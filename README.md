@@ -27,10 +27,16 @@ Toàn bộ dependencies ở ~/pom.xml
 
 Mã nguồn được tổ chức theo Client-Server và MVC:
 
-src/main/java/com/nhom1/auction/common: Chứa các lớp thực thể (User, Item) dùng chung cho cả Client và Server.
+src/main/java/com/nhom1/auction/
+├── common/      # Chứa các lớp dùng chung (User, Item, Bid)
+├── server/      # Logic phía Server
+│   └── dao/     # Xử lý dữ liệu (Database/File)
+└── client/      # Logic phía Client
+└── controller/ # Điều khiển giao diện JavaFX
 
-src/main/java/com/nhom1/auction/server: Chứa logic xử lý của Server và package dao để quản lý dữ liệu.
+src/main/resources/
+├── views/       # Chứa các file giao diện .fxml
+└── css/         # Chứa file style.css để làm đẹp UI
 
-src/main/java/com/nhom1/auction/client: Chứa logic phía người dùng và package controller để điều khiển giao diện.
-
-src/main/resources: Chứa các file giao diện (.fxml) và file định dạng (.css).
+5. Styling
+Trước khi commit code, nhấn Ctrl + Alt + L để IDE tự format lại code thêm 1 lần.
