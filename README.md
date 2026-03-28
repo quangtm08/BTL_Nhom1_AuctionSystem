@@ -34,5 +34,7 @@ src/main/java/com/nhom1/auction/server: Chứa logic xử lý của Server và p
 src/main/java/com/nhom1/auction/client: Chứa logic phía người dùng và package controller để điều khiển giao diện.
 
 src/main/resources: Chứa các file giao diện (.fxml) và file định dạng (.css).
+
 5. Styling
+6. 
 Trước khi commit code, nhấn Ctrl + Alt + L để IDE tự format lại code thêm 1 lần.

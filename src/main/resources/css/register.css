@@ -1,0 +1,125 @@
+.register-screen {
+    -fx-background-color: #111713;
+}
+
+.register-card {
+    -fx-alignment: center;
+}
+
+.hero-panel {
+    -fx-background-radius: 22px;
+    -fx-border-radius: 22px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.28), 32, 0.25, 0, 8);
+}
+
+.hero-image {
+    -fx-opacity: 1;
+}
+
+.form-panel {
+    -fx-padding: 0;
+}
+
+.title-flow {
+}
+
+.title-first-letter {
+    -fx-fill: rgba(242, 242, 242, 0.98);
+    -fx-font-size: 44px;
+    -fx-font-family: "EB Garamond";
+    -fx-font-style: italic;
+}
+
+.title-rest {
+    -fx-fill: rgba(242, 242, 242, 0.98);
+    -fx-font-size: 44px;
+    -fx-font-family: "EB Garamond";
+}
+
+.subtitle-text {
+    -fx-text-fill: rgba(149, 151, 155, 0.92);
+    -fx-font-size: 15px;
+    -fx-padding: 0 0 14 0;
+}
+
+.field-group {
+    -fx-padding: 4 0 0 0;
+}
+
+.field-label {
+    -fx-text-fill: rgba(138, 141, 144, 0.74);
+    -fx-font-size: 13px;
+}
+
+.input-field,
+.password-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(243, 244, 244, 0.95);
+    -fx-prompt-text-fill: rgba(243, 244, 244, 0.72);
+    -fx-font-size: 15px;
+    -fx-border-width: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+.input-field {
+    -fx-pref-height: 52px;
+    -fx-background-color: rgba(25, 28, 30, 0.94);
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(35, 40, 43, 0.30);
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 22, 0.20, 0, 6);
+    -fx-padding: 14 16 14 16;
+}
+
+.input-shell {
+    -fx-background-color: rgba(25, 28, 30, 0.94);
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(35, 40, 43, 0.30);
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 22, 0.20, 0, 6);
+    -fx-padding: 0 16 0 16;
+}
+
+.input-shell .password-field {
+    -fx-pref-height: 52px;
+}
+
+.field-icon {
+    -fx-text-fill: rgba(152, 155, 159, 0.78);
+    -fx-font-size: 16px;
+    -fx-padding: 0 0 2 0;
+}
+
+.register-button {
+    -fx-background-color: linear-gradient(to right, #304538 0%, #213c38 53%, #131916 100%);
+    -fx-text-fill: rgba(245, 242, 242, 0.92);
+    -fx-font-size: 17px;
+    -fx-font-weight: 600;
+    -fx-background-radius: 8px;
+    -fx-border-color: rgba(46, 49, 54, 0.22);
+    -fx-border-radius: 8px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 24, 0.20, 0, 8);
+    -fx-cursor: hand;
+}
+
+.register-button:hover {
+    -fx-background-color: linear-gradient(to right, #365140 0%, #274741 53%, #151e19 100%);
+}
+
+.footer-text {
+    -fx-text-fill: rgba(132, 135, 139, 0.92);
+    -fx-font-size: 12px;
+}
+
+.footer-link {
+    -fx-text-fill: rgba(201, 203, 206, 0.96);
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.footer-link:hover {
+    -fx-underline: true;
+}

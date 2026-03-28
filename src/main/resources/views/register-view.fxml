@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.geometry.Pos?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.Text?>
+<?import javafx.scene.text.TextFlow?>
+
+
+<StackPane xmlns="http://javafx.com/javafx/25"
+           xmlns:fx="http://javafx.com/fxml/1"
+           styleClass="register-screen">
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+  <children>
+      <HBox maxWidth="1180"
+            prefHeight="720"
+            alignment="CENTER"
+            spacing="54"
+            styleClass="register-card">
+          <children>
+              <StackPane prefWidth="540"
+                         prefHeight="650"
+                         minWidth="480"
+                         styleClass="hero-panel">
+                  <children>
+                      <ImageView fitWidth="540"
+                                 fitHeight="650"
+                                 preserveRatio="false"
+                                 styleClass="hero-image">
+                          <image>
+                              <Image url="@../assets/images/register-background.png"/>
+                          </image>
+                      </ImageView>
+                  </children>
+              </StackPane>
+
+              <StackPane prefWidth="470"
+                         prefHeight="650"
+                         alignment="CENTER_LEFT">
+                  <children>
+                      <VBox alignment="CENTER_LEFT"
+                            maxWidth="470"
+                            prefWidth="470"
+                            spacing="16"
+                            styleClass="form-panel">
+                          <children>
+                              <TextFlow styleClass="title-flow">
+                                  <children>
+                                      <Text text="C" styleClass="title-first-letter"/>
+                                      <Text text="reate an account" styleClass="title-rest"/>
+                                  </children>
+                              </TextFlow>
+                              <Label text="Join 9999 other collectors and win your first bid"
+                                     wrapText="true"
+                                     styleClass="subtitle-text"/>
+
+                              <VBox spacing="8" styleClass="field-group">
+                                  <children>
+                                      <Label text="Username or Email" styleClass="field-label"/>
+                                      <TextField promptText="quangtm.gp@gmail.com"
+                                                 prefHeight="52"
+                                                 styleClass="input-field"/>
+                                  </children>
+                              </VBox>
+
+                              <VBox spacing="8" styleClass="field-group">
+                                  <children>
+                                      <Label text="Password" styleClass="field-label"/>
+                                      <HBox alignment="CENTER_LEFT" spacing="12" styleClass="input-shell">
+                                          <children>
+                                              <PasswordField promptText="••••••••••••••"
+                                                             prefHeight="52"
+                                                             styleClass="password-field"/>
+                                              <Label text="◌" styleClass="field-icon"/>
+                                          </children>
+                                      </HBox>
+                                  </children>
+                              </VBox>
+
+                              <VBox spacing="8" styleClass="field-group">
+                                  <children>
+                                      <Label text="Confirm Password" styleClass="field-label"/>
+                                      <HBox alignment="CENTER_LEFT" spacing="12" styleClass="input-shell">
+                                          <children>
+                                              <PasswordField promptText="••••••••••••••"
+                                                             prefHeight="52"
+                                                             styleClass="password-field"/>
+                                              <Label text="◌" styleClass="field-icon"/>
+                                          </children>
+                                      </HBox>
+                                  </children>
+                              </VBox>
+
+                              <Button text="Register"
+                                      prefHeight="60"
+                                      maxWidth="1.7976931348623157E308"
+                                      styleClass="register-button"/>
+
+                              <HBox alignment="CENTER_LEFT" spacing="4">
+                                  <children>
+                                      <Label text="Already have an account?" styleClass="footer-text"/>
+                                      <Hyperlink text="Sign in" styleClass="footer-link"/>
+                                  </children>
+                              </HBox>
+                          </children>
+                      </VBox>
+                  </children>
+              </StackPane>
+          </children>
+      </HBox>
+  </children>
+</StackPane>
