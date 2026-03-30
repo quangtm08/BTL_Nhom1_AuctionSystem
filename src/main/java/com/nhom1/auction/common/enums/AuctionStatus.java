@@ -6,4 +6,4 @@ public enum AuctionStatus {
     FINISHED,
     PAID,
     CANCELED
-}
+    }

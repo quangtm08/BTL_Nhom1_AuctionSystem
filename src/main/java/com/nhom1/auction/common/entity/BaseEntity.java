@@ -6,13 +6,13 @@ import java.util.UUID;
 public abstract class BaseEntity {
     private UUID id;
     private LocalDateTime createdAt;
-    private LocalDateTime modifiedAt;
+    private LocalDateTime updatedAt;
 
     //Constructor
     public BaseEntity(){
         id = UUID.randomUUID();
         createdAt = LocalDateTime.now();
-        modifiedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
 
@@ -26,19 +26,16 @@ public abstract class BaseEntity {
         return createdAt;
     }
 
-    public final LocalDateTime getModifiedAt() {
-        return modifiedAt;
+    public final LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     /*
-    id and createdAt are fixed
-    touchModify to only update the modifiedAt when a change is made
-    => prevent creating fake modifiedAt
-
-    final so that subclasses don't need to override
+    1. id and createdAt are fixed fields => no setters.
+    2. touchUpdatedAt only updates updatedAt when a change is made
+    => prevent creating fake updatedAt
      */
-
-    public final void touchModify(LocalDateTime modifiedAt) {
-        this.modifiedAt = LocalDateTime.now();
+    public final void touchUpdatedAt() {
+        this.updatedAt = LocalDateTime.now();
     }
 }
