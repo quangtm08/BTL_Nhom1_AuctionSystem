@@ -8,16 +8,12 @@ public abstract class BaseEntity {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    //Constructor
     public BaseEntity(){
         id = UUID.randomUUID();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
-
-    //getters
-    //final so that subclasses don't need to override
     public final UUID getId() {
         return id;
     }
@@ -30,11 +26,7 @@ public abstract class BaseEntity {
         return updatedAt;
     }
 
-    /*
-    1. id and createdAt are fixed fields => no setters.
-    2. touchUpdatedAt only updates updatedAt when a change is made
-    => prevent creating fake updatedAt
-     */
+    // Only domain mutations should refresh updatedAt.
     public final void touchUpdatedAt() {
         this.updatedAt = LocalDateTime.now();
     }
