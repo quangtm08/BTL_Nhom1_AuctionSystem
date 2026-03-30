@@ -21,6 +21,8 @@ public class ClientApplication extends Application {
             ).toExternalForm()
         );
 
+
+
         stage.setTitle("Auction System Client");
         stage.setMinWidth(1100);
         stage.setMinHeight(760);

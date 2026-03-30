@@ -9,7 +9,7 @@
 Để tránh xung đột, không cần cài đặt Maven thủ công. Sử dụng file thực thi mvnw có sẵn 
 trong thư mục gốc:
 
-- Trên Windows: Chạy lệnh mvnw.cmd [lệnh] (Ví dụ: mvnw.cmd clean install).
+- Trên Windows: Chạy lệnh mvnw.cmd [lệnh] (Ví dụ: .\mvnw.cmd clean install).
 
 - Trên macOS/Linux: Chạy lệnh ./mvnw [lệnh] (Ví dụ: ./mvnw clean install).
 
