@@ -48,6 +48,9 @@ public class Auction extends BaseEntity{
         this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
     }
+
+
+
     public void startAuction(){
         if (status == AuctionStatus.OPEN){
             status = AuctionStatus.RUNNING;
@@ -75,6 +78,8 @@ public class Auction extends BaseEntity{
             throw new IllegalArgumentException();
         }
     }
+
+
     // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or RUNNING auctions.
     public void cancelAuction(UUID callerId, UserRole userRole){
         if (userRole == UserRole.ADMIN
