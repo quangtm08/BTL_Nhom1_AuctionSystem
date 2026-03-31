@@ -1,4 +1,5 @@
 package com.nhom1.auction.common.enums;
-public class BidType {
-
+public enum BidType {
+    MANUAL,
+    AUTO
 }
