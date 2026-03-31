@@ -1,12 +1,33 @@
 package com.nhom1.auction.common.entity;
 
-// Lớp gốc cung cấp khóa chính (ID) cho toàn bộ hệ thống(đẻ ra tất cả mọi thứ)
-public abstract class BaseEntity {
-    protected String id;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
-    public BaseEntity(String id) {
-        this.id = id;
+public abstract class BaseEntity {
+    private UUID id;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    public BaseEntity(){
+        id = UUID.randomUUID();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
-    public String getId() { return id; }
+    public final UUID getId() {
+        return id;
+    }
+
+    public final LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public final LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    // Only domain mutations should refresh updatedAt.
+    public final void touchUpdatedAt() {
+        this.updatedAt = LocalDateTime.now();
+    }
 }
