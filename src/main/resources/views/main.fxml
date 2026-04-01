@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+
+<StackPane fx:id="rootPane"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.nhom1.auction.client.Controller.MainController"
+           style="-fx-background-color: black;">
+
+    <!-- LOADING MẶC ĐỊNH -->
+    <VBox alignment="CENTER" spacing="20">
+        <Label text="Loading..." style="-fx-text-fill: white; -fx-font-size: 20;" />
+        <ProgressIndicator />
+    </VBox>
+
+</StackPane>
