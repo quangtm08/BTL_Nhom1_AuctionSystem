@@ -15,6 +15,7 @@ public class RegisterController{
 
     @FXML
     public void initialize(){
+        
 
         btnRegister.setOnAction((e) -> {
 
@@ -32,6 +33,12 @@ public class RegisterController{
         });
 
         btnSignIn.setOnAction((e) -> {
+
+
+            // Email
+            // Password
+
+            // ArrayList<User> Users = DB.getUSer();
             AppNavigator.navigateTo(AppView.LOADING);
 
             PauseTransition delay = new PauseTransition(Duration.seconds(2));

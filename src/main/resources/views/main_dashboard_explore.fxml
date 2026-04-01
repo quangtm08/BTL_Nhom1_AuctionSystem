@@ -5,7 +5,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<HBox fx:id="mainContainer" prefHeight="800.0" prefWidth="1280.0" styleClass="root-pane" stylesheets="@../css/main_dashboard_explore.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="mainContainer"
+    prefHeight="800.0" prefWidth="1280.0" styleClass="root-pane" 
+    stylesheets="@../css/main_dashboard_explore.css" xmlns="http://javafx.com/javafx/17"
+    xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.Controller.MainDashboardController" >
     <VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER">
         <padding>
             <Insets top="80.0" left="25.0" right="25.0" bottom="30.0"/>
@@ -15,7 +18,7 @@
                 <Button text="Explore" maxWidth="Infinity" styleClass="side-btn, side-btn-active"/>
                 <Button text="My bids" maxWidth="Infinity" styleClass="side-btn"/>
                 <Button text="My listings" maxWidth="Infinity" styleClass="side-btn"/>
-                <Button text="Payments" maxWidth="Infinity" styleClass="side-btn"/>
+                <Button fx:id="btnPayment" text="Payments" maxWidth="Infinity" styleClass="side-btn"/>
             </VBox>
             
             <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="user-footer">

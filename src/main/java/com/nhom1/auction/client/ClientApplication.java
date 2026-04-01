@@ -21,6 +21,8 @@ public class ClientApplication extends Application {
             getClass().getResource("/views/main.fxml")
         );
 
+        AppAssets.loadFonts();
+
         Scene scene = new Scene(loader.load());
 
         MainController mainController = loader.getController();

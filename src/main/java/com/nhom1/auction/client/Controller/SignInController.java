@@ -34,16 +34,16 @@ public class SignInController {
         btnSignIn.setOnAction(e -> {
             if(txtUsername.getText().equals("user") &&
                txtPassword.getText().equals("123")) {
-
-                AppNavigator.navigateTo(AppView.LOADING);
-
-                PauseTransition delay = new PauseTransition(Duration.seconds(2));
-
-                delay.setOnFinished(event -> {
-                    AppNavigator.navigateTo(AppView.MAIN_DASHBOARD);
-                });
-                delay.play();
             }
+
+            AppNavigator.navigateTo(AppView.LOADING);
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(2));
+
+            delay.setOnFinished(event -> {
+                AppNavigator.navigateTo(AppView.MAIN_DASHBOARD);
+            });
+            delay.play();
         });
     }
 }
