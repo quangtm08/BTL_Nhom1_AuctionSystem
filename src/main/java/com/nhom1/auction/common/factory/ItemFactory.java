@@ -1,32 +1,30 @@
 package com.nhom1.auction.common.factory;
 
-import com.nhom1.auction.common.entity.*;
+import com.nhom1.auction.common.entity.Art;
+import com.nhom1.auction.common.entity.Electronics;
+import com.nhom1.auction.common.entity.Item;
+import com.nhom1.auction.common.entity.Vehicle;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.enums.VehicleFuelType;
-import java.time.LocalDateTime;
 
 public class ItemFactory {
 
-    public static Item createElectronics(String id, String name, String description, double startingPrice,
-        LocalDateTime startTime, LocalDateTime endTime,
+    public static Item createElectronics(String name, String description, 
         ItemCondition condition, String brand, int warrantyMonths) {
-        return new Electronics(id, name, description, startingPrice, startTime, endTime,
+        return new Electronics(name, description,
             ItemCategory.ELECTRONICS, condition, brand, warrantyMonths);
     }
 
-    public static Item createArt(String id, String name, String description, double startingPrice,
-        LocalDateTime startTime, LocalDateTime endTime,
+    public static Item createArt(String name, String description, 
         ItemCondition condition, String artist, String era) {
-        return new Art(id, name, description, startingPrice, startTime, endTime,
+        return new Art(name, description, 
             ItemCategory.ART, condition, artist, era);
     }
 
 
-    public static Item createVehicle(String id, String name, String description, double startingPrice,
-        LocalDateTime startTime, LocalDateTime endTime,
-        ItemCondition condition, String make, int productionYear, VehicleFuelType fuelType) {
-        return new Vehicle(id, name, description, startingPrice, startTime, endTime,
+    public static Item createVehicle(String name, String description, ItemCondition condition, String make, int productionYear, VehicleFuelType fuelType) {
+        return new Vehicle( name, description, 
             ItemCategory.VEHICLE, condition, make, productionYear, fuelType);
     }
 }

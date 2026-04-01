@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public abstract class BaseEntity {
-    private UUID id;
-    private LocalDateTime createdAt;
+    private final UUID id;
+    private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public BaseEntity(){
