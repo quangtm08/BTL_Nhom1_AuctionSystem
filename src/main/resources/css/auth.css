@@ -41,12 +41,13 @@
     -fx-background-radius: 18;
     -fx-border-color: rgba(238, 238, 238, 0.42);
     -fx-border-radius: 18;
-    -fx-border-style: segments(12, 8, 12, 8) line-cap butt;
+    -fx-border-style: dashed;
+    -fx-border-width: 2;
 }
 
 .image-placeholder-label {
     -fx-text-fill: rgba(242, 242, 242, 0.78);
-    -fx-font-family: "System";
+    -fx-font-family: "Inter";
     -fx-font-size: 18px;
     -fx-font-weight: 600;
 }
@@ -80,25 +81,19 @@
     -fx-fill: rgba(242, 242, 242, 0.98);
     -fx-font-family: "EB Garamond";
     -fx-font-style: italic;
-    -fx-font-size: 56px;
+    -fx-font-size: 48px;
 }
 
 .title-rest {
     -fx-fill: rgba(242, 242, 242, 0.98);
     -fx-font-family: "EB Garamond";
-    -fx-font-size: 56px;
-}
-
-.auth-title {
-    -fx-text-fill: rgba(242, 242, 242, 0.98);
-    -fx-font-family: "EB Garamond";
-    -fx-font-size: 56px;
+    -fx-font-size: 48px;
 }
 
 .supporting-text {
     -fx-text-fill: rgba(149, 151, 155, 0.92);
-    -fx-font-family: "System";
-    -fx-font-size: 18px;
+    -fx-font-family: "Inter";
+    -fx-font-size: 16px;
 }
 
 .inline-link {
@@ -113,8 +108,8 @@
     -fx-faint-focus-color: transparent;
     -fx-padding: 0;
     -fx-text-fill: #eeeeee;
-    -fx-font-family: "System";
-    -fx-font-size: 18px;
+    -fx-font-family: "Inter";
+    -fx-font-size: 16px;
     -fx-font-weight: 500;
     -fx-underline: true;
 }
@@ -134,7 +129,7 @@
 
 .field-label {
     -fx-text-fill: rgba(138, 141, 144, 0.72);
-    -fx-font-family: "System";
+    -fx-font-family: "Inter";
     -fx-font-size: 14px;
 }
 
@@ -146,7 +141,7 @@
     -fx-padding: 0;
     -fx-text-fill: rgba(243, 244, 244, 0.95);
     -fx-prompt-text-fill: rgba(243, 244, 244, 0.45);
-    -fx-font-family: "System";
+    -fx-font-family: "Inter";
     -fx-font-size: 16px;
 }
 
@@ -162,7 +157,7 @@
     -fx-border-radius: 8;
     -fx-cursor: hand;
     -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.22), 36, 0.2, 0, 16);
-    -fx-font-family: "System";
+    -fx-font-family: "Inter";
     -fx-font-size: 20px;
     -fx-font-weight: 500;
     -fx-text-fill: rgba(245, 242, 242, 0.92);
