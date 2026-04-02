@@ -1,125 +1,90 @@
-.register-screen {
-    -fx-background-color: #111713;
+/* Nền tối sâu cho ứng dụng */
+.root-pane {
+    -fx-background-color: #050505;
 }
 
-.register-card {
-    -fx-alignment: center;
+/* Container chính bo góc */
+.main-card {
+    -fx-background-color: #0a0d0d;
+    -fx-background-radius: 24;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-radius: 24;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.5), 20, 0, 0, 10);
 }
 
-.hero-panel {
-    -fx-background-radius: 22px;
-    -fx-border-radius: 22px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.28), 32, 0.25, 0, 8);
+/* Banner bên trái: Gradient xanh đặc trưng */
+.left-banner {
+    -fx-background-color: linear-gradient(to bottom right, #244235, #0d1a14);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(255, 255, 255, 0.03);
+    -fx-border-radius: 18;
 }
 
-.hero-image {
-    -fx-opacity: 1;
-}
-
-.form-panel {
-    -fx-padding: 0;
-}
-
-.title-flow {
-}
-
-.title-first-letter {
-    -fx-fill: rgba(242, 242, 242, 0.98);
-    -fx-font-size: 44px;
-    -fx-font-family: "EB Garamond";
-    -fx-font-style: italic;
-}
-
-.title-rest {
-    -fx-fill: rgba(242, 242, 242, 0.98);
-    -fx-font-size: 44px;
-    -fx-font-family: "EB Garamond";
+/* Font Serif cho tiêu đề giống ảnh */
+.title-text {
+    -fx-text-fill: white;
+    -fx-font-family: "Georgia", "Serif";
+    -fx-font-size: 34px;
+    -fx-font-weight: normal;
 }
 
 .subtitle-text {
-    -fx-text-fill: rgba(149, 151, 155, 0.92);
-    -fx-font-size: 15px;
-    -fx-padding: 0 0 14 0;
-}
-
-.field-group {
-    -fx-padding: 4 0 0 0;
-}
-
-.field-label {
-    -fx-text-fill: rgba(138, 141, 144, 0.74);
+    -fx-text-fill: #7a7a7a;
     -fx-font-size: 13px;
 }
 
-.input-field,
-.password-field {
-    -fx-background-color: transparent;
-    -fx-text-fill: rgba(243, 244, 244, 0.95);
-    -fx-prompt-text-fill: rgba(243, 244, 244, 0.72);
-    -fx-font-size: 15px;
-    -fx-border-width: 0;
-    -fx-background-insets: 0;
-    -fx-padding: 0;
+.input-label {
+    -fx-text-fill: #5c5c5c;
+    -fx-font-size: 11px;
 }
 
+/* Ô nhập liệu tối */
 .input-field {
-    -fx-pref-height: 52px;
-    -fx-background-color: rgba(25, 28, 30, 0.94);
-    -fx-background-radius: 8px;
-    -fx-border-color: rgba(35, 40, 43, 0.30);
-    -fx-border-radius: 8px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 22, 0.20, 0, 6);
-    -fx-padding: 14 16 14 16;
+    -fx-background-color: #121616;
+    -fx-text-fill: #e0e0e0;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-border-color: #1d2222;
+    -fx-border-radius: 10;
 }
 
-.input-shell {
-    -fx-background-color: rgba(25, 28, 30, 0.94);
-    -fx-background-radius: 8px;
-    -fx-border-color: rgba(35, 40, 43, 0.30);
-    -fx-border-radius: 8px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.18), 22, 0.20, 0, 6);
-    -fx-padding: 0 16 0 16;
+.input-field:focused {
+    -fx-border-color: #2d4a3b;
+    -fx-background-color: #151a1a;
 }
 
-.input-shell .password-field {
-    -fx-pref-height: 52px;
+/* Nút bấm Register xanh mờ */
+.btn-primary {
+    -fx-background-color: linear-gradient(to right, #2d473a, #1b2e25);
+    -fx-text-fill: #d1d1d1;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-radius: 10;
 }
 
-.field-icon {
-    -fx-text-fill: rgba(152, 155, 159, 0.78);
-    -fx-font-size: 16px;
-    -fx-padding: 0 0 2 0;
+.btn-primary:hover {
+    -fx-opacity: 0.9;
 }
 
-.register-button {
-    -fx-background-color: linear-gradient(to right, #304538 0%, #213c38 53%, #131916 100%);
-    -fx-text-fill: rgba(245, 242, 242, 0.92);
-    -fx-font-size: 17px;
-    -fx-font-weight: 600;
-    -fx-background-radius: 8px;
-    -fx-border-color: rgba(46, 49, 54, 0.22);
-    -fx-border-radius: 8px;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.22), 24, 0.20, 0, 8);
+/* Chân trang */
+.footer-text {
+    -fx-text-fill: #666;
+    -fx-font-size: 12px;
+}
+
+.hyperlink-signin {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-underline: false;
+    -fx-padding: 0;
+    -fx-background-color: none;
     -fx-cursor: hand;
 }
 
-.register-button:hover {
-    -fx-background-color: linear-gradient(to right, #365140 0%, #274741 53%, #151e19 100%);
-}
-
-.footer-text {
-    -fx-text-fill: rgba(132, 135, 139, 0.92);
-    -fx-font-size: 12px;
-}
-
-.footer-link {
-    -fx-text-fill: rgba(201, 203, 206, 0.96);
-    -fx-font-size: 12px;
-    -fx-font-weight: 600;
-    -fx-border-color: transparent;
-    -fx-padding: 0;
-}
-
-.footer-link:hover {
-    -fx-underline: true;
+.eye-icon {
+    -fx-font-size: 16px;
+    -fx-text-fill: #444;
 }
