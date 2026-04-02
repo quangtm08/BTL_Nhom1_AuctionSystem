@@ -10,7 +10,7 @@
 <?import javafx.scene.shape.Circle?>
 
 
-<BorderPane fx:id="root" stylesheets="@../css/cha_ching.css" prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.Controller.ChaChingController">
+<BorderPane fx:id="root" stylesheets="@../css/payment.css" prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.Controller.ChaChingController">
 
    <left>
        <VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER">
