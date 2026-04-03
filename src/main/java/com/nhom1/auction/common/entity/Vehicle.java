@@ -5,9 +5,9 @@ import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.enums.VehicleFuelType;
 
 public class Vehicle extends Item {
-    private final String make;
-    private final int productionYear;
-    private final VehicleFuelType fuelType;
+    private String make;
+    private int productionYear;
+    private VehicleFuelType fuelType;
 
     public Vehicle(String name, String description,
         ItemCategory category, ItemCondition condition,
