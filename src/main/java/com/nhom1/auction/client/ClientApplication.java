@@ -8,6 +8,10 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 public class ClientApplication extends Application {
 
+    private static final double DESIGN_WIDTH = 1320;
+    private static final double DESIGN_HEIGHT = 855;
+    private static final double MIN_WIDTH = 1080;
+    private static final double MIN_HEIGHT = 700;
 
     private static Stage stage;
     private static FXMLLoader fxmlLoader;
@@ -17,21 +21,26 @@ public class ClientApplication extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
+        ClientApplication.stage = stage;
+
         FXMLLoader loader = new FXMLLoader(
             getClass().getResource("/views/main.fxml")
         );
 
         AppAssets.loadFonts();
 
-        Scene scene = new Scene(loader.load());
+        Scene scene = new Scene(loader.load(), DESIGN_WIDTH, DESIGN_HEIGHT);
 
         MainController mainController = loader.getController();
 
         AppNavigator.setRoot(mainController);
 
         stage.setScene(scene);
-        stage.setFullScreen(true);
-        stage.setFullScreenExitHint("");
+        stage.setMinWidth(MIN_WIDTH);
+        stage.setMinHeight(MIN_HEIGHT);
+        stage.setWidth(DESIGN_WIDTH);
+        stage.setHeight(DESIGN_HEIGHT);
+        stage.centerOnScreen();
         stage.show();
 
         AppNavigator.navigateTo(AppView.SIGN_IN);
