@@ -5,13 +5,11 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 import com.nhom1.auction.common.enums.BidType;
 
-public class BidTransaction {
-    private UUID id;
-    private UUID auctionId;
-    private UUID bidderId;
-    private BigDecimal amount;
-    private LocalDateTime timestamp;
-    private BidType bidType;
+public class BidTransaction extends BaseEntity {
+    private final UUID auctionId;
+    private final UUID bidderId;
+    private final BigDecimal amount;
+    private final BidType bidType;
 
     public BidTransaction(UUID auctionId, UUID bidderId, BigDecimal amount, BidType bidType) {
         if (auctionId == null) {
@@ -26,13 +24,23 @@ public class BidTransaction {
         if (bidType == null) {
             throw new IllegalArgumentException("bidType must not be null");
         }
-
-        this.id = UUID.randomUUID();
         this.auctionId = auctionId;
         this.bidderId = bidderId;
         this.amount = amount;
-        this.timestamp = LocalDateTime.now();
         this.bidType = bidType;
+    }
+    public UUID getAuctionId() {
+        return auctionId;
+    }
+    public UUID getBidderId() {
+        return bidderId;
+    }
+    public BigDecimal getAmount() {
+        return amount;
+    }
+ 
+    public BidType getBidType() {
+        return bidType;
     }
 }
 
