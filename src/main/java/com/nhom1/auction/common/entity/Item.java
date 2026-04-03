@@ -26,8 +26,12 @@ public abstract class Item extends BaseEntity {
     public String getName() { return name; }
     public ItemCategory getCategory() { return category; }
     public ItemCondition getCondition(){ return condition; }
+    public String getDescription(){ return description; }
     //Setter
     public void setCondition(ItemCondition condition){ this.condition=condition; }
+    public void setDescription(String description){ this.description=description; }
+    public void setCategory(ItemCategory category){ this.category=category; }
+    public void setName(String name) { this.name=name; }
 
 
 }
