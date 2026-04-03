@@ -5,31 +5,31 @@ import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.enums.VehicleFuelType;
 
 public class Vehicle extends Item {
-    private String make;
+    private String brand;
     private int productionYear;
     private VehicleFuelType fuelType;
 
     public Vehicle(String name, String description,
         ItemCategory category, ItemCondition condition,
-        String make, int productionYear, VehicleFuelType fuelType) {
+        String brand, int productionYear, VehicleFuelType fuelType) {
         super( name, description, category, condition);
-        this.make = make;
+        this.brand = brand;
         this.productionYear = productionYear;
         this.fuelType = fuelType;
     }
     //Getter
-    public String getMake(){ return make; }
+    public String getBrand(){ return brand; }
     public int getProductionYear(){ return productionYear; }
     public VehicleFuelType getFuelType(){ return fuelType; }
     //Setter
-    public void setMake(String make){ this.make=make; }
+    public void setBrnad(String brand){ this.brand=brand; }
     public void setProductionYear(int productionYear){ this.productionYear=productionYear; }
     public void setFuelType(VehicleFuelType fuelType ){ this.fuelType=fuelType; }
 
     @Override
     public void printInfo() {
 
-        System.out.println("[Vehicle] " + name + " | Make: " + make + " | Year: " + productionYear + " | Fuel: " + fuelType);
+        System.out.println("[Vehicle] " + name + " | Brand: " + brand + " | Year: " + productionYear + " | Fuel: " + fuelType);
     
     }
 }
