@@ -6,7 +6,7 @@ public enum AppView {
     SIGN_IN("/views/sign_in.fxml", null),
     REGISTER("/views/register.fxml",null),
     MAIN_DASHBOARD("/views/main_dashboard_explore.fxml",null),
-    CHA_CHING("/views/payment.fxml", null);
+    PAYMENT("/views/payment.fxml", null);
 
     private final String fxml;
     private final String css;
