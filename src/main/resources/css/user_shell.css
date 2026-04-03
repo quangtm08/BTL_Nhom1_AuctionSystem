@@ -1,0 +1,25 @@
+/* Shared shell styles for normal-user screens */
+.root-pane {
+    -fx-background-color: #0f1312;
+}
+
+.main-content {
+    -fx-background-color: #0f1312;
+}
+
+.header-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Georgia";
+}
+
+.shell-button-primary {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.shell-button-primary:hover {
+    -fx-background-color: #2b6b4c;
+}
+
