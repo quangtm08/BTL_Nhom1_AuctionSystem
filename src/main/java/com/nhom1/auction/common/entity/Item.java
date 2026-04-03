@@ -25,6 +25,9 @@ public abstract class Item extends BaseEntity {
     // Getter
     public String getName() { return name; }
     public ItemCategory getCategory() { return category; }
+    public ItemCondition getCondition(){ return condition; }
+    //Setter
+    public void setCondition(ItemCondition condition){ this.condition=condition; }
 
 
 }
