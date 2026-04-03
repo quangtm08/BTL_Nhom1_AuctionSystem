@@ -17,6 +17,14 @@ public class Vehicle extends Item {
         this.productionYear = productionYear;
         this.fuelType = fuelType;
     }
+    //Getter
+    public String getMake(){ return make; }
+    public int getProductionYear(){ return productionYear; }
+    public VehicleFuelType getFuelType(){ return fuelType; }
+    //Setter
+    public void setMake(String make){ this.make=make; }
+    public void setProductionYear(int productionYear){ this.productionYear=productionYear; }
+    public void setFuelType(VehicleFuelType fuelType ){ this.fuelType=fuelType; }
 
     @Override
     public void printInfo() {
