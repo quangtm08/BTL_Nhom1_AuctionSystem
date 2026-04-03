@@ -22,7 +22,7 @@ public class Vehicle extends Item {
     public int getProductionYear(){ return productionYear; }
     public VehicleFuelType getFuelType(){ return fuelType; }
     //Setter
-    public void setBrnad(String brand){ this.brand=brand; }
+    public void setBrand(String brand){ this.brand=brand; }
     public void setProductionYear(int productionYear){ this.productionYear=productionYear; }
     public void setFuelType(VehicleFuelType fuelType ){ this.fuelType=fuelType; }
 
