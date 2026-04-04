@@ -17,7 +17,7 @@
             <VBox spacing="12.0" VBox.vgrow="ALWAYS">
                 <Button text="Explore" maxWidth="Infinity" styleClass="side-btn, side-btn-active"/>
                 <Button text="My bids" maxWidth="Infinity" styleClass="side-btn"/>
-                <Button text="My listings" maxWidth="Infinity" styleClass="side-btn"/>
+                <Button fx:id="btnListings" text="My listings" maxWidth="Infinity" styleClass="side-btn"/>
                 <Button fx:id="btnPayment" text="Payments" maxWidth="Infinity" styleClass="side-btn"/>
             </VBox>
             

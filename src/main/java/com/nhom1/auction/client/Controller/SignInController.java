@@ -36,6 +36,7 @@ public class SignInController {
                txtPassword.getText().equals("123")) {
             }
 
+            
             AppNavigator.navigateTo(AppView.LOADING);
 
             PauseTransition delay = new PauseTransition(Duration.seconds(2));
@@ -44,6 +45,7 @@ public class SignInController {
                 AppNavigator.navigateTo(AppView.MAIN_DASHBOARD);
             });
             delay.play();
+            
         });
     }
 }

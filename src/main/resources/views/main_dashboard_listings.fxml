@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import java.net.URL?> 
+
+<BorderPane prefHeight="700.0" prefWidth="1100.0"
+            stylesheets="@../css/main_dashboard_listings.css"
+            styleClass="root-pane"
+            xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.nhom1.auction.client.Controller.MainDashboardListingController"
+        >
+
+    <!-- SIDEBAR -->
+    
+   <left>
+       <VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER">
+            <padding>
+                <Insets top="80.0" left="25.0" right="25.0" bottom="30.0"/>
+            </padding>
+            <children>
+                <VBox spacing="12.0" VBox.vgrow="ALWAYS">
+                    <Button fx:id="btnExplore" text="Explore" maxWidth="Infinity" styleClass="side-btn "/>
+                    <Button text="My bids" maxWidth="Infinity" styleClass="side-btn"/>
+                    <Button fx:id="btnListings" text="My listings" maxWidth="Infinity" styleClass="side-btn"/>
+                    <Button fx:id="btnPayment" text="Payments" maxWidth="Infinity" styleClass="side-btn, side-btn-active"/>
+                </VBox>
+                
+                <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="user-footer">
+                    <Circle radius="18.0" fill="#3a3a3a" stroke="#4a4a4a"/>
+                    <Label text="bruh" styleClass="user-label" style="-fx-text-fill: white;"/>
+                </HBox>
+            </children>
+        </VBox>
+   </left>
+
+
+    <!-- MAIN CONTENT -->
+    <center>
+        <VBox spacing="20" styleClass="main-content">
+            <padding>
+                <Insets top="40" left="40" right="40"/>
+            </padding>
+
+            <children>
+
+                <!-- TITLE -->
+                <Label text="See your networth grows" styleClass="title"/>
+
+                <!-- STATS -->
+                <HBox spacing="80">
+                    <VBox>
+                        <Label text="Active listings" styleClass="sub"/>
+                        <Label text="7" styleClass="big"/>
+                    </VBox>
+
+                    <VBox>
+                        <Label text="Ending soon" styleClass="sub"/>
+                        <Label text="2" styleClass="big-orange"/>
+                    </VBox>
+
+                    <VBox>
+                        <Label text="No bids yet" styleClass="sub"/>
+                        <Label text="0" styleClass="big"/>
+                    </VBox>
+
+                    <VBox>
+                        <Label text="Accumulated revenue" styleClass="sub"/>
+                        <Label text="100,3500" styleClass="money"/>
+                    </VBox>
+                </HBox>
+
+                <!-- FILTER -->
+                <HBox spacing="10">
+                    <Button text="All" styleClass="filter-btn-active"/>
+                    <Button text="Winning" styleClass="filter-btn"/>
+                    <Button text="Losing" styleClass="filter-btn"/>
+                    <Button text="Watchlist" styleClass="filter-btn"/>
+                </HBox>
+
+                <!-- CARD LIST -->
+                <HBox spacing="20">
+                    <VBox spacing="15">
+
+                        <!-- CARD -->
+                        <VBox styleClass="card">
+                            <HBox>
+                                <Label text="Vintage Fender Guitar" styleClass="card-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="Running" styleClass="badge-green"/>
+                            </HBox>
+
+                            <Label text="Art &amp; Collectibles" styleClass="card-sub"/>
+
+                            <Label text="Current bid" styleClass="card-sub"/>
+                            <Label text="5000" styleClass="card-price"/>
+
+                            <HBox spacing="10">
+                                <Button text="Edit" styleClass="btn-outline"/>
+                                <Button text="Delete" styleClass="btn-danger"/>
+                            </HBox>
+                        </VBox>
+
+                    </VBox>
+
+                    <VBox spacing="15">
+
+                        <VBox styleClass="card">
+                            <HBox>
+                                <Label text="Vintage Fender Guitar" styleClass="card-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="Ended" styleClass="badge-red"/>
+                            </HBox>
+
+                            <Label text="Art &amp; Collectibles" styleClass="card-sub"/>
+                            <Label text="Current bid" styleClass="card-sub"/>
+                            <Label text="5000" styleClass="card-price"/>
+
+                            <HBox spacing="10">
+                                <Button text="Edit" styleClass="btn-outline"/>
+                                <Button text="Delete" styleClass="btn-danger"/>
+                            </HBox>
+                        </VBox>
+
+                    </VBox>
+                </HBox>
+
+            </children>
+        </VBox>
+    </center>
+
+</BorderPane>

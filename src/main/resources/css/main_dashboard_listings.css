@@ -1,0 +1,127 @@
+.root-pane {
+    -fx-background-color: #0f1312;
+}
+
+/* SIDEBAR */
+.sidebar {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #1a221e;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.side-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #777777;
+    -fx-alignment: CENTER_LEFT;
+    -fx-font-size: 15px;
+    -fx-padding: 12 18;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.side-btn:hover {
+    -fx-background-color: #1a221e;
+    -fx-text-fill: #ffffff;
+}
+
+.side-btn-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #ffffff;
+}
+
+
+.user-footer {
+    -fx-padding: 15 0 0 0;
+    -fx-border-color: #1a221e;
+    -fx-border-width: 1px 0 0 0;
+}
+
+/* MAIN */
+.main-content {
+    -fx-background-color: #0f1312;
+}
+
+.title {
+    -fx-text-fill: white;
+    -fx-font-size: 30px;
+}
+
+.sub {
+    -fx-text-fill: #7a7a7a;
+}
+
+.big {
+    -fx-text-fill: white;
+    -fx-font-size: 28px;
+}
+
+.big-orange {
+    -fx-text-fill: #ff7b4a;
+    -fx-font-size: 28px;
+}
+
+.money {
+    -fx-text-fill: white;
+    -fx-font-size: 26px;
+}
+
+/* FILTER */
+.filter-btn {
+    -fx-background-color: #1a221e;
+    -fx-text-fill: #ccc;
+}
+
+.filter-btn-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: white;
+}
+
+/* CARD */
+.card {
+    -fx-background-color: #161b1a;
+    -fx-padding: 15;
+    -fx-background-radius: 10;
+    -fx-border-color: #2a2f2d;
+    -fx-border-radius: 10;
+}
+
+.card-title {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+}
+
+.card-sub {
+    -fx-text-fill: #7a7a7a;
+}
+
+.card-price {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+}
+
+.badge-green {
+    -fx-background-color: #1f3d1f;
+    -fx-text-fill: #6aff6a;
+    -fx-padding: 3 8;
+    -fx-background-radius: 5;
+}
+
+.badge-red {
+    -fx-background-color: #3d1f1f;
+    -fx-text-fill: #ff6a6a;
+    -fx-padding: 3 8;
+    -fx-background-radius: 5;
+}
+
+/* BUTTON */
+.btn-outline {
+    -fx-border-color: #777;
+    -fx-text-fill: #ccc;
+    -fx-background-color: transparent;
+}
+
+.btn-danger {
+    -fx-border-color: red;
+    -fx-text-fill: red;
+    -fx-background-color: transparent;
+}

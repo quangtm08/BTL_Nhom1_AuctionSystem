@@ -1,5 +1,6 @@
 package com.nhom1.auction.client.Controller;
 
+
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 
@@ -9,28 +10,27 @@ import javafx.scene.control.Button;
 import javafx.util.Duration;
 
 
+public class MainDashboardListingController{
 
-public class MainDashboardController {
-    
+    @FXML Button btnExplore;
     @FXML Button btnPayment;
-    @FXML Button btnListings;
-    
+
     @FXML
     public void initialize(){
 
-        btnPayment.setOnAction(e -> {
+        btnExplore.setOnAction(e -> {
             AppNavigator.navigateTo(AppView.LOADING);
 
             PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
             delay.setOnFinished(event -> {
-                    AppNavigator.navigateTo(AppView.CHA_CHING);
+                    AppNavigator.navigateTo(AppView.MAIN_DASHBOARD);
                 });
                 delay.play();
 
-        }); 
-    
-        btnListings.setOnAction(e -> {
+        });
+
+        btnPayment.setOnAction(e -> {
             AppNavigator.navigateTo(AppView.LOADING);
 
             PauseTransition delay = new PauseTransition(Duration.seconds(2));
@@ -39,7 +39,8 @@ public class MainDashboardController {
                     AppNavigator.navigateTo(AppView.MAIN_DASHBOARD_LISTINGS);
                 });
                 delay.play();
-        });
-    
+        } );
+
     }
+
 }

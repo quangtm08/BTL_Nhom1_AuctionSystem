@@ -19,6 +19,8 @@ public class AppNavigator {
                 AppNavigator.class.getResource(view.getFxml())
             );
 
+            
+            
             Parent root = loader.load();
 
             mainController.setView(root);

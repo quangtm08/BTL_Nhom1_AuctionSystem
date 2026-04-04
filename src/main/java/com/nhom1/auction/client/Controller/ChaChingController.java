@@ -10,7 +10,8 @@ import javafx.util.Duration;
 
 public class ChaChingController {
     
-     @FXML Button btnExplore;
+    @FXML Button btnListings;
+    @FXML Button btnExplore;
 
     @FXML
     public void initialize(){
@@ -27,6 +28,20 @@ public class ChaChingController {
 
             System.out.println(1);
         }); 
+
+        btnListings.setOnAction(e -> {
+            AppNavigator.navigateTo(AppView.LOADING);
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(2));
+
+            delay.setOnFinished(event -> {
+                    AppNavigator.navigateTo(AppView.MAIN_DASHBOARD_LISTINGS);
+                });
+                delay.play();
+
+            System.out.println(1);
+        });
+
     }
 
 }
