@@ -36,7 +36,7 @@ public class MainDashboardListingController{
             PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
             delay.setOnFinished(event -> {
-                    AppNavigator.navigateTo(AppView.MAIN_DASHBOARD_LISTINGS);
+                    AppNavigator.navigateTo(AppView.LISTINGS);
                 });
                 delay.play();
         } );

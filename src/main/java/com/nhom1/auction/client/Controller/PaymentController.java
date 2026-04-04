@@ -8,7 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.util.Duration;
 
-public class ChaChingController {
+public class PaymentController {
     
     @FXML Button btnListings;
     @FXML Button btnExplore;
@@ -35,7 +35,7 @@ public class ChaChingController {
             PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
             delay.setOnFinished(event -> {
-                    AppNavigator.navigateTo(AppView.MAIN_DASHBOARD_LISTINGS);
+                    AppNavigator.navigateTo(AppView.LISTINGS);
                 });
                 delay.play();
 

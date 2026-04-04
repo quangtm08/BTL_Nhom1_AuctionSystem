@@ -24,7 +24,7 @@ public class MainDashboardController {
             PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
             delay.setOnFinished(event -> {
-                    AppNavigator.navigateTo(AppView.CHA_CHING);
+                    AppNavigator.navigateTo(AppView.PAYMENT);
                 });
                 delay.play();
 
@@ -36,7 +36,7 @@ public class MainDashboardController {
             PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
             delay.setOnFinished(event -> {
-                    AppNavigator.navigateTo(AppView.MAIN_DASHBOARD_LISTINGS);
+                    AppNavigator.navigateTo(AppView.LISTINGS);
                 });
                 delay.play();
         });
