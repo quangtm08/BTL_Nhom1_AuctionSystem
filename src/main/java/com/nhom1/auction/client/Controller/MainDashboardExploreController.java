@@ -1,6 +1,5 @@
 package com.nhom1.auction.client.Controller;
 
-
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 
@@ -9,8 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.util.Duration;
 
-
-public class MainDashboardListingController{
-
-   
+public class MainDashboardExploreController {
+    
+    
 }

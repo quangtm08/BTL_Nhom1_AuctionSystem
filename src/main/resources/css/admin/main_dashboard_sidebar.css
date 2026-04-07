@@ -1,0 +1,44 @@
+
+.sidebar {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #1a221e;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.brand-container {
+    -fx-padding: 10 0 40 5;
+}
+
+.brand-title {
+    -fx-font-family: "Georgia", serif;
+    -fx-font-style: italic;
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.brand-subtitle {
+    -fx-text-fill: #555555;
+    -fx-font-size: 11px;
+}
+
+/* Nút bấm trên Sidebar */
+.side-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #777777;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 12 20;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.side-btn:hover {
+    -fx-background-color: #1a221e;
+    -fx-text-fill: #ffffff;
+}
+
+.side-btn-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: white;
+}
+

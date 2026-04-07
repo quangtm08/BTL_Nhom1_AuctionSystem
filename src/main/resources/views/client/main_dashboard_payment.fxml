@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import java.net.URL?> 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?> 
+<?import javafx.geometry.Insets?> 
+<?import javafx.scene.control.*?> 
+<?import javafx.scene.layout.*?> 
+<?import javafx.scene.shape.Circle?>
+
+
+<BorderPane fx:id="root" stylesheets="@/css/client/main_dashboard_payment.css" 
+            prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" 
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.Controller.MainDashboardPaymentController">
+
+   <left>
+        <fx:include source="components/main_dashboard_sidebar.fxml" />
+   </left>
+
+   <center>
+      <ScrollPane fitToWidth="true" styleClass="main-scroll-pane">
+         <content>
+            <VBox spacing="20.0" styleClass="main-content">
+               <children>
+                  <Label styleClass="header-title" text="Cha-ching $" />
+                  
+                  <Label styleClass="section-label" text="TO PAY" />
+                  
+                  <HBox alignment="CENTER_LEFT" styleClass="payment-card">
+                     <children>
+                        <VBox HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label styleClass="item-name" text="Fender Black 1 Guitar" />
+                              <Label styleClass="item-category" text="Art &amp; Collectibles" />
+                           </children>
+                        </VBox>
+                        <Label styleClass="price-tag" text="\$5000" />
+                        <Button styleClass="btn-pay" text="Pay now" />
+                     </children>
+                  </HBox>
+
+                  <Separator styleClass="content-divider" />
+
+                  <Label styleClass="section-label" text="HISTORY" />
+                  
+                  <HBox alignment="CENTER_LEFT" styleClass="history-row">
+                     <children>
+                        <VBox HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label styleClass="history-name" text="Gibson Les Paul 1970" />
+                              <Label styleClass="history-date" text="Dec 2, 2024" />
+                           </children>
+                        </VBox>
+                        <VBox alignment="CENTER_RIGHT" spacing="5.0">
+                           <children>
+                              <Label styleClass="badge-pay" text="Pay" />
+                              <Label styleClass="history-price" text="\$3000" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+                  
+                  <HBox alignment="CENTER_LEFT" styleClass="history-row">
+                     <children>
+                        <VBox HBox.hgrow="ALWAYS">
+                           <children>
+                              <Label styleClass="history-name" text="Gibson Les Paul 1970" />
+                              <Label styleClass="history-date" text="Dec 2, 2024" />
+                           </children>
+                        </VBox>
+                        <VBox alignment="CENTER_RIGHT" spacing="5.0">
+                           <children>
+                              <Label styleClass="badge-receive" text="Receive" />
+                              <Label styleClass="history-price" text="\$3000" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </content>
+      </ScrollPane>
+   </center>
+</BorderPane>

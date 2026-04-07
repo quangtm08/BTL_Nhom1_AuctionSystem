@@ -1,0 +1,130 @@
+/* Tổng thể */
+.root-pane {
+    -fx-background-color: #050505;
+}
+
+/* MAIN CONTENT */
+.main-content {
+    -fx-background-color: #050505;
+}
+
+.header-title {
+    -fx-text-fill: white;
+    -fx-font-size: 38px;
+    -fx-font-family: "Georgia", serif;
+}
+
+/* SEARCH & FILTER */
+.search-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #252d29 transparent;
+    -fx-border-width: 0 0 1px 0;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-padding: 10 0;
+}
+
+.search-field:focused {
+    -fx-border-color: transparent transparent #2b6b4c transparent;
+}
+
+.filter-chip {
+    -fx-background-color: #121a16;
+    -fx-text-fill: #888888;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.filter-chip:hover {
+    -fx-background-color: #1a221e;
+    -fx-text-fill: #ffffff;
+}
+
+.filter-chip-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #2b6b4c;
+    -fx-border-radius: 8;
+}
+
+/* SCROLLPANE CUSTOMIZATION */
+.custom-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-hbar-policy: NEVER; /* Ẩn cuộn ngang */
+}
+
+.custom-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Tùy chỉnh thanh cuộn dọc mỏng và tinh tế */
+.custom-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 6;
+}
+
+.custom-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #1a3327;
+    -fx-background-radius: 10;
+}
+
+.custom-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #2b6b4c;
+}
+
+/* PRODUCT CARD */
+.product-card {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #1a221e;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 25;
+    -fx-transition: 0.3s;
+}
+
+.product-card:hover {
+    -fx-border-color: #2b6b4c;
+    -fx-background-color: #0e1612;
+}
+
+.card-title-text {
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+.card-sub-text {
+    -fx-text-fill: #666666;
+    -fx-font-size: 13px;
+}
+
+.card-price-text {
+    -fx-text-fill: white;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.status-badge {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #4caf50;
+    -fx-padding: 5 12;
+    -fx-background-radius: 8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.btn-action-green {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.btn-action-green:hover {
+    -fx-background-color: #2b6b4c;
+}

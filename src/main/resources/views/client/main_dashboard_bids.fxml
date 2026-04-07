@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" 
+            styleClass="main-container" stylesheets="@/css/client/main_dashboard_bids.css"
+            fx:controller="com.nhom1.auction.client.Controller.MainDashboardListingController">
+    
+    <left>
+        <fx:include source="components/main_dashboard_sidebar.fxml" />
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll-pane">
+            <VBox spacing="30" styleClass="content-padding">
+                
+                <Label text="Always stay ahead" styleClass="dashboard-title-serif"/>
+                
+                <HBox spacing="60">
+                    <VBox spacing="5">
+                        <Label text="Active bids" styleClass="stat-label"/>
+                        <Label text="7" styleClass="stat-value-white"/>
+                    </VBox>
+                    <VBox spacing="5">
+                        <Label text="Winning" styleClass="stat-label"/>
+                        <Label text="7" styleClass="stat-value-green"/>
+                    </VBox>
+                    <VBox spacing="5">
+                        <Label text="Losing" styleClass="stat-label"/>
+                        <Label text="0" styleClass="stat-value-red"/>
+                    </VBox>
+                    <VBox spacing="5">
+                        <Label text="Ending soon (24h)" styleClass="stat-label"/>
+                        <Label text="3" styleClass="stat-value-white"/>
+                    </VBox>
+                </HBox>
+                
+                <VBox spacing="15">
+                    <TextField promptText="Search..." styleClass="search-field"/>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <ToggleButton text="All" selected="true" styleClass="filter-pill"/>
+                        <ToggleButton text="Winning" styleClass="filter-pill"/>
+                        <ToggleButton text="Losing" styleClass="filter-pill"/>
+                        <ToggleButton text="Watchlist" styleClass="filter-pill"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Sort by" styleClass="text-dim"/>
+                        <Label text="Ending soon" styleClass="sort-text-active"/>
+                    </HBox>
+                </VBox>
+                
+                <GridPane hgap="25" vgap="25">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50" />
+                        <ColumnConstraints percentWidth="50" />
+                    </columnConstraints>
+                    
+                    <VBox styleClass="bid-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <padding><Insets  top="20" left="25" right="25" bottom="20"/></padding>
+                        <HBox alignment="TOP_LEFT">
+                            <VBox spacing="2">
+                                <Label text="Vintage Fender Guitar" styleClass="bid-title"/>
+                                <Label text="Art &amp; Collectibles" styleClass="bid-subtitle"/>
+                            </VBox>
+                            <Region HBox.hgrow="ALWAYS"/><Label text="Winning" styleClass="badge-winning"/>
+                        </HBox>
+                        <Region minHeight="40"/><HBox alignment="BOTTOM_LEFT">
+                            <VBox spacing="4"><Label text="Current bid" styleClass="bid-subtitle"/><Label text="5000" styleClass="bid-price"/></VBox>
+                            <Region HBox.hgrow="ALWAYS"/><VBox alignment="BOTTOM_RIGHT" spacing="10">
+                                <Label text="2 days left" styleClass="text-dim"/><Button text="Raise bid" styleClass="btn-raise-bid"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+
+                    <VBox styleClass="bid-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                        <padding><Insets top="20" left="25" right="25" bottom="20"/></padding>
+                        <HBox alignment="TOP_LEFT">
+                            <VBox spacing="2"><Label text="Vintage Fender Guitar" styleClass="bid-title"/><Label text="Art &amp; Collectibles" styleClass="bid-subtitle"/></VBox>
+                            <Region HBox.hgrow="ALWAYS"/><Label text="Winning" styleClass="badge-winning"/>
+                        </HBox>
+                        <Region minHeight="40"/><HBox alignment="BOTTOM_LEFT">
+                            <VBox spacing="4"><Label text="Current bid" styleClass="bid-subtitle"/><Label text="5000" styleClass="bid-price"/></VBox>
+                            <Region HBox.hgrow="ALWAYS"/><VBox alignment="BOTTOM_RIGHT" spacing="10">
+                                <Label text="2 days" styleClass="text-dim"/><Button text="Raise bid" styleClass="btn-raise-bid"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    </GridPane>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
