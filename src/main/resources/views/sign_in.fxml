@@ -88,7 +88,7 @@
 
                         <HBox alignment="CENTER_RIGHT">
                            <children>
-                              <Button focusTraversable="false" mnemonicParsing="false" styleClass="inline-link" text="Forgot password?" />
+                              <Button  focusTraversable="false" mnemonicParsing="false" styleClass="inline-link" text="Forgot password?" />
                            </children>
                         </HBox>
 

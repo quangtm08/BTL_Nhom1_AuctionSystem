@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" 
+            styleClass="main-container" stylesheets="@/css/admin/main_dashboard_user_management.css"
+            >
+    <left>
+        <fx:include source="components/main_dashboard_sidebar.fxml" />
+    </left>
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll-pane">
+            <VBox spacing="30" styleClass="content-padding">
+                <VBox spacing="0" alignment="TOP_LEFT">
+                    <Label text="User Management" styleClass="dashboard-title"/>
+                    <Label text="12 total users — 10 active, 2 banned" styleClass="dashboard-date"/>
+                </VBox>
+
+                <HBox styleClass="section-card" alignment="CENTER_LEFT" spacing="20">
+                    <TextField promptText="Search by name or username..." HBox.hgrow="ALWAYS" styleClass="search-field"/>
+                    <HBox spacing="10" alignment="CENTER">
+                        <Label text="Status:" styleClass="text-dim"/>
+                        <ToggleButton text="All" selected="true" styleClass="filter-btn"/>
+                        <ToggleButton text="Active" styleClass="filter-btn"/>
+                        <ToggleButton text="Banned" styleClass="filter-btn"/>
+                    </HBox>
+                </HBox>
+
+                <VBox styleClass="section-card" spacing="0">
+                    <HBox styleClass="table-header" alignment="CENTER_LEFT">
+                        <Label text="USERNAME" minWidth="180" prefWidth="180"/>
+                        <Label text="FULL NAME" minWidth="220" prefWidth="220"/>
+                        <Label text="STATUS" minWidth="120" prefWidth="120" alignment="CENTER"/>
+                        <Label text="REGISTERED" minWidth="150" prefWidth="150"/>
+                        <Label text="ACTIONS" HBox.hgrow="ALWAYS" alignment="CENTER_RIGHT"/>
+                    </HBox>
+                    
+                    <HBox styleClass="table-row" alignment="CENTER_LEFT">
+                        <Label text="nguyenvana" minWidth="180" prefWidth="180" styleClass="text-white-bold"/>
+                        <Label text="Nguyễn Văn A" minWidth="220" prefWidth="220" styleClass="text-white"/>
+                        
+                        <HBox minWidth="120" prefWidth="120" alignment="CENTER">
+                            <Label text="Active" styleClass="badge-active"/>
+                        </HBox>
+
+                        <Label text="Jan 12, 2025" minWidth="150" prefWidth="150" styleClass="text-dim"/>
+                        
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <HBox spacing="10" alignment="CENTER_RIGHT">
+                            <Button text="👁" styleClass="btn-icon"/>
+                            <Button text="Ban" styleClass="btn-ban"/>
+                        </HBox>
+                    </HBox>
+
+                     <HBox styleClass="table-row" alignment="CENTER_LEFT">
+                        <Label text="nguyenvana" minWidth="180" prefWidth="180" styleClass="text-white-bold"/>
+                        <Label text="Nguyễn Văn A" minWidth="220" prefWidth="220" styleClass="text-white"/>
+                        
+                        <HBox minWidth="120" prefWidth="120" alignment="CENTER">
+                            <Label text="Active" styleClass="badge-active"/>
+                        </HBox>
+
+                        <Label text="Jan 12, 2025" minWidth="150" prefWidth="150" styleClass="text-dim"/>
+                        
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <HBox spacing="10" alignment="CENTER_RIGHT">
+                            <Button text="👁" styleClass="btn-icon"/>
+                            <Button text="Ban" styleClass="btn-ban"/>
+                        </HBox>
+                    </HBox>
+
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

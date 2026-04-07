@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import java.net.URL?> 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?> 
+<?import javafx.geometry.Insets?> 
+<?import javafx.scene.control.*?> 
+<?import javafx.scene.layout.*?> 
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane 
+        xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" stylesheets="@/css/admin/main_dashboard.css"
+        fx:controller="com.nhom1.auction.server.Controller.MainDashboardController"
+        >
+    <left>
+        <fx:include source="components/main_dashboard_sidebar.fxml"/>
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" hbarPolicy="NEVER">
+            <VBox spacing="30" style="-fx-padding: 40;">
+                
+                <VBox spacing="8">
+                    <Label text="Dashboard" style="-fx-font-family: 'Georgia'; -fx-font-style: italic; -fx-font-size: 36; -fx-text-fill: white;"/>
+                    <Label text="System overview — Saturday, March 28, 2026" style="-fx-text-fill: #555555;"/>
+                </VBox>
+
+                <HBox spacing="20">
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="TOP_LEFT">
+                            <Label text="Total Users" styleClass="stat-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <StackPane styleClass="icon-box"><Label text="👥" style="-fx-text-fill: #4d8055;"/></StackPane>
+                        </HBox>
+                        <Label text="1,284" styleClass="stat-value"/>
+                        <Label text="943 Bidders · 341 Sellers" styleClass="stat-label"/>
+                    </VBox>
+                    
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox alignment="TOP_LEFT">
+                            <Label text="Active Auctions" styleClass="stat-label"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <StackPane styleClass="icon-box"><Label text="🔨" style="-fx-text-fill: #4d8055;"/></StackPane>
+                        </HBox>
+                        <Label text="47" styleClass="stat-value"/>
+                        <Label text="Currently RUNNING" styleClass="stat-label"/>
+                    </VBox>
+                    
+                    </HBox>
+
+                <HBox spacing="20" VBox.vgrow="ALWAYS">
+                    <VBox styleClass="section-card" HBox.hgrow="ALWAYS" prefWidth="500">
+                        <Label text="Recent Activity" styleClass="section-title"/>
+                        <Label text="Last 15 system events" styleClass="stat-label">
+                            <VBox.margin><Insets bottom="20"/></VBox.margin>
+                        </Label>
+                        <VBox spacing="15">
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Circle radius="3" fill="#4d8055"/>
+                                <Label text="User nguyenvanra registered as Bidder" style="-fx-text-fill: #bbbbbb;" HBox.hgrow="ALWAYS"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label text="2 min ago" style="-fx-text-fill: #555555;"/>
+                            </HBox>
+                        </VBox>
+                    </VBox>
+
+                    <VBox styleClass="section-card" prefWidth="350">
+                        <Label text="Session Status" styleClass="section-title"/>
+                        <StackPane VBox.vgrow="ALWAYS">
+                            <Circle radius="80" fill="transparent" stroke="#1a221e" strokeWidth="20"/>
+                            <Label text="Charts Here" style="-fx-text-fill: #555555;"/>
+                        </StackPane>
+                    </VBox>
+                </HBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

@@ -1,7 +1,7 @@
-package com.nhom1.auction.client.Controller;
+package com.nhom1.auction.server.Controller;
 
-import com.nhom1.auction.client.AppNavigator;
-import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.server.AppNavigator;
+import com.nhom1.auction.server.AppView;
 
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
