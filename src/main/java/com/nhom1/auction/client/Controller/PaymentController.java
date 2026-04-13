@@ -8,7 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.util.Duration;
 
-public class ChaChingController {
+public class PaymentController {
     
      @FXML Button btnExplore;
 
