@@ -1,40 +1,65 @@
-1. Cấu hình môi trường
+# AuctionSystem - Hệ thống Đấu giá Trực tuyến
 
-- Java SDK: Phiên bản 25.
+Dự án môn Lập trình nâng cao (Advanced Programming) - Nhóm 1.
 
-- Maven: 3.9.14 (Sử dụng thông qua Maven Wrapper).
+## 1. Cấu hình môi trường
 
-2. Cách khởi chạy dự án với Maven Wrapper
+*   **Java SDK:** Phiên bản 25.
+*   **Maven:** 3.9.14 (Sử dụng thông qua Maven Wrapper đính kèm).
+*   **Hệ quản trị CSDL:** MySQL (Connector version 8.3.0).
 
-Để tránh xung đột, không cần cài đặt Maven thủ công. Sử dụng file thực thi mvnw có sẵn 
-trong thư mục gốc:
+## 2. Cách khởi chạy dự án
 
-- Trên Windows: Chạy lệnh mvnw.cmd [lệnh] (Ví dụ: .\mvnw.cmd clean install).
+Sử dụng file thực thi `mvnw` (Maven Wrapper) có sẵn trong thư mục gốc để đảm bảo tính nhất quán:
 
-- Trên macOS/Linux: Chạy lệnh ./mvnw [lệnh] (Ví dụ: ./mvnw clean install).
+*   **Cài đặt dependencies:**
+    *   Windows: `.\mvnw.cmd clean install`
+    *   macOS/Linux: `./mvnw clean install`
+*   **Chạy ứng dụng (Client):**
+    *   Windows: `.\mvnw.cmd javafx:run`
+    *   macOS/Linux: `./mvnw javafx:run`
 
-**NOTE: Sau khi clone về, chạy clean install để cài hết dependencies**
+## 3. Các thư viện sử dụng (Dependencies)
 
-3. Các thư viện sử dụng (Dependencies)
+*   **JavaFX 25:** Thư viện xây dựng giao diện người dùng.
+*   **JUnit 5.10.0:** Công cụ thực hiện Unit Test.
+*   **MySQL Connector/J 8.3.0:** Driver kết nối cơ sở dữ liệu MySQL.
 
-Hiện đang có:
-- JavaFX 21
-- JUnit 5.10.0: Để làm Unit Test
+Chi tiết cấu hình xem tại `pom.xml`.
 
-Toàn bộ dependencies ở ~/pom.xml
+## 4. Cấu trúc dự án (Current Project Structure)
 
-4. Cấu trúc cơ bản
+Mã nguồn được tổ chức theo mô hình Client-Server và áp dụng các mẫu thiết kế (Design Patterns):
 
-Mã nguồn được tổ chức theo Client-Server và MVC:
+```text
+BTL_AuctionSystem/
+├── design/                 # Chứa các file thiết kế giao diện (UI/UX)
+├── docs/                   # Tài liệu yêu cầu bài tập lớn và hướng dẫn
+├── src/
+│   ├── main/
+│   │   ├── java/com/nhom1/auction/
+│   │   │   ├── client/     # Logic phía người dùng (JavaFX)
+│   │   │   │   ├── Controller/    # Các lớp điều khiển giao diện (MVC)
+│   │   │   │   ├── AppAssets.java # Quản lý tài nguyên (Fonts, Images)
+│   │   │   │   ├── AppNavigator.java # Điều hướng giữa các View
+│   │   │   │   └── ClientApplication.java # Entry point của ứng dụng
+│   │   │   └── common/     # Các thành phần dùng chung (Shared logic)
+│   │   │       ├── entity/    # Các thực thể domain (Item, Auction, User,...)
+│   │   │       ├── enums/     # Các kiểu liệt kê (AuctionStatus, BidType,...)
+│   │   │       ├── exception/ # Các lớp ngoại lệ tùy chỉnh
+│   │   │       ├── factory/   # Áp dụng Factory Pattern (ví dụ: ItemFactory)
+│   │   │       └── value/     # Các đối tượng giá trị (Money, TimeRange)
+│   │   └── resources/
+│   │       ├── assets/     # Fonts và hình ảnh tĩnh
+│   │       ├── css/        # Các file định dạng giao diện
+│   │       └── views/      # Các file giao diện FXML
+│   └── test/               # Unit tests (JUnit 5)
+```
 
-src/main/java/com/nhom1/auction/common: Chứa các lớp thực thể (User, Item) dùng chung cho cả Client và Server.
+## 5. Trạng thái hiện tại (Current State)
 
-src/main/java/com/nhom1/auction/server: Chứa logic xử lý của Server và package dao để quản lý dữ liệu.
-
-src/main/java/com/nhom1/auction/client: Chứa logic phía người dùng và package controller để điều khiển giao diện.
-
-src/main/resources: Chứa các file giao diện (.fxml) và file định dạng (.css).
-
-5. Styling
-
-Trước khi commit code, nhấn Ctrl + Alt + L để IDE tự format lại code thêm 1 lần.
+*   **Domain Model:** Đã hoàn thiện cấu trúc cơ bản cho các thực thể (Art, Electronics, Vehicle, Auction, BidTransaction,...) và logic tính toán (Money, TimeRange).
+*   **UI/UX:** Đã thiết kế xong các màn hình chính (Sign In, Register, Dashboard,...).
+*   **Client Logic:** Đã triển khai khung điều hướng (Navigation) và tích hợp FXML/CSS.
+*   **Server:** Đang trong quá trình phát triển (Pending).
+*   **Database:** Đã tích hợp MySQL Driver, cấu hình schema đang được thực hiện.
