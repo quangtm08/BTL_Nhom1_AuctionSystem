@@ -1,7 +1,12 @@
 package com.nhom1.auction.common.entity;
 
 import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.enums.UserRole;
+import com.nhom1.auction.common.exception.AuctionClosedException;
+import com.nhom1.auction.common.exception.InvalidBidException;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
+import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,49 +54,63 @@ public class Auction extends BaseEntity{
         this.bidHistory = new ArrayList<>();
     }
 
-
-
-    public void startAuction(){
+    public void startAuction() throws InvalidAuctionStateException {
         if (status == AuctionStatus.OPEN){
             status = AuctionStatus.RUNNING;
             touchUpdatedAt();
         } else {
-            throw new IllegalArgumentException();
+            throw new InvalidAuctionStateException("Only OPEN auctions can be started");
         }
     }
 
-    public void endAuction(){
+    public void endAuction() throws InvalidAuctionStateException {
         if (status == AuctionStatus.RUNNING){
             status = AuctionStatus.FINISHED;
             touchUpdatedAt();
         } else {
-            throw new IllegalArgumentException();
+            throw new InvalidAuctionStateException("Only RUNNING auctions can be ended");
         }
     }
 
     // TODO: Add payment validation before allowing this transition.
-    public void markAsPaid(){
+    public void markAsPaid() throws InvalidAuctionStateException {
         if (status == AuctionStatus.FINISHED){
             status = AuctionStatus.PAID;
             touchUpdatedAt();
         } else {
-            throw new IllegalArgumentException();
+            throw new InvalidAuctionStateException("Only FINISHED auctions can be marked as paid");
         }
+    }
+
+    public BidTransaction placeBid(UUID bidderId, BigDecimal amount, BidType bidType, LocalDateTime bidTime)
+        throws InvalidBidException, AuctionClosedException, UnauthorizedActionException {
+        AuctionBidValidator.validatePlaceBid(this, bidderId, amount, bidType, bidTime);
+
+        BidTransaction bidTransaction = new BidTransaction(getId(), bidderId, amount, bidType);
+        bidHistory.add(bidTransaction);
+        highestBidderId = bidderId;
+        currentHighestBid = amount;
+        touchUpdatedAt();
+        return bidTransaction;
     }
 
 
     // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or RUNNING auctions.
-    public void cancelAuction(UUID callerId, UserRole userRole){
+    public void cancelAuction(UUID callerId, UserRole userRole)
+        throws InvalidAuctionStateException, UnauthorizedActionException {
         if (userRole == UserRole.ADMIN
             && (status == AuctionStatus.OPEN || status == AuctionStatus.RUNNING)){
             status = AuctionStatus.CANCELED;
             touchUpdatedAt();
-        } else if (userRole == UserRole.SELLER && callerId.equals(sellerId)
-            && status == AuctionStatus.OPEN){
+        } else if (userRole == UserRole.SELLER && callerId != null && callerId.equals(sellerId)
+            && status == AuctionStatus.OPEN) {
             status = AuctionStatus.CANCELED;
             touchUpdatedAt();
         } else {
-            throw new IllegalArgumentException();
+            if (userRole == UserRole.ADMIN || (userRole == UserRole.SELLER && callerId != null && callerId.equals(sellerId))) {
+                throw new InvalidAuctionStateException("The auction cannot be canceled in its current state");
+            }
+            throw new UnauthorizedActionException("Only the owning seller or an admin can cancel this auction");
         }
     }
     // Return a snapshot so callers cannot modify the auction's internal bid history.
