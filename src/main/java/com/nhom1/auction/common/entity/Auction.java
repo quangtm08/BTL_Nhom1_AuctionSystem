@@ -2,6 +2,7 @@ package com.nhom1.auction.common.entity;
 
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.UserRole;
+import com.nhom1.auction.common.observer.AuctionObserver;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ public class Auction extends BaseEntity{
     private final LocalDateTime startTime;
     private final LocalDateTime endTime;
     private final List<BidTransaction> bidHistory;
+    private final List<AuctionObserver> auctionObservers = new ArrayList<>();
+
 
     private UUID highestBidderId;
     private BigDecimal currentHighestBid;
@@ -94,6 +97,22 @@ public class Auction extends BaseEntity{
             throw new IllegalArgumentException();
         }
     }
+
+
+    public void addObserver(AuctionObserver observer){
+        auctionObservers.add(observer);
+    }
+    public void removeObserver(AuctionObserver observer){
+        auctionObservers.remove(observer);
+    }
+    public void notifyObserver(){
+        for (AuctionObserver observer : auctionObservers){
+            observer.onNewBids();
+        }
+    }
+
+
+
     // Return a snapshot so callers cannot modify the auction's internal bid history.
     public List<BidTransaction> getBidHistory() {
         return List.copyOf(bidHistory);
