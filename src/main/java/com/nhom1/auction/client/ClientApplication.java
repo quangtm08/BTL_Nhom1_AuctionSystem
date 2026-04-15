@@ -1,6 +1,7 @@
 package com.nhom1.auction.client;
 
-import com.nhom1.auction.client.Controller.MainController;
+import com.nhom1.auction.client.user.Connection.ServerConnection;
+import com.nhom1.auction.client.user.Controller.MainController;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -18,6 +19,7 @@ public class ClientApplication extends Application {
     private static String clientIp;
     private static String ip;
     private static int port;
+    private static ServerConnection serverConnection;
 
     @Override
     public void start(Stage stage) throws Exception {
