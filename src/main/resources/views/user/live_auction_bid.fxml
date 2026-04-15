@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.Insets?>
+
+<ScrollPane fitToWidth="true"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@/css/client/live_auction_bid.css"
+            styleClass="root">
+
+    <VBox spacing="30" styleClass="container">
+
+        <!-- ===== TOP CARD ===== -->
+        <HBox spacing="30" styleClass="main-card">
+
+            <!-- LEFT IMAGE -->
+            <VBox spacing="15">
+                <Pane styleClass="main-image"/>
+
+                <HBox spacing="15">
+                    <Pane styleClass="thumb"/>
+                    <Pane styleClass="thumb"/>
+                    <Pane styleClass="thumb"/>
+                </HBox>
+            </VBox>
+
+            <!-- RIGHT CONTENT -->
+            <VBox spacing="15" HBox.hgrow="ALWAYS">
+
+                <Label text="Macintosh 1984" styleClass="title"/>
+
+                <Label text="Vintage 1984 Macintosh 128K: iconic all-in-one Mac, pioneering GUI and mouse..."
+                       wrapText="true"
+                       styleClass="description"/>
+
+                <!-- SELLER -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Circle radius="20" styleClass="avatar"/>
+                    <VBox>
+                        <Label text="Seller" styleClass="sub-text"/>
+                        <Label text="Apple Glazer" styleClass="seller-name"/>
+                    </VBox>
+                </HBox>
+
+                <!-- BID BOX -->
+                <VBox spacing="15" styleClass="bid-box">
+
+                    <HBox>
+                        <Label text="Current highest bid"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="10,000"/>
+                    </HBox>
+
+                    <HBox>
+                        <Label text="Minimum increment"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="50"/>
+                    </HBox>
+
+                    <TextField promptText=" ENTER YOUR BID"
+                               styleClass="bid-input"/>
+
+                    <HBox spacing="10">
+                        <Button text="Bid" styleClass="btn-green"/>
+                        <Button text="Setup auto bid" styleClass="btn-green-outline"/>
+                        <Button text="Cancel" styleClass="btn-red"/>
+                    </HBox>
+
+                </VBox>
+
+            </VBox>
+        </HBox>
+
+        <!-- ===== BOTTOM ===== -->
+        <HBox spacing="20">
+
+            <!-- DESCRIPTION -->
+            <VBox styleClass="card" HBox.hgrow="ALWAYS">
+                <Label text="Description" styleClass="section-title"/>
+                <Label wrapText="true"
+                       text="This listing features a vintage Macintosh 128K from 1984..."
+                       styleClass="description"/>
+            </VBox>
+
+            <!-- BIDDINGS -->
+            <VBox styleClass="card" prefWidth="300">
+                <Label text="Biddings" styleClass="section-title"/>
+                <Label text="List | Chart" styleClass="sub-text"/>
+            </VBox>
+
+        </HBox>
+
+    </VBox>
+</ScrollPane>

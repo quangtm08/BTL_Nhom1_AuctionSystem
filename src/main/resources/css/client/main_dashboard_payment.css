@@ -1,9 +1,12 @@
-/* Giao diện tổng thể */
+/* Tổng thể */
 .root-pane {
-    -fx-background-color: #0f1312; /* Màu nền chính tối */
+    -fx-background-color: #050505;
 }
 
-/* SIDEBAR */
+/* MAIN CONTENT */
+.main-content {
+    -fx-background-color: #050505;
+}
 
 /* NỘI DUNG CHÍNH */
 .main-scroll-pane {
@@ -17,7 +20,7 @@
 
 .main-content {
     -fx-padding: 40 60;
-    -fx-background-color: #0f1312;
+    -fx-background-color: #050505;
 }
 
 .header-title {

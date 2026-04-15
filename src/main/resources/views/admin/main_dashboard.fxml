@@ -11,7 +11,7 @@
 
 <BorderPane 
         xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" stylesheets="@/css/admin/main_dashboard.css"
-        fx:controller="com.nhom1.auction.server.Controller.MainDashboardController"
+        fx:controller="com.nhom1.auction.client.admin.Controller.MainDashboardController"
         >
     <left>
         <fx:include source="components/main_dashboard_sidebar.fxml"/>

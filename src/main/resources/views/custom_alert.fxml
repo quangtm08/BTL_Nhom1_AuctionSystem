@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<VBox styleClass="alert-box"
+    xmlns="http://javafx.com/javafx/25"
+      xmlns:fx="http://javafx.com/fxml"
+      alignment="CENTER"
+      spacing="20"
+   
+      stylesheets="@../css/custom_alert.css">
+    <VBox styleClass="alert-container">
+
+        <StackPane styleClass="alert-header">
+            <Label text="✖" styleClass="alert-icon"/>
+        </StackPane>
+
+        <VBox alignment="CENTER" spacing="10">
+            <Label fx:id="lblTitle" text="Ooops!" styleClass="alert-title"/>
+            <Label fx:id="lblMessage" text="Error" styleClass="alert-message"/>
+        </VBox>
+
+        <Button fx:id="btnClose" text="Try Again" styleClass="alert-button"/>
+
+    </VBox>
+</VBox>

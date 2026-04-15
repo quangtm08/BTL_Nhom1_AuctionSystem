@@ -42,3 +42,20 @@
     -fx-text-fill: white;
 }
 
+.logout-btn {
+    -fx-background-color: #331a1a;      /* nền tím đậm */
+    -fx-text-fill: red;
+    -fx-font-weight: bold;
+
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;/* viền tím */
+
+    -fx-padding: 6 14 6 14;
+
+    -fx-content-display: right;         /* icon sang phải */
+    -fx-graphic-text-gap: 8;            /* khoảng cách icon */
+}
+
+.logout-btn:hover{
+    -fx-cursor:hand;
+}

@@ -9,9 +9,10 @@
 }
 
 .header-title {
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+    -fx-font-size: 38;
     -fx-text-fill: white;
-    -fx-font-size: 38px;
-    -fx-font-family: "Georgia", serif;
 }
 
 /* SEARCH & FILTER */

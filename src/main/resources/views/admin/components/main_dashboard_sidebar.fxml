@@ -5,7 +5,7 @@
 <?import javafx.scene.shape.Circle?>
 
 <VBox prefWidth="260" styleClass="sidebar" xmlns:fx="http://javafx.com/fxml" 
-        fx:controller="com.nhom1.auction.server.Controller.MainDashboardSidebarController" 
+        fx:controller="com.nhom1.auction.client.admin.Controller.MainDashboardSidebarController" 
         stylesheets="@/css/admin/main_dashboard_sidebar.css">
     <padding><Insets top="40" left="25" right="25" bottom="25"/></padding>
     <VBox spacing="5" styleClass="brand-container">
@@ -21,6 +21,8 @@
     <HBox alignment="CENTER_LEFT" spacing="12" styleClass="user-footer">
         <StackPane><Circle radius="18" fill="#1a221e"/><Label text="🛡️"/></StackPane>
         <VBox><Label text="Admin" styleClass="text-white-bold"/><Label text="Super user" styleClass="text-dim"/></VBox>
+        <Button fx:id="btnLogout" text="Logout ⎋" styleClass="logout-btn"/>
+
     </HBox>
     
 </VBox>
