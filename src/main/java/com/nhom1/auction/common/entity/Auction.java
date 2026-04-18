@@ -151,7 +151,7 @@ public class Auction extends BaseEntity{
     }
     // Return a snapshot so callers cannot modify the auction's internal bid history.
     public List<BidTransaction> getBidHistory() {
-        synchronized (bidHistory) { // Synchronize to ensure thread safety when copying the list
+        synchronized (bidHistoryMonitor) { // Synchronize on the same monitor used when modifying the bid history
             return List.copyOf(bidHistory);
         }
     }
