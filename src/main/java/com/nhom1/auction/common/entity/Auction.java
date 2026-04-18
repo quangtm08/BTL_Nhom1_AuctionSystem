@@ -120,9 +120,9 @@ public class Auction extends BaseEntity{
             touchUpdatedAt();
             return bidTransaction;
         } finally {
-                auctionLock.unlock();
-            }
+            auctionLock.unlock();
         }
+    }
 
 
     // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or RUNNING auctions.
