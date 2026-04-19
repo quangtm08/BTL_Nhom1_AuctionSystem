@@ -54,7 +54,7 @@ mvn javafx:run
 
 ## 📝 Tài liệu tham khảo
 Chi tiết về các thay đổi kiến trúc và sơ đồ ánh xạ UI có thể xem tại:
-- `docs/system-architecture-guide.md`
+- `docs/project-structure-refactor.md`
 - `docs/assignment-requirement.md`
 
 ---
