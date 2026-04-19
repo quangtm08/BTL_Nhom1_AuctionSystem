@@ -2,7 +2,7 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.common.service.AuthService;
+import com.nhom1.auction.server.service.AuthService;
 
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
@@ -61,7 +61,7 @@ public class SignInController {
                     PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
                     delay.setOnFinished(event -> {
-                            AppNavigator.navigateTo(AppView.MAIN_DASHBOARD);
+                            AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
                     });
 
                     delay.play();
@@ -72,7 +72,7 @@ public class SignInController {
                     PauseTransition delay = new PauseTransition(Duration.seconds(2));
 
                     delay.setOnFinished(event -> {
-                            AppNavigator.navigateTo(AppView.EXPLORE);
+                            AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
                     });
 
                     delay.play();

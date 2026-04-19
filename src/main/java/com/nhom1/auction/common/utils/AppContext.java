@@ -1,4 +1,4 @@
-package com.nhom1.auction.common.classes;
+package com.nhom1.auction.common.utils;
 
 public class AppContext {
     private static boolean isServer;

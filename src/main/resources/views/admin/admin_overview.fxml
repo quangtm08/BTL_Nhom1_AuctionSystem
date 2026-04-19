@@ -10,7 +10,7 @@
 <?import javafx.scene.shape.Circle?>
 
 <BorderPane 
-        xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" stylesheets="@/css/admin/main_dashboard.css"
+        xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" stylesheets="@/css/admin/admin_overview.css"
         fx:controller="com.nhom1.auction.client.admin.controller.AdminOverviewController"
         >
     <left>

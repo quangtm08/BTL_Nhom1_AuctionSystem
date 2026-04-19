@@ -46,6 +46,7 @@ public class AdminSidebarController {
 
         btnDashboard.getStyleClass().remove("side-btn-active");
         btnUsers.getStyleClass().remove("side-btn-active");
+        btnAuctions.getStyleClass().remove("side-btn-active");
 
         switch (current) {
             case ADMIN_OVERVIEW -> btnDashboard.getStyleClass().add("side-btn-active");

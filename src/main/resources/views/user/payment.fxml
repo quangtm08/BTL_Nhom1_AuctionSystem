@@ -10,7 +10,7 @@
 <?import javafx.scene.shape.Circle?>
 
 
-<BorderPane fx:id="root" stylesheets="@/css/client/main_dashboard_payment.css" 
+<BorderPane fx:id="root" stylesheets="@/css/client/payment.css" 
             prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" 
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.user.controller.PaymentController">
 

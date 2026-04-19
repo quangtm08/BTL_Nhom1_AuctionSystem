@@ -8,7 +8,7 @@
 <ScrollPane fitToWidth="true"
             xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml"
-            stylesheets="@/css/client/live_auction_bid.css"
+            stylesheets="@/css/client/auction_detail.css"
             styleClass="root">
 
     <VBox spacing="30" styleClass="container">

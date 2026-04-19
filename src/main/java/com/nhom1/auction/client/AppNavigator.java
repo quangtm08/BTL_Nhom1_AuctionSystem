@@ -1,16 +1,16 @@
 package com.nhom1.auction.client;
 
-import com.nhom1.auction.common.classes.BaseMainController;
+import com.nhom1.auction.client.BaseShellController;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 public class AppNavigator {
 
-    private static BaseMainController mainController;
+    private static BaseShellController mainController;
     private static AppView currentView;
 
 
-    public static void setRoot(BaseMainController controller) {
+    public static void setRoot(BaseShellController controller) {
         mainController = controller;
     }
 

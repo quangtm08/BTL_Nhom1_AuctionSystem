@@ -1,4 +1,4 @@
-package com.nhom1.auction.common.service;
+package com.nhom1.auction.server.service;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.nhom1.auction.common.database.DBConnection;
+import com.nhom1.auction.server.database.DBConnection;
 
 public class AuthService {
 

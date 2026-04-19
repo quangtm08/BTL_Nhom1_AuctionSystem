@@ -1,4 +1,4 @@
-package com.nhom1.auction.common.database;
+package com.nhom1.auction.server.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

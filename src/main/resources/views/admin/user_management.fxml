@@ -7,7 +7,7 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml"
-            stylesheets="@/css/admin/main_dashboard_user_management.css"
+            stylesheets="@/css/admin/user_management.css"
             styleClass="root">
 
        <left>

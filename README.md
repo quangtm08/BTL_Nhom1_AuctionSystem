@@ -1,65 +1,61 @@
-# AuctionSystem - Hệ thống Đấu giá Trực tuyến
+# BTL_AuctionSystem - Nhóm 1
 
-Dự án môn Lập trình nâng cao (Advanced Programming) - Nhóm 1.
+Hệ thống đấu giá trực tuyến xây dựng trên nền tảng JavaFX (Client) và Socket (Server). Dự án đã được tái cấu trúc để chuẩn hóa quy trình đặt tên và tăng cường bảo mật kiến trúc.
 
-## 1. Cấu hình môi trường
+## 🏗️ Kiến trúc Hệ thống
 
-*   **Java SDK:** Phiên bản 25.
-*   **Maven:** 3.9.14 (Sử dụng thông qua Maven Wrapper đính kèm).
-*   **Hệ quản trị CSDL:** MySQL (Connector version 8.3.0).
+Dự án tuân thủ mô hình Client-Server rạch ròi:
+- **Client**: Giao diện người dùng JavaFX, giao tiếp với Server qua Socket.
+- **Server**: Xử lý logic nghiệp vụ, quản lý phiên đấu giá và kết nối trực tiếp cơ sở dữ liệu (SQLite/MySQL).
+- **Common**: Chứa các Entity (Item, Auction, User), Enum và các lớp tiện ích dùng chung cho cả hai phía.
 
-## 2. Cách khởi chạy dự án
-
-Sử dụng file thực thi `mvnw` (Maven Wrapper) có sẵn trong thư mục gốc để đảm bảo tính nhất quán:
-
-*   **Cài đặt dependencies:**
-    *   Windows: `.\mvnw.cmd clean install`
-    *   macOS/Linux: `./mvnw clean install`
-*   **Chạy ứng dụng (Client):**
-    *   Windows: `.\mvnw.cmd javafx:run`
-    *   macOS/Linux: `./mvnw javafx:run`
-
-## 3. Các thư viện sử dụng (Dependencies)
-
-*   **JavaFX 25:** Thư viện xây dựng giao diện người dùng.
-*   **JUnit 5.10.0:** Công cụ thực hiện Unit Test.
-*   **MySQL Connector/J 8.3.0:** Driver kết nối cơ sở dữ liệu MySQL.
-
-Chi tiết cấu hình xem tại `pom.xml`.
-
-## 4. Cấu trúc dự án (Current Project Structure)
-
-Mã nguồn được tổ chức theo mô hình Client-Server và áp dụng các mẫu thiết kế (Design Patterns):
+## 📁 Cấu trúc Thư mục Quan trọng
 
 ```text
-BTL_AuctionSystem/
-├── design/                 # Chứa các file thiết kế giao diện (UI/UX)
-├── docs/                   # Tài liệu yêu cầu bài tập lớn và hướng dẫn
-├── src/
-│   ├── main/
-│   │   ├── java/com/nhom1/auction/
-│   │   │   ├── client/     # Logic phía người dùng (JavaFX)
-│   │   │   │   ├── Controller/    # Các lớp điều khiển giao diện (MVC)
-│   │   │   │   ├── AppAssets.java # Quản lý tài nguyên (Fonts, Images)
-│   │   │   │   ├── AppNavigator.java # Điều hướng giữa các View
-│   │   │   │   └── ClientApplication.java # Entry point của ứng dụng
-│   │   │   └── common/     # Các thành phần dùng chung (Shared logic)
-│   │   │       ├── entity/    # Các thực thể domain (Item, Auction, User,...)
-│   │   │       ├── enums/     # Các kiểu liệt kê (AuctionStatus, BidType,...)
-│   │   │       ├── exception/ # Các lớp ngoại lệ tùy chỉnh
-│   │   │       ├── factory/   # Áp dụng Factory Pattern (ví dụ: ItemFactory)
-│   │   │       └── value/     # Các đối tượng giá trị (Money, TimeRange)
-│   │   └── resources/
-│   │       ├── assets/     # Fonts và hình ảnh tĩnh
-│   │       ├── css/        # Các file định dạng giao diện
-│   │       └── views/      # Các file giao diện FXML
-│   └── test/               # Unit tests (JUnit 5)
+src/main/java/com/nhom1/auction/
+├── client/                 # Logic phía người dùng
+│   ├── controller/         # Các Controller xử lý UI (đã chuẩn hóa tên)
+│   ├── connection/         # Quản lý kết nối Socket tới Server
+│   ├── ShellController     # Khung giao diện chính (Unified Shell)
+│   └── ClientApplication   # Điểm chạy ứng dụng Client
+├── server/                 # Logic phía máy chủ
+│   ├── service/            # Xử lý nghiệp vụ (AuthService, v.v.)
+│   ├── database/           # Kết nối DB (DBConnection) - Chỉ Server có quyền truy cập
+│   └── Server              # Điểm chạy ứng dụng Server
+└── common/                 # Code dùng chung
+    ├── entity/             # Các đối tượng dữ liệu (Art, Vehicle, Auction...)
+    ├── enums/              # AuctionStatus, UserRole...
+    └── BaseShellController # Interface khung giao diện
 ```
 
-## 5. Trạng thái hiện tại (Current State)
+## 🏷️ Quy chuẩn Đặt tên UI mới
+Các Controller và View hiện đã được đặt tên theo **Tính năng**:
+- `AuctionBrowseController` (Duyệt đấu giá)
+- `MyBidsController` (Đấu giá của tôi)
+- `MyListingsController` (Tin đăng của tôi)
+- `AuctionDetailController` (Chi tiết & Đặt giá)
+- `AdminOverviewController` (Tổng quan quản trị)
 
-*   **Domain Model:** Đã hoàn thiện cấu trúc cơ bản cho các thực thể (Art, Electronics, Vehicle, Auction, BidTransaction,...) và logic tính toán (Money, TimeRange).
-*   **UI/UX:** Đã thiết kế xong các màn hình chính (Sign In, Register, Dashboard,...).
-*   **Client Logic:** Đã triển khai khung điều hướng (Navigation) và tích hợp FXML/CSS.
-*   **Server:** Đang trong quá trình phát triển (Pending).
-*   **Database:** Đã tích hợp MySQL Driver, cấu hình schema đang được thực hiện.
+## 🚀 Hướng dẫn Chạy ứng dụng
+
+Dự án sử dụng Maven. Đảm bảo bạn đã cài đặt JDK 25.
+
+### 1. Chạy Server
+Mở terminal và chạy lệnh:
+```bash
+mvn exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"
+```
+
+### 2. Chạy Client
+Mở terminal mới và chạy lệnh:
+```bash
+mvn javafx:run
+```
+
+## 📝 Tài liệu tham khảo
+Chi tiết về các thay đổi kiến trúc và sơ đồ ánh xạ UI có thể xem tại:
+- `docs/system-architecture-guide.md`
+- `docs/assignment-requirement.md`
+
+---
+*Dự án đang trong quá trình phát triển (Tuần 7).*

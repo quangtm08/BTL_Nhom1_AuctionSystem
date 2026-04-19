@@ -2,7 +2,7 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.common.service.AuthService;
+import com.nhom1.auction.server.service.AuthService;
 
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;

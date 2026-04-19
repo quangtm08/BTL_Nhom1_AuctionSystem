@@ -6,7 +6,7 @@
 
 <VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER" 
       xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
-      stylesheets="@/css/client/main_dashboard_sidebar.css" fx:controller="com.nhom1.auction.client.user.controller.UserSidebarController"  >
+      stylesheets="@/css/client/user_sidebar.css" fx:controller="com.nhom1.auction.client.user.controller.UserSidebarController"  >
     <padding>
         <Insets top="80.0" left="25.0" right="25.0" bottom="30.0"/>
     </padding>
