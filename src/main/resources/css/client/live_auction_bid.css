@@ -1,0 +1,123 @@
+/* ===== ROOT ===== */
+.root {
+    -fx-background-color: #07110d;
+}
+
+/* CONTAINER */
+.container {
+    -fx-background-color: #050505;
+    -fx-padding: 40;
+}
+
+/* MAIN CARD */
+.main-card {
+    -fx-background-color: linear-gradient(to right, #0c1c16, #111c19);
+    -fx-background-radius: 20;
+    -fx-padding: 30;
+}root {
+    -fx-background-color: #050505;
+}
+
+/* SCROLLPANE */
+.scroll-pane {
+    -fx-background-color: #050505;
+    -fx-background: #050505;
+}
+
+/* VIEWPORT (quan trọng nhất) */
+.scroll-pane .viewport {
+    -fx-background-color: #050505;
+}
+
+/* IMAGE */
+.main-image {
+    -fx-pref-width: 280;
+    -fx-pref-height: 220;
+    -fx-background-color: #cccccc;
+    -fx-background-radius: 10;
+}
+
+.thumb {
+    -fx-pref-width: 80;
+    -fx-pref-height: 80;
+    -fx-background-color: #cccccc;
+    -fx-background-radius: 10;
+}
+
+/* TEXT */
+.title {
+    -fx-text-fill: white;
+    -fx-font-size: 28;
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+}
+
+.description {
+    -fx-text-fill: #a0a0a0;
+}
+
+.sub-text {
+    -fx-text-fill: #777;
+    -fx-font-size: 12;
+}
+
+.seller-name {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* AVATAR */
+.avatar {
+    -fx-fill: #cccccc;
+}
+
+/* BID BOX */
+.bid-box {
+    -fx-background-color: linear-gradient(to right, #1d3b32, #1a2f2b);
+    -fx-background-radius: 10;
+    -fx-padding: 15;
+}
+
+/* INPUT */
+.bid-input {
+    -fx-background-color: transparent;
+    -fx-border-color: #777;
+    -fx-border-width: 0 0 1 0;
+    -fx-text-fill: white;
+}
+
+/* BUTTON */
+.btn-green {
+    -fx-background-color: #2e5d4f;
+    -fx-text-fill: white;
+    -fx-background-radius: 6;
+}
+
+.btn-green-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: #2e5d4f;
+    -fx-text-fill: #2e5d4f;
+    -fx-background-radius: 6;
+}
+
+.btn-red {
+    -fx-background-color: transparent;
+    -fx-border-color: #ff5c5c;
+    -fx-text-fill: #ff5c5c;
+    -fx-background-radius: 6;
+}
+
+/* CARD */
+.card {
+    -fx-background-color: #0c1c16;
+    -fx-background-radius: 15;
+    -fx-padding: 20;
+}
+
+/* SECTION */
+.section-title {
+    -fx-text-fill: white;
+    -fx-font-size: 22;
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+}

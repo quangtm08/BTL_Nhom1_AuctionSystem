@@ -1,9 +1,30 @@
-/* Tổng thể */
-.root-pane {
-    -fx-background-color: #050505;
+/* ==========================================================================
+   1. GLOBAL STYLES & ROOT
+   ========================================================================== */
+.root {
+    -fx-base: #070b09;
+    -fx-background-color: #070b09;
 }
 
-/* SIDEBAR */
+/* ScrollPane Configuration - Tránh vệt trắng khi cuộn */
+.custom-scroll-pane {
+    -fx-background: transparent !important;
+    -fx-background-color: transparent !important;
+    -fx-border-color: transparent;
+}
+
+.custom-scroll-pane .viewport {
+    -fx-background-color: #070b09 !important;
+}
+
+.content-padding {
+    -fx-padding: 40 60;
+}
+
+/* ==========================================================================
+   2. SIDEBAR NAVIGATION
+   ========================================================================== */
+
 .sidebar {
     -fx-background-color: #0c120f;
     -fx-border-color: #1a221e;
@@ -35,19 +56,85 @@
     -fx-border-color: #1a221e;
     -fx-border-width: 1px 0 0 0;
 }
+.logout-btn {
+    -fx-background-color: #331a1a;      /* nền tím đậm */
+    -fx-text-fill: red;
+    -fx-font-weight: bold;
 
-/* MAIN CONTENT */
-.main-content {
-    -fx-background-color: #050505;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;/* viền tím */
+
+    -fx-padding: 6 14 6 14;
+
+    -fx-content-display: right;         /* icon sang phải */
+    -fx-graphic-text-gap: 8;            /* khoảng cách icon */
 }
 
-.header-title {
+.logout-btn:hover{
+    -fx-cursor:hand;
+}
+
+/* ==========================================================================
+   3. TYPOGRAPHY & HEADERS
+   ========================================================================== */
+.dashboard-title-serif {
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+    -fx-font-size: 38;
     -fx-text-fill: white;
-    -fx-font-size: 38px;
-    -fx-font-family: "Georgia", serif;
 }
 
-/* SEARCH & FILTER */
+.text-dim {
+    -fx-text-fill: #555555;
+}
+
+/* ==========================================================================
+   4. STATISTICS SECTION (Quick Stats)
+   ========================================================================== */
+.stat-label {
+    -fx-text-fill: #555555;
+    -fx-font-size: 14;
+}
+
+.stat-value-white {
+    -fx-text-fill: white;
+    -fx-font-size: 48;
+    -fx-font-weight: bold;
+}
+
+.stat-value-green {
+    -fx-text-fill: #4d8055;
+    -fx-font-size: 48;
+    -fx-font-weight: bold;
+}
+
+.stat-value-red {
+    -fx-text-fill: #ff4d4d;
+    -fx-font-size: 48;
+    -fx-font-weight: bold;
+}
+
+
+/* ==========================================================================
+   6. BUTTONS, BADGES & FILTERS
+   ========================================================================== */
+/* Badges */
+.badge-winning {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #4d8055;
+    -fx-padding: 4 12;
+    -fx-background-radius: 10;
+    -fx-font-size: 11;
+}
+
+/* Action Buttons */
+.btn-raise-bid {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: white;
+    -fx-padding: 8 20;
+    -fx-background-radius: 6;
+}
+
 .search-field {
     -fx-background-color: transparent;
     -fx-border-color: transparent transparent #252d29 transparent;
@@ -60,6 +147,23 @@
 .search-field:focused {
     -fx-border-color: transparent transparent #2b6b4c transparent;
 }
+
+
+/* Filtering & Sorting */
+.filter-pill {
+    -fx-background-color: #1a221e;
+    -fx-text-fill: white;
+    -fx-background-radius: 10;
+    -fx-padding: 5 15;
+}
+
+.sort-text-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #4d8055;
+    -fx-padding: 4 10;
+    -fx-background-radius: 8;
+}
+
 
 .filter-chip {
     -fx-background-color: #121a16;
@@ -81,7 +185,7 @@
     -fx-border-radius: 8;
 }
 
-/* SCROLLPANE CUSTOMIZATION */
+
 .custom-scroll {
     -fx-background-color: transparent;
     -fx-background: transparent;

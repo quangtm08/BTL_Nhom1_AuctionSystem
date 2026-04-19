@@ -12,7 +12,9 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.text.TextFlow?>
 
-<StackPane prefHeight="855.0" prefWidth="1320.0" styleClass="root-pane" stylesheets="@../css/register.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.Controller.RegisterController">
+<StackPane prefHeight="855.0" prefWidth="1320.0" styleClass="root-pane" stylesheets="@../css/register.css" 
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
+            fx:controller="com.nhom1.auction.client.user.Controller.RegisterController">
    <children>
       <HBox fillHeight="true" maxHeight="Infinity" maxWidth="Infinity" prefHeight="855.0" prefWidth="1320.0" styleClass="split-layout">
          <children>
@@ -68,21 +70,21 @@
                               <VBox spacing="10.0" styleClass="field-card">
                                  <children>
                                     <Label styleClass="field-label" text="Username or Email" />
-                                    <TextField styleClass="field-input" />
+                                    <TextField fx:id="txtUsername" styleClass="field-input" />
                                  </children>
                               </VBox>
 
                               <VBox spacing="10.0" styleClass="field-card">
                                  <children>
                                     <Label styleClass="field-label" text="Password" />
-                                    <PasswordField styleClass="field-input" />
+                                    <PasswordField fx:id="txtPassword" styleClass="field-input" />
                                  </children>
                               </VBox>
 
                               <VBox spacing="10.0" styleClass="field-card">
                                  <children>
                                     <Label styleClass="field-label" text="Confirm Password" />
-                                    <PasswordField styleClass="field-input" />
+                                    <PasswordField fx:id="txtRepeatPassword" styleClass="field-input" />
                                  </children>
                               </VBox>
                            </children>

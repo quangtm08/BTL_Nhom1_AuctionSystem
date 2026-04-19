@@ -1,0 +1,179 @@
+@font-face {
+    font-family: "Inter";
+    src: url("../../assets/fonts/Inter-Italic.ttf");
+}
+@font-face {
+    font-family: "EBGaramond";
+    src: url("../../assets/fonts/EBGaramond-Italic.ttf");
+}
+/* Tông màu chủ đạo */
+.root {
+    -fx-base: #070b09;
+    -fx-background-color: #070b09;
+}
+
+/* SIDEBAR (Giữ nguyên phần bạn đã viết và thêm chút tinh chỉnh) */
+
+.sidebar {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #1a221e;
+    -fx-border-width: 0 1px 0 0;
+}
+
+.brand-container {
+    -fx-padding: 10 0 40 5;
+}
+
+.brand-title {
+    -fx-font-family: "Georgia", serif;
+    -fx-font-style: italic;
+    -fx-font-size: 24px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.brand-subtitle {
+    -fx-text-fill: #555555;
+    -fx-font-size: 11px;
+}
+
+/* Nút bấm trên Sidebar */
+.side-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #777777;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 12 20;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.side-btn:hover {
+    -fx-background-color: #1a221e;
+    -fx-text-fill: #ffffff;
+}
+
+.side-btn-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: white;
+}
+
+
+
+/* --- DASHBOARD CONTENT --- */
+.dashboard-title {
+    -fx-font-family: "EBGaramond", serif;
+    -fx-font-style: italic;
+    -fx-font-size: 42px;
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+}
+
+.dashboard-date {
+    -fx-text-fill: #555555;
+    -fx-font-size: 13px;
+}
+
+/* --- THẺ THỐNG KÊ (STATS CARDS) --- */
+.stat-card {
+    -fx-background-color: transparent;
+    -fx-border-color: #1a221e;
+    -fx-border-radius: 12;
+    -fx-border-width: 1px;
+    -fx-padding: 20;
+}
+
+.stat-label {
+    -fx-text-fill: #777777;
+    -fx-font-size: 13px;
+}
+
+.stat-value {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+}
+
+.icon-box {
+    -fx-background-color: rgba(77, 128, 85, 0.15);
+    -fx-background-radius: 8;
+    -fx-padding: 8;
+}
+
+/* --- CÁC KHỐI NỘI DUNG LỚN (RECENT ACTIVITY) --- */
+.section-card {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #1a221e;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 25;
+}
+
+.section-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.activity-dot {
+    -fx-fill: #4d8055;
+    -fx-effect: dropshadow(three-pass-box, #4d8055, 5, 0, 0, 0);
+}
+
+.activity-text {
+    -fx-text-fill: #bbbbbb;
+}
+
+/* --- FOOTER NGƯỜI DÙNG --- */
+.user-footer {
+    -fx-border-color: #1a221e;
+    -fx-border-width: 1px 0 0 0;
+    -fx-padding: 20 0 0 0;
+}
+
+.logout-btn {
+    -fx-background-color: #2a1515;
+    -fx-text-fill: #ff4d4d;
+    -fx-background-radius: 10;
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.logout-btn:hover {
+    -fx-background-color: #3d1a1a;
+}
+
+scroll-pane {
+    -fx-background-color: #070b09 !important; /* Dùng !important để ghi đè mọi thứ */
+    -fx-background: #070b09 !important;
+    -fx-border-color: transparent !important;
+    -fx-viewport-fill: #070b09 !important; /* Thuộc tính quan trọng để nhuộm màu lòng ScrollPane */
+    -fx-padding: 0;
+}
+
+/* 2. ÉP MÀU CHO VIEWPORT (Lớp chứa nội dung) */
+.scroll-pane .viewport {
+    -fx-background-color: #070b09 !important;
+}
+
+/* 3. ĐẢM BẢO VBOX BÊN TRONG CŨNG MÀU TỐI */
+/* Nếu bạn đặt id cho VBox bên trong là contentBox thì dùng #contentBox */
+.scroll-pane > .viewport > .container {
+    -fx-background-color: #070b09 !important;
+}
+
+/* 4. XỬ LÝ THANH CUỘN (Để không bị lạc quẻ giữa nền đen) */
+.scroll-pane .thumb {
+    -fx-background-color: #1a221e !important;
+    -fx-background-insets: 2;
+    -fx-background-radius: 5;
+}
+
+.scroll-pane .track {
+    -fx-background-color: #0c120f !important; /* Màu giống sidebar cho đồng bộ */
+    -fx-border-color: transparent !important;
+}
+
+.scroll-pane .corner {
+    -fx-background-color: #070b09 !important;
+}
