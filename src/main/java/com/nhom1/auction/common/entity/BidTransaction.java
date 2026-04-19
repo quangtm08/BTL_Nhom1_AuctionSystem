@@ -1,9 +1,8 @@
 package com.nhom1.auction.common.entity;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
 import com.nhom1.auction.common.enums.BidType;
+import java.math.BigDecimal;
+import java.util.UUID;
 
 public class BidTransaction extends BaseEntity {
     private final UUID auctionId;
@@ -29,19 +28,20 @@ public class BidTransaction extends BaseEntity {
         this.amount = amount;
         this.bidType = bidType;
     }
+
     public UUID getAuctionId() {
         return auctionId;
     }
+
     public UUID getBidderId() {
         return bidderId;
     }
+
     public BigDecimal getAmount() {
         return amount;
     }
- 
+
     public BidType getBidType() {
         return bidType;
     }
 }
-
-
