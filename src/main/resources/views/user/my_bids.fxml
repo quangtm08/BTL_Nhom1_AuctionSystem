@@ -1,71 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
-<?import java.net.URL?> 
 
-<BorderPane prefHeight="700.0" prefWidth="1100.0"
-            stylesheets="@/css/client/main_dashboard_listings.css"
-            styleClass="root-pane"
-            xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.nhom1.auction.client.user.Controller.MainDashboardListingController"
-        >
-
-    <!-- SIDEBAR -->
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" 
+            styleClass="main-container" stylesheets="@/css/client/main_dashboard_bids.css"
+            fx:controller="com.nhom1.auction.client.user.controller.MyBidsController">
     
-   <left>
-        <fx:include source="components/main_dashboard_sidebar.fxml" />
-   </left>
+    <left>
+        <fx:include source="/views/user/components/user_sidebar.fxml" />
+    </left>
 
-
-    <!-- MAIN CONTENT -->
     <center>
-        <VBox spacing="20" styleClass="main-content">
-            <padding>
-                <Insets top="40" left="40" right="40"/>
-            </padding>
-
-            <children>
-
-                <!-- TITLE -->
-                <Label text="See your networth grows" styleClass="title"/>
-
-                <!-- STATS -->
-                <HBox spacing="80">
-                    <VBox>
-                        <Label text="Active listings" styleClass="sub"/>
-                        <Label text="7" styleClass="big"/>
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll-pane">
+            <VBox spacing="30" styleClass="content-padding">
+                
+                <Label text="Always stay ahead" styleClass="dashboard-title-serif"/>
+                
+                <HBox spacing="60">
+                    <VBox spacing="5">
+                        <Label text="Active bids" styleClass="stat-label"/>
+                        <Label text="7" styleClass="stat-value-white"/>
                     </VBox>
-
-                    <VBox>
-                        <Label text="Ending soon" styleClass="sub"/>
-                        <Label text="2" styleClass="big-orange"/>
+                    <VBox spacing="5">
+                        <Label text="Winning" styleClass="stat-label"/>
+                        <Label text="7" styleClass="stat-value-green"/>
                     </VBox>
-
-                    <VBox>
-                        <Label text="No bids yet" styleClass="sub"/>
-                        <Label text="0" styleClass="big"/>
+                    <VBox spacing="5">
+                        <Label text="Losing" styleClass="stat-label"/>
+                        <Label text="0" styleClass="stat-value-red"/>
                     </VBox>
-
-                    <VBox>
-                        <Label text="Accumulated revenue" styleClass="sub"/>
-                        <Label text="100,3500" styleClass="money"/>
+                    <VBox spacing="5">
+                        <Label text="Ending soon (24h)" styleClass="stat-label"/>
+                        <Label text="3" styleClass="stat-value-white"/>
                     </VBox>
                 </HBox>
-
-                <!-- FILTER -->
-                <HBox spacing="10">
-
-                    <Button text="All" styleClass="filter-chip"/>
-                    <Button text="Winning" styleClass="filter-chip"/>
-                    <Button text="Losing" styleClass="filter-chip"/>
-                    <Button text="Watchlist" styleClass="filter-chip"/>
-                </HBox>
-
-                <!-- CARD LIST -->
+                
+                <VBox spacing="15">
+                    <TextField promptText="Search..." styleClass="search-field"/>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button text="All" styleClass="filter-chip"/>
+                        <Button text="Winning" styleClass="filter-chip"/>
+                        <Button text="Losing" styleClass="filter-chip"/>
+                        <Button text="Watchlist" styleClass="filter-chip"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Sort by" styleClass="text-dim"/>
+                        <Label text="Ending soon" styleClass="sort-text-active"/>
+                    </HBox>
+                </VBox>
+                
                 <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
                 <content>
                     <GridPane hgap="30.0" vgap="30.0">
@@ -93,6 +77,7 @@
                                     </VBox>
                                     <VBox alignment="BOTTOM_RIGHT" spacing="10">
                                         <Label text="2 days" styleClass="card-sub-text"/>
+                                        <Button fx:id="btnRaiseBid" text="Raise bid" styleClass="btn-action-green"/>
                                     </VBox>
                                 </HBox>
                             </VBox>
@@ -113,6 +98,7 @@
                                     </VBox>
                                     <VBox alignment="BOTTOM_RIGHT" spacing="10">
                                         <Label text="5 hours" styleClass="card-sub-text"/>
+                                        <Button text="Raise bid" styleClass="btn-action-green"/>
                                     </VBox>
                                 </HBox>
                             </VBox>
@@ -133,6 +119,7 @@
                                     </VBox>
                                     <VBox alignment="BOTTOM_RIGHT" spacing="10">
                                         <Label text="12 hours" styleClass="card-sub-text"/>
+                                        <Button text="Raise bid" styleClass="btn-action-green"/>
                                     </VBox>
                                 </HBox>
                             </VBox>
@@ -153,17 +140,15 @@
                                     </VBox>
                                     <VBox alignment="BOTTOM_RIGHT" spacing="10">
                                         <Label text="1 day" styleClass="card-sub-text"/>
+                                        <Button text="Raise bid" styleClass="btn-action-green"/>
                                     </VBox>
                                 </HBox>
                             </VBox>
-
                         </children>
                     </GridPane>
                 </content>
             </ScrollPane>
-
-            </children>
-        </VBox>
+            </VBox>
+        </ScrollPane>
     </center>
-
 </BorderPane>

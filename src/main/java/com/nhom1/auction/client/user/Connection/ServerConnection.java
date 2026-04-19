@@ -1,4 +1,4 @@
-package com.nhom1.auction.client.user.Connection;
+package com.nhom1.auction.client.user.connection;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

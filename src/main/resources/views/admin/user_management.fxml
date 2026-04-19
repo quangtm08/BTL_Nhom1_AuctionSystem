@@ -11,7 +11,7 @@
             styleClass="root">
 
        <left>
-        <fx:include source="components/main_dashboard_sidebar.fxml"/>
+        <fx:include source="components/admin_sidebar.fxml"/>
     </left>
 
     <center>

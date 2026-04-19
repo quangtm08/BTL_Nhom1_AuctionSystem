@@ -1,4 +1,4 @@
-package com.nhom1.auction.client.user.Controller;
+package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
@@ -8,7 +8,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.util.Duration;
 
-public class MainDashboardExploreController {
+public class PaymentController {
     
-    
+   
+
 }

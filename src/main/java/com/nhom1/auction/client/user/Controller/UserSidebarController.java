@@ -1,4 +1,4 @@
-package com.nhom1.auction.client.user.Controller;
+package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
@@ -9,7 +9,7 @@ import javafx.scene.control.Button;
 import javafx.util.Duration;
 
 
-public class MainDashboardSidebarController {
+public class UserSidebarController {
     
     @FXML Button btnExplore;
     @FXML Button btnBids;
@@ -21,9 +21,9 @@ public class MainDashboardSidebarController {
     @FXML
     public void initialize(){
 
-        btnExplore.setOnAction(e -> navigateWithLoading(AppView.EXPLORE));
-        btnBids.setOnAction(e -> navigateWithLoading(AppView.BIDS));
-        btnListings.setOnAction(e -> navigateWithLoading(AppView.LISTINGS));
+        btnExplore.setOnAction(e -> navigateWithLoading(AppView.AUCTION_BROWSE));
+        btnBids.setOnAction(e -> navigateWithLoading(AppView.MY_BIDS));
+        btnListings.setOnAction(e -> navigateWithLoading(AppView.MY_LISTINGS));
         btnPayment.setOnAction(e -> navigateWithLoading(AppView.PAYMENT));
         btnLogout.setOnAction(e -> navigateWithLoading(AppView.SIGN_IN));
 
@@ -54,11 +54,12 @@ public class MainDashboardSidebarController {
 
     
         switch (current) {
-            case EXPLORE -> btnExplore.getStyleClass().add("side-btn-active");
-            case BIDS -> btnBids.getStyleClass().add("side-btn-active");
-            case LISTINGS -> btnListings.getStyleClass().add("side-btn-active");
+            case AUCTION_BROWSE -> btnExplore.getStyleClass().add("side-btn-active");
+            case MY_BIDS -> btnBids.getStyleClass().add("side-btn-active");
+            case MY_LISTINGS -> btnListings.getStyleClass().add("side-btn-active");
             case PAYMENT -> btnPayment.getStyleClass().add("side-btn-active");
-            default -> throw new IllegalArgumentException("Unexpected value: " + current);
+            default -> {
+            }
         }
     }
 

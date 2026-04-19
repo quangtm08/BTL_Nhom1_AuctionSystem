@@ -1,4 +1,4 @@
-package com.nhom1.auction.client.admin.Controller;
+package com.nhom1.auction.client.admin.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
@@ -8,7 +8,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.util.Duration;
 
-public class MainDashboardSidebarController {
+public class AdminSidebarController {
     
     @FXML Button btnDashboard;
     @FXML Button btnUsers;
@@ -20,9 +20,9 @@ public class MainDashboardSidebarController {
 
         updateActiveButton();
 
-        btnDashboard.setOnAction(e -> navigateWithLoading(AppView.MAIN_DASHBOARD));
-        btnUsers.setOnAction(e -> navigateWithLoading(AppView.MAIN_DASHBOARD_USER_MANAGEMENT));
-        btnAuctions.setOnAction(e -> navigateWithLoading(AppView.MAIN_DASHBOARD_AUCTION_MANAGEMENT));
+        btnDashboard.setOnAction(e -> navigateWithLoading(AppView.ADMIN_OVERVIEW));
+        btnUsers.setOnAction(e -> navigateWithLoading(AppView.USER_MANAGEMENT));
+        btnAuctions.setOnAction(e -> navigateWithLoading(AppView.AUCTION_MANAGEMENT));
         btnLogout.setOnAction(e -> navigateWithLoading(AppView.SIGN_IN));
 
 
@@ -48,10 +48,11 @@ public class MainDashboardSidebarController {
         btnUsers.getStyleClass().remove("side-btn-active");
 
         switch (current) {
-            case MAIN_DASHBOARD -> btnDashboard.getStyleClass().add("side-btn-active");
-            case MAIN_DASHBOARD_USER_MANAGEMENT -> btnUsers.getStyleClass().add("side-btn-active");
-            case MAIN_DASHBOARD_AUCTION_MANAGEMENT -> btnAuctions.getStyleClass().add("side-btn-active");
-            default -> throw new IllegalArgumentException("Unexpected value: " + current);
+            case ADMIN_OVERVIEW -> btnDashboard.getStyleClass().add("side-btn-active");
+            case USER_MANAGEMENT -> btnUsers.getStyleClass().add("side-btn-active");
+            case AUCTION_MANAGEMENT -> btnAuctions.getStyleClass().add("side-btn-active");
+            default -> {
+            }
         }
     }
 

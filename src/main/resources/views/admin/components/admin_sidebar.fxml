@@ -5,7 +5,7 @@
 <?import javafx.scene.shape.Circle?>
 
 <VBox prefWidth="260" styleClass="sidebar" xmlns:fx="http://javafx.com/fxml" 
-        fx:controller="com.nhom1.auction.client.admin.Controller.MainDashboardSidebarController" 
+        fx:controller="com.nhom1.auction.client.admin.controller.AdminSidebarController" 
         stylesheets="@/css/admin/main_dashboard_sidebar.css">
     <padding><Insets top="40" left="25" right="25" bottom="25"/></padding>
     <VBox spacing="5" styleClass="brand-container">

@@ -1,12 +1,11 @@
-package com.nhom1.auction.client.user.Controller;
+package com.nhom1.auction.client;
 
 import com.nhom1.auction.common.classes.BaseMainController;
-
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 
-public class MainController implements BaseMainController{
+public class ShellController implements BaseMainController {
 
     @FXML
     private StackPane rootPane;

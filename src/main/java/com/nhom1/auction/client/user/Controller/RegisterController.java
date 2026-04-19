@@ -1,4 +1,4 @@
-package com.nhom1.auction.client.user.Controller;
+package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
