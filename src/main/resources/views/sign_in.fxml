@@ -12,7 +12,8 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.text.TextFlow?>
 
-<StackPane prefHeight="855.0" prefWidth="1320.0" styleClass="root-pane" stylesheets="@../css/sign_in.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.Controller.SignInController">
+<StackPane prefHeight="855.0" prefWidth="1320.0" styleClass="root-pane" stylesheets="@../css/sign_in.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nhom1.auction.client.user.Controller.SignInController">
    <children>
       <HBox fillHeight="true" maxHeight="Infinity" maxWidth="Infinity" prefHeight="855.0" prefWidth="1320.0" styleClass="split-layout">
          <children>
@@ -88,7 +89,7 @@
 
                         <HBox alignment="CENTER_RIGHT">
                            <children>
-                              <Button focusTraversable="false" mnemonicParsing="false" styleClass="inline-link" text="Forgot password?" />
+                              <Button  focusTraversable="false" mnemonicParsing="false" styleClass="inline-link" text="Forgot password?" />
                            </children>
                         </HBox>
 

@@ -1,0 +1,153 @@
+/* ===== ROOT & GLOBAL ===== */
+.root {
+    -fx-background-color: #070b09;
+}
+
+.dashboard-title {
+    -fx-font-family: "EBGaramond", serif;
+    -fx-font-style: italic;
+    -fx-font-size: 36px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.dashboard-date {
+    -fx-text-fill: #555555;
+    -fx-font-size: 13px;
+}
+
+/* ===== FILTER BAR ===== */
+.filter-btn, .filter-btn-active {
+    -fx-background-radius: 8;
+    -fx-padding: 8 18; /* Tăng nhẹ padding cho nút */
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+
+.filter-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #777777;
+    -fx-border-color: #1a221e;
+}
+
+.filter-btn:hover {
+    -fx-background-color: #1a221e;
+    -fx-text-fill: white;
+}
+
+.filter-btn-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #4d8055;
+    -fx-border-color: #1a3327;
+    -fx-font-weight: bold;
+}
+
+.search-field {
+    -fx-background-color: #0c120f;
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #444444;
+    -fx-border-color: #1a221e;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 10 15; /* Làm ô search dày hơn */
+}
+
+/* ===== TABLE CARD ===== */
+.table-card {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #1a221e;
+    -fx-border-radius: 15;
+    -fx-background-radius: 15;
+    -fx-padding: 5 15; /* Khoảng cách padding cho cả bảng */
+}
+
+/* Header Text */
+.table-header-text {
+    -fx-text-fill: #555555;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 15 0; /* Tăng chiều cao của Header */
+}
+
+.table-header-row {
+    -fx-border-color: transparent transparent #1a221e transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Row Styling - Đã tăng kích thước */
+.table-row-bg {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #1a221e transparent;
+    -fx-border-width: 0 0 0.5 0;
+    -fx-cursor: hand;
+    /* Tăng padding dọc lên 20px để thanh item to ra rõ rệt */
+    -fx-padding: 20 10; 
+    /* Đảm bảo độ cao tối thiểu là 65px */
+    -fx-min-height: 65px; 
+}
+
+.table-row-bg:hover {
+    /* Màu xanh Emerald rất mờ khi hover */
+    -fx-background-color: rgba(82, 183, 136, 0.05); 
+    -fx-background-radius: 10;
+}
+
+/* Data Text */
+.table-text-main {
+    -fx-text-fill: #e0e0e0;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px; /* Tăng lên 14px cho dễ nhìn */
+}
+
+.table-text-sub {
+    -fx-text-fill: #999999;
+    -fx-font-size: 13px;
+}
+
+.price-highlight {
+    -fx-text-fill: #52b788; /* Emerald Green */
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.status-running {
+    -fx-text-fill: #52b788;
+    -fx-font-weight: bold;
+}
+
+/* ===== BUTTONS ===== */
+.btn-cancel {
+    -fx-background-color: #2a1515;
+    -fx-text-fill: #ff4d4d;
+    -fx-background-radius: 8;
+    -fx-padding: 6 15; /* Nút to hơn một chút cho cân đối */
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-cancel:hover {
+    -fx-background-color: #4a1a1a;
+    -fx-text-fill: white;
+}
+
+/* ===== SCROLLPANE ===== */
+.custom-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+}
+
+.custom-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Thanh cuộn (Scrollbar) thiết kế mỏng, hiện đại */
+.custom-scroll-pane .thumb {
+    -fx-background-color: #1a3327;
+    -fx-background-radius: 10;
+}
+
+.custom-scroll-pane .track {
+    -fx-background-color: transparent;
+}
