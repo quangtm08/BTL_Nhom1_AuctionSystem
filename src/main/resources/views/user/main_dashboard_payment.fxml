@@ -10,27 +10,12 @@
 <?import javafx.scene.shape.Circle?>
 
 
-<BorderPane fx:id="root" stylesheets="@../css/payment.css" prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.Controller.PaymentController">
+<BorderPane fx:id="root" stylesheets="@/css/client/main_dashboard_payment.css" 
+            prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" 
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.user.Controller.MainDashboardPaymentController">
 
    <left>
-       <VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER">
-            <padding>
-                <Insets top="80.0" left="25.0" right="25.0" bottom="30.0"/>
-            </padding>
-            <children>
-                <VBox spacing="12.0" VBox.vgrow="ALWAYS">
-                    <Button fx:id="btnExplore" text="Explore" maxWidth="Infinity" styleClass="side-btn "/>
-                    <Button text="My bids" maxWidth="Infinity" styleClass="side-btn"/>
-                    <Button text="My listings" maxWidth="Infinity" styleClass="side-btn"/>
-                    <Button fx:id="btnPayment" text="Payments" maxWidth="Infinity" styleClass="side-btn, side-btn-active"/>
-                </VBox>
-                
-                <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="user-footer">
-                    <Circle radius="18.0" fill="#3a3a3a" stroke="#4a4a4a"/>
-                    <Label text="bruh" styleClass="user-label" style="-fx-text-fill: white;"/>
-                </HBox>
-            </children>
-        </VBox>
+        <fx:include source="components/main_dashboard_sidebar.fxml" />
    </left>
 
    <center>
