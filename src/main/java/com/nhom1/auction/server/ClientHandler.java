@@ -7,10 +7,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 
 class ClientHandler implements Runnable {
-    private Socket socket;
+    private final Socket socket;
+    private final MessageRouter router;
 
-    public ClientHandler(Socket socket) {
+    public ClientHandler(Socket socket, MessageRouter router) {
         this.socket = socket;
+        this.router = router;
     }
 
     @Override
@@ -24,15 +26,26 @@ class ClientHandler implements Runnable {
             String message;
 
             while ((message = in.readLine()) != null) {
-                System.out.println("Client send: " + message);
+                // Ignore empty lines
+                if (message.trim().isEmpty()) continue;
+                
+                System.out.println("Received request: " + message);
 
-                String response = "Server receive: " + message;
+                // Pass the raw JSON to the router and get a raw JSON response
+                String response = router.handleRequest(message);
 
+                // Send response back (one line per message)
                 out.println(response);
             }
 
         } catch (IOException e) {
-            System.out.println("Client disconnect");
+            System.out.println("Client disconnected: " + e.getMessage());
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
