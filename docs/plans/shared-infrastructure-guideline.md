@@ -1,100 +1,92 @@
-# Shared Infrastructure Guideline
+# Hướng dẫn Hạ tầng dùng chung (Shared Infrastructure)
 
-This document defines the minimum shared infrastructure the team should complete before splitting into mostly independent feature work.
+Tài liệu này định nghĩa hạ tầng tối thiểu mà nhóm nên hoàn thành trước khi chia ra phát triển các tính năng (feature work) độc lập.
 
-The goal is not to finalize every design decision in the whole system.
-The goal is to finish the parts that many features depend on, so people stop blocking each other.
+Mục tiêu không phải là chốt mọi quyết định thiết kế cho toàn bộ hệ thống. Mục tiêu là hoàn thành 
+những phần mà nhiều tính năng phụ thuộc vào, để mọi người không bị chặn (block) lẫn nhau.
 
-If the team completes the items in this document, it should be safe to assign members to separate work areas with much lower risk of misalignment.
+Nếu nhóm hoàn thành các mục trong tài liệu này, việc phân chia thành viên vào các khu vực công việc 
+riêng biệt sẽ an toàn hơn và giảm thiểu rủi ro sai lệch.
 
-## Why this phase matters
+## Tại sao giai đoạn này quan trọng
 
-Right now the project already has:
+Nếu nhóm bắt đầu chia việc tính năng quá sớm, các vấn đề phổ biến sẽ xuất hiện:
+- Một người thay đổi định dạng socket và làm hỏng code client của người khác.
+- Một người viết SQL trực tiếp trong các Controller hoặc Handler.
+- Nhiều người cùng thực hiện một quy tắc nghiệp vụ ở các nơi khác nhau.
+- Schema của database thay đổi mà không phải ai cũng nhận ra.
+- Công việc UI bị đình trệ do các giao diện (interface) backend chưa hoàn thành.
 
-- JavaFX UI screens and controllers
-- core domain classes such as `Auction`
-- a SQLite database
-- an early socket prototype
+Mục đích của giai đoạn hạ tầng dùng chung này là để ngăn chặn những vấn đề đó.
 
-This is good progress, but the boundaries between client, server, business logic, and data access are not settled yet.
+## Nguyên tắc chính
 
-If the team starts splitting feature work too early, common problems will appear:
+Nhóm trước hết nên thống nhất về các **Shared contracts** (hợp đồng dùng chung) và ranh giới (boundaries) dùng chung.
 
-- one person changes the socket format and breaks someone else's client code
-- one person writes SQL directly in controllers or handlers
-- multiple people implement the same business rule in different places
-- the database schema changes without everyone noticing
-- UI work gets blocked by unfinished backend interfaces
+Sau đó, mỗi thành viên có thể sở hữu một khu vực công việc với sự tự do hơn nhiều. Nói cách khác:
+- **Hạ tầng dùng chung trước.**
+- **Tính năng độc lập sau.**
 
-The purpose of this shared infrastructure phase is to prevent those problems.
+## Những gì được tính là hạ tầng dùng chung
 
-## Main principle
+Các phần sau đây nên được thảo luận và giải quyết sớm vì nhiều phần của hệ thống phụ thuộc vào chúng.
 
-The team should first agree on shared contracts and shared boundaries.
+### 1. Cấu trúc Package
 
-After that, each member can own a work area with much more freedom.
+Như hiện tại và thống nhất khi có chỉnh sửa thêm
 
-In other words:
+### 2. Ranh giới Client-Server
 
-- shared infrastructure first
-- feature verticals second
+Server nên sở hữu:
+- Quyền truy cập cơ sở dữ liệu (Database access).
+- Logic nghiệp vụ làm thay đổi trạng thái hệ thống.
+- Các hoạt động nhạy cảm với xử lý đồng thời (Concurrency).
 
-## What counts as shared infrastructure
+Client nên sở hữu:
+- Các màn hình JavaFX.
+- Logic điều khiển (Controller logic) cho tương tác của người dùng.
+- Gửi yêu cầu (Request) tới Server.
+- Hiển thị phản hồi (Response) từ Server.
 
-The following pieces should be discussed and settled early because many parts of the system depend on them.
+**Client không nên truy cập cơ sở dữ liệu trực tiếp.** (
 
-### 1. Package structure
-
-The codebase should have a package structure that clearly separates responsibilities.
-
-A suggested direction:
+## Luồng Client đề xuất
 
 ```text
-com.nhom1.auction
-  client
-    controller
-    connection
-    service
-  server
-    transport
-    router
-    handler
-    service
-    repository
-  common
-    dto
-    entity
-    enums
-    exception
+JavaFX UI (View)
+-> Controller
+-> Client Service
+-> ServerConnection
+-> Socket Output
 ```
 
-This is only a suggested structure, not a strict rule.
-The important point is that everyone understands where new code should go.
+### Trách nhiệm của các lớp (Client layers)
 
-### 2. Client-server boundary
+#### `JavaFX UI`
+- Hiển thị dữ liệu từ DTO.
+- Thu thập input từ người dùng.
 
-The server should own:
+#### `Controller`
+- Lắng nghe các sự kiện UI (click, type).
+- Gọi đến các phương thức tương ứng trong Client Service.
+- Không nên chứa logic nghiệp vụ phức tạp.
 
-- database access
-- business logic that changes system state
-- concurrency-sensitive operations
+#### `Client Service`
+- Chứa logic nghiệp vụ phía client.
+- Tạo các đối tượng Request DTO để chuẩn bị gửi đi.
+- Xử lý các phản hồi từ Server để cập nhật trạng thái ứng dụng.
 
-The client should own:
+#### `ServerConnection`
+- Đóng gói (serialize) DTO thành JSON.
+- Gửi dữ liệu qua Socket.
+- Nhận dữ liệu phản hồi và chuyển ngược lại cho Service.
 
-- JavaFX screens
-- controller logic for user interaction
-- sending requests to the server
-- rendering server responses
-
-The client should not access the database directly.
-
-## Suggested server flow
-
-One good direction for this project is:
+## Luồng Server đề xuất
 
 ```text
 Client UI
 -> ServerConnection
+(Server bắt đầu từ đây)
 -> ClientHandler
 -> MessageRouter
 -> Feature Handler
@@ -103,90 +95,71 @@ Client UI
 -> Database
 ```
 
-### Layer responsibilities
+### Trách nhiệm của các lớp (Layer responsibilities)
 
 #### `ClientHandler`
-
-- reads messages from the socket
-- writes responses back to the client
-- should not contain feature-specific business logic
+- Đọc tin nhắn từ Socket.
+- Ghi phản hồi ngược lại cho Client.
+- Không nên chứa logic nghiệp vụ cụ thể của tính năng.
 
 #### `MessageRouter`
-
-- checks message type
-- chooses the correct handler
-- example: `LOGIN`, `REGISTER`, `PLACE_BID`, `CREATE_AUCTION`
+- Kiểm tra loại tin nhắn (Message type).
+- Chọn Handler chính xác.
+- Ví dụ: `LOGIN`, `REGISTER`, `PLACE_BID`, `CREATE_AUCTION`.
 
 #### `Feature Handler`
-
-- receives a parsed request
-- calls the appropriate service
-- converts service results into response DTOs
+- Nhận Request đã được phân tích (parsed).
+- Gọi Service thích hợp.
+- Chuyển đổi kết quả từ Service thành các Response DTO.
 
 #### `Service`
-
-- contains business rules
-- examples:
-  - validate login flow
-  - enforce auction state transitions
-  - validate bids
-  - decide winner when auction ends
-  - apply anti-sniping if implemented
+- Chứa các quy tắc nghiệp vụ (Business rules).
+- Ví dụ:
+  - Xác thực luồng Login.
+  - Áp dụng các thay đổi trạng thái Auction.
+  - Xác thực giá thầu (Bids).
+  - Quyết định người chiến thắng khi đấu giá kết thúc.
+  - Áp dụng Anti-sniping nếu được thực thi.
 
 #### `Repository`
-
-- contains SQL or JDBC access code
-- acts like a DAO layer
-- examples:
-  - find user by username
-  - save auction
-  - list auctions
-  - insert bid history row
+- Chứa code truy cập SQL hoặc JDBC.
+- Đóng vai trò như một lớp DAO.
+- Ví dụ:
+  - Tìm User theo username.
+  - Lưu Auction.
+  - Liệt kê các Auction.
+  - Chèn một dòng lịch sử giá thầu (Bid history).
 
 #### `Database`
+- Sử dụng SQLite hiện tại.
+- Schema nên được thiết kế để việc chuyển sang PostgreSQL sau này dễ quản lý.
 
-- SQLite for now
-- schema should be designed so migration to PostgreSQL later is manageable
-
-## Shared terminology
+## Thuật ngữ dùng chung
 
 ### DTO
-
-DTO means Data Transfer Object.
-
-A DTO is a simple object used to transfer data between parts of the system, especially between client and server.
-It should not contain business logic.
-
-Examples:
-
-- `LoginRequestDTO`
-- `LoginResponseDTO`
-- `PlaceBidRequestDTO`
-- `AuctionSummaryDTO`
+DTO có nghĩa là **Data Transfer Object**. Một DTO là một đối tượng đơn giản được dùng để truyền dữ liệu giữa 
+các phần của hệ thống, đặc biệt là giữa client và server. Nó không nên chứa logic nghiệp vụ.
+- Ví dụ: `LoginRequestDTO`, `LoginResponseDTO`, `PlaceBidRequestDTO`, `AuctionSummaryDTO`.
 
 ### Repository
-
-Repository is the data access layer.
-
-Its job is to talk to the database and run SQL queries.
-In many discussions, this is very close to the DAO concept.
+Repository là lớp truy cập dữ liệu (Data access layer). Công việc của nó là nói chuyện với cơ sở 
+dữ liệu và chạy các truy vấn SQL. Trong nhiều cuộc thảo luận, khái niệm này rất gần với DAO.
 
 ### Service
 
-Service is the business logic layer.
+Service là lớp logic nghiệp vụ (Business logic layer). Trong kiến trúc này, chúng ta phân biệt rõ:
+- **Server Service**: Nắm giữ "sự thật" và thực thi luật chơi (Business Rules). Chỉ có lớp này mới được gọi Repository để đọc/ghi Database.
+- **Client Service**: Hỗ trợ UI. Không chạm vào Database. Nhiệm vụ chính là đóng gói dữ liệu vào DTO, gửi qua Socket và xử lý phản hồi từ Server để điều hướng màn hình hoặc hiện thông báo.
 
-Its job is to enforce system rules and coordinate repositories or domain logic.
 
-## Shared contracts the team should settle first
 
-The team does not need to define every future detail immediately.
-The team should define the common contracts that unblock parallel development.
+## Các Hợp đồng dùng chung (Shared Contracts) cần thống nhất trước
 
-### 1. Message envelope format
+Nhóm không cần phải định nghĩa mọi chi tiết tương lai ngay lập tức. Nhóm nên định nghĩa các 
+hợp đồng chung để gỡ bỏ sự tắc nghẽn trong phát triển song song.
 
-The team should agree on one common request format and one common response format.
-
-For example:
+### 1. Định dạng Message envelope
+Nhóm nên thống nhất về một định dạng Request chung và một định dạng Response chung. Ví dụ:
 
 ```json
 {
@@ -210,187 +183,55 @@ For example:
 }
 ```
 
-The exact fields can change.
-The important point is that all messages follow one shared structure.
+Các trường dữ liệu chính xác có thể thay đổi. Điểm quan trọng là tất cả các tin nhắn đều tuân theo một cấu trúc dùng chung.
 
-### 2. Core message types
+### 2. Các loại tin nhắn cốt lõi (Core message types)
+Nhóm nên thống nhất về bộ tin nhắn đầu tiên cần thiết cho hệ thống tích hợp cơ bản. Đề xuất:
+- `LOGIN`, `REGISTER`, `LIST_AUCTIONS`, `GET_AUCTION_DETAIL`, `PLACE_BID`, `CREATE_AUCTION`, `CANCEL_AUCTION`.
 
-The team should agree on the first set of messages needed for the basic end-to-end system.
+### 3. Quy tắc sở hữu Payload (Payload ownership rule)
+Toàn bộ nhóm nên thống nhất về:
+- Message envelope.
+- Quy ước đặt tên.
+- Cấu trúc phản hồi lỗi (Error response shape).
+- Các loại tin nhắn cốt lõi ban đầu.
 
-Suggested first set:
-
-- `LOGIN`
-- `REGISTER`
-- `LIST_AUCTIONS`
-- `GET_AUCTION_DETAIL`
-- `PLACE_BID`
-- `CREATE_AUCTION`
-- `CANCEL_AUCTION`
-
-This list is enough to unblock the first real system integration.
-
-### 3. Payload ownership rule
-
-The whole team should agree on:
-
-- the message envelope
-- naming conventions
-- error response shape
-- the initial core message types
-
-After that, the owner of each feature area can define the detailed payloads for their messages, but those details should still be reviewed with the team before becoming final.
-
-This keeps consistency without slowing everyone down too much.
+Sau đó, người sở hữu từng mảng tính năng có thể tự định nghĩa chi tiết Payload cho tin nhắn của họ, nhưng những chi tiết đó vẫn nên được review với nhóm trước khi chốt chính thức. Điều này giúp giữ tính nhất quán mà không làm chậm tốc độ làm việc của mọi người.
 
 ### 4. Database schema
+Nhóm nên sớm chốt phiên bản đầu tiên của Schema. Ít nhất là định nghĩa mục đích và các trường chính của: `users`, `items`, `auctions`, `bids`.
+Cần trả lời:
+- Bảng nào sở hữu dữ liệu nào?
+- Khóa chính (Primary keys) là gì? Khóa ngoại (Foreign keys) là gì?
+- Những trường nào đại diện cho trạng thái đấu giá (Auction state)?
 
-The team should settle a first version of the schema early.
+### 5. Sở hữu quy tắc nghiệp vụ (Business rule ownership)
+Một số quy tắc nên được viết xuống tại một nơi để nhóm không thực hiện chúng khác nhau ở các module khác nhau. Ví dụ: Các trạng thái và bước chuyển của đấu giá, ai có quyền đặt giá, ai có quyền hủy đấu giá, v.v.
 
-At minimum, define the purpose and core fields of:
+## Những gì cần tránh trong giai đoạn này
 
-- `users`
-- `items`
-- `auctions`
-- `bids`
+- Không để Client Controller truy cập database trực tiếp.
+- Không viết các quy tắc nghiệp vụ quan trọng bên trong JavaFX Controller.
+- Không đặt SQL trực tiếp trong Socket Handler nếu logic đó có thể được tái sử dụng ở nơi khác.
+- Không cho phép mỗi chủ sở hữu tính năng tự chế ra định dạng tin nhắn khác nhau.
 
-Useful questions to answer:
+## Cột mốc (Milestone) đề xuất cho cuối giai đoạn này
 
-- Which table owns which data?
-- What are the primary keys?
-- What are the foreign keys?
-- Which fields are required?
-- Which fields represent auction state?
-- Which fields are needed later for PostgreSQL migration?
+Trước khi chia ra làm việc độc lập, nhóm nên đặt mục tiêu chạy được một luồng xuyên suốt (end-to-end flow) đơn giản:
+`register or login -> list auctions -> open auction detail -> place bid -> receive server response`
 
-The team does not need perfect normalization on day one, but it should avoid letting each feature invent its own storage model independently.
+Luồng này không cần phải được trau chuốt. Nó chỉ cần chứng minh rằng: Client có thể nói chuyện với Server, Server có thể điều hướng tin nhắn, Service có thể thực thi quy tắc, Repository có thể lưu và tải dữ liệu.
 
-### 5. Business rule ownership
+## Phân chia công việc sau khi hạ tầng đã sẵn sàng
 
-Some rules should be written down in one place so the team does not implement them differently in different modules.
+Đối với nhóm 4 thành viên, một sự phân chia thực tế là:
+- **Thành viên 1:** Vận chuyển và Giao thức (Transport & Protocol - code socket, message router).
+- **Thành viên 2:** Xác thực và Dữ liệu người dùng (Auth & User data).
+- **Thành viên 3:** Đấu giá và Logic đặt giá (Auction & Bidding logic).
+- **Thành viên 4:** Tích hợp Client và kết nối UI (kết nối màn hình UI với phản hồi thực từ Server).
 
-Examples:
+## Hướng dẫn quy trình làm việc của nhóm
 
-- valid auction states and transitions
-- who can bid
-- who can cancel an auction
-- what makes a bid valid
-- how concurrent bids are resolved
-- what happens when an auction reaches its end time
-
-## What to avoid during this phase
-
-- Do not let client controllers access the database directly.
-- Do not write important business rules inside JavaFX controllers.
-- Do not put SQL directly in socket handlers if the logic may be reused elsewhere.
-- Do not allow each feature owner to invent a different message format.
-- Do not over-design every optional feature before the basic path works.
-
-## Suggested milestone for the end of this phase
-
-Before splitting into mostly independent work, the team should aim to make one thin end-to-end flow work:
-
-```text
-register or login
--> list auctions
--> open auction detail
--> place bid
--> receive server response
-```
-
-This flow does not need to be polished.
-It only needs to prove that:
-
-- the client can talk to the server
-- the server can route messages
-- services can enforce rules
-- repositories can save and load data
-- the team's contracts are usable in practice
-
-Once this flow works, feature work can split much more safely.
-
-## How to divide work after infrastructure is ready
-
-For a 4-member team, a practical split is:
-
-### Member 1: transport and protocol
-
-- socket communication basics
-- message envelope
-- message router
-- common request and response conventions
-
-### Member 2: auth and user data
-
-- login and register flow
-- `AuthService`
-- user repository
-- role handling
-
-### Member 3: auction and bidding logic
-
-- auction state logic
-- bid validation
-- concurrency handling
-- auction and bid repositories
-
-### Member 4: client integration and UI wiring
-
-- client-side service or gateway
-- replace direct DB usage from client controllers
-- connect UI screens to real server responses
-
-This split is not permanent forever.
-After the shared contracts settle, the team can rebalance based on progress and difficulty.
-
-## Team workflow guidance
-
-### Use weekly milestones, not weekly ownership
-
-The lecturer's weekly plan is helpful for pacing.
-It should be treated as a milestone plan, not as the exact way to assign people.
-
-For example:
-
-- by the end of the week, the protocol should be frozen
-- by the end of the week, auth should work end-to-end
-- by the end of the week, one bid flow should work
-
-But ownership during that week should still be based on modules and responsibilities.
-
-### Discuss interface changes early
-
-If a member wants to change:
-
-- message format
-- DB schema
-- package structure
-- service method signatures used by others
-
-that change should be discussed before implementation, not after.
-
-### Prefer thin interfaces between team members
-
-Examples:
-
-- UI teammate depends on DTOs and client service interfaces, not raw server internals
-- service teammate depends on repository interfaces, not direct controller logic
-- transport teammate depends on message types, not auction business rules
-
-The thinner the interface, the easier it is to work independently.
-
-## Decision checklist for discussion meetings
-
-When the team meets to discuss the shared foundation, the goal is not to debate everything.
-The goal is to leave the meeting with answers to these questions:
-
-- What is the agreed request and response message envelope?
-- Which message types are needed first?
-- Which package or folder owns each kind of code?
-- Which responsibilities belong to handlers, services, and repositories?
-- What is the initial DB schema?
-- Which business rules are already fixed and written down?
-- What is the first end-to-end flow we will make work?
-- Who owns each part for the next iteration?
-
-If those questions are answered, the team is likely ready to begin independent feature work.
-
+- **Sử dụng milestones hàng tuần, không phải ownership hàng tuần:** Kế hoạch của giảng viên nên được coi là cột mốc tiến độ, không phải là cách chính xác để phân việc.
+- **Thảo luận về các thay đổi giao diện (interface) sớm:** Nếu một thành viên muốn thay đổi định dạng tin nhắn, DB schema, cấu trúc package, hoặc chữ ký phương thức service dùng chung, thay đổi đó phải được thảo luận trước khi thực hiện.
+- **Ưu tiên Interface mỏng (Thin interface) giữa các thành viên:** Người làm UI phụ thuộc vào DTO và Client Service interface, không phải nội bộ server thô. Người làm Service phụ thuộc vào Repository interface, không phải trực tiếp logic controller.

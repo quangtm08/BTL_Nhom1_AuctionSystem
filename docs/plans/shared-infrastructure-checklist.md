@@ -1,83 +1,79 @@
-# Shared Infrastructure Checklist
+# Danh sách kiểm tra (Checklist) Hạ tầng dùng chung
 
-Use this checklist to decide whether the project is ready for parallel feature development.
+Sử dụng checklist này để quyết định xem dự án đã sẵn sàng cho việc phát triển các tính năng song song (parallel feature development) hay chưa.
 
-The project does not need to be perfect before the team starts splitting work.
-It does need to be stable enough that people can work without breaking each other constantly.
+Dự án không cần phải hoàn hảo trước khi nhóm bắt đầu chia việc. Tuy nhiên, nó cần đủ ổn định để mọi người có thể làm việc mà không gây xung đột (breaking) code của nhau liên tục.
 
-## A. Architecture and boundaries
+## A. Kiến trúc và Ranh giới (Architecture and boundaries)
 
-- [ ] The team agrees that only the server accesses the database.
-- [ ] The team agrees on the rough server flow:
+- [ ] Nhóm thống nhất rằng chỉ có **Server** mới được truy cập **Database**.
+- [ ] Nhóm thống nhất về luồng xử lý cơ bản của Server:
   `ClientHandler -> MessageRouter -> Handler -> Service -> Repository -> Database`
-- [ ] The team agrees on where controllers, DTOs, services, repositories, and socket code should live.
-- [ ] The team has written down the responsibility of each layer.
+- [ ] Nhóm thống nhất về nơi đặt các Controller, DTO, Service, Repository và code Socket.
+- [ ] Nhóm đã ghi chú rõ trách nhiệm của từng lớp (layer).
 
-## B. Message contract
+## B. Hợp đồng tin nhắn (Message contract)
 
-- [ ] There is one shared request message envelope.
-- [ ] There is one shared response message envelope.
-- [ ] There is one shared approach for success and error responses.
-- [ ] The first core message types are listed and named consistently.
-- [ ] The team agrees who can define detailed payloads for each feature area.
+- [ ] Có một **Message envelope** chung cho các Request.
+- [ ] Có một **Message envelope** chung cho các Response.
+- [ ] Có một cách tiếp cận chung cho các phản hồi thành công (success) và lỗi (error).
+- [ ] Danh sách các **Core message types** đầu tiên đã được liệt kê và đặt tên nhất quán.
+- [ ] Nhóm thống nhất về việc ai có quyền định nghĩa chi tiết **Payload** cho từng mảng tính năng.
 
-## C. Core feature contracts
+## C. Hợp đồng tính năng cốt lõi (Core feature contracts)
 
-- [ ] Login and register request/response shapes are defined.
-- [ ] Auction listing request/response shape is defined.
-- [ ] Auction detail request/response shape is defined.
-- [ ] Place bid request/response shape is defined.
-- [ ] Create auction request/response shape is defined.
-- [ ] Cancel auction request/response shape is defined.
+- [ ] Cấu trúc Request/Response cho Login và Register đã được định nghĩa.
+- [ ] Cấu trúc Request/Response cho danh sách đấu giá (Auction listing) đã được định nghĩa.
+- [ ] Cấu trúc Request/Response cho chi tiết đấu giá (Auction detail) đã được định nghĩa.
+- [ ] Cấu trúc Request/Response cho đặt giá (Place bid) đã được định nghĩa.
+- [ ] Cấu trúc Request/Response cho tạo đấu giá (Create auction) đã được định nghĩa.
+- [ ] Cấu trúc Request/Response cho hủy đấu giá (Cancel auction) đã được định nghĩa.
 
-## D. Database foundation
+## D. Nền tảng Cơ sở dữ liệu (Database foundation)
 
-- [ ] The initial schema for `users`, `items`, `auctions`, and `bids` is documented.
-- [ ] Keys and relationships are clear enough that multiple people can code against them.
-- [ ] The team understands which fields are temporary and which are part of the stable design.
-- [ ] The current SQLite decisions do not make later PostgreSQL migration unnecessarily hard.
+- [ ] **Schema** ban đầu cho các bảng `users`, `items`, `auctions`, và `bids` đã được ghi chép lại.
+- [ ] Các khóa (Keys) và mối quan hệ (Relationships) đủ rõ ràng để nhiều người có thể cùng viết code dựa trên đó.
+- [ ] Nhóm hiểu rõ trường dữ liệu nào là tạm thời và trường nào là một phần của thiết kế ổn định.
+- [ ] Các quyết định hiện tại với **SQLite** không gây khó khăn vô ích cho việc chuyển đổi sang **PostgreSQL** sau này.
 
-## E. Business rules
+## E. Quy tắc nghiệp vụ (Business rules)
 
-- [ ] Auction states and transitions are written down clearly.
-- [ ] Role permissions are written down clearly.
-- [ ] Bid validation rules are written down clearly.
-- [ ] Concurrency-sensitive behavior has one agreed implementation strategy.
-- [ ] The team knows which logic belongs in services rather than controllers or repositories.
+- [ ] Các trạng thái (States) và quy trình chuyển đổi (Transitions) của Auction đã được viết rõ ràng.
+- [ ] Phân quyền vai trò (Role permissions) đã được viết rõ ràng.
+- [ ] Các quy tắc kiểm tra giá thầu (Bid validation) đã được viết rõ ràng.
+- [ ] Các hành vi nhạy cảm với xử lý đồng thời (Concurrency) đã có một chiến lược thực thi thống nhất.
+- [ ] Nhóm biết logic nào thuộc về Service thay vì Controller hay Repository.
 
-## F. Minimal working flow
+## F. Luồng hoạt động tối thiểu (Minimal working flow)
 
-- [ ] A user can send a request from the client to the server.
-- [ ] The server can parse and route the message.
-- [ ] A handler can call a service.
-- [ ] A service can call a repository.
-- [ ] A repository can read or write data.
-- [ ] The server can send a structured response back to the client.
-- [ ] At least one thin end-to-end flow works:
+- [ ] User có thể gửi một Request từ Client tới Server.
+- [ ] Server có thể phân tích (parse) và điều hướng (route) tin nhắn.
+- [ ] Một **Handler** có thể gọi một **Service**.
+- [ ] Một **Service** có thể gọi một **Repository**.
+- [ ] Một **Repository** có thể đọc hoặc ghi dữ liệu.
+- [ ] Server có thể gửi một Response có cấu trúc ngược lại cho Client.
+- [ ] Ít nhất một luồng xuyên suốt (end-to-end) đơn giản đã hoạt động:
   `login/register -> list auctions -> auction detail -> place bid`
 
-## G. Team coordination
+## G. Phối hợp nhóm (Team coordination)
 
-- [ ] Each of the 4 members has a clear short-term ownership area.
-- [ ] Changes to shared contracts must be discussed before being merged.
-- [ ] The team has a PR or review habit before code reaches the shared branch.
-- [ ] The team understands that weekly lecturer milestones are for pacing, not strict ownership boundaries.
+- [ ] Mỗi thành viên trong số 4 người đều có mảng sở hữu (ownership) ngắn hạn rõ ràng.
+- [ ] Các thay đổi đối với **Shared contracts** phải được thảo luận trước khi merge.
+- [ ] Nhóm có thói quen tạo PR hoặc review trước khi code được đưa vào nhánh chung (shared branch).
+- [ ] Nhóm hiểu rằng các cột mốc (milestones) hàng tuần của giảng viên là để giữ nhịp độ, không phải là ranh giới sở hữu cứng nhắc.
 
-## Ready-to-split rule
+## Quy tắc Sẵn sàng chia việc (Ready-to-split rule)
 
-If most of the boxes above are checked, especially sections A through F, the team is ready to split into more independent feature work.
+Nếu hầu hết các mục trên đã được tích chọn, đặc biệt là các phần từ A đến F, nhóm đã sẵn sàng để chia nhỏ công việc phát triển tính năng độc lập hơn.
 
-If many boxes are still unchecked, the team should stay focused on shared infrastructure a bit longer before assigning full vertical ownership.
+Nếu nhiều mục vẫn chưa được hoàn thành, nhóm nên tập trung vào hạ tầng dùng chung (shared infrastructure) lâu hơn một chút trước khi phân chia sở hữu theo chiều dọc (vertical ownership).
 
-## Suggested note for your team meeting
+## Lưu ý gợi ý cho cuộc họp nhóm
 
-When using this checklist, avoid asking:
+Khi sử dụng checklist này, hãy tránh hỏi:
+- "Toàn bộ kiến trúc đã hoàn hảo chưa?"
 
-- "Is the whole architecture perfect?"
+Thay vào đó hãy hỏi:
+- "Nền tảng dùng chung đã đủ ổn định để mọi người có thể làm việc song song mà ít gây nhầm lẫn hay chưa?"
 
-Instead ask:
-
-- "Is the shared foundation stable enough that people can work in parallel with low confusion?"
-
-That is the real decision this checklist is meant to support.
-
+Đó mới là quyết định thực sự mà checklist này hướng tới.
