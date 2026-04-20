@@ -1,47 +1,62 @@
-# Plan: Authentication Vertical Slice Refactor
+# Kế hoạch Refactor Hệ thống Xác thực (Authentication)
 
-**Status:** Draft / Not Started
-**Goal:** Implement a fully decoupled Client-Server authentication flow (Login/Register) using Sockets and JSON, following the [Shared Infrastructure Guideline](../plans/shared-infrastructure-guideline.md).
-
----
-
-## Phase 1: Shared Protocol (`common`)
-Establish the "Bridge" that both Client and Server understand.
-- [ ] **Step 1.1:** Define `MessageType` enum (`LOGIN`, `REGISTER`).
-- [ ] **Step 1.2:** Create `RequestMessage<T>` and `ResponseMessage<T>` envelopes (the "Message Envelope").
-- [ ] **Step 1.3:** Create specific Payloads: `LoginRequest`, `RegisterRequest`, and `AuthResponse` (contains User info).
-
-## Phase 2: Server Infrastructure (`server`)
-Prepare the Server to receive and route messages correctly.
-- [ ] **Step 2.1:** Create `UserRepository` (DAO) to handle JDBC/SQL. Extract this logic from the current `AuthService`.
-- [ ] **Step 2.2:** Refactor `AuthService` to be "Pure Logic" (Business Rules only). It must depend on `UserRepository`.
-- [ ] **Step 2.3:** Implement `AuthHandler` to bridge `RequestMessage` -> `AuthService`.
-- [ ] **Step 2.4:** Implement `MessageRouter` to delegate `MessageType` to `AuthHandler`.
-- [ ] **Step 2.5:** Update `ClientHandler` to read JSON lines and pass them to the `MessageRouter`.
-
-## Phase 3: Client Infrastructure (`client`)
-Prepare the Client to send messages and handle responses.
-- [ ] **Step 3.1:** Update `ServerConnection` to use `BufferedReader`/`PrintWriter` (Text-based JSON) and Jackson.
-- [ ] **Step 3.2:** Implement `AuthClientService` to wrap the socket logic:
-    - Build Request DTO -> Send -> Wait for Response -> Return Result.
-- [ ] **Step 3.3:** Refactor `SignInController` and `RegisterController`:
-    - **CRITICAL:** Remove all `com.nhom1.auction.server.*` imports.
-    - Call `AuthClientService` instead.
-
-## Phase 4: Validation
-- [ ] **Step 4.1:** Verify `REGISTER` flow: User created in `auction.db` via Socket.
-- [ ] **Step 4.2:** Verify `LOGIN` flow: User logs in and receives correct Role from Server.
+**Trạng thái:** Đang thực hiện (In Progress)
+**Mục tiêu:** Tách biệt hoàn toàn Client và Server. Mọi giao tiếp Login/Register phải đi qua Socket bằng JSON thay vì gọi trực tiếp Class của nhau.
 
 ---
 
-## Architectural Constraints
-1. **JSON Protocol:** One JSON object per line. No mixed streams (Object vs Text).
-2. **Standardization:** Use `username` (not `email`) to match current database schema.
-3. **Strict Decoupling:** The `client` package MUST NOT import anything from the `server` package.
-4. **Error Handling:** Services throw Exceptions; Handlers catch them and return JSON Error Codes.
+## 1. Nhật ký tiến độ (Progress Log)
+
+### Phase 1: Giao thức chung (`common`) - **HOÀN THÀNH** ✅
+Chúng ta đã xây dựng bộ "ngôn ngữ chung" mà cả Client và Server đều hiểu.
+- [x] **Step 1.1:** Định nghĩa `MessageType` (LOGIN, REGISTER, LIST_AUCTIONS...).
+- [x] **Step 1.2:** Tạo "Vỏ bọc tin nhắn" (Message Envelope): `RequestMessage<T>` và `ResponseMessage<T>`.
+- [x] **Step 1.3:** Tạo các "Gói dữ liệu" (Payload): `LoginRequest`, `RegisterRequest`, và `AuthResponse`.
+
+### Phase 2: Hạ tầng Server (`server`) - **ĐANG THỰC HIỆN** 🏗️
+- [x] **Step 2.0:** Cập nhật `BaseEntity` và toàn bộ các Entity (`User`, `Auction`, `Item`, `BidTransaction`) để hỗ trợ việc đọc/ghi Database.
+- [x] **Step 2.1:** Tạo `UserRepository` (DAO) để xử lý SQL (Đã hoàn thành).
+- [x] **Step 2.2:** Refactor `AuthService` (Logic nghiệp vụ - Đã hoàn thành).
+- [ ] **Step 2.3:** Cài đặt `AuthHandler`.
+- [ ] **Step 2.4:** Cài đặt `MessageRouter`.
+- [ ] **Step 2.5:** Update `ClientHandler`.
 
 ---
 
-## Next Action
-**Phase 1: Shared Protocol.** 
-We will begin by creating the `com.nhom1.auction.common.protocol` package and the basic message envelopes.
+## 2. Giải thích các khái niệm kỹ thuật (Dành cho thành viên nhóm)
+
+### Tại sao dùng Generic `<T>` cho tin nhắn?
+Hãy tưởng tượng `RequestMessage` là một **Chiếc hộp bưu điện tiêu chuẩn**.
+- **Cái hộp (Envelope):** Luôn có mã ID và loại hàng (Type) ghi bên ngoài để bưu tá (Router) biết phải giao đi đâu.
+- **Hàng bên trong (Payload `T`):** Có thể là bất cứ thứ gì (Thông tin Login, Thông tin Đấu giá...).
+- **Lợi ích:** Chúng ta chỉ cần viết 1 Class hộp duy nhất, nhưng có thể đựng mọi loại hàng khác nhau.
+
+### Tại sao cần 2 Constructor (Hàm khởi tạo) trong Entity?
+Tất cả các Class kế thừa `BaseEntity` đều có 2 cách để sinh ra:
+
+1. **Cách 1: Tạo mới hoàn toàn (Dành cho đăng ký/tạo mới)**
+   - Dùng khi người dùng nhập dữ liệu từ UI.
+   - **Cơ chế:** Tự động sinh ra một mã UUID mới và lấy thời gian hiện tại làm `createdAt`.
+   - *Lưu ý:* Client không bao giờ được tự sinh ID để tránh bị trùng lặp hoặc hack thời gian.
+
+2. **Cách 2: Tái tạo từ Database (Dành cho Login/Xem dữ liệu)**
+   - Dùng khi chúng ta lấy dữ liệu từ DB lên.
+   - **Cơ chế:** Chúng ta "ép" Object phải nhận lại đúng cái ID và mốc thời gian cũ đã lưu trong DB thay vì sinh cái mới.
+
+### Tại sao ID và Timestamps lại là `final`?
+Chúng ta muốn dữ liệu có tính **bất biến (Immutable)**. Một khi một User hoặc một món hàng đã được tạo ra:
+- ID của nó không bao giờ được thay đổi.
+- Ngày tạo (`createdAt`) không bao giờ được sửa.
+Điều này giúp hệ thống cực kỳ ổn định và dễ track lỗi.
+
+---
+
+## 3. Quy ước DTO (Data Transfer Object)
+- **LoginRequest:** Dùng `identifier` (có thể là username HOẶC email) + `password`.
+- **RegisterRequest:** Client gửi `username`, `email`, `password`. Server sẽ tự gán `role = USER` mặc định để bảo mật (không để Client tự chọn role ADMIN).
+- **AuthResponse:** Sau khi login thành công, Server gửi lại `userId`, `username`, `email`, `role` để Client biết đường hiển thị giao diện Admin hay User.
+
+---
+
+## 4. Bước tiếp theo (Next Action)
+Tiếp tục **Step 2.1**: Viết Class `UserRepository` để thực hiện các câu lệnh SQL thực tế vào file `auction.db`.

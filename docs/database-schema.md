@@ -1,11 +1,12 @@
 Table users {
-id text [pk, note: "UUID"]
-username text [not null, unique]
-password text [not null]
-full_name text [not null]
-role text [not null, default: "USER", note: "USER | ADMIN"]
-created_at text [not null]
-updated_at text [not null]}
+  id text [pk, note: "UUID"]
+  username text [not null, unique]
+  email text [not null, unique]
+  password text [not null]
+  role text [not null, default: "USER", note: "USER | ADMIN"]
+  created_at text [not null]
+  updated_at text [not null]
+}
 
 Table items {
 id text [pk, note: "UUID"]
