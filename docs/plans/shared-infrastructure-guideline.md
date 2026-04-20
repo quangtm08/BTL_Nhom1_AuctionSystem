@@ -55,8 +55,8 @@ Client nên sở hữu:
 ```text
 JavaFX UI (View)
 -> Controller
--> Client Service
--> ServerConnection
+-> Client Service (tạo connection với server + dto)
+-> ServerConnection (dto -> json)
 -> Socket Output
 ```
 
@@ -87,11 +87,11 @@ JavaFX UI (View)
 Client UI
 -> ServerConnection
 (Server bắt đầu từ đây)
--> ClientHandler
+-> ClientHandler (json -> object)
 -> MessageRouter
--> Feature Handler
--> Service
--> Repository
+-> Feature Handler 
+-> Service (business logic)
+-> Repository (SQL)
 -> Database
 ```
 
