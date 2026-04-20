@@ -14,6 +14,15 @@ public abstract class BaseEntity {
         updatedAt = LocalDateTime.now();
     }
 
+
+    //this constructor is used by repository to create object with already existed id and timestamps
+    protected BaseEntity(UUID id, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+
     public final UUID getId() {
         return id;
     }

@@ -61,6 +61,23 @@ public class Auction extends BaseEntity{
         this.bidHistory = new ArrayList<>();
     }
 
+    /**
+     * Use this constructor for loading an EXISTING auction from the database.
+     */
+    public Auction(UUID id, UUID itemId, UUID sellerId, LocalDateTime startTime, LocalDateTime endTime,
+                   UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
+                   LocalDateTime createdAt, LocalDateTime updatedAt) {
+        super(id, createdAt, updatedAt);
+        this.itemId = itemId;
+        this.sellerId = sellerId;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.highestBidderId = highestBidderId;
+        this.currentHighestBid = currentHighestBid;
+        this.status = status;
+        this.bidHistory = new ArrayList<>();
+    }
+
     public void startAuction() throws InvalidAuctionStateException {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
