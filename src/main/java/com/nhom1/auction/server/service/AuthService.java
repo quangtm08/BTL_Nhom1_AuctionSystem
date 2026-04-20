@@ -1,91 +1,36 @@
 package com.nhom1.auction.server.service;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.nhom1.auction.server.database.DBConnection;
+import com.nhom1.auction.common.entity.User;
+import com.nhom1.auction.common.enums.UserRole;
+import com.nhom1.auction.common.exception.AuthenticationException;
+import com.nhom1.auction.common.exception.UserAlreadyExistsException;
+import com.nhom1.auction.server.repository.UserRepository;
 
 public class AuthService {
+    private final UserRepository userRepository;
 
-    public String login(String username, String password) {
-        String sql = "SELECT role FROM users WHERE username = ? AND password = ?";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, username);
-            ps.setString(2, password);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return rs.getString("role");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return null;
+    public AuthService(UserRepository userRepository){
+        this.userRepository = userRepository;
     }
 
-    public boolean register(String username, String password, String role) {
-        String checkSql = "SELECT id FROM users WHERE username = ?";
-        String insertSql = "INSERT INTO users(username, password, role) VALUES (?, ?, ?)";
-
-        try (Connection conn = DBConnection.getConnection()) {
-
-            // 1. Kiểm tra username đã tồn tại chưa
-            PreparedStatement checkPs = conn.prepareStatement(checkSql);
-            checkPs.setString(1, username);
-            ResultSet rs = checkPs.executeQuery();
-
-            if (rs.next()) {
-                // username đã tồn tại
-                return false;
-            }
-
-            // 2. Insert user mới
-            PreparedStatement insertPs = conn.prepareStatement(insertSql);
-            insertPs.setString(1, username);
-            insertPs.setString(2, password);
-            insertPs.setString(3, role);
-
-            int rows = insertPs.executeUpdate();
-
-            return rows > 0;
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+    public User login(String identifier, String password) throws AuthenticationException {
+        return userRepository.findByIdentifier(identifier)
+            .filter(user -> user.getPassword().equals(password))
+            .orElseThrow(() -> new AuthenticationException("Wrong email/username or password"));
     }
 
-    // 📋 Lấy toàn bộ user (test)
-    public List<String> getAllUsers() {
-        List<String> list = new ArrayList<>();
-
-        String sql = "SELECT username, password, role FROM users";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                String user = rs.getString("username") + " | "
-                        + rs.getString("password") + " | "
-                        + rs.getString("role");
-
-                list.add(user);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    public User register(String username, String email, String password) throws UserAlreadyExistsException {
+        if (userRepository.existsByEmail(email)){
+            throw new UserAlreadyExistsException("Email already exists");
+        }
+        if (userRepository.existsByUsername(username)){
+            throw new UserAlreadyExistsException("Username already exists");
         }
 
-        return list;
+        User newUser = new User(username, email, password, UserRole.USER);
+        userRepository.save(newUser);
+
+        return newUser;
     }
+}
 }
