@@ -8,7 +8,7 @@ import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
-import com.nhom1.auction.server.service.AuthService;
+import com.nhom1.auction.server.auth.AuthService;
 
 //It translates JSON into DTOs and calls the Service.
 
