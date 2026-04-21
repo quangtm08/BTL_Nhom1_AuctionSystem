@@ -1,0 +1,90 @@
+package com.nhom1.auction.server.auth;
+
+import com.nhom1.auction.common.entity.User;
+import com.nhom1.auction.common.enums.UserRole;
+
+import java.sql.*;
+import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * UserRepository: The "Database Engine" for the Auth feature.
+ * It handles raw SQL queries for the users table.
+ */
+public class UserRepository {
+    private final Connection connection;
+
+    public UserRepository(Connection connection) {
+        this.connection = connection;
+    }
+
+    public Optional<User> findByIdentifier(String identifier) {
+        String sql = "SELECT * FROM users WHERE username = ? OR email = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, identifier);
+            ps.setString(2, identifier);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User user = new User(
+                        UUID.fromString(rs.getString("id")),
+                        rs.getString("username"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        UserRole.valueOf(rs.getString("role")),
+                        LocalDateTime.parse(rs.getString("created_at")),
+                        LocalDateTime.parse(rs.getString("updated_at"))
+                    );
+                    return Optional.of(user);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    public boolean existsByUsername(String username) {
+        String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean existsByEmail(String email) {
+        String sql = "SELECT 1 FROM users WHERE email = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public void save(User user) {
+        String sql = "INSERT INTO users(id, username, email, password, role, created_at, updated_at) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, user.getId().toString());
+            ps.setString(2, user.getUsername());
+            ps.setString(3, user.getEmail());
+            ps.setString(4, user.getPassword());
+            ps.setString(5, user.getRole().name());
+            ps.setString(6, user.getCreatedAt().toString());
+            ps.setString(7, user.getUpdatedAt().toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}

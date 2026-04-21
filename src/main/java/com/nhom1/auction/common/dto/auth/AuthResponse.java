@@ -5,18 +5,15 @@ import com.nhom1.auction.common.enums.UserRole;
 public class AuthResponse {
     private String userID; //use String instead of UUID for safer JSON conversion and compatibility
     private String username;
-    private String emaill;
+    private String email;
     private UserRole role;
-
-
-
 
     public AuthResponse() {};
 
-    public AuthResponse(String userID, String username, String emaill, UserRole role) {
+    public AuthResponse(String userID, String username, String email, UserRole role) {
         this.userID = userID;
         this.username = username;
-        this.emaill = emaill;
+        this.email = email;
         this.role = role;
     }
 
@@ -36,12 +33,12 @@ public class AuthResponse {
         this.username = username;
     }
 
-    public String getEmaill() {
-        return emaill;
+    public String getEmail() {
+        return email;
     }
 
-    public void setEmaill(String emaill) {
-        this.emaill = emaill;
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public UserRole getRole() {

@@ -1,11 +1,14 @@
-package com.nhom1.auction.server.service;
+package com.nhom1.auction.server.auth;
 
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.UserAlreadyExistsException;
-import com.nhom1.auction.server.repository.UserRepository;
 
+/**
+ * AuthService: The "Business Brain" for Authentication.
+ * It makes decisions about login/register without knowing about SQL or JSON.
+ */
 public class AuthService {
     private final UserRepository userRepository;
 
@@ -32,5 +35,4 @@ public class AuthService {
 
         return newUser;
     }
-}
 }
