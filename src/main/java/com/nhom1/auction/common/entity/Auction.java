@@ -15,24 +15,25 @@ import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 
-
-public class Auction extends BaseEntity{
+public class Auction extends BaseEntity {
     private final UUID itemId;
     private final UUID sellerId;
     private final LocalDateTime startTime;
-    private final LocalDateTime endTime;
+    private LocalDateTime endTime;
     private final List<BidTransaction> bidHistory;
 
-//volatile để đảm bảo giá trị được cập nhật và đồng bộ hóa, thread-safe !
+    // volatile để đảm bảo giá trị được cập nhật và đồng bộ hóa, thread-safe !
     private volatile UUID highestBidderId;
     private volatile BigDecimal currentHighestBid;
     private volatile AuctionStatus status;
 
-// thêm ReentrantLock đảm bảo thread-safety khi thay đổi trạng thái của phiên.
-    private final ReentrantLock auctionLock = new ReentrantLock(true); //Fair lock để đảm bảo thứ tự truy cập công bằng giữa các thread.
+    // thêm ReentrantLock đảm bảo thread-safety khi thay đổi trạng thái của phiên.
+    private final ReentrantLock auctionLock = new ReentrantLock(true); // Fair lock để đảm bảo thứ tự truy cập công bằng
+                                                                       // giữa các thread.
     private final Object bidHistoryMonitor = new Object(); // Monitor riêng để đồng bộ hóa truy cập vào bidHistory
+
     // TODO: Change exception to domain exception of the app.
-    public Auction(UUID itemId,UUID sellerId, LocalDateTime startTime, LocalDateTime endTime){
+    public Auction(UUID itemId, UUID sellerId, LocalDateTime startTime, LocalDateTime endTime) {
         if (itemId == null) {
             throw new IllegalArgumentException("itemId must not be null");
         }
@@ -48,7 +49,6 @@ public class Auction extends BaseEntity{
         if (!endTime.isAfter(startTime)) {
             throw new IllegalArgumentException("endTime must be after startTime");
         }
-
 
         this.itemId = itemId;
         this.sellerId = sellerId;
@@ -81,7 +81,7 @@ public class Auction extends BaseEntity{
     public void startAuction() throws InvalidAuctionStateException {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
-            if (status == AuctionStatus.OPEN){
+            if (status == AuctionStatus.OPEN) {
                 status = AuctionStatus.RUNNING;
                 touchUpdatedAt();
             } else {
@@ -95,7 +95,7 @@ public class Auction extends BaseEntity{
     public void endAuction() throws InvalidAuctionStateException {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
-            if (status == AuctionStatus.RUNNING){
+            if (status == AuctionStatus.RUNNING) {
                 status = AuctionStatus.FINISHED;
                 touchUpdatedAt();
             } else {
@@ -110,7 +110,7 @@ public class Auction extends BaseEntity{
     public void markAsPaid() throws InvalidAuctionStateException {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
-            if (status == AuctionStatus.FINISHED){
+            if (status == AuctionStatus.FINISHED) {
                 status = AuctionStatus.PAID;
                 touchUpdatedAt();
             } else {
@@ -122,7 +122,7 @@ public class Auction extends BaseEntity{
     }
 
     public BidTransaction placeBid(UUID bidderId, BigDecimal amount, BidType bidType, LocalDateTime bidTime)
-        throws InvalidBidException, AuctionClosedException, UnauthorizedActionException {
+            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException {
 
         auctionLock.lock(); // Lock to ensure thread safety when placing a bid
         try {
@@ -141,23 +141,23 @@ public class Auction extends BaseEntity{
         }
     }
 
-
-    //TODO Rewrite this to use ID check. SELLER roll no longer exists
-    // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or RUNNING auctions.
+    // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or
+    // RUNNING auctions.
     public void cancelAuction(UUID callerId, UserRole userRole)
-        throws InvalidAuctionStateException, UnauthorizedActionException {
+            throws InvalidAuctionStateException, UnauthorizedActionException {
 
         auctionLock.lock(); // Lock to ensure thread safety when canceling the auction
         try {
             if (userRole == UserRole.ADMIN
-                && (status == AuctionStatus.OPEN || status == AuctionStatus.RUNNING)){
+                    && (status == AuctionStatus.OPEN || status == AuctionStatus.RUNNING)) {
                 status = AuctionStatus.CANCELED;
                 touchUpdatedAt();
             } else if (userRole == UserRole.USER && callerId != null && callerId.equals(sellerId)
-                && status == AuctionStatus.OPEN) {
+                    && status == AuctionStatus.OPEN) {
                 status = AuctionStatus.CANCELED;
                 touchUpdatedAt();
-            } else if (userRole == UserRole.ADMIN || (userRole == UserRole.USER && callerId != null && callerId.equals(sellerId))) {
+            } else if (userRole == UserRole.ADMIN
+                    || (userRole == UserRole.USER && callerId != null && callerId.equals(sellerId))) {
                 throw new InvalidAuctionStateException("The auction cannot be canceled in its current state");
             } else {
                 throw new UnauthorizedActionException("Only the owning seller or an admin can cancel this auction");
@@ -167,13 +167,14 @@ public class Auction extends BaseEntity{
             auctionLock.unlock();
         }
     }
-    // Return a snapshot so callers cannot modify the auction's internal bid history.
+
+    // Return a snapshot so callers cannot modify the auction's internal bid
+    // history.
     public List<BidTransaction> getBidHistory() {
         synchronized (bidHistoryMonitor) { // Synchronize on the same monitor used when modifying the bid history
             return List.copyOf(bidHistory);
         }
     }
-
 
     public UUID getItemId() {
         return itemId;
@@ -191,6 +192,17 @@ public class Auction extends BaseEntity{
         return endTime;
     }
 
+    // Used by AuctionScheduler for anti-sniping: extends the end time when a bid is placed near the deadline.
+    public void extendEndTime(LocalDateTime newEndTime) {
+        auctionLock.lock();
+        try {
+            this.endTime = newEndTime;
+            touchUpdatedAt();
+        } finally {
+            auctionLock.unlock();
+        }
+    }
+
     public UUID getHighestBidderId() {
         return highestBidderId;
     }
@@ -203,4 +215,3 @@ public class Auction extends BaseEntity{
         return status;
     }
 }
-
