@@ -11,8 +11,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /*
- - The entry point of the Auction System.
- - It bootstraps the ServerContext (Shared infrastructure + Modules) and manages the Socket network connections.
+ - The entry point of the Auction System. Run this file will run the server
+ - It initializes the ServerContext (Shared infrastructure + Modules) and manages the Socket network connections.
  */
 public class Server {
     public static void main(String[] args) {
@@ -33,6 +33,7 @@ public class Server {
                 System.out.println("========================================");
 
                 while (true) {
+                    //Blocking call: the server waits here until a client connects and wakes it up
                     Socket socket = serverSocket.accept();
                     clientCount++;
 

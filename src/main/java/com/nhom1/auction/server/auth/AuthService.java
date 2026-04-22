@@ -5,23 +5,34 @@ import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.UserAlreadyExistsException;
 
-/**
- * AuthService: The "Business Brain" for Authentication.
- * It makes decisions about login/register without knowing about SQL or JSON.
- */
+import java.util.List;
+
+/*
+ - Execute authentication business logic. Does not know anything about JSON or SQL:
+ + AuthHandler already turns JSON to DTOs and use it to call this service
+ + This service asks repository to read/write to database
+  */
 public class AuthService {
     private final UserRepository userRepository;
+
 
     public AuthService(UserRepository userRepository){
         this.userRepository = userRepository;
     }
+    
+    //Return all users
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 
+    //Take in identifier (email or username) and password. Return User object if success, throw exception if failed
     public User login(String identifier, String password) throws AuthenticationException {
         return userRepository.findByIdentifier(identifier)
             .filter(user -> user.getPassword().equals(password))
             .orElseThrow(() -> new AuthenticationException("Wrong email/username or password"));
     }
 
+    //Take in username, email and password. Return User object if success, throw exception if failed
     public User register(String username, String email, String password) throws UserAlreadyExistsException {
         if (userRepository.existsByEmail(email)){
             throw new UserAlreadyExistsException("Email already exists");

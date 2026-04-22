@@ -4,6 +4,7 @@ import com.nhom1.auction.common.protocol.ResponseMessage;
 
 @FunctionalInterface
 public interface MessageRouteAction {
-    //Take raw JSON and Jackson mapper -> return Response object
+    //Contract: Take requestId and payload -> return Response object with the same Id and response payload
+    //Used by feature handler (E.g. AuthHanlder)
     ResponseMessage<?> execute(String requestId, String jsonPayload) throws Exception;
 }

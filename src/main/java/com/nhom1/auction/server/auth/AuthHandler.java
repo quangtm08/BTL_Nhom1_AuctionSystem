@@ -10,8 +10,7 @@ import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.auth.AuthService;
 
-//It translates JSON into DTOs and calls the Service.
-
+//It translates JSON into DTOs (Login request, Register request) and calls the AuthService to get result
 public class AuthHandler {
     private final AuthService authService;
 

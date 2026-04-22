@@ -74,6 +74,9 @@ Nếu một tính năng (ví dụ: `AuctionService`) cần thông tin từ một
 *   **KHÔNG** viết lại câu lệnh SQL truy vấn user trong `AuctionRepository`.
 *   **Cách đúng:** Truyền đối tượng `UserRepository` (hoặc `AuthService`) vào cho `AuctionService` thông qua hàm khởi tạo (constructor). Từ đó, tái sử dụng các hàm đã được viết sẵn (như `findByIdentifier()`). Việc các Service hoặc Repository gọi chéo nhau để đọc dữ liệu là hoàn toàn hợp lệ và khuyến khích nhằm tránh trùng lặp code.
 
+**LƯU Ý:** CẦN TRAO ĐỔI VỚI NGƯỜI OWN FLOW KIA ĐỂ VIẾT THÊM METHOD VÀ SQL QUERY NẾU CẦN
+
+
 ---
 
 ## 4. Checklist Hoàn Thành Một Tính Năng

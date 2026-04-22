@@ -8,7 +8,7 @@ import java.net.Socket;
 
 /*
 Each client interacts with the server through a ClientHandler
-It reads from the socket, asks the Router for an answer, and writes back.
+It reads from the socket, asks the MessageRouter for an answer, and writes back.
  */
 public class ClientHandler implements Runnable {
     private final Socket socket;
@@ -19,6 +19,8 @@ public class ClientHandler implements Runnable {
         this.router = router;
     }
 
+
+    //Read JSON request from socket with BufferedReader and write JSON response to socket with PrintWriter
     @Override
     public void run() {
         try (
@@ -26,7 +28,8 @@ public class ClientHandler implements Runnable {
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)
         ) {
             String inputLine;
-            while ((inputLine = in.readLine()) != null) {
+            //Continue to read till reaches the end (return null)
+            while ((inputLine = in.readLine()) != null) { 
                 // Pass raw JSON to message router and get raw JSON response back
                 String response = router.handleRequest(inputLine);
                 out.println(response);

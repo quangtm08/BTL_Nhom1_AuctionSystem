@@ -5,12 +5,14 @@ import com.nhom1.auction.common.enums.UserRole;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * UserRepository: The "Database Engine" for the Auth feature.
- * It handles raw SQL queries for the users table.
+- Execute raw SQL and return result for AuthService
+- Interacts with user table
  */
 public class UserRepository {
     private final Connection connection;
@@ -19,6 +21,35 @@ public class UserRepository {
         this.connection = connection;
     }
 
+
+
+    //Return all users
+    public List<User> findAll() {
+        String sql = "SELECT * FROM users";
+        List<User> users = new ArrayList<>();
+        try (Statement stmt = connection.createStatement()) {
+            try (ResultSet rs = stmt.executeQuery(sql)) {
+                while (rs.next()) {
+                    users.add(new User(
+                        UUID.fromString(rs.getString("id")),
+                        rs.getString("username"),
+                        rs.getString("email"),
+                        rs.getString("password"),
+                        UserRole.valueOf(rs.getString("role")),
+                        LocalDateTime.parse(rs.getString("created_at")),
+                        LocalDateTime.parse(rs.getString("updated_at"))
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return users;
+    }
+
+
+
+    //Take username or email. Return user object if found
     public Optional<User> findByIdentifier(String identifier) {
         String sql = "SELECT * FROM users WHERE username = ? OR email = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -63,6 +94,9 @@ public class UserRepository {
         return Optional.empty();
     }
 
+
+
+    //Take in username. Returns boolean if user exists
     public boolean existsByUsername(String username) {
         String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -76,6 +110,7 @@ public class UserRepository {
         return false;
     }
 
+    //Take in email. Returns boolean if user exists
     public boolean existsByEmail(String email) {
         String sql = "SELECT 1 FROM users WHERE email = ? LIMIT 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -89,6 +124,8 @@ public class UserRepository {
         return false;
     }
 
+
+    //Take in user object. Convert it to SQL fields and save user to database
     public void save(User user) {
         String sql = "INSERT INTO users(id, username, email, password, role, created_at, updated_at) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
