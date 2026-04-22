@@ -44,7 +44,7 @@ BTL_AuctionSystem/
 │   ├── main/
 │   │   ├── java/com/nhom1/auction/
 │   │   │   ├── client/                 # Phía client (JavaFX - giao diện)
-│   │   │   │   ├── Controller/         # Điều khiển UI (MVC Controller)
+│   │   │   │   ├── controller/         # Điều khiển UI (MVC Controller)
 │   │   │   │   ├── AppAssets.java      # Quản lý tài nguyên (ảnh, font,…)
 │   │   │   │   ├── AppNavigator.java   # Điều hướng giữa các màn hình
 │   │   │   │   └── ClientApplication.java # Entry point của ứng dụng client
