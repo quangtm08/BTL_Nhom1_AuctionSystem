@@ -46,10 +46,51 @@ Mở terminal và chạy lệnh:
 mvn exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"
 ```
 
-### 2. Chạy Client
-Mở terminal mới và chạy lệnh:
-```bash
-mvn javafx:run
+```text
+BTL_AuctionSystem/
+├── .github/                # Cấu hình CI/CD, workflow GitHub Actions
+├── .idea/                  # Cấu hình IDE IntelliJ (không quan trọng khi deploy)
+├── .mvn/                   # Wrapper Maven
+├── .vscode/                # Cấu hình VS Code
+├── database/               # Script cơ sở dữ liệu (SQL, schema)
+├── design/                 # File thiết kế giao diện (Figma, ảnh mockup)
+├── docs/                   # Tài liệu đặc tả, yêu cầu bài toán
+├── src/
+│   ├── main/
+│   │   ├── java/com/nhom1/auction/
+│   │   │   ├── client/                 # Phía client (JavaFX - giao diện)
+│   │   │   │   ├── controller/         # Điều khiển UI (MVC Controller)
+│   │   │   │   ├── AppAssets.java      # Quản lý tài nguyên (ảnh, font,…)
+│   │   │   │   ├── AppNavigator.java   # Điều hướng giữa các màn hình
+│   │   │   │   └── ClientApplication.java # Entry point của ứng dụng client
+│   │   │   │
+│   │   │   ├── common/                 # Thành phần dùng chung (shared)
+│   │   │   │   ├── entity/             # Thực thể (User, Auction, Item,...)
+│   │   │   │   ├── enums/              # Kiểu liệt kê (Status, Role,...)
+│   │   │   │   ├── exception/          # Exception tùy chỉnh
+│   │   │   │   ├── factory/            # Factory Pattern tạo object
+│   │   │   │   ├── observer/           # Observer Pattern (real-time update)
+│   │   │   │   ├── value/              # Value Object (Money, TimeRange,...)
+│   │   │   │   └── utils/              #  Các lớp tiện ích (helper functions)
+│   │   │   │
+│   │   │   └── server/                 # Backend xử lý nghiệp vụ
+│   │   │       ├── controller/         # Xử lý request từ client
+│   │   │       ├── service/            # Business logic
+│   │   │       ├── repository/         # Truy cập dữ liệu (DB)
+│   │   │       └── ServerApplication.java # Entry point server
+│   │   │
+│   │   └── resources/
+│   │       ├── assets/                 # Ảnh, font
+│   │       ├── css/                    # File style JavaFX
+│   │       └── views/                  # File FXML giao diện
+│   │
+│   └── test/                           # Unit test (JUnit)
+├── target/                             # File build (auto sinh)
+├── .gitignore                          # Bỏ qua file không cần commit
+├── mvnw / mvnw.cmd                     # Maven wrapper
+├── nbactions.xml                       # Config NetBeans (nếu dùng)
+├── pom.xml                             # Cấu hình Maven (dependency, build)
+└── README.md                           # Mô tả project
 ```
 
 ## 📝 Tài liệu tham khảo
