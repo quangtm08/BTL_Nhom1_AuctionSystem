@@ -1,16 +1,16 @@
 package com.nhom1.auction.client;
 
-import com.nhom1.auction.common.classes.BaseMainController;
+import com.nhom1.auction.client.BaseShellController;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 public class AppNavigator {
 
-    private static BaseMainController mainController;
+    private static BaseShellController mainController;
     private static AppView currentView;
 
 
-    public static void setRoot(BaseMainController controller) {
+    public static void setRoot(BaseShellController controller) {
         mainController = controller;
     }
 
@@ -21,7 +21,6 @@ public class AppNavigator {
     @SuppressWarnings({"UseSpecificCatch", "CallToPrintStackTrace"})
     public static void navigateTo(AppView view) {
         try {
-            
             if (view == currentView) return;
 
             currentView = view;
@@ -29,7 +28,6 @@ public class AppNavigator {
             FXMLLoader loader = new FXMLLoader(
                 AppNavigator.class.getResource(view.getFxml())
             );
-        
 
             Parent root = loader.load();
 

@@ -1,7 +1,6 @@
 package com.nhom1.auction.client;
 
-import com.nhom1.auction.client.user.Connection.ServerConnection;
-import com.nhom1.auction.client.user.Controller.MainController;
+import com.nhom1.auction.client.user.connection.ServerConnection;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -33,9 +32,9 @@ public class ClientApplication extends Application {
 
         Scene scene = new Scene(loader.load(), DESIGN_WIDTH, DESIGN_HEIGHT);
 
-        MainController mainController = loader.getController();
+        ShellController shellController = loader.getController();
 
-        AppNavigator.setRoot(mainController);
+        AppNavigator.setRoot(shellController);
 
         stage.setScene(scene);
         stage.setMinWidth(MIN_WIDTH);

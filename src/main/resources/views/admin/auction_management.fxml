@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@/css/admin/auction_management.css"
+            styleClass="root">
+
+    <left>
+        <fx:include source="components/admin_sidebar.fxml"/>
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="custom-scroll-pane">
+            <VBox spacing="30" style="-fx-padding: 40;">
+
+                <VBox spacing="5">
+                    <Label text="Auction Management" styleClass="dashboard-title"/>
+                    <Label text="8 total auctions · 3 pending approval" styleClass="dashboard-date"/>
+                </VBox>
+
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <ToggleButton text="Pending" styleClass="filter-btn"/>
+                    <ToggleButton text="Live" styleClass="filter-btn"/>
+                    <ToggleButton text="Ended" styleClass="filter-btn"/>
+                    <ToggleButton text="All" styleClass="filter-btn-active" selected="true"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <TextField promptText="Search auctions..." prefWidth="250" styleClass="search-field"/>
+                </HBox>
+
+                <VBox styleClass="table-card">
+                    <GridPane hgap="15" vgap="0">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="180" prefWidth="180" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="120" prefWidth="120" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="150" prefWidth="150" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="120" prefWidth="120" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="ALWAYS" />    </columnConstraints>
+
+                        <children>
+                            <HBox styleClass="table-header-row" GridPane.columnSpan="8" GridPane.rowIndex="0">
+                                <padding><Insets bottom="10" top="10" left="10" right="10"/></padding>
+                            </HBox>
+                            <Label text="ITEM" styleClass="table-header-text" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                            <Label text="CATEGORY" styleClass="table-header-text" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                            <Label text="SELLER" styleClass="table-header-text" GridPane.columnIndex="2" GridPane.rowIndex="0" />
+                            <Label text="START PRICE" styleClass="table-header-text" GridPane.columnIndex="3" GridPane.rowIndex="0" />
+                            <Label text="TOP BID" styleClass="table-header-text" GridPane.columnIndex="4" GridPane.rowIndex="0" />
+                            <Label text="END TIME" styleClass="table-header-text" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+                            <Label text="STATUS" styleClass="table-header-text" GridPane.columnIndex="6" GridPane.rowIndex="0" />
+                            <Label text="ACTIONS" styleClass="table-header-text" GridPane.columnIndex="7" GridPane.rowIndex="0" />
+
+                            <HBox styleClass="table-row-bg" GridPane.columnSpan="8" GridPane.rowIndex="1">
+                                <padding><Insets bottom="12" top="12" left="10" right="10"/></padding>
+                            </HBox>
+                            <Label text="Macintosh 1984" styleClass="table-text-main" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                            <Label text="Electronics" styleClass="table-text-sub" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                            <Label text="apple_glazer" styleClass="table-text-sub" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                            <Label text="5,000" styleClass="table-text-sub" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                            <Label text="50,000" styleClass="price-highlight" GridPane.columnIndex="4" GridPane.rowIndex="1" />
+                            <Label text="2026-03-27" styleClass="table-text-sub" GridPane.columnIndex="5" GridPane.rowIndex="1" />
+                            <Label text="Running" styleClass="status-running" GridPane.columnIndex="6" GridPane.rowIndex="1" />
+                            <Button text="Cancel" styleClass="btn-cancel" GridPane.columnIndex="7" GridPane.rowIndex="1" />
+
+                            <HBox styleClass="table-row-bg" GridPane.columnSpan="8" GridPane.rowIndex="2">
+                                <padding><Insets bottom="12" top="12" left="10" right="10"/></padding>
+                            </HBox>
+                            <Label text="Vintage Rolex" styleClass="table-text-main" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                            <Label text="Watches" styleClass="table-text-sub" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                            <Label text="watch_collector" styleClass="table-text-sub" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                            <Label text="12,000" styleClass="table-text-sub" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                            <Label text="15,500" styleClass="price-highlight" GridPane.columnIndex="4" GridPane.rowIndex="2" />
+                            <Label text="2026-04-01" styleClass="table-text-sub" GridPane.columnIndex="5" GridPane.rowIndex="2" />
+                            <Label text="Running" styleClass="status-running" GridPane.columnIndex="6" GridPane.rowIndex="2" />
+                            <Button text="Cancel" styleClass="btn-cancel"   GridPane.columnIndex="7" GridPane.rowIndex="2" />
+
+                        </children>
+                        <padding>
+                            <Insets bottom="10" left="15" right="15" top="10" />
+                        </padding>
+                    </GridPane>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

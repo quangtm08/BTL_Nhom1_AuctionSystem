@@ -1,5 +1,8 @@
 package com.nhom1.auction.common.entity;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.enums.VehicleFuelType;
@@ -13,6 +16,19 @@ public class Vehicle extends Item {
         ItemCategory category, ItemCondition condition,
         String brand, int productionYear, VehicleFuelType fuelType) {
         super( name, description, category, condition);
+        this.brand = brand;
+        this.productionYear = productionYear;
+        this.fuelType = fuelType;
+    }
+
+    /**
+     * Use this constructor for loading an EXISTING vehicle item from the database.
+     */
+    public Vehicle(UUID id, String name, String description,
+                   ItemCategory category, ItemCondition condition,
+                   String brand, int productionYear, VehicleFuelType fuelType,
+                   LocalDateTime createdAt, LocalDateTime updatedAt) {
+        super(id, name, description, category, condition, createdAt, updatedAt);
         this.brand = brand;
         this.productionYear = productionYear;
         this.fuelType = fuelType;

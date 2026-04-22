@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml"
+            stylesheets="@/css/admin/user_management.css"
+            styleClass="root">
+
+       <left>
+        <fx:include source="components/admin_sidebar.fxml"/>
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="custom-scroll-pane">
+            <VBox spacing="35" style="-fx-padding: 50 60;">
+                
+                <VBox spacing="8">
+                    <Label text="User Management" styleClass="dashboard-title"/>
+                    <Label text="12 total users — 10 active, 2 banned" styleClass="dashboard-date"/>
+                </VBox>
+
+                <HBox spacing="15" alignment="CENTER_LEFT" styleClass="filter-container">
+                    <padding><Insets top="15" bottom="15" left="20" right="20"/></padding>
+                    <TextField promptText="Search by name or username..." HBox.hgrow="ALWAYS" styleClass="search-field"/>
+                    
+                    <Label text="Status:" styleClass="table-header-text"/>
+                    <HBox spacing="5" styleClass="toggle-group-container">
+                        <ToggleButton text="All" styleClass="filter-btn-active" selected="true"/>
+                        <ToggleButton text="Active" styleClass="filter-btn"/>
+                        <ToggleButton text="Banned" styleClass="filter-btn"/>
+                    </HBox>
+                </HBox>
+
+                <VBox styleClass="table-card">
+                    <GridPane hgap="10">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="200" prefWidth="200" /> 
+                            <ColumnConstraints minWidth="200" prefWidth="200" /> 
+                            <ColumnConstraints minWidth="120" prefWidth="120" halignment="CENTER"/> 
+                            <ColumnConstraints minWidth="150" prefWidth="150" /> 
+                            <ColumnConstraints minWidth="120" prefWidth="120" hgrow="ALWAYS" halignment="RIGHT"/> 
+                        </columnConstraints>
+                        <children>
+                            <HBox styleClass="table-header-row" GridPane.columnSpan="5" GridPane.rowIndex="0"/>
+                            <Label text="USERNAME" styleClass="table-header-text" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                            <Label text="FULL NAME" styleClass="table-header-text" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                            <Label text="STATUS" styleClass="table-header-text" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                            <Label text="REGISTERED" styleClass="table-header-text" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                            <Label text="ACTIONS" styleClass="table-header-text" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+
+                            <HBox styleClass="table-row-bg" GridPane.columnSpan="5" GridPane.rowIndex="1"/>
+                            <Label text="nguyenvana" styleClass="table-text-main" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            <Label text="Nguyễn Văn A" styleClass="table-text-sub" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                            <Label text="Active" styleClass="status-pill-active" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                            <Label text="Jan 12, 2025" styleClass="table-text-sub" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                            <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.columnIndex="4" GridPane.rowIndex="1">
+                                <Button text="👁" styleClass="btn-icon"/>
+                                <Button text="Ban" styleClass="btn-cancel"/>
+                            </HBox>
+
+                            <HBox styleClass="table-row-bg" GridPane.columnSpan="5" GridPane.rowIndex="2"/>
+                            <Label text="lehoanganh" styleClass="table-text-main" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                            <Label text="Lê Hoàng Anh" styleClass="table-text-sub" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                            <Label text="Banned" styleClass="status-pill-banned" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                            <Label text="Mar 1, 2025" styleClass="table-text-sub" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                            <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.columnIndex="4" GridPane.rowIndex="2">
+                                <Button text="👁" styleClass="btn-icon"/>
+                                <Button text="Unban" styleClass="btn-unban"/>
+                            </HBox>
+                        </children>
+                    </GridPane>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>

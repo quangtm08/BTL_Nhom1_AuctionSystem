@@ -1,29 +1,54 @@
 package com.nhom1.auction.server;
 
+import com.nhom1.auction.server.infrastructure.ClientHandler;
+import com.nhom1.auction.server.infrastructure.MessageRouter;
+import com.nhom1.auction.server.infrastructure.ServerContext;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-
+/*
+ - The entry point of the Auction System. Run this file will run the server
+ - It initializes the ServerContext (Shared infrastructure + Modules) and manages the Socket network connections.
+ */
 public class Server {
     public static void main(String[] args) {
-        int port = 12345 , ClientConnected = 0;
+        int port = 12345;
+        int clientCount = 0;
         ExecutorService pool = Executors.newFixedThreadPool(10);
 
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server run with port: " + port);
+        try {
+            // 1. Initialize Infrastructure & Features via Context
+            // This builds the Database connection, Router, and all Modules (Auth, etc.)
+            ServerContext context = new ServerContext();
+            MessageRouter router = context.getRouter();
 
-            while (true) {
-                Socket socket = serverSocket.accept();
-                pool.execute(new ClientHandler(socket));
-                ClientConnected++;
-                System.out.println("Client connected to Server: " + ClientConnected + " client.");
+            // 2. Start Network Listening
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                System.out.println("========================================");
+                System.out.println("   Listening on port: " + port);
+                System.out.println("========================================");
+
+                while (true) {
+                    //Blocking call: the server waits here until a client connects and wakes it up
+                    Socket socket = serverSocket.accept();
+                    clientCount++;
+
+                    System.out.println("[" + clientCount + "] New client connection from: " + socket.getInetAddress());
+
+                    // Each thread gets a reference to the same router (Thread-Safe)
+                    pool.execute(new ClientHandler(socket, router));
+                }
             }
-
-        } catch (IOException e) {
+        } catch (Exception e) {
+            System.err.println("CRITICAL: Server failed to start: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            pool.shutdown();
         }
     }
 }
+

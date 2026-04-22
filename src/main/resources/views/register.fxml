@@ -14,7 +14,7 @@
 
 <StackPane prefHeight="855.0" prefWidth="1320.0" styleClass="root-pane" stylesheets="@../css/register.css" 
             xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="com.nhom1.auction.client.user.Controller.RegisterController">
+            fx:controller="com.nhom1.auction.client.user.controller.RegisterController">
    <children>
       <HBox fillHeight="true" maxHeight="Infinity" maxWidth="Infinity" prefHeight="855.0" prefWidth="1320.0" styleClass="split-layout">
          <children>
@@ -69,8 +69,15 @@
                            <children>
                               <VBox spacing="10.0" styleClass="field-card">
                                  <children>
-                                    <Label styleClass="field-label" text="Username or Email" />
+                                    <Label styleClass="field-label" text="Username" />
                                     <TextField fx:id="txtUsername" styleClass="field-input" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="10.0" styleClass="field-card">
+                                 <children>
+                                    <Label styleClass="field-label" text="Email" />
+                                    <TextField fx:id="txtEmail" styleClass="field-input" />
                                  </children>
                               </VBox>
 

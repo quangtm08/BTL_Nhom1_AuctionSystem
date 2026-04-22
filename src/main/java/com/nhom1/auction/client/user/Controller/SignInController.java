@@ -1,10 +1,15 @@
-package com.nhom1.auction.client.user.Controller;
+package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.common.service.AuthService;
-
-import javafx.animation.PauseTransition;
+import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.common.dto.auth.AuthResponse;
+import com.nhom1.auction.common.dto.auth.LoginRequest;
+import com.nhom1.auction.common.enums.UserRole;
+import com.nhom1.auction.common.protocol.MessageType;
+import com.nhom1.auction.common.protocol.RequestMessage;
+import com.nhom1.auction.common.utils.AppContext;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -15,8 +20,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Duration;
-
 
 public class SignInController {
 
@@ -31,58 +34,45 @@ public class SignInController {
     public void initialize() {
 
         btnRegister.setOnAction(e -> {
-            AppNavigator.navigateTo(AppView.LOADING);
-
-            PauseTransition delay = new PauseTransition(Duration.seconds(2));
-
-            delay.setOnFinished(event -> {
-                    AppNavigator.navigateTo(AppView.REGISTER);
-                });
-            delay.play();
+            AppNavigator.navigateTo(AppView.REGISTER);
         });
 
-        btnSignIn.setOnAction((var e) -> {    
-
-            AuthService authService = new AuthService();
-
-            System.out.println("===== USERS =====");
-            authService.getAllUsers().forEach(System.out::println);
-
+        btnSignIn.setOnAction((var e) -> {
             String username = txtUsername.getText();
             String password = txtPassword.getText();
 
-            String USER_ROLE = authService.login(username, password);
-
-            if(USER_ROLE != null){
-                if(USER_ROLE.equals("ADMIN")){
-
-                    AppNavigator.navigateTo(AppView.LOADING);
-
-                    PauseTransition delay = new PauseTransition(Duration.seconds(2));
-
-                    delay.setOnFinished(event -> {
-                            AppNavigator.navigateTo(AppView.MAIN_DASHBOARD);
-                    });
-
-                    delay.play();
-                }
-                else{
-                    AppNavigator.navigateTo(AppView.LOADING);
-
-                    PauseTransition delay = new PauseTransition(Duration.seconds(2));
-
-                    delay.setOnFinished(event -> {
-                            AppNavigator.navigateTo(AppView.EXPLORE);
-                    });
-
-                    delay.play();
-                }
+            if (username.isEmpty() || password.isEmpty()) {
+                showError("Missing Info", "Please enter both username and password.");
+                return;
             }
-            else{
-                showError("Ooops!", "Incorrect account or password");
-                txtPassword.setText("");
-                txtUsername.setText("");
-            }
+
+            // 1. Package the request
+            LoginRequest loginRequest = new LoginRequest(username, password);
+            RequestMessage<LoginRequest> loginRequestMessage = new RequestMessage<>(MessageType.LOGIN, loginRequest);
+
+        // 2. Send and handle response
+        ServerConnection.getInstance().sendRequest(loginRequestMessage, AuthResponse.class)
+            .thenAccept(response -> {
+                Platform.runLater(() -> {
+                    if (response.isSuccess()) {
+                        AuthResponse authData = (AuthResponse) response.getPayload();
+                        AppContext.setCurrentUser(authData);
+
+                        if (authData.getRole() == UserRole.ADMIN) {
+                            AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
+                        } else {
+                            AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
+                        }
+                    } else {
+                        showError("Login Failed", response.getError().getMessage());
+                        txtPassword.clear();
+                    }
+                });
+            })
+            .exceptionally(ex -> {
+                Platform.runLater(() -> showError("Connection Error", "Server is down."));
+                return null;
+            });
 
         });
     }

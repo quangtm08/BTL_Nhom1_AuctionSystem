@@ -2,6 +2,5 @@ package com.nhom1.auction.common.enums;
 
 public enum UserRole {
     ADMIN,
-    SELLER,
-    BIDDER
+    USER
 }

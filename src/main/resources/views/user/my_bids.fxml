@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" 
+            styleClass="main-container" stylesheets="@/css/client/my_bids.css"
+            fx:controller="com.nhom1.auction.client.user.controller.MyBidsController">
+    
+    <left>
+        <fx:include source="/views/user/components/user_sidebar.fxml" />
+    </left>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll-pane">
+            <VBox spacing="30" styleClass="content-padding">
+                
+                <Label text="Always stay ahead" styleClass="dashboard-title-serif"/>
+                
+                <HBox spacing="60">
+                    <VBox spacing="5">
+                        <Label text="Active bids" styleClass="stat-label"/>
+                        <Label text="7" styleClass="stat-value-white"/>
+                    </VBox>
+                    <VBox spacing="5">
+                        <Label text="Winning" styleClass="stat-label"/>
+                        <Label text="7" styleClass="stat-value-green"/>
+                    </VBox>
+                    <VBox spacing="5">
+                        <Label text="Losing" styleClass="stat-label"/>
+                        <Label text="0" styleClass="stat-value-red"/>
+                    </VBox>
+                    <VBox spacing="5">
+                        <Label text="Ending soon (24h)" styleClass="stat-label"/>
+                        <Label text="3" styleClass="stat-value-white"/>
+                    </VBox>
+                </HBox>
+                
+                <VBox spacing="15">
+                    <TextField promptText="Search..." styleClass="search-field"/>
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Button text="All" styleClass="filter-chip"/>
+                        <Button text="Winning" styleClass="filter-chip"/>
+                        <Button text="Losing" styleClass="filter-chip"/>
+                        <Button text="Watchlist" styleClass="filter-chip"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Sort by" styleClass="text-dim"/>
+                        <Label text="Ending soon" styleClass="sort-text-active"/>
+                    </HBox>
+                </VBox>
+                
+                <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
+                <content>
+                    <GridPane hgap="30.0" vgap="30.0">
+                        <padding>
+                            <Insets bottom="30.0" right="20.0" />
+                        </padding>
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
+                        </columnConstraints>
+                        <children>
+                            <VBox styleClass="product-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                <HBox alignment="CENTER_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Vintage Fender Guitar" styleClass="card-title-text"/>
+                                        <Label text="Art &amp; Collectibles" styleClass="card-sub-text"/>
+                                    </VBox>
+                                    <Label text="Winning" styleClass="status-badge"/>
+                                </HBox>
+                                <Region prefHeight="50.0" />
+                                <HBox alignment="BOTTOM_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Current bid" styleClass="card-sub-text"/>
+                                        <Label text="\$5000" styleClass="card-price-text"/>
+                                    </VBox>
+                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
+                                        <Label text="2 days" styleClass="card-sub-text"/>
+                                        <Button fx:id="btnRaiseBid" text="Raise bid" styleClass="btn-action-green"/>
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+
+                            <VBox styleClass="product-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                <HBox alignment="CENTER_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Macintosh 1984" styleClass="card-title-text"/>
+                                        <Label text="Electronics" styleClass="card-sub-text"/>
+                                    </VBox>
+                                    <Label text="Outbid" styleClass="status-badge" style="-fx-text-fill: #ff4d4d; -fx-background-color: #331a1a;"/>
+                                </HBox>
+                                <Region prefHeight="50.0" />
+                                <HBox alignment="BOTTOM_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Current bid" styleClass="card-sub-text"/>
+                                        <Label text="\$2400" styleClass="card-price-text"/>
+                                    </VBox>
+                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
+                                        <Label text="5 hours" styleClass="card-sub-text"/>
+                                        <Button text="Raise bid" styleClass="btn-action-green"/>
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+
+                            <VBox styleClass="product-card" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                <HBox alignment="CENTER_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Leica M6 Camera" styleClass="card-title-text"/>
+                                        <Label text="Photography" styleClass="card-sub-text"/>
+                                    </VBox>
+                                    <Label text="Winning" styleClass="status-badge"/>
+                                </HBox>
+                                <Region prefHeight="50.0" />
+                                <HBox alignment="BOTTOM_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Current bid" styleClass="card-sub-text"/>
+                                        <Label text="\$3200" styleClass="card-price-text"/>
+                                    </VBox>
+                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
+                                        <Label text="12 hours" styleClass="card-sub-text"/>
+                                        <Button text="Raise bid" styleClass="btn-action-green"/>
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+
+                            <VBox styleClass="product-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                <HBox alignment="CENTER_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Eames Lounge Chair" styleClass="card-title-text"/>
+                                        <Label text="Furniture" styleClass="card-sub-text"/>
+                                    </VBox>
+                                    <Label text="Winning" styleClass="status-badge"/>
+                                </HBox>
+                                <Region prefHeight="50.0" />
+                                <HBox alignment="BOTTOM_LEFT">
+                                    <VBox HBox.hgrow="ALWAYS">
+                                        <Label text="Current bid" styleClass="card-sub-text"/>
+                                        <Label text="\$1800" styleClass="card-price-text"/>
+                                    </VBox>
+                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
+                                        <Label text="1 day" styleClass="card-sub-text"/>
+                                        <Button text="Raise bid" styleClass="btn-action-green"/>
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+                        </children>
+                    </GridPane>
+                </content>
+            </ScrollPane>
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
