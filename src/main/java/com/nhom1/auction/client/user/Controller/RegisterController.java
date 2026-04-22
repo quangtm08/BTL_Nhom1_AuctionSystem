@@ -27,7 +27,7 @@ public class RegisterController {
     @FXML private Button btnRegister;
     @FXML private Button btnSignIn; 
     @FXML private TextField txtUsername; 
-    @FXML private TextField txtEmail; //TODO add to fxml
+    @FXML private TextField txtEmail; 
     @FXML private PasswordField txtPassword; 
     @FXML private PasswordField txtRepeatPassword; 
 
