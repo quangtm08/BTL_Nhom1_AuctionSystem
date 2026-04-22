@@ -33,27 +33,49 @@ Mã nguồn được tổ chức theo mô hình Client-Server và áp dụng cá
 
 ```text
 BTL_AuctionSystem/
-├── design/                 # Chứa các file thiết kế giao diện (UI/UX)
-├── docs/                   # Tài liệu yêu cầu bài tập lớn và hướng dẫn
+├── .github/                # Cấu hình CI/CD, workflow GitHub Actions
+├── .idea/                  # Cấu hình IDE IntelliJ (không quan trọng khi deploy)
+├── .mvn/                   # Wrapper Maven
+├── .vscode/                # Cấu hình VS Code
+├── database/               # Script cơ sở dữ liệu (SQL, schema)
+├── design/                 # File thiết kế giao diện (Figma, ảnh mockup)
+├── docs/                   # Tài liệu đặc tả, yêu cầu bài toán
 ├── src/
 │   ├── main/
 │   │   ├── java/com/nhom1/auction/
-│   │   │   ├── client/     # Logic phía người dùng (JavaFX)
-│   │   │   │   ├── Controller/    # Các lớp điều khiển giao diện (MVC)
-│   │   │   │   ├── AppAssets.java # Quản lý tài nguyên (Fonts, Images)
-│   │   │   │   ├── AppNavigator.java # Điều hướng giữa các View
-│   │   │   │   └── ClientApplication.java # Entry point của ứng dụng
-│   │   │   └── common/     # Các thành phần dùng chung (Shared logic)
-│   │   │       ├── entity/    # Các thực thể domain (Item, Auction, User,...)
-│   │   │       ├── enums/     # Các kiểu liệt kê (AuctionStatus, BidType,...)
-│   │   │       ├── exception/ # Các lớp ngoại lệ tùy chỉnh
-│   │   │       ├── factory/   # Áp dụng Factory Pattern (ví dụ: ItemFactory)
-│   │   │       └── value/     # Các đối tượng giá trị (Money, TimeRange)
+│   │   │   ├── client/                 # Phía client (JavaFX - giao diện)
+│   │   │   │   ├── Controller/         # Điều khiển UI (MVC Controller)
+│   │   │   │   ├── AppAssets.java      # Quản lý tài nguyên (ảnh, font,…)
+│   │   │   │   ├── AppNavigator.java   # Điều hướng giữa các màn hình
+│   │   │   │   └── ClientApplication.java # Entry point của ứng dụng client
+│   │   │   │
+│   │   │   ├── common/                 # Thành phần dùng chung (shared)
+│   │   │   │   ├── entity/             # Thực thể (User, Auction, Item,...)
+│   │   │   │   ├── enums/              # Kiểu liệt kê (Status, Role,...)
+│   │   │   │   ├── exception/          # Exception tùy chỉnh
+│   │   │   │   ├── factory/            # Factory Pattern tạo object
+│   │   │   │   ├── observer/           # Observer Pattern (real-time update)
+│   │   │   │   ├── value/              # Value Object (Money, TimeRange,...)
+│   │   │   │   └── utils/              #  Các lớp tiện ích (helper functions)
+│   │   │   │
+│   │   │   └── server/                 # Backend xử lý nghiệp vụ
+│   │   │       ├── controller/         # Xử lý request từ client
+│   │   │       ├── service/            # Business logic
+│   │   │       ├── repository/         # Truy cập dữ liệu (DB)
+│   │   │       └── ServerApplication.java # Entry point server
+│   │   │
 │   │   └── resources/
-│   │       ├── assets/     # Fonts và hình ảnh tĩnh
-│   │       ├── css/        # Các file định dạng giao diện
-│   │       └── views/      # Các file giao diện FXML
-│   └── test/               # Unit tests (JUnit 5)
+│   │       ├── assets/                 # Ảnh, font
+│   │       ├── css/                    # File style JavaFX
+│   │       └── views/                  # File FXML giao diện
+│   │
+│   └── test/                           # Unit test (JUnit)
+├── target/                             # File build (auto sinh)
+├── .gitignore                          # Bỏ qua file không cần commit
+├── mvnw / mvnw.cmd                     # Maven wrapper
+├── nbactions.xml                       # Config NetBeans (nếu dùng)
+├── pom.xml                             # Cấu hình Maven (dependency, build)
+└── README.md                           # Mô tả project
 ```
 
 ## 5. Trạng thái hiện tại (Current State)
