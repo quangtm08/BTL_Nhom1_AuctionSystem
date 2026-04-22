@@ -21,7 +21,6 @@ public class AppNavigator {
     @SuppressWarnings({"UseSpecificCatch", "CallToPrintStackTrace"})
     public static void navigateTo(AppView view) {
         try {
-            
             if (view == currentView) return;
 
             currentView = view;
@@ -29,7 +28,6 @@ public class AppNavigator {
             FXMLLoader loader = new FXMLLoader(
                 AppNavigator.class.getResource(view.getFxml())
             );
-        
 
             Parent root = loader.load();
 

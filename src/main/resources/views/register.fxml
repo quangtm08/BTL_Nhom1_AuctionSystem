@@ -69,8 +69,15 @@
                            <children>
                               <VBox spacing="10.0" styleClass="field-card">
                                  <children>
-                                    <Label styleClass="field-label" text="Username or Email" />
+                                    <Label styleClass="field-label" text="Username" />
                                     <TextField fx:id="txtUsername" styleClass="field-input" />
+                                 </children>
+                              </VBox>
+
+                              <VBox spacing="10.0" styleClass="field-card">
+                                 <children>
+                                    <Label styleClass="field-label" text="Email" />
+                                    <TextField fx:id="txtEmail" styleClass="field-input" />
                                  </children>
                               </VBox>
 

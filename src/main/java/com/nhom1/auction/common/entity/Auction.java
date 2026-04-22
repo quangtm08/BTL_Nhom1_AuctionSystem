@@ -142,6 +142,7 @@ public class Auction extends BaseEntity{
     }
 
 
+    //TODO Rewrite this to use ID check. SELLER roll no longer exists
     // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or RUNNING auctions.
     public void cancelAuction(UUID callerId, UserRole userRole)
         throws InvalidAuctionStateException, UnauthorizedActionException {
@@ -152,11 +153,11 @@ public class Auction extends BaseEntity{
                 && (status == AuctionStatus.OPEN || status == AuctionStatus.RUNNING)){
                 status = AuctionStatus.CANCELED;
                 touchUpdatedAt();
-            } else if (userRole == UserRole.SELLER && callerId != null && callerId.equals(sellerId)
+            } else if (userRole == UserRole.USER && callerId != null && callerId.equals(sellerId)
                 && status == AuctionStatus.OPEN) {
                 status = AuctionStatus.CANCELED;
                 touchUpdatedAt();
-            } else if (userRole == UserRole.ADMIN || (userRole == UserRole.SELLER && callerId != null && callerId.equals(sellerId))) {
+            } else if (userRole == UserRole.ADMIN || (userRole == UserRole.USER && callerId != null && callerId.equals(sellerId))) {
                 throw new InvalidAuctionStateException("The auction cannot be canceled in its current state");
             } else {
                 throw new UnauthorizedActionException("Only the owning seller or an admin can cancel this auction");

@@ -25,18 +25,36 @@ public class UserRepository {
             ps.setString(1, identifier);
             ps.setString(2, identifier);
 
+            System.out.println("[DB] Searching for: " + identifier);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
+                    System.out.println("[DB] Match found: " + rs.getString("username"));
+                    
+                    // Robust date parsing to prevent crashes on legacy/manual DB entries
+                    LocalDateTime createdAt;
+                    LocalDateTime updatedAt;
+                    try {
+                        createdAt = LocalDateTime.parse(rs.getString("created_at"));
+                        updatedAt = LocalDateTime.parse(rs.getString("updated_at"));
+                    } catch (Exception e) {
+                        System.err.println("Warning: Could not parse dates for user " + rs.getString("username") + ". Using current time.");
+                        createdAt = LocalDateTime.now();
+                        updatedAt = LocalDateTime.now();
+                    }
+
                     User user = new User(
                         UUID.fromString(rs.getString("id")),
                         rs.getString("username"),
                         rs.getString("email"),
                         rs.getString("password"),
                         UserRole.valueOf(rs.getString("role")),
-                        LocalDateTime.parse(rs.getString("created_at")),
-                        LocalDateTime.parse(rs.getString("updated_at"))
+                        createdAt,
+                        updatedAt
                     );
                     return Optional.of(user);
+                } else {
+                    System.out.println("[DB] No match found for: " + identifier);
                 }
             }
         } catch (SQLException e) {
