@@ -513,9 +513,9 @@ double finalPrice           // 0.0 nếu không có bid nào
 
 ## Bảng Tổng kết
 
-| Thành viên | Server | Client | Thử thách chính |
-|---|---|---|---|
-| 1 (Người bán) | `server/auction/` — 5 file | Tạo đấu giá, Danh sách của tôi | ItemFactory; JOIN với items cho seller_id |
-| 2 (Người bid) | `server/bidding/` — 4 file | Duyệt, Chi tiết, Bid của tôi | `Auction.placeBid()` đã có lock — không lock thêm |
-| 3 (Hệ thống) | `server/automation/`, `server/admin/`, `server/payment/` — 9 file | Admin, Thanh toán, Popup auto-bid | Phụ thuộc vòng với BidService; chặn đệ quy trong triggerAutoBids |
-| 4 (Điều phối) | Mở rộng `server/infrastructure/` — 3 file | Push handler trong AuctionDetail | Giao thức push; kết nối ServerContext |
+| Thành viên      | Server                                                            | Client                      | Thử thách chính                                                   |
+|-----------------|-------------------------------------------------------------------|-----------------------------|-------------------------------------------------------------------|
+| 1 (Người bán)   | `server/auction/` — 5 file                                        | Tạo đấu giá, Danh sách của tôi | ItemFactory; JOIN với items cho seller_id                         |
+| 2 (Người bid)   | `server/bidding/` — 4 file                                        | Duyệt, Chi tiết, Bid của tôi   | `Auction.placeBid()` đã có lock — không lock thêm                  |
+| 3 (Hệ thống)    | `server/automation/`, `server/admin/`, `server/payment/` — 9 file | Admin, Thanh toán, Popup auto-bid | Phụ thuộc vòng với BidService; chặn đệ quy trong triggerAutoBids |
+| 4 (Điều phối)   | Mở rộng `server/infrastructure/` — 3 file                          | Push handler trong AuctionDetail | Giao thức push; kết nối ServerContext                             |
