@@ -11,8 +11,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
-- Execute raw SQL and return result for AuthService
-- Interacts with user table
+ * - Execute raw SQL and return result for AuthService
+ * - Interacts with user table
  */
 public class UserRepository {
     private final Connection connection;
@@ -21,9 +21,7 @@ public class UserRepository {
         this.connection = connection;
     }
 
-
-
-    //Return all users
+    // Return all users
     public List<User> findAll() {
         String sql = "SELECT * FROM users";
         List<User> users = new ArrayList<>();
@@ -31,14 +29,13 @@ public class UserRepository {
             try (ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
                     users.add(new User(
-                        UUID.fromString(rs.getString("id")),
-                        rs.getString("username"),
-                        rs.getString("email"),
-                        rs.getString("password"),
-                        UserRole.valueOf(rs.getString("role")),
-                        LocalDateTime.parse(rs.getString("created_at")),
-                        LocalDateTime.parse(rs.getString("updated_at"))
-                    ));
+                            UUID.fromString(rs.getString("id")),
+                            rs.getString("username"),
+                            rs.getString("email"),
+                            rs.getString("password"),
+                            UserRole.valueOf(rs.getString("role")),
+                            LocalDateTime.parse(rs.getString("created_at")),
+                            LocalDateTime.parse(rs.getString("updated_at"))));
                 }
             }
         } catch (SQLException e) {
@@ -47,9 +44,7 @@ public class UserRepository {
         return users;
     }
 
-
-
-    //Take username or email. Return user object if found
+    // Take username or email. Return user object if found
     public Optional<User> findByIdentifier(String identifier) {
         String sql = "SELECT * FROM users WHERE username = ? OR email = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -61,7 +56,7 @@ public class UserRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     System.out.println("[DB] Match found: " + rs.getString("username"));
-                    
+
                     // Robust date parsing to prevent crashes on legacy/manual DB entries
                     LocalDateTime createdAt;
                     LocalDateTime updatedAt;
@@ -69,20 +64,20 @@ public class UserRepository {
                         createdAt = LocalDateTime.parse(rs.getString("created_at"));
                         updatedAt = LocalDateTime.parse(rs.getString("updated_at"));
                     } catch (Exception e) {
-                        System.err.println("Warning: Could not parse dates for user " + rs.getString("username") + ". Using current time.");
+                        System.err.println("Warning: Could not parse dates for user " + rs.getString("username")
+                                + ". Using current time.");
                         createdAt = LocalDateTime.now();
                         updatedAt = LocalDateTime.now();
                     }
 
                     User user = new User(
-                        UUID.fromString(rs.getString("id")),
-                        rs.getString("username"),
-                        rs.getString("email"),
-                        rs.getString("password"),
-                        UserRole.valueOf(rs.getString("role")),
-                        createdAt,
-                        updatedAt
-                    );
+                            UUID.fromString(rs.getString("id")),
+                            rs.getString("username"),
+                            rs.getString("email"),
+                            rs.getString("password"),
+                            UserRole.valueOf(rs.getString("role")),
+                            createdAt,
+                            updatedAt);
                     return Optional.of(user);
                 } else {
                     System.out.println("[DB] No match found for: " + identifier);
@@ -94,9 +89,7 @@ public class UserRepository {
         return Optional.empty();
     }
 
-
-
-    //Take in username. Returns boolean if user exists
+    // Take in username. Returns boolean if user exists
     public boolean existsByUsername(String username) {
         String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -110,7 +103,7 @@ public class UserRepository {
         return false;
     }
 
-    //Take in email. Returns boolean if user exists
+    // Take in email. Returns boolean if user exists
     public boolean existsByEmail(String email) {
         String sql = "SELECT 1 FROM users WHERE email = ? LIMIT 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -124,11 +117,10 @@ public class UserRepository {
         return false;
     }
 
-
-    //Take in user object. Convert it to SQL fields and save user to database
+    // Take in user object. Convert it to SQL fields and save user to database
     public void save(User user) {
         String sql = "INSERT INTO users(id, username, email, password, role, created_at, updated_at) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                + "VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, user.getId().toString());
             ps.setString(2, user.getUsername());

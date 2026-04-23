@@ -22,7 +22,7 @@ Phía client: dùng `SignInController` làm tham chiếu — build DTO từ form
 
 ## File dùng chung — Quy tắc sở hữu
 
-**Chỉ Thành viên 4 commit vào các file sau.** Thành viên khác nêu thay đổi cần thiết trong chat, TV4 thực hiện.
+**Chỉ Quang (Thành viên 4) commit vào các file sau.** Thành viên khác nêu thay đổi cần thiết trong chat, Quang thực hiện.
 
 | File | Lý do |
 |---|---|
@@ -32,7 +32,7 @@ Phía client: dùng `SignInController` làm tham chiếu — build DTO từ form
 
 ---
 
-## Thành viên 1 — Luồng Người bán
+## Duy (Thành viên 1) — Luồng Người bán
 
 **Phạm vi:** Seller tạo phiên đấu giá → hệ thống lưu và hiển thị phiên đó.
 
@@ -44,11 +44,11 @@ Phía client: dùng `SignInController` làm tham chiếu — build DTO từ form
 
 **`CreateAuctionResponse`** — trả về auctionId và status sau khi tạo thành công.
 
-**`AuctionSummaryDto`** — **thống nhất với TV2 trước khi viết.** Xem phần Chữ ký Contract bên dưới.
+**`AuctionSummaryDto`** — **thống nhất với Ngọc (Thành viên 2) trước khi viết.** Xem phần Chữ ký Contract bên dưới.
 
 **`MyListingsResponse`** — danh sách `AuctionSummaryDto` của seller.
 
-Yêu cầu TV4 thêm `CREATE_AUCTION` vào `MessageType`.
+Yêu cầu Quang (Thành viên 4) thêm `CREATE_AUCTION` vào `MessageType`.
 
 ---
 
@@ -58,7 +58,7 @@ Yêu cầu TV4 thêm `CREATE_AUCTION` vào `MessageType`.
 - `save(Item item, UUID sellerId)` — Item là đối tượng domain thuần túy, không mang sellerId. Repository tự điền cột `seller_id` trong DB từ tham số truyền vào. Dựa vào category để điền các cột phụ (Art/Electronics/Vehicle).
 - `findById(UUID id)` — SELECT và tái tạo đúng subtype dựa vào cột category.
 
-**`AuctionRepository`** — **công bố cho TV2 & TV3 vào ngày đầu tiên.** Xem phần Chữ ký Contract bên dưới.
+**`AuctionRepository`** — **công bố cho Ngọc (Thành viên 2) & Bình (Thành viên 3) vào ngày đầu tiên.** Xem phần Chữ ký Contract bên dưới.
 
 > Bảng `auctions` **không có** cột `seller_id`. Thông tin seller nằm ở bảng `items`. Mọi truy vấn cần seller phải JOIN với bảng `items`.
 
@@ -68,7 +68,7 @@ Yêu cầu TV4 thêm `CREATE_AUCTION` vào `MessageType`.
 
 **`AuctionHandler`** — đăng ký 2 route: `CREATE_AUCTION` và `LIST_MY_LISTINGS`.
 
-**`AuctionModule`** — khởi tạo Repository/Service/Handler, **trả về `AuctionRepository`** để TV4 dùng trong `ServerContext`.
+**`AuctionModule`** — khởi tạo Repository/Service/Handler, **trả về `AuctionRepository`** để Quang (Thành viên 4) dùng trong `ServerContext`.
 
 ---
 
@@ -89,14 +89,14 @@ Yêu cầu TV4 thêm `CREATE_AUCTION` vào `MessageType`.
 
 | Chủ đề | Với | Hạn chót |
 |---|---|---|
-| Danh sách trường `AuctionSummaryDto` | TV2 | Trước khi viết DTO |
-| Chữ ký `AuctionRepository` | TV2 & TV3 | Ngày đầu tiên |
-| `AuctionModule.init()` trả về `AuctionRepository` | TV4 | TV4 kết nối `ServerContext` |
-| Thêm `CREATE_AUCTION` vào `MessageType` | TV4 | Trước khi viết Handler |
+| Danh sách trường `AuctionSummaryDto` | Ngọc (Thành viên 2) | Trước khi viết DTO |
+| Chữ ký `AuctionRepository` | Ngọc (Thành viên 2) & Bình (Thành viên 3) | Ngày đầu tiên |
+| `AuctionModule.init()` trả về `AuctionRepository` | Quang (Thành viên 4) | Quang kết nối `ServerContext` |
+| Thêm `CREATE_AUCTION` vào `MessageType` | Quang (Thành viên 4) | Trước khi viết Handler |
 
 ---
 
-## Thành viên 2 — Luồng Đấu giá chính
+## Ngọc (Thành viên 2) — Luồng Đấu giá chính
 
 **Phạm vi:** Người mua duyệt danh sách, xem chi tiết phiên đấu giá, đặt bid, xem lịch sử bid của mình.
 
@@ -116,11 +116,11 @@ Yêu cầu TV4 thêm `CREATE_AUCTION` vào `MessageType`.
 
 **`MyBidsResponse`** — danh sách `BidWithAuctionDto`.
 
-**`ListAuctionsResponse`** — danh sách `AuctionSummaryDto` (do TV1 sở hữu).
+**`ListAuctionsResponse`** — danh sách `AuctionSummaryDto` (do Duy (Thành viên 1) sở hữu).
 
 **`GetAuctionDetailRequest`** — auctionId.
 
-Xác nhận với TV4 các `MessageType` sau không bị đổi tên: `PLACE_BID`, `LIST_AUCTIONS`, `GET_AUCTION_DETAIL`, `LIST_MY_BIDS`.
+Xác nhận với Quang (Thành viên 4) các `MessageType` sau không bị đổi tên: `PLACE_BID`, `LIST_AUCTIONS`, `GET_AUCTION_DETAIL`, `LIST_MY_BIDS`.
 
 ---
 
@@ -130,15 +130,15 @@ Xác nhận với TV4 các `MessageType` sau không bị đổi tên: `PLACE_BID
 - `save(BidTransaction)` — INSERT vào bảng bids. **Lưu ý: bảng bids không có cột `updated_at`**, chỉ chèn `created_at`.
 - `findByAuctionId(UUID)` — lấy lịch sử bid của một phiên, sắp xếp theo thời gian tăng dần.
 - `findByBidderId(UUID)` — JOIN với bảng auctions và items để lấy đủ thông tin cho `BidWithAuctionDto`.
-- `findLastBidTime(UUID auctionId)` — trả về `Optional<LocalDateTime>`, dùng cho anti-sniping trong scheduler của TV3.
+- `findLastBidTime(UUID auctionId)` — trả về `Optional<LocalDateTime>`, dùng cho anti-sniping trong scheduler của Bình (Thành viên 3).
 
-**`BidService`** — **công bố chữ ký `placeBid()` cho TV3 vào ngày đầu tiên.** Xem phần Chữ ký Contract bên dưới.
+**`BidService`** — **công bố chữ ký `placeBid()` cho Bình (Thành viên 3) vào ngày đầu tiên.** Xem phần Chữ ký Contract bên dưới.
 - `placeBid(bidderId, auctionId, amount)` — tải Auction từ DB, gọi `auction.placeBid()` (method này tự quản lý lock — **không lock thêm lần nữa**), lưu bid và cập nhật bid cao nhất.
 - `getAuctionDetail(auctionId)` — tải auction, item, lịch sử bid, lắp ráp `AuctionDetailDto`.
 - `listAllAuctions()` — lấy tất cả phiên, map sang `AuctionSummaryDto`.
 - `getMyBids(bidderId)` — lấy lịch sử bid của người dùng.
 
-> `BidService` cần cả `AuctionRepository` (TV1) lẫn `ItemRepository` (TV1). `BidModule.init()` nhận cả hai từ `ServerContext`.
+> `BidService` cần cả `AuctionRepository` (Duy) lẫn `ItemRepository` (Duy). `BidModule.init()` nhận cả hai từ `ServerContext`.
 
 **`BidHandler`** — đăng ký 4 route: `PLACE_BID`, `LIST_AUCTIONS`, `GET_AUCTION_DETAIL`, `LIST_MY_BIDS`. Sau khi `placeBid` thành công, gọi `notificationService.broadcastBidUpdate(...)` để push thông báo real-time.
 
@@ -150,7 +150,7 @@ Xác nhận với TV4 các `MessageType` sau không bị đổi tên: `PLACE_BID
 
 **`AuctionBrowseController`** — load danh sách phiên khi khởi tạo. Khi click vào một phiên, lưu auctionId vào `AppContext.setSelectedAuctionId()` rồi điều hướng sang màn hình chi tiết.
 
-**`AuctionDetailController`** — load chi tiết phiên theo `AppContext.getSelectedAuctionId()`. Xử lý nút "Place Bid". Dự phòng chỗ cho push handler real-time (TV4 kết nối sau).
+**`AuctionDetailController`** — load chi tiết phiên theo `AppContext.getSelectedAuctionId()`. Xử lý nút "Place Bid". Dự phòng chỗ cho push handler real-time (Quang (Thành viên 4) kết nối sau).
 
 **`MyBidsController`** — load và hiển thị lịch sử bid của người dùng hiện tại.
 
@@ -165,16 +165,16 @@ Xác nhận với TV4 các `MessageType` sau không bị đổi tên: `PLACE_BID
 
 | Chủ đề | Với | Hạn chót |
 |---|---|---|
-| Danh sách trường `AuctionSummaryDto` | TV1 | Trước khi viết DTO |
-| Chữ ký `AuctionRepository` & `ItemRepository` | TV1 | Ngày đầu tiên |
-| Tham số `BidModule.init()` | TV4 | TV4 kết nối `ServerContext` |
-| Chữ ký `NotificationService.broadcastBidUpdate()` | TV4 | Trước khi viết `BidHandler` |
-| `AutoBidService.triggerAutoBids()` gọi ở đâu? | TV3 | Thống nhất: gọi từ `BidHandler` sau khi bid thủ công thành công, **không** gọi từ bên trong `BidService` |
-| Các trường `PUSH_BID_UPDATE` DTO | TV4 | Trước khi viết `BidHandler` |
+| Danh sách trường `AuctionSummaryDto` | Duy (Thành viên 1) | Trước khi viết DTO |
+| Chữ ký `AuctionRepository` & `ItemRepository` | Duy (Thành viên 1) | Ngày đầu tiên |
+| Tham số `BidModule.init()` | Quang (Thành viên 4) | Quang kết nối `ServerContext` |
+| Chữ ký `NotificationService.broadcastBidUpdate()` | Quang (Thành viên 4) | Trước khi viết `BidHandler` |
+| `AutoBidService.triggerAutoBids()` gọi ở đâu? | Bình (Thành viên 3) | Thống nhất: gọi từ `BidHandler` sau khi bid thủ công thành công, **không** gọi từ bên trong `BidService` |
+| Các trường `PUSH_BID_UPDATE` DTO | Quang (Thành viên 4) | Trước khi viết `BidHandler` |
 
 ---
 
-## Thành viên 3 — Tự động hóa & Thanh toán
+## Bình (Thành viên 3) — Tự động hóa & Thanh toán
 
 **Phạm vi:** Vòng đời phiên đấu giá theo thời gian (scheduler), auto-bid bot, thanh toán, và dashboard admin.
 
@@ -188,7 +188,7 @@ Xác nhận với TV4 các `MessageType` sau không bị đổi tên: `PLACE_BID
 
 `common/dto/payment/`: `ProcessPaymentRequest` (auctionId, bidderId), `ProcessPaymentResponse` (status).
 
-Yêu cầu TV4 thêm vào `MessageType`: `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`, `ADMIN_LIST_AUCTIONS`, `PROCESS_PAYMENT`. Xác nhận `AUTO_BID_CONFIG` không đổi tên.
+Yêu cầu Quang (Thành viên 4) thêm vào `MessageType`: `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`, `ADMIN_LIST_AUCTIONS`, `PROCESS_PAYMENT`. Xác nhận `AUTO_BID_CONFIG` không đổi tên.
 
 ---
 
@@ -196,13 +196,13 @@ Yêu cầu TV4 thêm vào `MessageType`: `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`
 
 **Module `server/admin/`**
 
-`AdminService` — nhận `UserRepository` (từ `AuthModule`, TV4 truyền vào) và `AuctionRepository` (từ TV1, TV4 truyền vào). Cung cấp: `getAllUsers()`, `deleteUser(targetId, callerId)` (kiểm tra quyền ADMIN), `getAllAuctions()`.
+`AdminService` — nhận `UserRepository` (từ `AuthModule`, Quang (Thành viên 4) truyền vào) và `AuctionRepository` (từ Duy (Thành viên 1), Quang truyền vào). Cung cấp: `getAllUsers()`, `deleteUser(targetId, callerId)` (kiểm tra quyền ADMIN), `getAllAuctions()`.
 
 `AdminHandler` — đăng ký 3 route: `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`, `ADMIN_LIST_AUCTIONS`.
 
 `AdminModule` — nhận `UserRepository` và `AuctionRepository` qua tham số `init()`.
 
-> `AuthModule.init()` đã trả về `UserRepository` — TV4 đã có sẵn, chỉ cần truyền vào.
+> `AuthModule.init()` đã trả về `UserRepository` — Quang (Thành viên 4) đã có sẵn, chỉ cần truyền vào.
 
 ---
 
@@ -212,7 +212,7 @@ Yêu cầu TV4 thêm vào `MessageType`: `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`
 
 `AutoBidConfig` — value class đơn giản: auctionId, bidderId, maxAmount, increment.
 
-`AutoBidService` — **công bố chữ ký `triggerAutoBids()` cho TV2 vào ngày đầu tiên.**
+`AutoBidService` — **công bố chữ ký `triggerAutoBids()` cho Ngọc (Thành viên 2) vào ngày đầu tiên.**
 - `saveConfig(dto)` — lưu cấu hình auto-bid.
 - `triggerAutoBids(auctionId, newHighestBid, currentHighestBidderId)` — tìm auto-bidder đủ điều kiện (chưa đang dẫn đầu, maxAmount còn đủ), tính bid tiếp theo và gọi `BidService.placeBid()`. **Thêm bộ chặn đệ quy** để tránh vòng lặp vô hạn.
 
@@ -224,7 +224,7 @@ Yêu cầu TV4 thêm vào `MessageType`: `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`
 
 Mỗi "tick":
 1. Lấy toàn bộ phiên đang RUNNING.
-2. Nếu phiên đã hết giờ: kiểm tra anti-sniping (truy vấn `BidRepository.findLastBidTime()` của TV2 — nếu bid gần nhất nằm trong X giây cuối thì gia hạn, ngược lại chuyển sang FINISHED và broadcast kết thúc).
+2. Nếu phiên đã hết giờ: kiểm tra anti-sniping (truy vấn `BidRepository.findLastBidTime()` của Ngọc (Thành viên 2) — nếu bid gần nhất nằm trong X giây cuối thì gia hạn, ngược lại chuyển sang FINISHED và broadcast kết thúc).
 3. Với phiên OPEN có startTime đã qua: chuyển sang RUNNING.
 
 ---
@@ -258,15 +258,15 @@ Mỗi "tick":
 
 | Chủ đề | Với | Hạn chót |
 |---|---|---|
-| Chữ ký `AuctionRepository` (updateStatus, updateEndTime) | TV1 | Ngày đầu tiên |
-| `triggerAutoBids()` gọi từ `BidHandler`, không phải `BidService` | TV2 | Trước khi TV2 viết `BidHandler` |
-| `BidRepository.findLastBidTime()` cho anti-sniping | TV2 | Trước khi viết `tick()` |
-| Chữ ký `NotificationService.broadcastAuctionEnded()` | TV4 | Trước khi viết `tick()` |
-| `BidService` truyền vào `AutoBidModule` | TV4 | TV4 kết nối `ServerContext` |
+| Chữ ký `AuctionRepository` (updateStatus, updateEndTime) | Duy (Thành viên 1) | Ngày đầu tiên |
+| `triggerAutoBids()` gọi từ `BidHandler`, không phải `BidService` | Ngọc (Thành viên 2) | Trước khi Ngọc viết `BidHandler` |
+| `BidRepository.findLastBidTime()` cho anti-sniping | Ngọc (Thành viên 2) | Trước khi viết `tick()` |
+| Chữ ký `NotificationService.broadcastAuctionEnded()` | Quang (Thành viên 4) | Trước khi viết `tick()` |
+| `BidService` truyền vào `AutoBidModule` | Quang (Thành viên 4) | Quang kết nối `ServerContext` |
 
 ---
 
-## Thành viên 4 — Điều phối viên
+## Quang (Thành viên 4) — Điều phối viên
 
 **Phạm vi:** Hệ thống push thông báo real-time, quản lý file dùng chung, kết nối `ServerContext`, hỗ trợ các thành viên ngay từ ngày đầu.
 
@@ -276,11 +276,11 @@ Mỗi "tick":
 
 1. **`AppContext`** — thêm trường `selectedAuctionId` với getter/setter tương ứng.
 
-2. **`MessageType`** — thêm tất cả mục mới từ TV1, TV2, TV3 trong một lần commit: `CREATE_AUCTION`, `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`, `ADMIN_LIST_AUCTIONS`, `PROCESS_PAYMENT`, `PUSH_BID_UPDATE`, `PUSH_AUCTION_ENDED`.
+2. **`MessageType`** — thêm tất cả mục mới từ Duy (Thành viên 1), Ngọc (Thành viên 2), Bình (Thành viên 3) trong một lần commit: `CREATE_AUCTION`, `ADMIN_LIST_USERS`, `ADMIN_DELETE_USER`, `ADMIN_LIST_AUCTIONS`, `PROCESS_PAYMENT`, `PUSH_BID_UPDATE`, `PUSH_AUCTION_ENDED`.
 
-3. **`NotificationService` stub** (thân phương thức rỗng) — để TV2 & TV3 có thể compile: `broadcastBidUpdate(auctionId, newBid, newHighestBidderId)` và `broadcastAuctionEnded(auctionId, winnerId)`.
+3. **`NotificationService` stub** (thân phương thức rỗng) — để Ngọc (Thành viên 2) & Bình (Thành viên 3) có thể compile: `broadcastBidUpdate(auctionId, newBid, newHighestBidderId)` và `broadcastAuctionEnded(auctionId, winnerId)`.
 
-4. **`registerPushHandler` stub trên `ServerConnection`** — để TV2 có thể compile code real-time phía client.
+4. **`registerPushHandler` stub trên `ServerConnection`** — để Ngọc (Thành viên 2) có thể compile code real-time phía client.
 
 ---
 
@@ -305,7 +305,7 @@ Mỗi "tick":
 Thứ tự khởi tạo:
 1. `ClientRegistry` và `NotificationService`
 2. `AuthModule.init()` → lấy `UserRepository` ✅ (đã xong)
-3. `AuctionModule.init()` → lấy `AuctionRepository` (TV1 cần trả về)
+3. `AuctionModule.init()` → lấy `AuctionRepository` (Duy (Thành viên 1) cần trả về)
 4. `BidModule.init()` với `AuctionRepository`, `ItemRepository`, `NotificationService`
 5. `AutoBidModule.init()` với `BidService`
 6. `AdminModule.init()` với `UserRepository`, `AuctionRepository`
@@ -334,9 +334,9 @@ Thứ tự khởi tạo:
 | Chủ đề | Với | Hạn chót |
 |---|---|---|
 | Giao thức push (`pushType` trong `ResponseMessage`) | **Cả nhóm** | Ngày 1 — ảnh hưởng tất cả |
-| Kiểu trả về `AuctionModule.init()` | TV1 | Trước khi viết `ServerContext` |
-| Tham số `BidModule.init()` | TV2 | Trước khi viết `ServerContext` |
-| Phụ thuộc vòng `BidService` ↔ `AutoBidService` | TV2 & TV3 | Ngày 1 |
+| Kiểu trả về `AuctionModule.init()` | Duy (Thành viên 1) | Trước khi viết `ServerContext` |
+| Tham số `BidModule.init()` | Ngọc (Thành viên 2) | Trước khi viết `ServerContext` |
+| Phụ thuộc vòng `BidService` ↔ `AutoBidService` | Ngọc (Thành viên 2) & Bình (Thành viên 3) | Ngày 1 |
 
 ---
 
@@ -344,10 +344,10 @@ Thứ tự khởi tạo:
 
 | Rủi ro | Giải pháp |
 |---|---|
-| Nhiều người chỉnh sửa `MessageType.java` | TV4 sở hữu — nhắn cho TV4 mục cần thêm |
-| Nhiều người chỉnh sửa `ServerContext.java` | TV4 sở hữu — gửi chữ ký module, TV4 kết nối |
+| Nhiều người chỉnh sửa `MessageType.java` | Quang (Thành viên 4) sở hữu — nhắn cho Quang mục cần thêm |
+| Nhiều người chỉnh sửa `ServerContext.java` | Quang (Thành viên 4) sở hữu — gửi chữ ký module, Quang kết nối |
 | `AuctionRepository` khởi tạo hai lần | Khởi tạo một lần trong `ServerContext`, truyền tham số cho mọi module |
-| `BidHandler` cần `NotificationService` trước khi TV4 xong | TV4 giao stub vào ngày 1 |
+| `BidHandler` cần `NotificationService` trước khi Quang (Thành viên 4) xong | Quang giao stub vào ngày 1 |
 | `AutoBidService` ↔ `BidService` phụ thuộc vòng | Inject `AutoBidService` vào `BidHandler`, không vào `BidService` |
 | ~~`UserRepository` bị nhốt trong `AuthModule`~~ | ✅ Đã giải quyết |
 
@@ -355,9 +355,10 @@ Thứ tự khởi tạo:
 
 ## Chữ ký Contract — Các thành viên PHẢI thống nhất trước khi code
 
-Đây là các chữ ký phương thức mà một thành viên **công bố** và thành viên khác **phụ thuộc vào**. Không được thay đổi sau khi đã thống nhất.
+Đây là các chữ ký phương thức mà một thành viên **công bố** và thành viên khác **phụ thuộc vào**. Hạn chế thay đổi sau khi đã thống nhất.
+Nếu thay đổi phải thảo luận với team. 
 
-### TV1 công bố → TV2 & TV3 phụ thuộc
+### Duy (Thành viên 1) công bố → Ngọc (Thành viên 2) & Bình (Thành viên 3) phụ thuộc
 
 ```java
 // ── AuctionRepository ──────────────────────────────────────────────────────
@@ -378,14 +379,14 @@ Optional<Auction> findById(UUID id)
 List<Auction> findAll()
 // Tải toàn bộ phiên đấu giá trong DB.
 // Phải JOIN với items để lấy seller_id cho từng phiên.
-// Được dùng bởi AuctionScheduler (TV3) mỗi giây để kiểm tra trạng thái,
-// và bởi BidService (TV2) để cung cấp danh sách cho màn hình Browse.
+// Được dùng bởi AuctionScheduler (Bình) mỗi giây để kiểm tra trạng thái,
+// và bởi BidService (Ngọc) để cung cấp danh sách cho màn hình Browse.
 
 List<Auction> findBySellerId(UUID sellerId)
 // Lấy tất cả phiên đấu giá của một seller cụ thể.
 // Vì seller_id nằm ở bảng items, phải JOIN:
 //   SELECT a.* FROM auctions a JOIN items i ON a.item_id = i.id WHERE i.seller_id = ?
-// Dùng cho màn hình "Danh sách của tôi" (TV1).
+// Dùng cho màn hình "Danh sách của tôi" (Duy).
 
 void updateStatus(UUID auctionId, AuctionStatus status)
 // Cập nhật trạng thái phiên (ví dụ: OPEN → RUNNING → FINISHED → PAID / CANCELED).
@@ -422,7 +423,7 @@ Optional<Item> findById(UUID id)
 // (Art, Electronics, hoặc Vehicle) với đầy đủ các trường phụ tương ứng.
 ```
 
-### TV2 công bố → TV3 phụ thuộc
+### Ngọc (Thành viên 2) công bố → Bình (Thành viên 3) phụ thuộc
 
 ```java
 // ── BidService ─────────────────────────────────────────────────────────────
@@ -442,12 +443,12 @@ BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount)
 Optional<LocalDateTime> findLastBidTime(UUID auctionId)
 // Trả về thời điểm của bid gần nhất trong một phiên đấu giá.
 // Câu SQL: SELECT MAX(created_at) FROM bids WHERE auction_id = ?
-// Dùng bởi AuctionScheduler (TV3) trong cơ chế anti-sniping:
+// Dùng bởi AuctionScheduler (Bình) trong cơ chế anti-sniping:
 // nếu bid cuối nằm trong X giây trước khi hết giờ, scheduler gia hạn phiên thay vì kết thúc.
 // Trả về Optional.empty() nếu phiên chưa có bid nào.
 ```
 
-### TV4 công bố → TV2 & TV3 phụ thuộc
+### Quang (Thành viên 4) công bố → Ngọc (Thành viên 2) & Bình (Thành viên 3) phụ thuộc
 
 ```java
 // ── NotificationService ────────────────────────────────────────────────────
@@ -473,10 +474,10 @@ void registerPushHandler(MessageType type, Consumer<String> handler)
 // không phụ thuộc vào bất kỳ DTO push cụ thể nào — controller tự parse JSON.
 ```
 
-### TV1 & TV2 cùng thống nhất — DTO dùng chung
+### Duy (Thành viên 1) & Ngọc (Thành viên 2) cùng thống nhất — DTO dùng chung
 
 ```java
-// AuctionSummaryDto — dùng bởi TV1 (MyListings), TV2 (Browse), TV3 (Admin)
+// AuctionSummaryDto — dùng bởi Duy (TV1), Ngọc (TV2), Bình (TV3)
 // Chứa đủ thông tin để hiển thị trong một card hoặc một dòng trong danh sách.
 // Không chứa itemDescription hay bidHistory — những trường đó thuộc về AuctionDetailDto.
 // Tất cả ID đều là String (UUID.toString()) để tránh lỗi deserialize với Jackson.
@@ -492,7 +493,7 @@ String endTime          // LocalDateTime.toString()
 String sellerId         // cần để MyListingsController xác định phiên nào thuộc về mình
 ```
 
-### TV4 định nghĩa — Push event DTOs
+### Quang (Thành viên 4) định nghĩa — Push event DTOs
 
 ```java
 // common/dto/notification/BidUpdateEvent
@@ -515,7 +516,7 @@ double finalPrice           // 0.0 nếu không có bid nào
 
 | Thành viên      | Server                                                            | Client                      | Thử thách chính                                                   |
 |-----------------|-------------------------------------------------------------------|-----------------------------|-------------------------------------------------------------------|
-| 1 (Người bán)   | `server/auction/` — 5 file                                        | Tạo đấu giá, Danh sách của tôi | ItemFactory; JOIN với items cho seller_id                         |
-| 2 (Người bid)   | `server/bidding/` — 4 file                                        | Duyệt, Chi tiết, Bid của tôi   | `Auction.placeBid()` đã có lock — không lock thêm                  |
-| 3 (Hệ thống)    | `server/automation/`, `server/admin/`, `server/payment/` — 9 file | Admin, Thanh toán, Popup auto-bid | Phụ thuộc vòng với BidService; chặn đệ quy trong triggerAutoBids |
-| 4 (Điều phối)   | Mở rộng `server/infrastructure/` — 3 file                          | Push handler trong AuctionDetail | Giao thức push; kết nối ServerContext                             |
+| Duy (Người bán) | `server/auction/` — 5 file                                        | Tạo đấu giá, Danh sách của tôi | ItemFactory; JOIN với items cho seller_id                         |
+| Ngọc (Người bid) | `server/bidding/` — 4 file                                        | Duyệt, Chi tiết, Bid của tôi   | `Auction.placeBid()` đã có lock — không lock thêm                  |
+| Bình (Hệ thống) | `server/automation/`, `server/admin/`, `server/payment/` — 9 file | Admin, Thanh toán, Popup auto-bid | Phụ thuộc vòng với BidService; chặn đệ quy trong triggerAutoBids |
+| Quang (Điều phối) | Mở rộng `server/infrastructure/` — 3 file                          | Push handler trong AuctionDetail | Giao thức push; kết nối ServerContext                             |
