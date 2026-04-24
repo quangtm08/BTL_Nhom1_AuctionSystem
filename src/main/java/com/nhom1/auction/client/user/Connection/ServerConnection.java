@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
@@ -17,12 +18,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
-/**
- * ServerConnection: The "Bridge" between the Client and the Server.
- * 
- * It manages the persistent Socket connection and handles JSON deserialization
- * using specific blueprints (JavaType) to avoid the LinkedHashMap issue.
+/*
+ - Bridge between the Client and the Server.
+ - It manages the persistent Socket connection and handles JSON deserialization
  */
 public class ServerConnection {
     private static ServerConnection instance;
@@ -116,9 +116,7 @@ public class ServerConnection {
         return future;
     }
 
-    /**
-     * THE CLEAN FIX: Tell Jackson exactly what type T is BEFORE it reads the JSON.
-     */
+
     private void handleRawResponse(String json) {
         try {
             JsonNode root = mapper.readTree(json);
@@ -142,6 +140,9 @@ public class ServerConnection {
             System.err.println("Error parsing server response: " + e.getMessage());
         }
     }
+
+    public void registerPushHandler(MessageType type, Consumer<String> handler){}
+
 
     public boolean isConnected() {
         return connected;
