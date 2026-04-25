@@ -1,42 +1,41 @@
 package com.nhom1.auction.common.dto.bidding;
 
-import java.util.UUID;
 
 public class PlaceBidResponse {
-    private UUID bidId;
-    private UUID newHighestBidderId;
-    private UUID newHighestBidId;
+    private String bidId;
+    private String newHighestBidderId;
+    private String newHighestBidId;
 
     public PlaceBidResponse() {}
 
-    public PlaceBidResponse(UUID bidId, UUID newHighestBidderId, UUID newHighestBidId) {
+    public PlaceBidResponse(String bidId, String newHighestBidderId, String newHighestBidId) {
         this.bidId = bidId;
         this.newHighestBidderId = newHighestBidderId;
         this.newHighestBidId = newHighestBidId;
     }
 
     // Getters and Setters
-    public UUID getBidId() {
+    public String getBidId() {
         return bidId;
     }
 
-    public void setBidId(UUID bidId) {
+    public void setBidId(String bidId) {
         this.bidId = bidId;
     }
 
-    public UUID getNewHighestBidderId() {
+    public String getNewHighestBidderId() {
         return newHighestBidderId;
     }
 
-    public void setNewHighestBidderId(UUID newHighestBidderId) {
+    public void setNewHighestBidderId(String newHighestBidderId) {
         this.newHighestBidderId = newHighestBidderId;
     }
 
-    public UUID getNewHighestBidId() {
+    public String getNewHighestBidId() {
         return newHighestBidId;
     }
 
-    public void setNewHighestBidId(UUID newHighestBidId) {
+    public void setNewHighestBidId(String newHighestBidId) {
         this.newHighestBidId = newHighestBidId;
     }
 }
