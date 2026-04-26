@@ -35,15 +35,10 @@ public class AdminService {
         if (targetUserId == null || targetUserId.isBlank()) {
             throw new ValidationException("Target user ID is required.");
         }
-        if (callerId == null || callerId.isBlank()) {
-            throw new ValidationException("Caller ID is required.");
-        }
 
-        User caller = userRepository.findById(UUID.fromString(callerId))
-                .orElseThrow(() -> new AuthenticationException("Caller not found."));
-        if (caller.getRole() != UserRole.ADMIN) {
-            throw new UnauthorizedActionException("Only ADMIN can delete users.");
-        }
+        // Reuse the same admin gate as the read endpoints so the permission
+        // contract stays aligned across list/delete flows.
+        User caller = requireAdmin(callerId);
 
         // Guardrail for shared admin tooling:
         // this branch intentionally blocks self-delete so an admin cannot lock
@@ -52,7 +47,7 @@ public class AdminService {
             throw new UnauthorizedActionException("Admin accounts cannot delete themselves from this flow.");
         }
 
-        User target = userRepository.findById(UUID.fromString(targetUserId))
+        User target = userRepository.findById(parseUserId(targetUserId, "Target user ID"))
                 .orElseThrow(() -> new ValidationException("Target user not found."));
         if (target.getRole() == UserRole.ADMIN) {
             throw new UnauthorizedActionException("Admin accounts cannot be deleted from this flow.");
@@ -77,12 +72,22 @@ public class AdminService {
             throw new ValidationException("Caller ID is required.");
         }
 
-        User caller = userRepository.findById(UUID.fromString(callerId))
+        User caller = userRepository.findById(parseUserId(callerId, "Caller ID"))
                 .orElseThrow(() -> new AuthenticationException("Caller not found."));
         if (caller.getRole() != UserRole.ADMIN) {
             throw new UnauthorizedActionException("Only ADMIN can access this admin flow.");
         }
         return caller;
+    }
+
+    private UUID parseUserId(String rawId, String fieldName) throws ValidationException {
+        try {
+            return UUID.fromString(rawId);
+        } catch (IllegalArgumentException e) {
+            // Convert low-level UUID parsing failure into the validation
+            // contract expected by AdminHandler/client service.
+            throw new ValidationException(fieldName + " is invalid.");
+        }
     }
 
     private UserSummaryDto toUserSummaryDto(User user) {

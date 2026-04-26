@@ -35,15 +35,12 @@ public class AdminOverviewController {
         lblRecentActivityTime.setText("now");
         lblSessionStatus.setText("Loading...");
 
-        CompletableFuture<AdminUserListResponse> usersFuture = adminClientService.listUsers();
-        CompletableFuture<AdminAuctionListResponse> auctionsFuture = adminClientService.listAllAuctions();
-
-        CompletableFuture.allOf(usersFuture, auctionsFuture)
-                .thenRun(() -> Platform.runLater(() -> {
-                    AdminUserListResponse users = usersFuture.join();
-                    AdminAuctionListResponse auctions = auctionsFuture.join();
-                    renderDashboard(users, auctions);
-                }))
+        // Keep both requests independent, then merge the successful payloads
+        // into one snapshot for a single UI render pass.
+        adminClientService.listUsers()
+                .thenCombine(adminClientService.listAllAuctions(), DashboardSnapshot::new)
+                .thenAccept(snapshot -> Platform.runLater(() ->
+                        renderDashboard(snapshot.usersResponse(), snapshot.auctionsResponse())))
                 .exceptionally(ex -> {
                     Platform.runLater(() -> renderFailure(ex));
                     return null;
@@ -85,7 +82,9 @@ public class AdminOverviewController {
     }
 
     private void renderFailure(Throwable ex) {
-        Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+        // Reuse the shared future-unwrapping helper so UI error text reflects
+        // the original validation/server exception instead of CompletionException.
+        Throwable cause = AdminClientService.extractFailure(ex);
         lblTotalUsersValue.setText("--");
         lblTotalUsersBreakdown.setText("Could not load users");
         lblActiveAuctionsValue.setText("--");
@@ -94,4 +93,8 @@ public class AdminOverviewController {
         lblRecentActivityTime.setText("error");
         lblSessionStatus.setText("Unavailable");
     }
+
+    private record DashboardSnapshot(
+            AdminUserListResponse usersResponse,
+            AdminAuctionListResponse auctionsResponse) {}
 }
