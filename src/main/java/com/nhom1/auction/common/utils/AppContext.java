@@ -1,16 +1,19 @@
 package com.nhom1.auction.common.utils;
 
 import com.nhom1.auction.common.dto.auth.AuthResponse;
+import java.util.UUID;
 
 /*
- - AppContext: Global Session and Configuration storage.
- - It holds data that needs to be shared across multiple UI screens (Controllers),
+ - Global Session and Configuration storage.
+ - Holds data that needs to be shared across multiple UI screens (Controllers),
   (E.g. current logged-in user, server status,..)
  */
 public class AppContext {
     private static boolean isServer;
     // Allows the entire Client application to know who is logged in.
     private static AuthResponse currentUser;
+
+    private static String selectedAuctionId;
 
     public static void setServer(boolean value) {
         isServer = value;
@@ -35,4 +38,15 @@ public class AppContext {
     public static void clearSession() {
         currentUser = null;
     }
+
+
+    public static String getSelectedAuctionId() {
+        return selectedAuctionId;
+    }
+
+    public static void setSelectedAuctionId(String selectedAuctionId) {
+        AppContext.selectedAuctionId = selectedAuctionId;
+    }
+
+
 }

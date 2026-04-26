@@ -65,8 +65,8 @@ public class Auction extends BaseEntity {
      * Use this constructor for loading an EXISTING auction from the database.
      */
     public Auction(UUID id, UUID itemId, UUID sellerId, LocalDateTime startTime, LocalDateTime endTime,
-                   UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
-                   LocalDateTime createdAt, LocalDateTime updatedAt) {
+            UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id, createdAt, updatedAt);
         this.itemId = itemId;
         this.sellerId = sellerId;
@@ -176,6 +176,18 @@ public class Auction extends BaseEntity {
         }
     }
 
+    // Used by AuctionScheduler for anti-sniping: extends the end time when a bid is
+    // placed near the deadline.
+    public void extendEndTime(LocalDateTime newEndTime) {
+        auctionLock.lock();
+        try {
+            this.endTime = newEndTime;
+            touchUpdatedAt();
+        } finally {
+            auctionLock.unlock();
+        }
+    }
+
     public UUID getItemId() {
         return itemId;
     }
@@ -190,17 +202,6 @@ public class Auction extends BaseEntity {
 
     public LocalDateTime getEndTime() {
         return endTime;
-    }
-
-    // Used by AuctionScheduler for anti-sniping: extends the end time when a bid is placed near the deadline.
-    public void extendEndTime(LocalDateTime newEndTime) {
-        auctionLock.lock();
-        try {
-            this.endTime = newEndTime;
-            touchUpdatedAt();
-        } finally {
-            auctionLock.unlock();
-        }
     }
 
     public UUID getHighestBidderId() {
