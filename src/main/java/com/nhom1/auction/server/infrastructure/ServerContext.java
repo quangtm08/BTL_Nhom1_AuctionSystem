@@ -26,8 +26,10 @@ public class ServerContext {
         // Future modules will be wired here by Member 4:
         // AuctionRepository auctionRepo = AuctionModule.init(connection, router);
         // BidModule.init(connection, router, auctionRepo, itemRepo, notificationService);
-        // AdminModule.init(connection, router, userRepository, auctionRepo);
-        // PaymentModule.init(connection, router, auctionRepo, userRepository);
+        // AdminModule.init(router, userRepository, adminAuctionGateway);
+        // Admin branch is ready, but final wiring still depends on:
+        // - Duy: concrete auction-side implementation for admin auction summaries
+        // - Quang: ServerContext merge order after AuctionModule lands
 
     }
 

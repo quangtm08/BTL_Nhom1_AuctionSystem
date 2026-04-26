@@ -2,8 +2,11 @@ package com.nhom1.auction.server.auth;
 
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +31,7 @@ public class UserRepository {
         try (Statement stmt = connection.createStatement()) {
             try (ResultSet rs = stmt.executeQuery(sql)) {
                 while (rs.next()) {
-                    users.add(new User(
-                            UUID.fromString(rs.getString("id")),
-                            rs.getString("username"),
-                            rs.getString("email"),
-                            rs.getString("password"),
-                            UserRole.valueOf(rs.getString("role")),
-                            LocalDateTime.parse(rs.getString("created_at")),
-                            LocalDateTime.parse(rs.getString("updated_at"))));
+                    users.add(mapUser(rs));
                 }
             }
         } catch (SQLException e) {
@@ -56,31 +52,28 @@ public class UserRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     System.out.println("[DB] Match found: " + rs.getString("username"));
-
-                    // Robust date parsing to prevent crashes on legacy/manual DB entries
-                    LocalDateTime createdAt;
-                    LocalDateTime updatedAt;
-                    try {
-                        createdAt = LocalDateTime.parse(rs.getString("created_at"));
-                        updatedAt = LocalDateTime.parse(rs.getString("updated_at"));
-                    } catch (Exception e) {
-                        System.err.println("Warning: Could not parse dates for user " + rs.getString("username")
-                                + ". Using current time.");
-                        createdAt = LocalDateTime.now();
-                        updatedAt = LocalDateTime.now();
-                    }
-
-                    User user = new User(
-                            UUID.fromString(rs.getString("id")),
-                            rs.getString("username"),
-                            rs.getString("email"),
-                            rs.getString("password"),
-                            UserRole.valueOf(rs.getString("role")),
-                            createdAt,
-                            updatedAt);
-                    return Optional.of(user);
+                    return Optional.of(mapUser(rs));
                 } else {
                     System.out.println("[DB] No match found for: " + identifier);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
+    // Shared dependency point for Binh's admin/payment features.
+    // AuthModule already exports UserRepository via ServerContext, so other
+    // modules can safely reuse this lookup without re-owning user SQL.
+    public Optional<User> findById(UUID id) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, id.toString());
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(mapUser(rs));
                 }
             }
         } catch (SQLException e) {
@@ -133,5 +126,39 @@ public class UserRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    // Shared dependency point for Binh's admin feature.
+    public void deleteById(UUID id) {
+        String sql = "DELETE FROM users WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, id.toString());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private User mapUser(ResultSet rs) throws SQLException {
+        LocalDateTime createdAt;
+        LocalDateTime updatedAt;
+        try {
+            createdAt = LocalDateTime.parse(rs.getString("created_at"));
+            updatedAt = LocalDateTime.parse(rs.getString("updated_at"));
+        } catch (Exception e) {
+            System.err.println("Warning: Could not parse dates for user " + rs.getString("username")
+                    + ". Using current time.");
+            createdAt = LocalDateTime.now();
+            updatedAt = LocalDateTime.now();
+        }
+
+        return new User(
+                UUID.fromString(rs.getString("id")),
+                rs.getString("username"),
+                rs.getString("email"),
+                rs.getString("password"),
+                UserRole.valueOf(rs.getString("role")),
+                createdAt,
+                updatedAt);
     }
 }
