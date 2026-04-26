@@ -48,8 +48,11 @@ final class AuctionBidValidator {
         if (bidTime.isAfter(auction.getEndTime())) {
             throw new AuctionClosedException("auction has already ended");
         }
-        if (auction.getCurrentHighestBid() != null
-            && amount.compareTo(auction.getCurrentHighestBid()) <= 0) {
+        if (auction.getCurrentHighestBid() == null) {
+            if (amount.compareTo(auction.getStartingPrice()) < 0) {
+                throw new InvalidBidException("The first bid must be at least the starting price of " + auction.getStartingPrice());
+            }
+        } else if (amount.compareTo(auction.getCurrentHighestBid()) <= 0) {
             throw new InvalidBidException("amount must be greater than currentHighestBid");
         }
     }
