@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +23,8 @@ import com.nhom1.auction.common.enums.VehicleFuelType;
  * Handles Art, Electronics, and Vehicle subtypes based on category.
  */
 public class ItemRepository {
+    private static final DateTimeFormatter SQLITE_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
     private final Connection connection;
 
     public ItemRepository(Connection connection) {
@@ -129,8 +132,8 @@ public class ItemRepository {
         String description = rs.getString("description");
         ItemCategory category = ItemCategory.valueOf(rs.getString("category"));
         ItemCondition condition = ItemCondition.valueOf(rs.getString("condition"));
-        LocalDateTime createdAt = LocalDateTime.parse(rs.getString("created_at"));
-        LocalDateTime updatedAt = LocalDateTime.parse(rs.getString("updated_at"));
+        LocalDateTime createdAt = parseSqliteDateTime(rs.getString("created_at"));
+        LocalDateTime updatedAt = parseSqliteDateTime(rs.getString("updated_at"));
 
         return switch (category) {
             case ELECTRONICS -> new Electronics(
@@ -153,5 +156,25 @@ public class ItemRepository {
                 createdAt, updatedAt
             );
         };
+    }
+
+    public int deleteById(UUID itemId) {
+        String sql = "DELETE FROM items WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, itemId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete item", e);
+        }
+    }
+
+    private LocalDateTime parseSqliteDateTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        if (value.contains("T")) {
+            return LocalDateTime.parse(value);
+        }
+        return LocalDateTime.parse(value, SQLITE_DATE_TIME_FORMATTER);
     }
 }

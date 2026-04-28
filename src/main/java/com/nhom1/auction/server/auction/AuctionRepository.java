@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,7 @@ import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
 
 public class AuctionRepository {
+    private static final DateTimeFormatter SQLITE_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final Connection connection;
 
@@ -36,28 +38,27 @@ public class AuctionRepository {
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
 
-            ps.setObject(1, auction.getId());
-            ps.setObject(2, auction.getItemId());
-            ps.setObject(3, auction.getStartTime());
-            ps.setObject(4, auction.getEndTime());
+            ps.setString(1, auction.getId().toString());
+            ps.setString(2, auction.getItemId().toString());
+            ps.setString(3, formatSqliteDateTime(auction.getStartTime()));
+            ps.setString(4, formatSqliteDateTime(auction.getEndTime()));
             ps.setString(5, auction.getStatus().name());
 
-            // nullable
             if (auction.getCurrentHighestBid() != null) {
                 ps.setBigDecimal(6, auction.getCurrentHighestBid());
             } else {
-                ps.setNull(6, Types.DECIMAL);
+                ps.setBigDecimal(6, BigDecimal.ZERO);
             }
 
             if (auction.getHighestBidderId() != null) {
-                ps.setObject(7, auction.getHighestBidderId());
+                ps.setString(7, auction.getHighestBidderId().toString());
             } else {
-                ps.setNull(7, Types.OTHER);
+                ps.setNull(7, Types.VARCHAR);
             }
 
             LocalDateTime now = LocalDateTime.now();
-            ps.setObject(8, now);
-            ps.setObject(9, now);
+            ps.setString(8, formatSqliteDateTime(now));
+            ps.setString(9, formatSqliteDateTime(now));
 
             ps.executeUpdate();
 
@@ -127,7 +128,7 @@ public class AuctionRepository {
         List<Auction> list = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setObject(1, sellerId);
+            ps.setString(1, sellerId.toString());
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -239,20 +240,21 @@ public class AuctionRepository {
     // ===================== MAPPER =====================
     private Auction map(ResultSet rs) throws SQLException {
 
-        UUID id = rs.getObject("id", UUID.class);
-        UUID itemId = rs.getObject("item_id", UUID.class);
-        UUID sellerId = rs.getObject("seller_id", UUID.class);
+        UUID id = UUID.fromString(rs.getString("id"));
+        UUID itemId = UUID.fromString(rs.getString("item_id"));
+        UUID sellerId = UUID.fromString(rs.getString("seller_id"));
 
-        LocalDateTime startTime = rs.getObject("start_time", LocalDateTime.class);
-        LocalDateTime endTime = rs.getObject("end_time", LocalDateTime.class);
+        LocalDateTime startTime = parseSqliteDateTime(rs.getString("start_time"));
+        LocalDateTime endTime = parseSqliteDateTime(rs.getString("end_time"));
 
-        UUID highestBidderId = rs.getObject("highest_bidder_id", UUID.class);
+        String highestBidderIdRaw = rs.getString("highest_bidder_id");
+        UUID highestBidderId = highestBidderIdRaw == null ? null : UUID.fromString(highestBidderIdRaw);
         BigDecimal currentHighestBid = rs.getBigDecimal("current_highest_bid");
 
         AuctionStatus status = AuctionStatus.valueOf(rs.getString("status"));
 
-        LocalDateTime createdAt = rs.getObject("created_at", LocalDateTime.class);
-        LocalDateTime updatedAt = rs.getObject("updated_at", LocalDateTime.class);
+        LocalDateTime createdAt = parseSqliteDateTime(rs.getString("created_at"));
+        LocalDateTime updatedAt = parseSqliteDateTime(rs.getString("updated_at"));
 
         return new Auction(
                 id,
@@ -266,5 +268,32 @@ public class AuctionRepository {
                 createdAt,
                 updatedAt
         );
+    }
+
+    public int deleteById(UUID auctionId) {
+        String sql = "DELETE FROM auctions WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, auctionId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete auction", e);
+        }
+    }
+
+    private LocalDateTime parseSqliteDateTime(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        if (value.contains("T")) {
+            return LocalDateTime.parse(value);
+        }
+        return LocalDateTime.parse(value, SQLITE_DATE_TIME_FORMATTER);
+    }
+
+    private String formatSqliteDateTime(LocalDateTime value) {
+        if (value == null) {
+            return null;
+        }
+        return value.format(SQLITE_DATE_TIME_FORMATTER);
     }
 }
