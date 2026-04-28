@@ -9,7 +9,7 @@ public class AuctionModule {
     public static AuctionRepository init(Connection connection, MessageRouter router) {
         ItemRepository itemRepository = new ItemRepository(connection);
         AuctionRepository auctionRepository = new AuctionRepository(connection);
-        AuctionService auctionService = new AuctionService(auctionRepository, itemRepository);
+        AuctionService auctionService = new AuctionService(auctionRepository, itemRepository, connection);
         AuctionHandler auctionHandler = new AuctionHandler(auctionService);
 
         auctionHandler.register(router);
