@@ -1,0 +1,158 @@
+.listing-root {
+    -fx-background-color: #050505;
+}
+
+.listing-content {
+    -fx-background-color: #050505;
+}
+
+.back-text {
+    -fx-text-fill: #9aa89f;
+    -fx-font-size: 14px;
+}
+.back-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #9aa89f;
+    -fx-font-size: 17px;
+    -fx-font-weight: 600;
+    -fx-padding: 0;
+}
+.back-btn:hover {
+    -fx-cursor: hand;
+    -fx-text-fill: #c7d3cd;
+}
+
+.page-title {
+    -fx-text-fill: #f2f5f3;
+    -fx-font-size: 44px;
+    -fx-font-weight: 700;
+}
+
+.section-title, .field-label {
+    -fx-text-fill: #90a196;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.field-input, .field-area, .combo-box.field-input {
+    -fx-background-color: #2f3533;
+    -fx-text-fill: #ecefed;
+    -fx-prompt-text-fill: #7f8b84;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #45504a;
+    -fx-padding: 10 14;
+}
+
+.combo-box.field-input .list-cell {
+    -fx-text-fill: #ecefed;
+    -fx-background-color: #2f3533;
+}
+
+.combo-box.field-input .arrow-button {
+    -fx-background-color: #2f3533;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #1f2523;
+    -fx-border-color: #45504a;
+}
+
+.combo-box-popup .list-cell {
+    -fx-background-color: #1f2523;
+    -fx-text-fill: #e3ebe6;
+}
+
+.combo-box-popup .list-cell:hover,
+.combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: #2b3a33;
+}
+
+.field-area {
+    -fx-pref-height: 118;
+    -fx-border-color: transparent;
+    -fx-background-color: #2f3533;
+}
+.field-area .content {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+}
+.field-area:focused .content {
+    -fx-background-color: transparent;
+}
+.field-area .viewport {
+    -fx-background-color: transparent;
+}
+.field-area:focused {
+    -fx-border-color: transparent;
+}
+
+.upload-box {
+    -fx-border-color: #3a4a42;
+    -fx-border-style: segments(6, 8);
+    -fx-border-radius: 12;
+    -fx-padding: 30 10;
+}
+
+.upload-icon {
+    -fx-text-fill: #94a39a;
+    -fx-font-size: 20px;
+}
+
+.upload-title {
+    -fx-text-fill: #d9e2dc;
+    -fx-font-size: 20px;
+    -fx-font-weight: 600;
+}
+
+.upload-sub {
+    -fx-text-fill: #7f8e85;
+    -fx-font-size: 13px;
+}
+
+.line-separator .line {
+    -fx-border-color: #1f2c26;
+}
+
+.duration-chip {
+    -fx-background-color: transparent;
+    -fx-border-color: #455049;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-text-fill: #9cad9f;
+    -fx-padding: 7 14;
+}
+
+.duration-chip-active {
+    -fx-background-color: #14472f;
+    -fx-border-color: #1ea45e;
+    -fx-text-fill: #b8f2ce;
+}
+
+.duration-custom-input {
+    -fx-background-color: #2f3533;
+    -fx-text-fill: #ecefed;
+    -fx-prompt-text-fill: #7f8b84;
+    -fx-border-color: #45504a;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 7 12;
+}
+
+.btn-secondary, .btn-primary {
+    -fx-padding: 9 18;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: #4a5750;
+    -fx-text-fill: #9aa9a0;
+}
+
+.btn-primary {
+    -fx-background-color: #1e8b4f;
+    -fx-border-color: #28b567;
+    -fx-text-fill: #ebffee;
+}

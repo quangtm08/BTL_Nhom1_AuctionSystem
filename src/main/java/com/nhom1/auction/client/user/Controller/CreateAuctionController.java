@@ -1,0 +1,222 @@
+package com.nhom1.auction.client.user.controller;
+
+import java.io.File;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.nhom1.auction.client.AppNavigator;
+import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
+import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
+import com.nhom1.auction.common.dto.auth.AuthResponse;
+import com.nhom1.auction.common.enums.ItemCategory;
+import com.nhom1.auction.common.enums.ItemCondition;
+import com.nhom1.auction.common.protocol.MessageType;
+import com.nhom1.auction.common.protocol.RequestMessage;
+import com.nhom1.auction.common.utils.AppContext;
+
+import javafx.application.Platform;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
+
+public class CreateAuctionController {
+
+    @FXML
+    private ComboBox<ItemCategory> categoryComboBox;
+
+    @FXML
+    private ComboBox<ItemCondition> conditionComboBox;
+
+    @FXML
+    private Label uploadCountLabel;
+    @FXML
+    private Button duration1Btn;
+    @FXML
+    private Button duration3Btn;
+    @FXML
+    private Button duration7Btn;
+    @FXML
+    private Button duration14Btn;
+    @FXML
+    private Button duration30Btn;
+    @FXML
+    private TextField customDurationField;
+    @FXML
+    private TextField titleField;
+    @FXML
+    private TextArea descriptionArea;
+    @FXML
+    private TextField startingBidField;
+    @FXML
+    private TextField reservePriceField;
+
+    @FXML
+    private void initialize() {
+        categoryComboBox.getItems().setAll(ItemCategory.values());
+        conditionComboBox.getItems().setAll(ItemCondition.values());
+        customDurationField.textProperty().addListener((obs, oldValue, newValue) -> {
+            if (newValue != null && !newValue.isBlank()) {
+                clearActiveDurationButtons();
+            }
+        });
+    }
+
+    @FXML
+    private void handleDurationPreset(ActionEvent event) {
+        if (!(event.getSource() instanceof Button selectedButton)) {
+            return;
+        }
+        clearActiveDurationButtons();
+        ObservableList<String> classes = selectedButton.getStyleClass();
+        if (!classes.contains("duration-chip-active")) {
+            classes.add("duration-chip-active");
+        }
+        customDurationField.clear();
+    }
+
+    private void clearActiveDurationButtons() {
+        Arrays.asList(duration1Btn, duration3Btn, duration7Btn, duration14Btn, duration30Btn)
+                .forEach(button -> button.getStyleClass().remove("duration-chip-active"));
+    }
+
+    @FXML
+    private void handleBackToListings() {
+        AppNavigator.navigateTo(AppView.MY_LISTINGS);
+    }
+
+    @FXML
+    private void handleChoosePhotos() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose listing photos");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg")
+        );
+
+        Window window = uploadCountLabel.getScene() != null ? uploadCountLabel.getScene().getWindow() : null;
+        List<File> selectedFiles = fileChooser.showOpenMultipleDialog(window);
+
+        if (selectedFiles == null || selectedFiles.isEmpty()) {
+            uploadCountLabel.setText("No photo selected");
+            return;
+        }
+
+        String selectedNames = selectedFiles.stream()
+                .limit(2)
+                .map(File::getName)
+                .collect(Collectors.joining(", "));
+        if (selectedFiles.size() > 2) {
+            selectedNames = selectedNames + " +" + (selectedFiles.size() - 2) + " more";
+        }
+
+        uploadCountLabel.setText(selectedFiles.size() + " photo(s): " + selectedNames);
+    }
+
+    @FXML
+    private void handlePublishListing() {
+        AuthResponse user = AppContext.getCurrentUser();
+        if (user == null || user.getUserID() == null || user.getUserID().isBlank()) {
+            uploadCountLabel.setText("Please sign in again.");
+            return;
+        }
+        if (titleField.getText() == null || titleField.getText().isBlank()) {
+            uploadCountLabel.setText("Title is required.");
+            return;
+        }
+        if (categoryComboBox.getValue() == null || conditionComboBox.getValue() == null) {
+            uploadCountLabel.setText("Category and condition are required.");
+            return;
+        }
+
+        BigDecimal startingBid;
+        try {
+            startingBid = new BigDecimal(startingBidField.getText().trim());
+        } catch (Exception ex) {
+            uploadCountLabel.setText("Starting bid must be a valid number.");
+            return;
+        }
+
+        int durationDays = resolveDurationDays();
+        if (durationDays <= 0) {
+            uploadCountLabel.setText("Duration must be greater than 0.");
+            return;
+        }
+
+        LocalDateTime startTime = LocalDateTime.now();
+        LocalDateTime endTime = startTime.plusDays(durationDays);
+
+        CreateAuctionRequest dto = new CreateAuctionRequest();
+        dto.setSellerId(user.getUserID());
+        dto.setName(titleField.getText().trim());
+        dto.setDescription(descriptionArea.getText());
+        dto.setCategory(categoryComboBox.getValue());
+        dto.setCondition(conditionComboBox.getValue());
+        dto.setStartingPrice(startingBid);
+        dto.setStartTime(startTime);
+        dto.setEndTime(endTime);
+
+        // Minimal category-specific defaults to satisfy backend validation
+        switch (dto.getCategory()) {
+            case ART -> {
+                dto.setArtist("Unknown");
+                dto.setEra("Unknown");
+            }
+            case ELECTRONICS -> {
+                dto.setBrand("Unknown");
+                dto.setWarrantyMonths(0);
+            }
+            case VEHICLE -> {
+                dto.setBrand("Unknown");
+                dto.setProductionYear(2000);
+                dto.setFuelType(null);
+            }
+        }
+
+        RequestMessage<CreateAuctionRequest> request = new RequestMessage<>(MessageType.CREATE_AUCTION, dto);
+        uploadCountLabel.setText("Publishing...");
+        ServerConnection.getInstance()
+                .sendRequest(request, CreateAuctionResponse.class)
+                .thenAccept(response -> Platform.runLater(() -> {
+                    if (response != null && response.isSuccess()) {
+                        uploadCountLabel.setText("Published successfully.");
+                        AppNavigator.navigateTo(AppView.MY_LISTINGS);
+                    } else {
+                        String err = (response != null && response.getError() != null)
+                                ? response.getError().getMessage()
+                                : "Failed to publish listing.";
+                        uploadCountLabel.setText(err);
+                    }
+                }))
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> uploadCountLabel.setText("Connection error."));
+                    return null;
+                });
+    }
+
+    private int resolveDurationDays() {
+        if (customDurationField.getText() != null && !customDurationField.getText().isBlank()) {
+            try {
+                return Integer.parseInt(customDurationField.getText().trim());
+            } catch (NumberFormatException ex) {
+                return -1;
+            }
+        }
+        if (duration1Btn.getStyleClass().contains("duration-chip-active")) return 1;
+        if (duration3Btn.getStyleClass().contains("duration-chip-active")) return 3;
+        if (duration7Btn.getStyleClass().contains("duration-chip-active")) return 7;
+        if (duration14Btn.getStyleClass().contains("duration-chip-active")) return 14;
+        if (duration30Btn.getStyleClass().contains("duration-chip-active")) return 30;
+        return 7;
+    }
+}

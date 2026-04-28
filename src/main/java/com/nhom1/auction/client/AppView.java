@@ -7,6 +7,8 @@ public enum AppView {
     REGISTER("/views/register.fxml", null),
     AUCTION_BROWSE("/views/user/auction_browse.fxml", null),
     MY_LISTINGS("/views/user/my_listings.fxml", null),
+    CREATE_LISTING("/views/user/create_auction.fxml", null),
+    EDIT_LISTING("/views/user/edit_auction.fxml", null),
     MY_BIDS("/views/user/my_bids.fxml", null),
     PAYMENT("/views/user/payment.fxml", null),
 
