@@ -11,6 +11,7 @@ public enum MessageType {
 
 
     CREATE_AUCTION,
+    DELETE_AUCTION,
     LIST_MY_LISTINGS, //to show all the user's listings in the My Listings screen
 
 

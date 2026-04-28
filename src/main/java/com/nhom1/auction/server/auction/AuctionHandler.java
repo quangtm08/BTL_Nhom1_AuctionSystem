@@ -39,6 +39,17 @@ public class AuctionHandler {
                 return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid ListMyListings JSON");
             }
         });
+
+        router.register(MessageType.DELETE_AUCTION, (requestId, payloadJson) -> {
+            try {
+                JsonNode payload = JsonUtil.fromJson(payloadJson, JsonNode.class);
+                String sellerId = payload.has("sellerId") ? payload.get("sellerId").asText() : null;
+                String auctionId = payload.has("auctionId") ? payload.get("auctionId").asText() : null;
+                return handleDeleteAuction(requestId, sellerId, auctionId);
+            } catch (Exception e) {
+                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid DeleteAuction JSON");
+            }
+        });
     }
 
     private ResponseMessage<CreateAuctionResponse> handleCreateAuction(String requestId, CreateAuctionRequest dto) {
@@ -60,7 +71,11 @@ public class AuctionHandler {
 
             return new ResponseMessage<>(requestId, response);
         } catch (Exception e) {
-            return new ResponseMessage<>(requestId, "CREATE_AUCTION_FAILED", e.getMessage());
+            String detail = e.getMessage();
+            if (e.getCause() != null && e.getCause().getMessage() != null) {
+                detail = detail + " | cause: " + e.getCause().getMessage();
+            }
+            return new ResponseMessage<>(requestId, "CREATE_AUCTION_FAILED", detail);
         }
     }
 
@@ -70,6 +85,15 @@ public class AuctionHandler {
             return new ResponseMessage<>(requestId, new MyListingsResponse(listings));
         } catch (Exception e) {
             return new ResponseMessage<>(requestId, "LIST_MY_LISTINGS_FAILED", e.getMessage());
+        }
+    }
+
+    private ResponseMessage<String> handleDeleteAuction(String requestId, String sellerId, String auctionId) {
+        try {
+            auctionService.deleteAuction(sellerId, auctionId);
+            return new ResponseMessage<>(requestId, "Deleted");
+        } catch (Exception e) {
+            return new ResponseMessage<>(requestId, "DELETE_AUCTION_FAILED", e.getMessage());
         }
     }
 }

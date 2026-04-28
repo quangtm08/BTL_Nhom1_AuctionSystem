@@ -1,6 +1,7 @@
 package com.nhom1.auction.server.auction;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,10 +16,12 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final ItemRepository itemRepository;
+    private final Connection connection;
 
-    public AuctionService(AuctionRepository auctionRepository, ItemRepository itemRepository) {
+    public AuctionService(AuctionRepository auctionRepository, ItemRepository itemRepository, Connection connection) {
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
+        this.connection = connection;
     }
 
     public Auction createAuction(String sellerId, CreateAuctionRequest dto) {
@@ -64,6 +67,50 @@ public class AuctionService {
                     );
                 })
                 .toList();
+    }
+
+    public void deleteAuction(String sellerId, String auctionId) {
+        UUID parsedSellerId = parseSellerId(sellerId);
+        if (auctionId == null || auctionId.isBlank()) {
+            throw new IllegalArgumentException("auctionId must not be blank");
+        }
+
+        UUID parsedAuctionId;
+        try {
+            parsedAuctionId = UUID.fromString(auctionId);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("auctionId is not a valid UUID", ex);
+        }
+
+        Auction auction = auctionRepository.findById(parsedAuctionId)
+                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+
+        if (!parsedSellerId.equals(auction.getSellerId())) {
+            throw new IllegalArgumentException("You are not allowed to delete this auction");
+        }
+
+        try {
+            boolean oldAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                int deletedAuctions = auctionRepository.deleteById(parsedAuctionId);
+                int deletedItems = itemRepository.deleteById(auction.getItemId());
+                if (deletedAuctions == 0) {
+                    throw new IllegalStateException("Auction was not deleted.");
+                }
+                if (deletedItems == 0) {
+                    throw new IllegalStateException("Item was not deleted.");
+                }
+                connection.commit();
+            } catch (Exception ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(oldAutoCommit);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Delete transaction failed", ex);
+        }
     }
 
     private void validateCreateAuctionRequest(String sellerId, CreateAuctionRequest dto) {
