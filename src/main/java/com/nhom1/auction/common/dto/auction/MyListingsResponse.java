@@ -2,13 +2,13 @@ package com.nhom1.auction.common.dto.auction;
 
 import java.util.List;
 
-public class MyListingsReponse {
+public class MyListingsResponse {
     
     private List<AuctionSummaryDto> listings;
 
-    public MyListingsReponse() {}
+    public MyListingsResponse() {}
 
-    public MyListingsReponse(List<AuctionSummaryDto> listings) {
+    public MyListingsResponse(List<AuctionSummaryDto> listings) {
         this.listings = listings;
     }
 
