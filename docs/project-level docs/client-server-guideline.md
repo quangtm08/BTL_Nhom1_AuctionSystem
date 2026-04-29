@@ -18,12 +18,24 @@ Tài liệu này sẽ hướng dẫn chi tiết cách "làm chủ" một tính n
 *   **Chỉnh sửa `MessageType.java` (trong `common/protocol`):** Thêm từ khóa cho tính năng tương ứng. Ví dụ: `BID_PLACE`, `GET_ALL_AUCTIONS`.
 
 ### Bước 2: Viết giao diện ở thư mục `client`
-*   **Tạo/Chỉnh sửa UI Controller:** Ví dụ `BidController.java`.
+*   **Tạo/Chỉnh sửa Client Service** (trong `client/user/service/` hoặc `client/admin/service/`): Ví dụ `BiddingClientService.java`.
+*   **Logic bên trong Client Service:**
+    1. Nhận tham số thuần từ Controller (username, password, auctionId, amount...).
+    2. Validate đầu vào phía client (fail fast — trước khi gửi server).
+    3. Gom dữ liệu vào đối tượng DTO vừa tạo (`BidRequest`).
+    4. Đóng gói DTO vào `RequestMessage` với nhãn `MessageType` tương ứng.
+    5. Gọi `BaseClientService.send(...)` → unwrap `ResponseMessage` → trả về `CompletableFuture<T>` (chỉ payload, không phải `ResponseMessage`).
+    6. Nếu response thất bại, `BaseClientService` tự ném `AuctionException` với message của server.
+    7. Xử lý session side-effect nếu cần (ví dụ: `AppContext.setCurrentUser()` sau login thành công).
+
+*   **Tạo/Chỉnh sửa UI Controller:** Ví dụ `AuctionBrowseController.java`.
 *   **Logic bên trong Controller:**
-    1. Lấy dữ liệu người dùng nhập từ giao diện (Text box, Button click).
-    2. Gom dữ liệu vào đối tượng DTO vừa tạo (`BidRequest`).
-    3. Đóng gói DTO vào `RequestMessage` với nhãn `MessageType` tương ứng.
-    4. Gọi `ServerConnection.getInstance().sendRequest(...)` và dùng `.thenAccept(response -> { ... })` để xử lý khi lấy được kết quả từ máy chủ, sau đó cập nhật lại màn hình.
+    1. Gọi method của Client Service với dữ liệu từ giao diện.
+    2. Dùng `.thenAccept(result -> { Platform.runLater(() -> { ... }); })` để cập nhật UI khi lấy được kết quả.
+    3. Dùng `.exceptionally(ex -> { ... })` để hiển thị thông báo lỗi.
+    4. **Controller KHÔNG import** `RequestMessage`, `MessageType`, `ServerConnection`, hay `ResponseMessage`.
+
+> **Lưu ý:** Tham khảo `AuthClientService.java` (trong `client/user/service/`) làm mẫu cho cách viết Client Service. Tất cả client service kế thừa `BaseClientService`.
 
 ### Bước 3: Xử lý nghiệp vụ ở thư mục `server`
 Cần tạo một folder mới trong `server` (ví dụ: `server/bidding`) và tạo 4 file sau:
@@ -91,5 +103,5 @@ Hãy đánh dấu kiểm các bước sau để chắc chắn tính năng đã t
 - [ ] (Server) Lắp ráp Handler: nhận JSON -> Gọi Service xử lý -> Trả Result về.
 - [ ] (Server) Gom Repository, Service và Handler vào hàm `init` của một Module mới.
 - [ ] (Server) Gọi hàm `.init(connection, router)` của Module trên vào trong `ServerContext`.
-- [ ] (Client) Chỉnh sửa Controller để gom thông tin thành `RequestMessage`.
-- [ ] (Client) Gọi hàm `sendRequest` của `ServerConnection`, nhận kết quả và đổ lại lên màn hình giao diện.
+- [ ] (Client) Tạo Client Service kế thừa `BaseClientService`: nhận tham số thuần → validate → đóng gói `RequestMessage` → gọi `send()` → trả về `CompletableFuture<T>`. Lỗi tự ném `AuctionException`.
+- [ ] (Client) Chỉnh sửa Controller: gọi Client Service → `Platform.runLater()` → cập nhật UI / hiển thị lỗi. Controller KHÔNG import `RequestMessage`, `MessageType`, `ServerConnection`.

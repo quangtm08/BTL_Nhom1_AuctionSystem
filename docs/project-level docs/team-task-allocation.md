@@ -417,7 +417,7 @@ Nếu thay đổi phải thảo luận với team.
 
 void save(Auction auction)
 // Lưu một phiên đấu giá mới vào DB (chỉ dùng khi tạo mới, không phải update).
-// Các cột cần INSERT: id, item_id, start_time, end_time, status, starting_price,
+// Các cột cần INSERT: id, item_id, start_time, end_time, status,
 //   current_highest_bid (mặc định 0.0), highest_bidder_id (mặc định null), created_at, updated_at.
 // KHÔNG có cột seller_id trên bảng auctions — không cần INSERT seller_id ở đây.
 // Thông tin seller nằm ở bảng items. Mọi truy vấn cần seller phải JOIN.
@@ -539,7 +539,6 @@ String itemId
 String itemName
 String itemCategory     // ItemCategory.name() — "ELECTRONICS" | "ART" | "VEHICLE"
 String status           // AuctionStatus.name() — "OPEN" | "RUNNING" | "FINISHED" | "PAID" | "CANCELED"
-double startingPrice      // giá khởi điểm của phiên đấu giá
 double currentHighestBid  // 0.0 nếu chưa có bid nào
 String highestBidderId  // null nếu chưa có bid nào
 String endTime          // LocalDateTime.toString()
