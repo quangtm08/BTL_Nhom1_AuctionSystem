@@ -61,10 +61,10 @@
                     </HBox>
 
                     <TextField promptText=" ENTER YOUR BID"
-                               styleClass="bid-input"/>
+                               styleClass="bid-input" fx:id="txtBidInput"/>
 
                     <HBox spacing="10">
-                        <Button text="Bid" styleClass="btn-green"/>
+                        <Button text="Bid" styleClass="btn-green" fx:id="btnBid"/>
                         <Button text="Setup auto bid" styleClass="btn-green-outline"/>
                         <Button text="Cancel" styleClass="btn-red"/>
                     </HBox>

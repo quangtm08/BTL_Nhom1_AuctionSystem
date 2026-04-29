@@ -1,6 +1,7 @@
 package com.nhom1.auction.common.entity;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +17,8 @@ import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 
 public class Auction extends BaseEntity {
+    private static final BigDecimal MIN_INCREMENT_RATE = new BigDecimal("0.05");
+    private static final int MIN_INCREMENT_SCALE = 2;
     private final UUID itemId;
     private final UUID sellerId;
     private final LocalDateTime startTime;
@@ -204,6 +207,11 @@ public class Auction extends BaseEntity {
 
     public BigDecimal getStartingPrice() {
         return startingPrice;
+    }
+
+    public BigDecimal getMinBidIncrement() {
+        return startingPrice.multiply(MIN_INCREMENT_RATE)
+            .setScale(MIN_INCREMENT_SCALE, RoundingMode.HALF_UP);
     }
 
     public LocalDateTime getStartTime() {
