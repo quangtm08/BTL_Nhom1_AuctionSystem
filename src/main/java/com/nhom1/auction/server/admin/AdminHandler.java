@@ -1,9 +1,10 @@
 package com.nhom1.auction.server.admin;
 
-import com.nhom1.auction.common.dto.admin.AdminListAuctionsRequest;
-import com.nhom1.auction.common.dto.admin.AdminDeleteUserRequest;
-import com.nhom1.auction.common.dto.admin.AdminListUsersRequest;
 import com.nhom1.auction.common.dto.admin.AdminAuctionListResponse;
+import com.nhom1.auction.common.dto.admin.AdminCancelAuctionRequest;
+import com.nhom1.auction.common.dto.admin.AdminDeleteUserRequest;
+import com.nhom1.auction.common.dto.admin.AdminListAuctionsRequest;
+import com.nhom1.auction.common.dto.admin.AdminListUsersRequest;
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
@@ -20,8 +21,7 @@ public class AdminHandler {
     public void register(MessageRouter router) {
         router.register(MessageType.ADMIN_LIST_USERS, (requestId, payloadJson) -> {
             try {
-                AdminListUsersRequest dto = JsonUtil.fromJson(payloadJson, AdminListUsersRequest.class);
-                return handleListUsers(requestId, dto);
+                return handleListUsers(requestId, JsonUtil.fromJson(payloadJson, AdminListUsersRequest.class));
             } catch (Exception e) {
                 return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid admin list users JSON");
             }
@@ -29,8 +29,7 @@ public class AdminHandler {
 
         router.register(MessageType.ADMIN_LIST_AUCTIONS, (requestId, payloadJson) -> {
             try {
-                AdminListAuctionsRequest dto = JsonUtil.fromJson(payloadJson, AdminListAuctionsRequest.class);
-                return handleListAuctions(requestId, dto);
+                return handleListAuctions(requestId, JsonUtil.fromJson(payloadJson, AdminListAuctionsRequest.class));
             } catch (Exception e) {
                 return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid admin list auctions JSON");
             }
@@ -38,23 +37,34 @@ public class AdminHandler {
 
         router.register(MessageType.ADMIN_DELETE_USER, (requestId, payloadJson) -> {
             try {
-                AdminDeleteUserRequest dto = JsonUtil.fromJson(payloadJson, AdminDeleteUserRequest.class);
-                return handleDeleteUser(requestId, dto);
+                return handleDeleteUser(requestId, JsonUtil.fromJson(payloadJson, AdminDeleteUserRequest.class));
             } catch (Exception e) {
                 return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid delete user JSON");
+            }
+        });
+
+        router.register(MessageType.ADMIN_CANCEL_AUCTION, (requestId, payloadJson) -> {
+            try {
+                return handleCancelAuction(requestId, JsonUtil.fromJson(payloadJson, AdminCancelAuctionRequest.class));
+            } catch (Exception e) {
+                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid cancel auction JSON");
             }
         });
     }
 
     private ResponseMessage<String> handleDeleteUser(String requestId, AdminDeleteUserRequest dto) {
         try {
-            if (dto == null) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing delete user payload.");
-            }
-            String result = adminService.deleteUser(dto.getTargetUserId(), dto.getCallerId());
-            return new ResponseMessage<>(requestId, result);
-        } catch (IllegalArgumentException e) {
-            return new ResponseMessage<>(requestId, "INVALID_ID", "Caller ID or target user ID is invalid.");
+            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing delete user payload.");
+            return new ResponseMessage<>(requestId, adminService.deleteUser(dto.getTargetUserId(), dto.getCallerId()));
+        } catch (Exception e) {
+            return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
+        }
+    }
+
+    private ResponseMessage<String> handleCancelAuction(String requestId, AdminCancelAuctionRequest dto) {
+        try {
+            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing cancel auction payload.");
+            return new ResponseMessage<>(requestId, adminService.cancelAuction(dto.getAuctionId(), dto.getCallerId()));
         } catch (Exception e) {
             return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
         }
@@ -62,12 +72,8 @@ public class AdminHandler {
 
     private ResponseMessage<AdminUserListResponse> handleListUsers(String requestId, AdminListUsersRequest dto) {
         try {
-            if (dto == null) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing admin list users payload.");
-            }
+            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing admin list users payload.");
             return new ResponseMessage<>(requestId, adminService.getAllUsers(dto.getCallerId()));
-        } catch (IllegalArgumentException e) {
-            return new ResponseMessage<>(requestId, "INVALID_ID", "Caller ID is invalid.");
         } catch (Exception e) {
             return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
         }
@@ -75,12 +81,8 @@ public class AdminHandler {
 
     private ResponseMessage<AdminAuctionListResponse> handleListAuctions(String requestId, AdminListAuctionsRequest dto) {
         try {
-            if (dto == null) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing admin list auctions payload.");
-            }
+            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing admin list auctions payload.");
             return new ResponseMessage<>(requestId, adminService.getAllAuctions(dto.getCallerId()));
-        } catch (IllegalArgumentException e) {
-            return new ResponseMessage<>(requestId, "INVALID_ID", "Caller ID is invalid.");
         } catch (Exception e) {
             return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
         }

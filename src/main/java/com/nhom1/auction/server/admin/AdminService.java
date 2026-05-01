@@ -36,14 +36,8 @@ public class AdminService {
             throw new ValidationException("Target user ID is required.");
         }
 
-        // Reuse the same admin gate as the read endpoints so the permission
-        // contract stays aligned across list/delete flows.
         User caller = requireAdmin(callerId);
-
-        // Guardrail for shared admin tooling:
-        // this branch intentionally blocks self-delete so an admin cannot lock
-        // themselves out while other admin-management flows are still incomplete.
-        if (callerId.equals(targetUserId)) {
+        if (caller.getId().toString().equals(targetUserId)) {
             throw new UnauthorizedActionException("Admin accounts cannot delete themselves from this flow.");
         }
 
@@ -57,12 +51,22 @@ public class AdminService {
         return "DELETED";
     }
 
+    public String cancelAuction(String auctionId, String callerId)
+            throws ValidationException, AuthenticationException, UnauthorizedActionException {
+        requireAdmin(callerId);
+        if (auctionId == null || auctionId.isBlank()) {
+            throw new ValidationException("Auction ID is required.");
+        }
+        boolean changed = adminAuctionGateway.cancelAuctionById(auctionId);
+        if (!changed) {
+            throw new ValidationException("Auction not found or cannot be canceled in current status.");
+        }
+        return "CANCELED";
+    }
+
     public AdminAuctionListResponse getAllAuctions(String callerId)
             throws ValidationException, AuthenticationException, UnauthorizedActionException {
         requireAdmin(callerId);
-        // Cross-team integration point:
-        // auction summaries come from Duy's auction-side mapping, not from the
-        // admin module itself.
         return new AdminAuctionListResponse(adminAuctionGateway.findAllAuctionSummaries());
     }
 
@@ -84,8 +88,6 @@ public class AdminService {
         try {
             return UUID.fromString(rawId);
         } catch (IllegalArgumentException e) {
-            // Convert low-level UUID parsing failure into the validation
-            // contract expected by AdminHandler/client service.
             throw new ValidationException(fieldName + " is invalid.");
         }
     }
