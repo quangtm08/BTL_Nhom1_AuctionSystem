@@ -1,5 +1,7 @@
 package com.nhom1.auction.common.dto.notification;
 
+import java.util.UUID;
+
 public class BidUpdateEvent {
     private String auctionId;
     private double newHighestBid;
@@ -13,6 +15,11 @@ public class BidUpdateEvent {
         this.newHighestBid = newHighestBid;
         this.newHighestBidderId = newHighestBidderId;
         this.timestamp = timestamp;
+    }
+
+    public BidUpdateEvent(String auctionId, double newHighestBid, UUID winnerId) {
+        this.auctionId = auctionId;
+        this.newHighestBid = newHighestBid;
     }
 
     public String getAuctionId() {

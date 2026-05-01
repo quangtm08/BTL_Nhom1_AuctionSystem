@@ -25,6 +25,7 @@ public class Server {
             // This builds the Database connection, Router, and all Modules (Auth, etc.)
             ServerContext context = new ServerContext();
             MessageRouter router = context.getRouter();
+            var clientRegistry = context.getClientRegistry();
 
             // 2. Start Network Listening
             try (ServerSocket serverSocket = new ServerSocket(port)) {
@@ -39,8 +40,8 @@ public class Server {
 
                     System.out.println("[" + clientCount + "] New client connection from: " + socket.getInetAddress());
 
-                    // Each thread gets a reference to the same router (Thread-Safe)
-                    pool.execute(new ClientHandler(socket, router));
+                    // Each thread gets a reference to the same router and registry
+                    pool.execute(new ClientHandler(socket, router, clientRegistry));
                 }
             }
         } catch (Exception e) {

@@ -9,6 +9,8 @@ import java.sql.Connection;
 public class ServerContext {
     private final MessageRouter router;
     private final Connection connection;
+    private final ClientRegistry clientRegistry;
+    private final NotificationService notificationService;
 
     public ServerContext() throws Exception {
         // 1. Initialize shared Infrastructure
@@ -19,19 +21,30 @@ public class ServerContext {
             throw new Exception("CRITICAL: Database connection failed.");
         }
 
+        // Initialize Real-time Push Infrastructure
+        this.clientRegistry = new ClientRegistry();
+        this.notificationService = new NotificationService(clientRegistry);
+
         // 2. Initialize Features (Modules)
         // Auth — returns UserRepository so other modules (Admin, Payment) can reuse it
         UserRepository userRepository = AuthModule.init(this.connection, this.router);
 
-        // Future modules will be wired here by Member 4:
+        // Future modules will be wired here by Member 4 (Quang):
         // AuctionRepository auctionRepo = AuctionModule.init(connection, router);
         // BidModule.init(connection, router, auctionRepo, itemRepo, notificationService);
         // AdminModule.init(connection, router, userRepository, auctionRepo);
         // PaymentModule.init(connection, router, auctionRepo, userRepository);
-
     }
 
     public MessageRouter getRouter() {
         return router;
+    }
+
+    public ClientRegistry getClientRegistry() {
+        return clientRegistry;
+    }
+
+    public NotificationService getNotificationService() {
+        return notificationService;
     }
 }
