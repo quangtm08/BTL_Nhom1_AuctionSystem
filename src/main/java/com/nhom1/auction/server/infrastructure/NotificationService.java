@@ -6,6 +6,7 @@ import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -18,7 +19,7 @@ public class NotificationService {
 
 
     //Broadcast to all users when a new bid appears
-    public void broadcastBidUpdate(UUID auctionId, double newHighestBid, UUID newHighestBidderId) {
+    public void broadcastBidUpdate(UUID auctionId, BigDecimal newHighestBid, UUID newHighestBidderId) {
         BidUpdateEvent event = new BidUpdateEvent(
             auctionId.toString(),
             newHighestBid,
@@ -29,7 +30,7 @@ public class NotificationService {
     }
 
 
-    public void broadcastAuctionEnded(UUID auctionId, UUID winnerId, double finalPrice) {
+    public void broadcastAuctionEnded(UUID auctionId, UUID winnerId, BigDecimal finalPrice) {
         AuctionEndedEvent event = new AuctionEndedEvent(
             auctionId.toString(),
             winnerId != null ? winnerId.toString() : null,

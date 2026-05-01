@@ -13,11 +13,13 @@ Hệ thống sử dụng mô hình **Synchronous-over-Asynchronous** (Đồng b�
 Khi người dùng thực hiện một hành động (ví dụ: nhấn nút "Login"), luồng xử lý diễn ra như sau:
 
 ### A. Tầng UI
+
 - **Thành phần**: `View.fxml` & `Controller` (ví dụ: `LoginController`)
 - **Hành động**: Người dùng nhấn nút, kích hoạt một method `@FXML`.
 - **Method**: `handleLogin()` gọi `authClientService.login(email, password)`.
 
 ### B. Tầng Client Service
+
 - **Thành phần**: `AuthClientService` (kế thừa `BaseClientService`)
 - **Hành động**: Kiểm tra dữ liệu đầu vào (validate) tại chỗ, sau đó đóng gói dữ liệu vào một `RequestMessage`.
 - **Method**: 
@@ -25,6 +27,7 @@ Khi người dùng thực hiện một hành động (ví dụ: nhấn nút "Log
     2. Gọi `this.send(request, AuthResponse.class)`.
 
 ### C. Tầng Infrastructure (Client)
+
 - **Thành phần**: `BaseClientService` & `ServerConnection`
 - **Hành động**: Quản lý socket và theo dõi các yêu cầu đang chờ xử lý.
 - **Method**:
@@ -42,11 +45,13 @@ Khi người dùng thực hiện một hành động (ví dụ: nhấn nút "Log
 Server luôn lắng nghe dữ liệu đến thông qua một luồng (thread) riêng biệt cho mỗi client.
 
 ### A. Tầng Network
+
 - **Thành phần**: `ClientHandler` (Runnable)
 - **Hành động**: Đọc các chuỗi JSON thô từ socket.
 - **Method**: Vòng lặp `run()` gọi `in.readLine()`, sau đó chuyển chuỗi nhận được cho `MessageRouter.handleRequest(json)`.
 
 ### B. Tầng Routing
+
 - **Thành phần**: `MessageRouter`
 - **Hành động**: Điều hướng yêu cầu đến đúng module tính năng.
 - **Method**: `handleRequest(json)` thực hiện:
@@ -55,6 +60,7 @@ Server luôn lắng nghe dữ liệu đến thông qua một luồng (thread) ri
     3. Gọi `action.execute(requestId, payloadJson)`.
 
 ### C. Tầng Feature (Handler/Service/Repo)
+
 - **Thành phần**: `AuthHandler`, `AuthService`, `UserRepository`
 - **Hành động**: Thực thi logic nghiệp vụ.
 - **Method**:
@@ -70,6 +76,7 @@ Server luôn lắng nghe dữ liệu đến thông qua một luồng (thread) ri
 Sau khi xử lý hoàn tất, kết quả được gửi trả lại cho người dùng.
 
 ### A. Truyền dữ liệu từ Server
+
 - **Thành phần**: `MessageRouter` & `ClientHandler`
 - **Hành động**: Serialize phản hồi và gửi đi.
 - **Method**: 
@@ -77,6 +84,7 @@ Sau khi xử lý hoàn tất, kết quả được gửi trả lại cho ngườ
     2. `ClientHandler.push(json)` ghi chuỗi JSON vào socket.
 
 ### B. Tiếp nhận dữ liệu tại Client
+
 - **Thành phần**: `ServerConnection` (Listener Thread)
 - **Hành động**: Lắng nghe phản hồi và khớp với các yêu cầu đang chờ.
 - **Method**:
@@ -88,6 +96,7 @@ Sau khi xử lý hoàn tất, kết quả được gửi trả lại cho ngườ
         - Gọi `future.complete(response)`, kích hoạt chuỗi xử lý của `CompletableFuture`.
 
 ### C. Hoàn tất và Cập nhật UI
+
 - **Thành phần**: `BaseClientService` & `Controller`
 - **Hành động**: Giải nén kết quả và cập nhật màn hình.
 - **Method**:
@@ -144,22 +153,23 @@ sequenceDiagram
 Việc hiểu rõ luồng nào đang thực thi tại mỗi thời điểm là rất quan trọng để tránh tình trạng treo UI và các lỗi "Illegal State" trong JavaFX.
 
 ### Quy trình Thực thi
-1.  **JavaFX Application Thread (UI Thread)**:
+
+1. **JavaFX Application Thread (UI Thread)**:
     - Thực thi trong `Controller`.
     - Gọi method của `ClientService`.
     - Khởi tạo kết nối mạng nhưng **không chờ đợi (không block)**. Luồng này quay lại ngay lập tức để giữ cho UI phản hồi mượt mà.
-2.  **Server Worker Thread (`ClientHandler`)**:
+2. **Server Worker Thread (`ClientHandler`)**:
     - Tại server, một luồng từ `FixedThreadPool` tiếp nhận yêu cầu.
     - Thực hiện truy vấn DB và logic nghiệp vụ.
     - Ghi phản hồi ngược lại socket.
-3.  **Client Listener Thread (Background/Daemon)**:
+3. **Client Listener Thread (Background/Daemon)**:
     - Bên trong `ServerConnection`, một luồng chạy ngầm (`listenerThread`) liên tục thực hiện vòng lặp `while` trên `in.readLine()`.
     - Khi có phản hồi đến, **luồng chạy ngầm này** sẽ thức dậy.
     - Nó gọi `future.complete(response)`.
-4.  **Thực thi Callback**:
+4. **Thực thi Callback**:
     - Mã nguồn bên trong `.thenAccept()` hoặc `.handle()` tại Controller được thực thi bởi **Client Listener Thread** (vì đây là luồng đã hoàn tất future).
     - **QUAN TRỌNG**: Vì đây là luồng chạy ngầm, nó **không thể** cập nhật trực tiếp các thành phần UI (label, button, list).
-5.  **Chuyển đổi Luồng (`Platform.runLater`)**:
+5. **Chuyển đổi Luồng (`Platform.runLater`)**:
     - Luồng chạy ngầm gọi `Platform.runLater(() -> { ... })`.
     - Thao tác này đưa một tác vụ (task) vào hàng đợi của UI Thread.
     - UI Thread sau đó sẽ lấy tác vụ này và thực hiện cập nhật màn hình.

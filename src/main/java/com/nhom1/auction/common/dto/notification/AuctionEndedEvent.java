@@ -1,13 +1,15 @@
 package com.nhom1.auction.common.dto.notification;
 
+import java.math.BigDecimal;
+
 public class AuctionEndedEvent {
     private String auctionId;
     private String winnerId;
-    private double finalPrice;
+    private BigDecimal finalPrice;
 
     public AuctionEndedEvent() {}
 
-    public AuctionEndedEvent(String auctionId, String winnerId, double finalPrice) {
+    public AuctionEndedEvent(String auctionId, String winnerId, BigDecimal finalPrice) {
         this.auctionId = auctionId;
         this.winnerId = winnerId;
         this.finalPrice = finalPrice;
@@ -29,11 +31,11 @@ public class AuctionEndedEvent {
         this.winnerId = winnerId;
     }
 
-    public double getFinalPrice() {
+    public BigDecimal getFinalPrice() {
         return finalPrice;
     }
 
-    public void setFinalPrice(double finalPrice) {
+    public void setFinalPrice(BigDecimal finalPrice) {
         this.finalPrice = finalPrice;
     }
 }

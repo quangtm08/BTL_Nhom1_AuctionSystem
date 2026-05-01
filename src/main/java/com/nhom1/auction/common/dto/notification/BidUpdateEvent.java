@@ -1,23 +1,24 @@
 package com.nhom1.auction.common.dto.notification;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class BidUpdateEvent {
     private String auctionId;
-    private double newHighestBid;
+    private BigDecimal newHighestBid;
     private String newHighestBidderId;
     private String timestamp;
 
     public BidUpdateEvent() {}
 
-    public BidUpdateEvent(String auctionId, double newHighestBid, String newHighestBidderId, String timestamp) {
+    public BidUpdateEvent(String auctionId, BigDecimal newHighestBid, String newHighestBidderId, String timestamp) {
         this.auctionId = auctionId;
         this.newHighestBid = newHighestBid;
         this.newHighestBidderId = newHighestBidderId;
         this.timestamp = timestamp;
     }
 
-    public BidUpdateEvent(String auctionId, double newHighestBid, UUID winnerId) {
+    public BidUpdateEvent(String auctionId, BigDecimal newHighestBid, UUID winnerId) {
         this.auctionId = auctionId;
         this.newHighestBid = newHighestBid;
     }
@@ -30,11 +31,11 @@ public class BidUpdateEvent {
         this.auctionId = auctionId;
     }
 
-    public double getNewHighestBid() {
+    public BigDecimal getNewHighestBid() {
         return newHighestBid;
     }
 
-    public void setNewHighestBid(double newHighestBid) {
+    public void setNewHighestBid(BigDecimal newHighestBid) {
         this.newHighestBid = newHighestBid;
     }
 
