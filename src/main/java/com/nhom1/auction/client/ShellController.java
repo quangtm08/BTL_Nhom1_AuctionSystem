@@ -6,7 +6,6 @@ import javafx.scene.Parent;
 import javafx.scene.layout.StackPane;
 
 public class ShellController implements BaseShellController {
-
     @FXML
     private StackPane rootPane;
 

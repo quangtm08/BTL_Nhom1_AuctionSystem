@@ -29,11 +29,11 @@ public class AuctionRepository {
     public void save(Auction auction) {
         String sql = """
             INSERT INTO auctions(
-                id, item_id, start_time, end_time, status,
+                id, item_id, start_time, end_time, status, starting_price,
                 current_highest_bid, highest_bidder_id,
                 created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -43,22 +43,23 @@ public class AuctionRepository {
             ps.setString(3, formatSqliteDateTime(auction.getStartTime()));
             ps.setString(4, formatSqliteDateTime(auction.getEndTime()));
             ps.setString(5, auction.getStatus().name());
+            ps.setBigDecimal(6, auction.getStartingPrice());
 
             if (auction.getCurrentHighestBid() != null) {
-                ps.setBigDecimal(6, auction.getCurrentHighestBid());
+                ps.setBigDecimal(7, auction.getCurrentHighestBid());
             } else {
-                ps.setBigDecimal(6, BigDecimal.ZERO);
+                ps.setBigDecimal(7, BigDecimal.ZERO);
             }
 
             if (auction.getHighestBidderId() != null) {
-                ps.setString(7, auction.getHighestBidderId().toString());
+                ps.setString(8, auction.getHighestBidderId().toString());
             } else {
-                ps.setNull(7, Types.VARCHAR);
+                ps.setNull(8, Types.VARCHAR);
             }
 
             LocalDateTime now = LocalDateTime.now();
-            ps.setString(8, formatSqliteDateTime(now));
             ps.setString(9, formatSqliteDateTime(now));
+            ps.setString(10, formatSqliteDateTime(now));
 
             ps.executeUpdate();
 
@@ -247,6 +248,7 @@ public class AuctionRepository {
         LocalDateTime startTime = parseSqliteDateTime(rs.getString("start_time"));
         LocalDateTime endTime = parseSqliteDateTime(rs.getString("end_time"));
 
+        BigDecimal startingPrice = rs.getBigDecimal("starting_price");
         String highestBidderIdRaw = rs.getString("highest_bidder_id");
         UUID highestBidderId = highestBidderIdRaw == null ? null : UUID.fromString(highestBidderIdRaw);
         BigDecimal currentHighestBid = rs.getBigDecimal("current_highest_bid");
@@ -260,6 +262,7 @@ public class AuctionRepository {
                 id,
                 itemId,
                 sellerId,
+                startingPrice,
                 startTime,
                 endTime,
                 highestBidderId,

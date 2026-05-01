@@ -35,6 +35,7 @@ public class AuctionService {
         Auction auction = new Auction(
                 item.getId(),
                 parsedSellerId,
+                dto.getStartingPrice(),
                 dto.getStartTime(),
                 dto.getEndTime()
         );
