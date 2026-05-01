@@ -17,7 +17,8 @@ import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
 
 public class AuctionRepository {
-    private static final DateTimeFormatter SQLITE_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter SQLITE_DATE_TIME_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final Connection connection;
 
@@ -28,13 +29,13 @@ public class AuctionRepository {
     // ===================== SAVE =====================
     public void save(Auction auction) {
         String sql = """
-            INSERT INTO auctions(
-                id, item_id, start_time, end_time, status, starting_price,
-                current_highest_bid, highest_bidder_id,
-                created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
+                    INSERT INTO auctions(
+                        id, item_id, start_time, end_time, status, starting_price,
+                        current_highest_bid, highest_bidder_id,
+                        created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
 
@@ -71,11 +72,11 @@ public class AuctionRepository {
     // ===================== FIND BY ID =====================
     public Optional<Auction> findById(UUID id) {
         String sql = """
-            SELECT a.*, i.seller_id
-            FROM auctions a
-            JOIN items i ON a.item_id = i.id
-            WHERE a.id = ?
-        """;
+                    SELECT a.*, i.seller_id
+                    FROM auctions a
+                    JOIN items i ON a.item_id = i.id
+                    WHERE a.id = ?
+                """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setObject(1, id);
@@ -96,15 +97,15 @@ public class AuctionRepository {
     // ===================== FIND ALL =====================
     public List<Auction> findAll() {
         String sql = """
-            SELECT a.*, i.seller_id
-            FROM auctions a
-            JOIN items i ON a.item_id = i.id
-        """;
+                    SELECT a.*, i.seller_id
+                    FROM auctions a
+                    JOIN items i ON a.item_id = i.id
+                """;
 
         List<Auction> list = new ArrayList<>();
 
         try (PreparedStatement ps = connection.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 list.add(map(rs));
@@ -120,11 +121,11 @@ public class AuctionRepository {
     // ===================== FIND BY SELLER =====================
     public List<Auction> findBySellerId(UUID sellerId) {
         String sql = """
-            SELECT a.*, i.seller_id
-            FROM auctions a
-            JOIN items i ON a.item_id = i.id
-            WHERE i.seller_id = ?
-        """;
+                    SELECT a.*, i.seller_id
+                    FROM auctions a
+                    JOIN items i ON a.item_id = i.id
+                    WHERE i.seller_id = ?
+                """;
 
         List<Auction> list = new ArrayList<>();
 
@@ -147,11 +148,11 @@ public class AuctionRepository {
     // ===================== FIND BY ITEM =====================
     public Optional<Auction> findByItemId(UUID itemId) {
         String sql = """
-            SELECT a.*, i.seller_id
-            FROM auctions a
-            JOIN items i ON a.item_id = i.id
-            WHERE a.item_id = ?
-        """;
+                    SELECT a.*, i.seller_id
+                    FROM auctions a
+                    JOIN items i ON a.item_id = i.id
+                    WHERE a.item_id = ?
+                """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setObject(1, itemId);
@@ -172,10 +173,10 @@ public class AuctionRepository {
     // ===================== UPDATE STATUS =====================
     public void updateStatus(UUID auctionId, AuctionStatus status) {
         String sql = """
-            UPDATE auctions
-            SET status = ?, updated_at = ?
-            WHERE id = ?
-        """;
+                    UPDATE auctions
+                    SET status = ?, updated_at = ?
+                    WHERE id = ?
+                """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, status.name());
@@ -192,10 +193,10 @@ public class AuctionRepository {
     // ===================== UPDATE BID =====================
     public void updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId) {
         String sql = """
-            UPDATE auctions
-            SET current_highest_bid = ?, highest_bidder_id = ?, updated_at = ?
-            WHERE id = ?
-        """;
+                    UPDATE auctions
+                    SET current_highest_bid = ?, highest_bidder_id = ?, updated_at = ?
+                    WHERE id = ?
+                """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
 
@@ -220,10 +221,10 @@ public class AuctionRepository {
     // ===================== UPDATE END TIME =====================
     public void updateEndTime(UUID auctionId, LocalDateTime newEndTime) {
         String sql = """
-            UPDATE auctions
-            SET end_time = ?, updated_at = ?
-            WHERE id = ?
-        """;
+                    UPDATE auctions
+                    SET end_time = ?, updated_at = ?
+                    WHERE id = ?
+                """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
 
@@ -269,8 +270,7 @@ public class AuctionRepository {
                 currentHighestBid,
                 status,
                 createdAt,
-                updatedAt
-        );
+                updatedAt);
     }
 
     public int deleteById(UUID auctionId) {

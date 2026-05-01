@@ -1,13 +1,14 @@
 package com.nhom1.auction.common.entity;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 final class AuctionBidValidator {
 
@@ -54,6 +55,15 @@ final class AuctionBidValidator {
             }
         } else if (amount.compareTo(auction.getCurrentHighestBid()) <= 0) {
             throw new InvalidBidException("amount must be greater than currentHighestBid");
+        } else {
+            BigDecimal minIncrement = auction.getMinBidIncrement();
+            BigDecimal requiredMinimum = auction.getCurrentHighestBid().add(minIncrement);
+            if (amount.compareTo(requiredMinimum) < 0) {
+                throw new InvalidBidException(
+                    "amount must be at least " + requiredMinimum
+                        + " (currentHighestBid + minIncrement)"
+                );
+            }
         }
     }
 }
