@@ -8,7 +8,7 @@ import com.nhom1.auction.common.enums.ItemCondition;
 
 public class Electronics extends Item {
     private String brand;
-    private int warrantyMonths;
+    private Integer warrantyMonths;
 
     public Electronics(String name, String description, 
         ItemCategory category, ItemCondition condition,
@@ -23,7 +23,7 @@ public class Electronics extends Item {
      */
     public Electronics(UUID id, String name, String description,
                        ItemCategory category, ItemCondition condition,
-                       String brand, int warrantyMonths,
+                       String brand, Integer warrantyMonths,
                        LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id, name, description, category, condition, createdAt, updatedAt);
         this.brand = brand;
@@ -31,10 +31,10 @@ public class Electronics extends Item {
     }
     //Getter
     public String getBrand(){ return brand; }
-    public int getWarrantyMonths(){ return warrantyMonths; }
+    public Integer getWarrantyMonths(){ return warrantyMonths; }
     //Setter
     public void setBrand(String brand){ this.brand=brand; }
-    public void setWarrantyMonths(int warrantyMonths){ this.warrantyMonths = warrantyMonths; }
+    public void setWarrantyMonths(Integer warrantyMonths){ this.warrantyMonths = warrantyMonths; }
 
     
     @Override
