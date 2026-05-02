@@ -1,10 +1,11 @@
 package com.nhom1.auction.server.infrastructure;
 
+import java.sql.Connection;
+
 import com.nhom1.auction.server.auction.AuctionModule;
 import com.nhom1.auction.server.auth.AuthModule;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
-import java.sql.Connection;
 
 public class ServerContext {
 
@@ -14,7 +15,6 @@ public class ServerContext {
     private final NotificationService notificationService;
 
     public ServerContext() throws Exception {
-        // 1. Initialize shared Infrastructure
         this.router = new MessageRouter();
         this.connection = DBConnection.getConnection();
 

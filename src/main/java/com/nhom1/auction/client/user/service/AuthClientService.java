@@ -15,11 +15,16 @@ public class AuthClientService extends BaseClientService {
         if (identifier == null || identifier.isBlank()) return validationError("Username is required.");
         if (password == null || password.isBlank())    return validationError("Password is required.");
 
+        // Controller only passes plain form values.
+        // Service owns the client-server contract details:
+        // build DTO, wrap RequestMessage, choose MessageType, send request.
         RequestMessage<LoginRequest> request = new RequestMessage<>(
             MessageType.LOGIN, new LoginRequest(identifier, password)
         );
         return send(request, AuthResponse.class)
             .thenApply(authData -> {
+                // Session state also stays in the service layer so controllers
+                // do not need to know when AppContext should be updated.
                 AppContext.setCurrentUser(authData);
                 return authData;
             });
@@ -32,6 +37,8 @@ public class AuthClientService extends BaseClientService {
 
         String resolvedEmail = (email != null && !email.isBlank()) ? email : username + "@auction.com";
 
+        // Same separation as login():
+        // controller does not touch RequestMessage or ServerConnection directly.
         RequestMessage<RegisterRequest> request = new RequestMessage<>(
             MessageType.REGISTER, new RegisterRequest(username, resolvedEmail, password)
         );

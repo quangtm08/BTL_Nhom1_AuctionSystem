@@ -34,6 +34,9 @@ public class RegisterController {
     }
 
     private void handleRegister() {
+        // This controller deliberately avoids building RegisterRequest or
+        // calling ServerConnection directly. It only collects UI input and
+        // delegates the client-server contract to AuthClientService.
         authService.register(
                 txtUsername.getText(),
                 txtEmail != null ? txtEmail.getText() : "",
@@ -44,7 +47,9 @@ public class RegisterController {
             AppNavigator.navigateTo(AppView.AUCTION_BROWSE)
         ))
         .exceptionally(ex -> {
-            Platform.runLater(() -> showError("Registration Failed", ex.getCause().getMessage()));
+            // Registration now shares the same fail-fast service layer as login,
+            // so validation errors may come directly without nested causes.
+            Platform.runLater(() -> showError("Registration Failed", AuthClientService.extractFailure(ex).getMessage()));
             return null;
         });
     }

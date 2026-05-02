@@ -32,6 +32,10 @@ public class SignInController {
         btnRegister.setOnAction(e -> AppNavigator.navigateTo(AppView.REGISTER));
 
         btnSignIn.setOnAction(e ->
+            // Controller stays UI-focused:
+            // read form fields, call service, then update navigation/error state.
+            // Protocol details such as RequestMessage and ServerConnection live
+            // inside AuthClientService/BaseClientService.
             authService.login(txtUsername.getText(), txtPassword.getText())
                 .thenAccept(authData -> Platform.runLater(() -> {
                     if (authData.getRole() == UserRole.ADMIN) {
@@ -42,7 +46,9 @@ public class SignInController {
                 }))
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
-                        showError("Login Failed", ex.getCause().getMessage());
+                        // AuthClientService can fail before network I/O, so use
+                        // the shared unwrap helper instead of assuming a cause.
+                        showError("Login Failed", AuthClientService.extractFailure(ex).getMessage());
                         txtPassword.clear();
                     });
                     return null;

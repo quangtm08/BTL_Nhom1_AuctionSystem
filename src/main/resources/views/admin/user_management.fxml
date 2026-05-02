@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane xmlns="http://javafx.com/javafx/25"
+<BorderPane xmlns="http://javafx.com/javafx/25"            fx:controller="com.nhom1.auction.client.admin.controller.UserManagementController"
             xmlns:fx="http://javafx.com/fxml"
             stylesheets="@/css/admin/user_management.css"
             styleClass="root">
@@ -20,7 +20,7 @@
                 
                 <VBox spacing="8">
                     <Label text="User Management" styleClass="dashboard-title"/>
-                    <Label text="12 total users — 10 active, 2 banned" styleClass="dashboard-date"/>
+                    <Label fx:id="lblUserSummary" text="Loading users..." styleClass="dashboard-date"/>
                 </VBox>
 
                 <HBox spacing="15" alignment="CENTER_LEFT" styleClass="filter-container">
@@ -36,7 +36,7 @@
                 </HBox>
 
                 <VBox styleClass="table-card">
-                    <GridPane hgap="10">
+                    <GridPane fx:id="userGrid" hgap="10">
                         <columnConstraints>
                             <ColumnConstraints minWidth="200" prefWidth="200" /> 
                             <ColumnConstraints minWidth="200" prefWidth="200" /> 
@@ -52,7 +52,7 @@
                             <Label text="REGISTERED" styleClass="table-header-text" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
                             <Label text="ACTIONS" styleClass="table-header-text" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
 
-                            <HBox styleClass="table-row-bg" GridPane.columnSpan="5" GridPane.rowIndex="1"/>
+                            <!-- <HBox styleClass="table-row-bg" GridPane.columnSpan="5" GridPane.rowIndex="1"/>
                             <Label text="nguyenvana" styleClass="table-text-main" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
                             <Label text="Nguyễn Văn A" styleClass="table-text-sub" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
                             <Label text="Active" styleClass="status-pill-active" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
@@ -70,7 +70,7 @@
                             <HBox spacing="10" alignment="CENTER_RIGHT" GridPane.columnIndex="4" GridPane.rowIndex="2">
                                 <Button text="👁" styleClass="btn-icon"/>
                                 <Button text="Unban" styleClass="btn-unban"/>
-                            </HBox>
+                            </HBox> -->
                         </children>
                     </GridPane>
                 </VBox>

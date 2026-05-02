@@ -35,9 +35,14 @@ public abstract class BaseClientService {
             .sendRequest(request, responseClass)
             .thenApply(this::unwrap)
             .exceptionally(ex -> {
-                Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+                // Keep validation errors intact so controllers can show the
+                // original fail-fast message instead of a generic network error.
+                Throwable cause = extractFailure(ex);
                 if (cause instanceof AuctionException ae) {
                     throw new CompletionException(ae);
+                }
+                if (cause instanceof ValidationException ve) {
+                    throw new CompletionException(ve);
                 }
                 throw new CompletionException(new AuctionException("Server unreachable: " + cause.getMessage()));
             });
@@ -54,5 +59,11 @@ public abstract class BaseClientService {
     // Fail fast before hitting the network. Usage: if (x.isBlank()) return validationError("...");
     protected <T> CompletableFuture<T> validationError(String message) {
         return CompletableFuture.failedFuture(new ValidationException(message));
+    }
+
+    // CompletableFuture often wraps the real failure in CompletionException.
+    // Controllers/services can reuse this instead of duplicating unwrap logic.
+    public static Throwable extractFailure(Throwable throwable) {
+        return throwable.getCause() != null ? throwable.getCause() : throwable;
     }
 }
