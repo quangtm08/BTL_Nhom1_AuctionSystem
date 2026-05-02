@@ -6,8 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -280,6 +280,16 @@ public class AuctionRepository {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete auction", e);
+        }
+    }
+
+    public int clearHighestBidderByUserId(UUID bidderId) {
+        String sql = "UPDATE auctions SET highest_bidder_id = NULL WHERE highest_bidder_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, bidderId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to clear highest bidder on auctions", e);
         }
     }
 

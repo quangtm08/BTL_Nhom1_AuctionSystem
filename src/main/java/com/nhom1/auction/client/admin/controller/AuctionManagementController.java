@@ -1,21 +1,30 @@
 package com.nhom1.auction.client.admin.controller;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import com.nhom1.auction.client.admin.service.AdminClientService;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
-import java.util.List;
+import com.nhom1.auction.common.enums.AuctionStatus;
+
 import javafx.application.Platform;
-import javafx.geometry.Pos;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
 public class AuctionManagementController {
+
     private final AdminClientService adminClientService = new AdminClientService();
 
     @FXML private Label lblAuctionSummary;
     @FXML private GridPane auctionGrid;
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     @FXML
     public void initialize() {
@@ -24,20 +33,30 @@ public class AuctionManagementController {
 
     private void reloadAuctions() {
         lblAuctionSummary.setText("Loading auctions...");
+
         adminClientService.listAllAuctions()
                 .thenAccept(res -> Platform.runLater(() -> renderAuctions(res.getAuctions())))
                 .exceptionally(ex -> {
                     Throwable cause = AdminClientService.extractFailure(ex);
-                    Platform.runLater(() -> lblAuctionSummary.setText("Load auctions failed: " + cause.getMessage()));
+                    Platform.runLater(() ->
+                            lblAuctionSummary.setText("Load auctions failed: " + cause.getMessage()));
                     return null;
                 });
     }
 
     private void renderAuctions(List<AuctionSummaryDto> auctions) {
         clearRowsFrom(1);
+
         List<AuctionSummaryDto> safeAuctions = auctions != null ? auctions : List.of();
-        for (int i = 0; i < safeAuctions.size(); i++) addRow(i + 1, safeAuctions.get(i));
-        long running = safeAuctions.stream().filter(a -> "RUNNING".equals(a.getStatus())).count();
+
+        for (int i = 0; i < safeAuctions.size(); i++) {
+            addRow(i + 1, safeAuctions.get(i));
+        }
+
+        long running = safeAuctions.stream()
+                .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
+                .count();
+
         lblAuctionSummary.setText(safeAuctions.size() + " total auctions - " + running + " running");
     }
 
@@ -46,28 +65,56 @@ public class AuctionManagementController {
         bg.getStyleClass().add("table-row-bg");
         auctionGrid.add(bg, 0, row, 8, 1);
 
+        // Item name
         addLabel(0, row, nvl(auction.getItemName()), "table-text-main");
-        addLabel(1, row, nvl(auction.getItemCategory()), "table-text-sub");
-        addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");
-        addLabel(3, row, "-", "table-text-sub");
-        addLabel(4, row, String.valueOf(auction.getCurrentHighestBid()), "price-highlight");
-        addLabel(5, row, nvl(auction.getEndTime()), "table-text-sub");
 
-        Label status = new Label(nvl(auction.getStatus()));
-        status.getStyleClass().add("RUNNING".equals(auction.getStatus()) ? "status-running" : "table-text-sub");
+        // Category (DTO không có → để "-")
+        addLabel(1, row, "-", "table-text-sub");
+
+        // Seller
+        addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");
+
+        // Starting price
+        addLabel(3, row, formatPrice(auction.getStartingPrice()), "table-text-sub");
+
+        // Current highest bid
+        addLabel(4, row, formatPrice(auction.getCurrentHighestBid()), "price-highlight");
+
+        // End time
+        addLabel(5, row, formatDateTime(auction.getEndTime()), "table-text-sub");
+
+        // Status (enum)
+        Label status = new Label(
+                auction.getStatus() != null ? auction.getStatus().name() : "-"
+        );
+
+        status.getStyleClass().add(
+                auction.getStatus() == AuctionStatus.RUNNING
+                        ? "status-running"
+                        : "table-text-sub"
+        );
+
         auctionGrid.add(status, 6, row);
 
+        // Cancel button
         Button cancelBtn = new Button("Cancel");
         cancelBtn.getStyleClass().add("btn-cancel");
-        boolean canCancel = "OPEN".equals(auction.getStatus()) || "RUNNING".equals(auction.getStatus());
+
+        boolean canCancel = auction.getStatus() == AuctionStatus.OPEN
+                || auction.getStatus() == AuctionStatus.RUNNING;
+
         cancelBtn.setDisable(!canCancel);
-        cancelBtn.setOnAction(e -> adminClientService.cancelAuction(auction.getAuctionId())
-                .thenAccept(ok -> Platform.runLater(this::reloadAuctions))
-                .exceptionally(ex -> {
-                    Throwable cause = AdminClientService.extractFailure(ex);
-                    Platform.runLater(() -> lblAuctionSummary.setText("Cancel failed: " + cause.getMessage()));
-                    return null;
-                }));
+
+        cancelBtn.setOnAction(e ->
+                adminClientService.cancelAuction(auction.getId())
+                        .thenAccept(ok -> Platform.runLater(this::reloadAuctions))
+                        .exceptionally(ex -> {
+                            Throwable cause = AdminClientService.extractFailure(ex);
+                            Platform.runLater(() ->
+                                    lblAuctionSummary.setText("Cancel failed: " + cause.getMessage()));
+                            return null;
+                        })
+        );
 
         HBox actions = new HBox(cancelBtn);
         actions.setAlignment(Pos.CENTER);
@@ -87,6 +134,23 @@ public class AuctionManagementController {
         });
     }
 
-    private String nvl(String value) { return value == null || value.isBlank() ? "-" : value; }
-    private String shortId(String id) { return (id == null || id.length() < 8) ? nvl(id) : id.substring(0, 8) + "..."; }
+    // ================= HELPER =================
+
+    private String nvl(String value) {
+        return value == null || value.isBlank() ? "-" : value;
+    }
+
+    private String shortId(String id) {
+        return (id == null || id.length() < 8)
+                ? nvl(id)
+                : id.substring(0, 8) + "...";
+    }
+
+    private String formatPrice(BigDecimal price) {
+        return price == null ? "-" : price.toPlainString();
+    }
+
+    private String formatDateTime(LocalDateTime time) {
+        return time == null ? "-" : time.format(formatter);
+    }
 }

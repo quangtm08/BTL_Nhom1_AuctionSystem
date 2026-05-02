@@ -136,28 +136,48 @@ public class BidRepository {
 		return Optional.empty();
 	}
 
-	private BidTransaction mapBidTransaction(ResultSet rs) throws SQLException {
-		UUID id = UUID.fromString(rs.getString("id"));
-		UUID auctionId = UUID.fromString(rs.getString("auction_id"));
-		UUID bidderId = UUID.fromString(rs.getString("bidder_id"));
-		BidType bidType = BidType.valueOf(rs.getString("bid_type"));
-		LocalDateTime createdAt = LocalDateTime.parse(rs.getString("created_at"));
+    public int deleteByBidderId(UUID bidderId) {
+        String sql = "DELETE FROM bids WHERE bidder_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, bidderId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete bids by bidder id", e);
+        }
+    }
 
-		return new BidTransaction(
-				id,
-				auctionId,
-				bidderId,
-				rs.getBigDecimal("amount"),
-				bidType,
-				createdAt,
-				createdAt
-		);
-	}
+    public int deleteByAuctionId(UUID auctionId) {
+        String sql = "DELETE FROM bids WHERE auction_id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setString(1, auctionId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete bids by auction id", e);
+        }
+    }
 
-	private UUID parseUuidNullable(String value) {
-		if (value == null || value.isBlank()) {
-			return null;
-		}
-		return UUID.fromString(value);
-	}
+    private BidTransaction mapBidTransaction(ResultSet rs) throws SQLException {
+        UUID id = UUID.fromString(rs.getString("id"));
+        UUID auctionId = UUID.fromString(rs.getString("auction_id"));
+        UUID bidderId = UUID.fromString(rs.getString("bidder_id"));
+        BidType bidType = BidType.valueOf(rs.getString("bid_type"));
+        LocalDateTime createdAt = LocalDateTime.parse(rs.getString("created_at"));
+
+        return new BidTransaction(
+                id,
+                auctionId,
+                bidderId,
+                rs.getBigDecimal("amount"),
+                bidType,
+                createdAt,
+                createdAt
+        );
+    }
+
+    private UUID parseUuidNullable(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return UUID.fromString(value);
+    }
 }

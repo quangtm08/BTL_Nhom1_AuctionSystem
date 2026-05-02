@@ -1,5 +1,10 @@
 package com.nhom1.auction.server.admin;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.UUID;
+
 import com.nhom1.auction.common.dto.admin.AdminAuctionListResponse;
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
 import com.nhom1.auction.common.dto.admin.UserSummaryDto;
@@ -8,17 +13,32 @@ import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
+import com.nhom1.auction.server.auction.AuctionRepository;
+import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
-import java.util.List;
-import java.util.UUID;
+import com.nhom1.auction.server.bidding.BidRepository;
 
 public class AdminService {
     private final UserRepository userRepository;
+    private final AuctionRepository auctionRepository;
+    private final ItemRepository itemRepository;
+    private final BidRepository bidRepository;
     private final AdminAuctionGateway adminAuctionGateway;
+    private final Connection connection;
 
-    public AdminService(UserRepository userRepository, AdminAuctionGateway adminAuctionGateway) {
+    public AdminService(
+            UserRepository userRepository,
+            AuctionRepository auctionRepository,
+            ItemRepository itemRepository,
+            BidRepository bidRepository,
+            AdminAuctionGateway adminAuctionGateway,
+            Connection connection) {
         this.userRepository = userRepository;
+        this.auctionRepository = auctionRepository;
+        this.itemRepository = itemRepository;
+        this.bidRepository = bidRepository;
         this.adminAuctionGateway = adminAuctionGateway;
+        this.connection = connection;
     }
 
     public AdminUserListResponse getAllUsers(String callerId)
@@ -47,7 +67,40 @@ public class AdminService {
             throw new UnauthorizedActionException("Admin accounts cannot be deleted from this flow.");
         }
 
-        userRepository.deleteById(target.getId());
+        try {
+            boolean oldAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                auctionRepository.clearHighestBidderByUserId(target.getId());
+                bidRepository.deleteByBidderId(target.getId());
+
+                List<com.nhom1.auction.common.entity.Auction> sellerAuctions = auctionRepository.findBySellerId(target.getId());
+                for (com.nhom1.auction.common.entity.Auction auction : sellerAuctions) {
+                    bidRepository.deleteByAuctionId(auction.getId());
+                    int deletedAuctions = auctionRepository.deleteById(auction.getId());
+                    int deletedItems = itemRepository.deleteById(auction.getItemId());
+                    if (deletedAuctions == 0 || deletedItems == 0) {
+                        throw new ValidationException("Failed to delete auction or item for user.");
+                    }
+                }
+
+                boolean deleted = userRepository.deleteById(target.getId());
+                if (!deleted) {
+                    throw new ValidationException("Failed to delete target user.");
+                }
+                connection.commit();
+            } catch (ValidationException ve) {
+                connection.rollback();
+                throw ve;
+            } catch (RuntimeException re) {
+                connection.rollback();
+                throw new ValidationException("User deletion failed: " + re.getMessage());
+            } finally {
+                connection.setAutoCommit(oldAutoCommit);
+            }
+        } catch (SQLException e) {
+            throw new ValidationException("User deletion failed: " + e.getMessage());
+        }
         return "DELETED";
     }
 

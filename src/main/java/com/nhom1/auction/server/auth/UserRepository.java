@@ -1,7 +1,5 @@
 package com.nhom1.auction.server.auth;
 
-import com.nhom1.auction.common.entity.User;
-import com.nhom1.auction.common.enums.UserRole;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import com.nhom1.auction.common.entity.User;
+import com.nhom1.auction.common.enums.UserRole;
 
 /**
  * - Execute raw SQL and return result for AuthService
@@ -129,13 +130,11 @@ public class UserRepository {
     }
 
     // Shared dependency point for Binh's admin feature.
-    public void deleteById(UUID id) {
+    public boolean deleteById(UUID id) throws SQLException {
         String sql = "DELETE FROM users WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, id.toString());
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            return ps.executeUpdate() > 0;
         }
     }
 

@@ -2,6 +2,8 @@ package com.nhom1.auction.server.infrastructure;
 
 import java.sql.Connection;
 
+import com.nhom1.auction.server.admin.AdminModule;
+import com.nhom1.auction.server.admin.SqlAdminAuctionGateway;
 import com.nhom1.auction.server.auction.AuctionModule;
 import com.nhom1.auction.server.auth.AuthModule;
 import com.nhom1.auction.server.auth.UserRepository;
@@ -39,6 +41,8 @@ public class ServerContext {
             this.router
         );
 
+        com.nhom1.auction.server.bidding.BidRepository bidRepository = new com.nhom1.auction.server.bidding.BidRepository(this.connection);
+
         // Bidding — depends on Auction and Item repositories from AuctionModule
         com.nhom1.auction.server.bidding.BidModule.init(
             this.connection,
@@ -46,6 +50,17 @@ public class ServerContext {
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
             this.notificationService
+        );
+
+        // Admin — depends on Auth and Auction infrastructure
+        AdminModule.init(
+            this.router,
+            userRepository,
+            auctionRepos.auctionRepository,
+            auctionRepos.itemRepository,
+            bidRepository,
+            new SqlAdminAuctionGateway(this.connection),
+            this.connection
         );
 
         System.out.println("========================================");
