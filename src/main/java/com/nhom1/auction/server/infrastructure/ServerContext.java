@@ -1,12 +1,13 @@
 package com.nhom1.auction.server.infrastructure;
 
+import com.nhom1.auction.server.auction.AuctionModule;
 import com.nhom1.auction.server.auth.AuthModule;
 import com.nhom1.auction.server.auth.UserRepository;
-import com.nhom1.auction.server.auction.AuctionModule;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
 import java.sql.Connection;
 
 public class ServerContext {
+
     private final MessageRouter router;
     private final Connection connection;
     private final ClientRegistry clientRegistry;
@@ -26,16 +27,30 @@ public class ServerContext {
         this.notificationService = new NotificationService(clientRegistry);
 
         // 2. Initialize Features (Modules)
-        // Auth — returns UserRepository so other modules (Admin, Payment) can reuse it
-        UserRepository userRepository = AuthModule.init(this.connection, this.router);
-        AuctionModule.init(this.connection, this.router);
+        // Auth — returns UserRepository so other modules can reuse it (e.g. for user validation)
+        UserRepository userRepository = AuthModule.init(
+            this.connection,
+            this.router
+        );
 
-        // Future modules will be wired here by Member 4 (Quang):
-        // AuctionRepository auctionRepo = AuctionModule.init(connection, router);
-        // BidModule.init(connection, router, auctionRepo, itemRepo,
-        // notificationService);
-        // AdminModule.init(connection, router, userRepository, auctionRepo);
-        // PaymentModule.init(connection, router, auctionRepo, userRepository);
+        // Auction — returns repositories needed by Bidding and Admin modules
+        AuctionModule.AuctionRepositories auctionRepos = AuctionModule.init(
+            this.connection,
+            this.router
+        );
+
+        // Bidding — depends on Auction and Item repositories from AuctionModule
+        com.nhom1.auction.server.bidding.BidModule.init(
+            this.connection,
+            this.router,
+            auctionRepos.auctionRepository,
+            auctionRepos.itemRepository,
+            this.notificationService
+        );
+
+        System.out.println("========================================");
+        System.out.println("   All modules wired successfully.");
+        System.out.println("========================================");
     }
 
     public MessageRouter getRouter() {
