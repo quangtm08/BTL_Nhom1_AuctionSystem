@@ -5,21 +5,24 @@ import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class NotificationService {
+
     private final ClientRegistry clientRegistry;
 
     public NotificationService(ClientRegistry clientRegistry) {
         this.clientRegistry = clientRegistry;
     }
 
-
     //Broadcast to all users when a new bid appears
-    public void broadcastBidUpdate(UUID auctionId, BigDecimal newHighestBid, UUID newHighestBidderId) {
+    public void broadcastBidUpdate(
+        UUID auctionId,
+        BigDecimal newHighestBid,
+        UUID newHighestBidderId
+    ) {
         BidUpdateEvent event = new BidUpdateEvent(
             auctionId.toString(),
             newHighestBid,
@@ -29,8 +32,11 @@ public class NotificationService {
         sendPush(MessageType.PUSH_BID_UPDATE, event);
     }
 
-
-    public void broadcastAuctionEnded(UUID auctionId, UUID winnerId, BigDecimal finalPrice) {
+    public void broadcastAuctionEnded(
+        UUID auctionId,
+        UUID winnerId,
+        BigDecimal finalPrice
+    ) {
         AuctionEndedEvent event = new AuctionEndedEvent(
             auctionId.toString(),
             winnerId != null ? winnerId.toString() : null,
@@ -39,6 +45,21 @@ public class NotificationService {
         sendPush(MessageType.PUSH_AUCTION_ENDED, event);
     }
 
+    public void broadcastNewAuction(
+        String auctionId,
+        String itemName,
+        BigDecimal startingPrice
+    ) {
+        java.util.Map<String, Object> payload = java.util.Map.of(
+            "auctionId",
+            auctionId,
+            "itemName",
+            itemName,
+            "startingPrice",
+            startingPrice
+        );
+        sendPush(MessageType.PUSH_NEW_AUCTION, payload);
+    }
 
     private void sendPush(MessageType type, Object payload) {
         try {
@@ -50,7 +71,10 @@ public class NotificationService {
             String json = JsonUtil.toJson(responseMessage);
             clientRegistry.broadcast(json);
         } catch (Exception e) {
-            System.err.println("[NotificationService] Error sending push notification: " + e.getMessage());
+            System.err.println(
+                "[NotificationService] Error sending push notification: " +
+                    e.getMessage()
+            );
             e.printStackTrace();
         }
     }
