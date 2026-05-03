@@ -15,6 +15,8 @@
     <VBox spacing="30" styleClass="container">
 
         <!-- ===== TOP CARD ===== -->
+        <Button text="Back" styleClass="btn-back" fx:id="btnBack"/>
+
         <HBox spacing="30" styleClass="main-card">
 
             <!-- LEFT IMAGE -->

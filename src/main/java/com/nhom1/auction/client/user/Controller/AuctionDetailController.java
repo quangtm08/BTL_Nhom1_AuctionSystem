@@ -1,5 +1,9 @@
 package com.nhom1.auction.client.user.controller;
 
+import java.math.BigDecimal;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.connection.ServerConnection;
@@ -8,15 +12,12 @@ import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.utils.AppContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-
-import java.math.BigDecimal;
 
 public class AuctionDetailController {
 
@@ -34,6 +35,9 @@ public class AuctionDetailController {
 
 	@FXML
 	private Label lblMinIncrement; // newly added for real-time updates
+
+	@FXML
+	private Button btnBack; // newly added back button
 
 	@FXML
 	public void initialize() {
@@ -56,6 +60,8 @@ public class AuctionDetailController {
 							() -> System.err.println("Failed to load auction detail: " + ex.getCause().getMessage()));
 					return null;
 				});
+
+		btnBack.setOnAction(e -> AppNavigator.navigateTo(AppView.AUCTION_BROWSE));
 
 		// Register real-time push handler for bid updates
 		ServerConnection.getInstance().registerPushHandler(

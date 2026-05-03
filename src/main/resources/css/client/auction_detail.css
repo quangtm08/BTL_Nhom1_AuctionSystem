@@ -121,3 +121,10 @@
     -fx-font-family: "Georgia";
     -fx-font-style: italic;
 }
+
+.btn-back {
+    -fx-background-color: transparent;
+    -fx-border-color: #777;
+    -fx-text-fill: #777;
+    -fx-background-radius: 6;
+}
