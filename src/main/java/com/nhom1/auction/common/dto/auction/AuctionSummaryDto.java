@@ -11,6 +11,7 @@ public class AuctionSummaryDto {
     
     private String id;
     private String itemName;
+    private String itemCategory;
     private BigDecimal startingPrice;
     private BigDecimal currentHighestBid;
     private LocalDateTime startTime;
@@ -20,11 +21,12 @@ public class AuctionSummaryDto {
 
     public AuctionSummaryDto() {}
 
-    public AuctionSummaryDto(String id, String itemName, BigDecimal startingPrice,
+    public AuctionSummaryDto(String id, String itemName, String itemCategory, BigDecimal startingPrice,
             BigDecimal currentHighestBid, LocalDateTime startTime, LocalDateTime endTime,
             AuctionStatus status, String sellerId) {
         this.id = id;
         this.itemName = itemName;
+        this.itemCategory = itemCategory;
         this.startingPrice = startingPrice;
         this.currentHighestBid = currentHighestBid;
         this.startTime = startTime;
@@ -48,6 +50,14 @@ public class AuctionSummaryDto {
 
     public void setItemName(String itemName) {
         this.itemName = itemName;
+    }
+
+    public String getItemCategory() {
+        return itemCategory;
+    }
+
+    public void setItemCategory(String itemCategory) {
+        this.itemCategory = itemCategory;
     }
 
     public BigDecimal getStartingPrice() {

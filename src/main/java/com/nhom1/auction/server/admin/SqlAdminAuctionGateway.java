@@ -41,6 +41,7 @@ public List<AuctionSummaryDto> findAllAuctionSummaries() {
             result.add(new AuctionSummaryDto(
                     rs.getString("id"),
                     rs.getString("item_name"),
+                    rs.getString("category"), // Added category
                     rs.getBigDecimal("starting_price"),
                     rs.getBigDecimal("current_highest_bid"),
                     rs.getTimestamp("start_time").toLocalDateTime(),

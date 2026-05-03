@@ -15,12 +15,13 @@ public class AuctionDetailDto {
     private String sellerID;
     private BigDecimal currentHighestBid; 
     private String currentHighestBidderId;
+    private BigDecimal minBidIncrement;
     private AuctionStatus status;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<BidSummaryDto> bidHistory;
     public AuctionDetailDto() {}
-    public AuctionDetailDto(String auctionId, String itemID, String itemName, String itemDescription, ItemCategory itemCategory, ItemCondition itemCondition, String sellerID, BigDecimal currentHighestBid, String currentHighestBidderId, AuctionStatus status, LocalDateTime startTime, LocalDateTime endTime, List<BidSummaryDto> bidHistory) {
+    public AuctionDetailDto(String auctionId, String itemID, String itemName, String itemDescription, ItemCategory itemCategory, ItemCondition itemCondition, String sellerID, BigDecimal currentHighestBid, String currentHighestBidderId, BigDecimal minBidIncrement, AuctionStatus status, LocalDateTime startTime, LocalDateTime endTime, List<BidSummaryDto> bidHistory) {
         this.auctionId = auctionId;
         this.itemID = itemID;
         this.itemName = itemName;
@@ -30,6 +31,7 @@ public class AuctionDetailDto {
         this.sellerID = sellerID;
         this.currentHighestBid = currentHighestBid;
         this.currentHighestBidderId = currentHighestBidderId;
+        this.minBidIncrement = minBidIncrement;
         this.status = status;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -63,7 +65,13 @@ public class AuctionDetailDto {
     public String getCurrentHighestBidderId() {
         return currentHighestBidderId;
     }
-    public AuctionStatus getAuctionStatus() {
+    public BigDecimal getMinBidIncrement() {
+        return minBidIncrement;
+    }
+    public void setMinBidIncrement(BigDecimal minBidIncrement) {
+        this.minBidIncrement = minBidIncrement;
+    }
+    public AuctionStatus getStatus() {
         return status;
     }
     public LocalDateTime getStartTime() {

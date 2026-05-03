@@ -68,6 +68,7 @@ public class BidService {
 		auction.getSellerId().toString(),
 		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
 		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
+		auction.getMinBidIncrement(), // Use the actual calculation from entity
 		auction.getStatus(),
 		auction.getStartTime(),
 		auction.getEndTime(),
@@ -103,10 +104,12 @@ public class BidService {
     private AuctionSummaryDto toAuctionSummaryDto(Auction auction) {
 	Item item = itemRepository.findById(auction.getItemId()).orElse(null);
 	String itemName = item == null ? "Unknown item" : item.getName();
+	String itemCategory = item == null ? "UNKNOWN" : item.getCategory().name();
 
 	return new AuctionSummaryDto(
 		auction.getId().toString(),
 		itemName,
+		itemCategory,
 		auction.getStartingPrice(),
 		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
 		auction.getStartTime(),

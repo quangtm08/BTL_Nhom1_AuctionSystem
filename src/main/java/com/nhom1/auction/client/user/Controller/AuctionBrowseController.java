@@ -85,7 +85,7 @@ public class AuctionBrowseController {
 		VBox titleBox = new VBox(2);
 		Label title = new Label(dto.getItemName() != null ? dto.getItemName() : "Untitled");
 		title.getStyleClass().add("card-title-text");
-		Label category = new Label(dto.getCategory() != null ? dto.getCategory() : "Uncategorized");
+		Label category = new Label(dto.getItemCategory() != null ? dto.getItemCategory() : "Uncategorized");
 		category.getStyleClass().add("card-sub-text");
 		titleBox.getChildren().addAll(title, category);
 

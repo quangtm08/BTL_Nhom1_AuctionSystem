@@ -55,10 +55,11 @@ public class AuctionService {
                             .orElseThrow(() -> new IllegalStateException(
                                     "Item not found for auction id: " + auction.getId()));
 
-                    BigDecimal startingPrice = auction.getCurrentHighestBid();
+                    BigDecimal startingPrice = auction.getStartingPrice();
                     return new AuctionSummaryDto(
                             auction.getId().toString(),
                             item.getName(),
+                            item.getCategory().name(),
                             startingPrice,
                             auction.getCurrentHighestBid(),
                             auction.getStartTime(),

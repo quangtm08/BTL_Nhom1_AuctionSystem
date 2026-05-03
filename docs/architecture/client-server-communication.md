@@ -25,16 +25,19 @@ Khi người dùng thực hiện một hành động (ví dụ: nhấn nút "Log
 - **Method**: 
     1. Tạo `new RequestMessage<>(MessageType.LOGIN, new LoginRequest(...))`.
     2. Gọi `this.send(request, AuthResponse.class)`.
+    
+> **Lưu ý về "Bản thiết kế" (Blueprint)**: Việc truyền `AuthResponse.class` ở đây là cực kỳ quan trọng do cơ chế **Type Erasure** của Java. Vì Java xóa bỏ thông tin kiểu dữ liệu generic sau khi biên dịch, chúng ta cần gửi kèm "bản thiết kế" này để Client có thể nhớ và dùng nó để giải mã dữ liệu khi phản hồi quay trở về sau này.
 
 ### C. Tầng Infrastructure (Client)
 
 - **Thành phần**: `BaseClientService` & `ServerConnection`
-- **Hành động**: Quản lý socket và theo dõi các yêu cầu đang chờ xử lý.
+- **Hành động**: Quản lý socket và theo dõi các yêu cầu đang chờ xử lý qua một "Sổ đăng ký".
 - **Method**:
     1. `BaseClientService.send()`: Gọi `ServerConnection.sendRequest()`.
     2. `ServerConnection.sendRequest()`: 
         - Gán một `requestId` duy nhất (UUID).
-        - Lưu trữ một `PendingRequest` (chứa `CompletableFuture`) vào một `ConcurrentHashMap`.
+        - **Ghi vào Sổ đăng ký**: Lưu trữ một `PendingRequest` (chứa cả `CompletableFuture` và "Bản thiết kế" `.class` ở trên) vào `ConcurrentHashMap` gọi là `pendingRequests`. 
+        - *Lưu ý*: Đây không phải hàng đợi để gửi, mà là nơi lưu giữ thông tin để "khớp" với phản hồi sau này.
         - Serialize message sang định dạng JSON thông qua `JsonUtil.toJson()`.
         - Ghi chuỗi JSON vào output stream của `Socket`.
 
@@ -86,14 +89,14 @@ Sau khi xử lý hoàn tất, kết quả được gửi trả lại cho ngườ
 ### B. Tiếp nhận dữ liệu tại Client
 
 - **Thành phần**: `ServerConnection` (Listener Thread)
-- **Hành động**: Lắng nghe phản hồi và khớp với các yêu cầu đang chờ.
+- **Hành động**: Lắng nghe phản hồi và khớp với các yêu cầu đang chờ trong "Sổ đăng ký".
 - **Method**:
     1. Vòng lặp `startListening()` đọc JSON phản hồi.
     2. `handleRawResponse(json)` thực hiện:
-        - Trích xuất `requestId`.
-        - Lấy và xóa `PendingRequest` khỏi map.
-        - Deserialize JSON thành `ResponseMessage<T>`.
-        - Gọi `future.complete(response)`, kích hoạt chuỗi xử lý của `CompletableFuture`.
+        - Trích xuất `requestId` từ JSON.
+        - **Tra cứu Sổ đăng ký**: Lấy và xóa `PendingRequest` ra khỏi map `pendingRequests` dựa trên ID.
+        - **Giải mã với Bản thiết kế**: Dùng `pending.responseClass` (bản thiết kế đã lưu lúc gửi) để hướng dẫn Jackson cách deserialize JSON thành đúng Object DTO (ví dụ: `AuthResponse`).
+        - **Hoàn tất Lời hứa**: Gọi `future.complete(response)`, lúc này dữ liệu chính thức được đổ vào `CompletableFuture`.
 
 ### C. Hoàn tất và Cập nhật UI
 
@@ -102,7 +105,7 @@ Sau khi xử lý hoàn tất, kết quả được gửi trả lại cho ngườ
 - **Method**:
     1. `BaseClientService.unwrap()`: Kiểm tra `response.isSuccess()`. Nếu thất bại, ném ra `AuctionException`.
     2. `Controller`: Nhận kết quả trong khối `.thenAccept()` hoặc `.handle()`.
-    3. **QUAN TRỌNG**: Sử dụng `Platform.runLater(() -> ...)` để đảm bảo việc cập nhật UI diễn ra trên JavaFX Application Thread.
+    3. **QUAN TRỌNG**: Sử dụng `Platform.runLater(() -> ...)` để đảm bảo việc cập nhật UI diễn ra trên JavaFX Application Thread vì lúc này chúng ta vẫn đang ở luồng chạy ngầm của Listener.
 
 ---
 
@@ -179,7 +182,7 @@ Việc hiểu rõ luồng nào đang thực thi tại mỗi thời điểm là r
 ## 5. Tài liệu Liên quan
 
 - **Real-time Push Notifications**: Xem chi tiết về luồng cập nhật một chiều từ server đến client (thông báo đấu giá, alert) tại [realtime-push.md](../modules/realtime-push-quang.md).
-- **Xử lý Ngoại lệ (Exception Handling)**: Xem chi tiết về cách lỗi được lan truyền và xử lý tại [exception-handling.md](./exception-handling.md) (Đang hoàn thiện).
+- **Xử lý Ngoại lệ (Exception Handling)**: Xem chi tiết về cách lỗi được lan truyền và xử lý tại [exception-handling.md](./exception-handling.md).
 
 ## Danh sách các Class Chính
 
