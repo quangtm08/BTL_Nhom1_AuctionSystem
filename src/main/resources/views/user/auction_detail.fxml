@@ -51,13 +51,13 @@
                     <HBox>
                         <Label text="Current highest bid"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="10,000"/>
+                        <Label text="10,000" fx:id="lblCurrentBid"/>
                     </HBox>
 
                     <HBox>
                         <Label text="Minimum increment"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="50"/>
+                        <Label text="50" fx:id="lblMinIncrement"/>
                     </HBox>
 
                     <TextField promptText=" ENTER YOUR BID"
