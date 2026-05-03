@@ -83,7 +83,11 @@ public class AuctionScheduler {
         auctionGateway.updateStatus(auctionId, AuctionStatus.FINISHED);
         // Cross-team dependency:
         // NotificationService implementation (member 4) decides push payload protocol.
-        notificationService.broadcastAuctionEnded(auctionId, auction.getHighestBidderId());
+        notificationService.broadcastAuctionEnded(
+            auctionId, 
+            auction.getHighestBidderId(), 
+            auction.getCurrentHighestBid()
+        );
     }
 
     private boolean shouldExtend(
