@@ -44,13 +44,30 @@ public class ServerContext {
         com.nhom1.auction.server.bidding.BidRepository bidRepository = new com.nhom1.auction.server.bidding.BidRepository(this.connection);
 
         // Bidding — depends on Auction and Item repositories from AuctionModule
-        com.nhom1.auction.server.bidding.BidModule.init(
+        com.nhom1.auction.server.bidding.BidModule.BidComponents bidComponents = com.nhom1.auction.server.bidding.BidModule.init(
             this.connection,
             this.router,
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
             this.notificationService
         );
+
+        // 3. Initialize Automation features
+        com.nhom1.auction.server.automation.AuctionGateway auctionGateway = 
+            new com.nhom1.auction.server.auction.AuctionGatewayImpl(auctionRepos.auctionRepository);
+            
+        com.nhom1.auction.server.automation.BidGateway bidGateway = 
+            new com.nhom1.auction.server.bidding.BidGatewayImpl(bidComponents.bidService, bidRepository);
+
+        com.nhom1.auction.server.automation.AutoBidService autoBidService = 
+            com.nhom1.auction.server.automation.AutoBidModule.init(this.connection, this.router, bidGateway);
+
+        // Resolve circular dependency
+        bidComponents.bidHandler.setAutoBidService(autoBidService);
+
+        com.nhom1.auction.server.automation.AuctionScheduler auctionScheduler = 
+            new com.nhom1.auction.server.automation.AuctionScheduler(auctionGateway, bidGateway, this.notificationService);
+        auctionScheduler.start();
 
         // Admin — depends on Auth and Auction infrastructure
         AdminModule.init(

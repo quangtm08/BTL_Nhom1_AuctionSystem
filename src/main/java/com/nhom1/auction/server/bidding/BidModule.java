@@ -9,7 +9,16 @@ import java.sql.Connection;
 
 public class BidModule {
 
-	public static BidService init(
+	public static class BidComponents {
+		public final BidService bidService;
+		public final BidHandler bidHandler;
+		public BidComponents(BidService bidService, BidHandler bidHandler) {
+			this.bidService = bidService;
+			this.bidHandler = bidHandler;
+		}
+	}
+
+	public static BidComponents init(
 			Connection connection,
 			MessageRouter router,
 			AuctionRepository auctionRepository,
@@ -22,6 +31,6 @@ public class BidModule {
 		handler.register(router);
 
 		System.out.println("BidModule: Feature initialized successfully.");
-		return service;
+		return new BidComponents(service, handler);
 	}
 }

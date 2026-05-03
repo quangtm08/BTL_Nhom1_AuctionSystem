@@ -17,16 +17,23 @@ import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
+import com.nhom1.auction.server.automation.AutoBidService;
+
 import java.util.UUID;
 
 public class BidHandler {
 
 	private final BidService bidService;
 	private final NotificationService notificationService;
+	private AutoBidService autoBidService;
 
 	public BidHandler(BidService bidService, NotificationService notificationService) {
 		this.bidService = bidService;
 		this.notificationService = notificationService;
+	}
+
+	public void setAutoBidService(AutoBidService autoBidService) {
+		this.autoBidService = autoBidService;
 	}
 
 	public void register(MessageRouter router) {
@@ -73,6 +80,11 @@ public class BidHandler {
 
 			BidTransaction bidTransaction = bidService.placeBid(bidderId, auctionId, request.getBidAmount());
 			notificationService.broadcastBidUpdate(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
+
+			// Trigger auto-bidders to respond to this manual bid
+			if (autoBidService != null) {
+				autoBidService.triggerAutoBids(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
+			}
 
 			PlaceBidResponse response = new PlaceBidResponse(
 					bidTransaction.getId().toString(),
