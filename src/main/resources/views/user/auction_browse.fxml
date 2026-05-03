@@ -37,7 +37,7 @@
 
             <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
                 <content>
-                    <GridPane fx:id="cardsGridPane" hgap="30.0" vgap="30.0"> // Dynamic grid for auction cards
+                    <GridPane fx:id="cardsGridPane" hgap="30.0" vgap="30.0">
                         <padding>
                             <Insets bottom="30.0" right="20.0" />
                         </padding>

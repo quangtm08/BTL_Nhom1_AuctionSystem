@@ -8,6 +8,7 @@
 <ScrollPane fitToWidth="true"
             xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.nhom1.auction.client.user.controller.AuctionDetailController"
             stylesheets="@/css/client/auction_detail.css"
             styleClass="root">
 
