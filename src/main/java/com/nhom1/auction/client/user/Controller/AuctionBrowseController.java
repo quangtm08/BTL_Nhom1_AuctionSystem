@@ -116,11 +116,13 @@ public class AuctionBrowseController {
 
 		VBox timeSection = new VBox(2);
 		timeSection.setAlignment(Pos.BOTTOM_RIGHT);
+		timeSection.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
 		Label timeLeftLabel = new Label(formatTimeLeft(dto.getEndTime()));
 		timeLeftLabel.getStyleClass().add("card-sub-text");
-		
+
 		Button bidButton = new Button("Raise bid");
 		bidButton.getStyleClass().add("btn-action-green");
+		bidButton.setMaxWidth(Double.MAX_VALUE);
 		timeSection.getChildren().addAll(timeLeftLabel, bidButton);
 
 		HBox.setHgrow(priceSection, Priority.ALWAYS);
