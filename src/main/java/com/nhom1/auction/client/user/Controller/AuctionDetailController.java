@@ -1,8 +1,10 @@
 package com.nhom1.auction.client.user.controller;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +33,7 @@ public class AuctionDetailController {
 
 	private final BiddingClientService biddingService = new BiddingClientService();
 	private final ObjectMapper mapper = new ObjectMapper();
-	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM");
+	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM");
 
 	@FXML
 	private TextField txtBidInput;
@@ -195,6 +197,6 @@ public class AuctionDetailController {
 
 	private String formatMoney(BigDecimal amount) {
 		if (amount == null) return "$0";
-		return "$" + amount.toPlainString();
+		return "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
 	}
 }
