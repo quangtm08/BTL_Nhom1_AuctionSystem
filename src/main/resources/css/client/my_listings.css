@@ -120,6 +120,7 @@
     -fx-text-fill: white;
     -fx-font-size: 28px;
     -fx-font-weight: bold;
+    -fx-max-width: Infinity;
 }
 
 .status-badge {

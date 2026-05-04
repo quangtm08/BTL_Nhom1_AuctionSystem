@@ -144,12 +144,14 @@ public class MyListingsController {
         currentBidText.getStyleClass().add("card-sub-text");
         Label price = new Label(formatMoney(dto.getCurrentHighestBid()));
         price.getStyleClass().add("card-price-text");
+        price.setMaxWidth(Double.MAX_VALUE);
         Label bidsText = new Label("Listing");
         bidsText.getStyleClass().add("card-sub-text");
         left.getChildren().addAll(currentBidText, price, bidsText);
 
         VBox right = new VBox();
         right.setAlignment(Pos.BOTTOM_RIGHT);
+        right.setMinWidth(javafx.scene.layout.Region.USE_PREF_SIZE);
         Label remaining = new Label(formatTimeLeft(dto.getEndTime()));
         remaining.getStyleClass().add("card-sub-text");
         right.getChildren().add(remaining);

@@ -76,8 +76,8 @@
                             <Insets bottom="30.0" right="20.0" />
                         </padding>
                         <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
                         </columnConstraints>
                         <children>
                             <!-- <VBox styleClass="product-card" spacing="12.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
