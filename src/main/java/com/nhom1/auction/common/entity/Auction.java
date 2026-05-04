@@ -1,6 +1,7 @@
 package com.nhom1.auction.common.entity;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +17,13 @@ import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 
 public class Auction extends BaseEntity {
+    private static final BigDecimal MIN_INCREMENT_RATE = new BigDecimal("0.05");
+    private static final int MIN_INCREMENT_SCALE = 2;
     private final UUID itemId;
     private final UUID sellerId;
     private final LocalDateTime startTime;
     private LocalDateTime endTime;
+    private final BigDecimal startingPrice;
     private final List<BidTransaction> bidHistory;
 
     // volatile để đảm bảo giá trị được cập nhật và đồng bộ hóa, thread-safe !
@@ -33,12 +37,15 @@ public class Auction extends BaseEntity {
     private final Object bidHistoryMonitor = new Object(); // Monitor riêng để đồng bộ hóa truy cập vào bidHistory
 
     // TODO: Change exception to domain exception of the app.
-    public Auction(UUID itemId, UUID sellerId, LocalDateTime startTime, LocalDateTime endTime) {
+    public Auction(UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime) {
         if (itemId == null) {
             throw new IllegalArgumentException("itemId must not be null");
         }
         if (sellerId == null) {
             throw new IllegalArgumentException("sellerId must not be null");
+        }
+        if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("startingPrice must not be null or negative");
         }
         if (startTime == null) {
             throw new IllegalArgumentException("startTime must not be null");
@@ -52,6 +59,7 @@ public class Auction extends BaseEntity {
 
         this.itemId = itemId;
         this.sellerId = sellerId;
+        this.startingPrice = startingPrice;
         this.startTime = startTime;
         this.endTime = endTime;
 
@@ -64,12 +72,13 @@ public class Auction extends BaseEntity {
     /**
      * Use this constructor for loading an EXISTING auction from the database.
      */
-    public Auction(UUID id, UUID itemId, UUID sellerId, LocalDateTime startTime, LocalDateTime endTime,
+    public Auction(UUID id, UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime,
             UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id, createdAt, updatedAt);
         this.itemId = itemId;
         this.sellerId = sellerId;
+        this.startingPrice = startingPrice;
         this.startTime = startTime;
         this.endTime = endTime;
         this.highestBidderId = highestBidderId;
@@ -194,6 +203,15 @@ public class Auction extends BaseEntity {
 
     public UUID getSellerId() {
         return sellerId;
+    }
+
+    public BigDecimal getStartingPrice() {
+        return startingPrice;
+    }
+
+    public BigDecimal getMinBidIncrement() {
+        return startingPrice.multiply(MIN_INCREMENT_RATE)
+            .setScale(MIN_INCREMENT_SCALE, RoundingMode.HALF_UP);
     }
 
     public LocalDateTime getStartTime() {

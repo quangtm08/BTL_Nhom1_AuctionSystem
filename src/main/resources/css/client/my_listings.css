@@ -13,6 +13,15 @@
     -fx-font-size: 38;
     -fx-text-fill: white;
 }
+.btn-create {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #dff3e8;
+    -fx-border-color: #2b6b4c;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 14;
+    -fx-cursor: hand;
+}
 
 .sub {
     -fx-text-fill: #7a7a7a;
@@ -88,7 +97,7 @@
     -fx-border-radius: 20;
     -fx-background-radius: 20;
     -fx-padding: 25;
-    -fx-transition: 0.3s;
+    -fx-spacing: 10;
 }
 
 .product-card:hover {
@@ -111,6 +120,7 @@
     -fx-text-fill: white;
     -fx-font-size: 28px;
     -fx-font-weight: bold;
+    -fx-max-width: Infinity;
 }
 
 .status-badge {
@@ -120,6 +130,81 @@
     -fx-background-radius: 8;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
+}
+.status-badge-ended {
+    -fx-background-color: #331a1a;
+    -fx-text-fill: #ff6b6b;
+    -fx-padding: 5 12;
+    -fx-background-radius: 8;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+.card-separator .line {
+    -fx-border-color: #2a332f;
+}
+.btn-card-edit, .btn-card-delete {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 10 12;
+    -fx-font-weight: 700;
+}
+.btn-card-edit {
+    -fx-background-color: transparent;
+    -fx-border-color: #8d9a93;
+    -fx-text-fill: #b8c5be;
+    -fx-cursor: hand;
+}
+.btn-card-delete {
+    -fx-background-color: transparent;
+    -fx-border-color: #a14747;
+    -fx-text-fill: #ff6b6b;
+    -fx-cursor: hand;
+}
+.btn-card-disabled {
+    -fx-opacity: 0.45;
+}
+
+/* Confirm delete dialog */
+.dialog-pane {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #e6eee9;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-border-width: 1.2;
+}
+
+.dialog-pane:header .header-panel {
+    -fx-background-color: #101a15;
+}
+
+.dialog-pane:header .header-panel .label {
+    -fx-text-fill: #e7efe9;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}
+
+.dialog-pane .content.label {
+    -fx-text-fill: #9eb0a6;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-cursor: hand;
+    -fx-font-weight: 700;
+    -fx-padding: 7 20;
+}
+
+.dialog-pane .button-yes {
+    -fx-background-color: transparent;
+    -fx-border-color: #8d9a93;
+    -fx-text-fill: #b8c5be;
+}
+
+.dialog-pane .button-no {
+    -fx-background-color: transparent;
+    -fx-border-color: #a14747;
+    -fx-text-fill: #ff6b6b;
 }
 
 .btn-action-green {

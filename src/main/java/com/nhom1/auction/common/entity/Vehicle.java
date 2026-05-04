@@ -9,12 +9,12 @@ import com.nhom1.auction.common.enums.VehicleFuelType;
 
 public class Vehicle extends Item {
     private String brand;
-    private int productionYear;
+    private Integer productionYear;
     private VehicleFuelType fuelType;
 
     public Vehicle(String name, String description,
         ItemCategory category, ItemCondition condition,
-        String brand, int productionYear, VehicleFuelType fuelType) {
+        String brand, Integer productionYear, VehicleFuelType fuelType) {
         super( name, description, category, condition);
         this.brand = brand;
         this.productionYear = productionYear;
@@ -26,7 +26,7 @@ public class Vehicle extends Item {
      */
     public Vehicle(UUID id, String name, String description,
                    ItemCategory category, ItemCondition condition,
-                   String brand, int productionYear, VehicleFuelType fuelType,
+                   String brand, Integer productionYear, VehicleFuelType fuelType,
                    LocalDateTime createdAt, LocalDateTime updatedAt) {
         super(id, name, description, category, condition, createdAt, updatedAt);
         this.brand = brand;
@@ -35,11 +35,11 @@ public class Vehicle extends Item {
     }
     //Getter
     public String getBrand(){ return brand; }
-    public int getProductionYear(){ return productionYear; }
+    public Integer getProductionYear(){ return productionYear; }
     public VehicleFuelType getFuelType(){ return fuelType; }
     //Setter
     public void setBrand(String brand){ this.brand=brand; }
-    public void setProductionYear(int productionYear){ this.productionYear=productionYear; }
+    public void setProductionYear(Integer productionYear){ this.productionYear=productionYear; }
     public void setFuelType(VehicleFuelType fuelType ){ this.fuelType=fuelType; }
 
     @Override

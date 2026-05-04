@@ -8,12 +8,15 @@
 <ScrollPane fitToWidth="true"
             xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.nhom1.auction.client.user.controller.AuctionDetailController"
             stylesheets="@/css/client/auction_detail.css"
             styleClass="root">
 
     <VBox spacing="30" styleClass="container">
 
         <!-- ===== TOP CARD ===== -->
+        <Button text="Back" styleClass="btn-back" fx:id="btnBack"/>
+
         <HBox spacing="30" styleClass="main-card">
 
             <!-- LEFT IMAGE -->
@@ -51,20 +54,20 @@
                     <HBox>
                         <Label text="Current highest bid"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="10,000"/>
+                        <Label text="10,000" fx:id="lblCurrentBid"/>
                     </HBox>
 
                     <HBox>
                         <Label text="Minimum increment"/>
                         <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="50"/>
+                        <Label text="50" fx:id="lblMinIncrement"/>
                     </HBox>
 
                     <TextField promptText=" ENTER YOUR BID"
-                               styleClass="bid-input"/>
+                               styleClass="bid-input" fx:id="txtBidInput"/>
 
                     <HBox spacing="10">
-                        <Button text="Bid" styleClass="btn-green"/>
+                        <Button text="Bid" styleClass="btn-green" fx:id="btnBid"/>
                         <Button text="Setup auto bid" styleClass="btn-green-outline"/>
                         <Button text="Cancel" styleClass="btn-red"/>
                     </HBox>
@@ -88,7 +91,10 @@
             <!-- BIDDINGS -->
             <VBox styleClass="card" prefWidth="300">
                 <Label text="Biddings" styleClass="section-title"/>
-                <Label text="List | Chart" styleClass="sub-text"/>
+                <ScrollPane fitToWidth="true" prefHeight="260"
+                            styleClass="bid-history-scroll" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="bidHistoryList" spacing="8"/>
+                </ScrollPane>
             </VBox>
 
         </HBox>

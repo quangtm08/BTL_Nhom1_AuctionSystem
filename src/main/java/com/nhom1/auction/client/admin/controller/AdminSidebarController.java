@@ -32,11 +32,8 @@ public class AdminSidebarController {
         // Không reload nếu đang ở màn hiện tại
         if (AppNavigator.getCurrentView() == targetView) return;
 
-        AppNavigator.navigateTo(AppView.LOADING);
-
-        PauseTransition delay = new PauseTransition(Duration.seconds(0.5));
-        delay.setOnFinished(e -> AppNavigator.navigateTo(targetView));
-        delay.play();
+        // Bỏ qua màn LOADING và delay, chuyển thẳng đến view đích
+        AppNavigator.navigateTo(targetView);
     }
 
     private void updateActiveButton() {

@@ -10,6 +10,7 @@ public class ResponseMessage<T> {
     private boolean success;
     private T payload;
     private ErrorResponse error;
+    private MessageType type;
 
     public ResponseMessage() {}
 
@@ -39,4 +40,7 @@ public class ResponseMessage<T> {
 
     public ErrorResponse getError() { return error; }
     public void setError(ErrorResponse error) { this.error = error; }
+
+    public MessageType getType() { return type; }
+    public void setType(MessageType type) { this.type = type; }
 }

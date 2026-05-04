@@ -1,0 +1,205 @@
+.listing-root {
+    -fx-background-color: #050505;
+}
+
+.listing-content {
+    -fx-background-color: #050505;
+}
+
+.back-text {
+    -fx-text-fill: #8d9f95;
+    -fx-font-size: 14px;
+}
+.back-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #8d9f95;
+    -fx-font-size: 17px;
+    -fx-font-weight: 600;
+    -fx-padding: 0;
+}
+.back-btn:hover {
+    -fx-cursor: hand;
+    -fx-text-fill: #c7d3cd;
+}
+
+.page-title {
+    -fx-text-fill: #eef5f0;
+    -fx-font-size: 48px;
+    -fx-font-weight: 700;
+}
+
+.meta-text, .note-text {
+    -fx-text-fill: #74857b;
+    -fx-font-size: 13px;
+}
+
+.icon-btn {
+    -fx-background-color: #1c2722;
+    -fx-text-fill: #a4b2ab;
+    -fx-background-radius: 8;
+    -fx-padding: 6 11;
+}
+
+.status-banner {
+    -fx-background-color: #16462f;
+    -fx-border-color: #2e8f60;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10 14;
+}
+
+.status-text {
+    -fx-text-fill: #72e49e;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.status-sub {
+    -fx-text-fill: #89aa99;
+}
+
+.field-label, .section-title {
+    -fx-text-fill: #8ea096;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+}
+
+.field-input, .field-area, .combo-box.field-input {
+    -fx-background-color: #2f3533;
+    -fx-text-fill: #eff3f1;
+    -fx-prompt-text-fill: #7e8c84;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-color: #45504a;
+    -fx-padding: 10 14;
+}
+
+.combo-box.field-input .list-cell {
+    -fx-text-fill: #eff3f1;
+    -fx-background-color: #2f3533;
+}
+
+.combo-box.field-input .arrow-button {
+    -fx-background-color: #2f3533;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #1f2523;
+    -fx-border-color: #45504a;
+}
+
+.combo-box-popup .list-cell {
+    -fx-background-color: #1f2523;
+    -fx-text-fill: #e3ebe6;
+}
+
+.combo-box-popup .list-cell:hover,
+.combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: #2b3a33;
+}
+
+.field-area {
+    -fx-pref-height: 110;
+    -fx-border-color: transparent;
+    -fx-background-color: #2f3533;
+}
+.field-area .content {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+}
+.field-area:focused .content {
+    -fx-background-color: transparent;
+}
+.field-area .viewport {
+    -fx-background-color: transparent;
+}
+.field-area:focused {
+    -fx-border-color: transparent;
+}
+
+.photo-box, .photo-add {
+    -fx-pref-width: 64;
+    -fx-pref-height: 64;
+    -fx-alignment: CENTER;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.photo-box {
+    -fx-background-color: #2f3c36;
+    -fx-border-color: #44524b;
+}
+
+.photo-meta {
+    -fx-text-fill: #6f7d76;
+    -fx-font-size: 11px;
+}
+
+.photo-add {
+    -fx-background-color: transparent;
+    -fx-border-color: #3d4a43;
+    -fx-border-style: segments(6, 8);
+}
+
+.photo-add-text {
+    -fx-text-fill: #77867d;
+    -fx-font-size: 24px;
+}
+
+.line-separator .line {
+    -fx-border-color: #1e2c25;
+}
+
+.btn-danger, .btn-secondary, .btn-primary {
+    -fx-padding: 9 16;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}
+
+.button:hover {
+    -fx-cursor: hand;
+}
+
+.btn-danger {
+    -fx-background-color: transparent;
+    -fx-border-color: #7c362f;
+    -fx-text-fill: #e36d62;
+}
+
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: #455249;
+    -fx-text-fill: #95a59b;
+}
+
+.btn-primary {
+    -fx-background-color: #1e8b4f;
+    -fx-border-color: #2ab769;
+    -fx-text-fill: #ebffee;
+    -fx-padding-left: 20
+}
+
+.duration-chip {
+    -fx-background-color: transparent;
+    -fx-border-color: #455049;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-text-fill: #9cad9f;
+    -fx-padding: 7 14;
+}
+
+.duration-chip-active {
+    -fx-background-color: #14472f;
+    -fx-border-color: #1ea45e;
+    -fx-text-fill: #b8f2ce;
+}
+
+.duration-custom-input {
+    -fx-background-color: #2f3533;
+    -fx-text-fill: #ecefed;
+    -fx-prompt-text-fill: #7f8b84;
+    -fx-border-color: #45504a;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 7 12;
+}

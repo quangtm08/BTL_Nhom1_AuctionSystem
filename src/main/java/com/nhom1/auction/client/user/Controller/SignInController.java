@@ -2,13 +2,9 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.client.user.service.AuthClientService;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
-import com.nhom1.auction.common.dto.auth.LoginRequest;
 import com.nhom1.auction.common.enums.UserRole;
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.RequestMessage;
-import com.nhom1.auction.common.utils.AppContext;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -23,6 +19,7 @@ import javafx.stage.StageStyle;
 
 public class SignInController {
 
+    private final AuthClientService authService = new AuthClientService();
     private Stage alertStage;
 
     @FXML private Button btnSignIn;
@@ -32,92 +29,55 @@ public class SignInController {
 
     @FXML
     public void initialize() {
+        btnRegister.setOnAction(e -> AppNavigator.navigateTo(AppView.REGISTER));
 
-        btnRegister.setOnAction(e -> {
-            AppNavigator.navigateTo(AppView.REGISTER);
-        });
-
-        btnSignIn.setOnAction((var e) -> {
-            String username = txtUsername.getText();
-            String password = txtPassword.getText();
-
-            if (username.isEmpty() || password.isEmpty()) {
-                showError("Missing Info", "Please enter both username and password.");
-                return;
-            }
-
-            // 1. Package the request
-            LoginRequest loginRequest = new LoginRequest(username, password);
-            RequestMessage<LoginRequest> loginRequestMessage = new RequestMessage<>(MessageType.LOGIN, loginRequest);
-
-        // 2. Send and handle response
-        ServerConnection.getInstance().sendRequest(loginRequestMessage, AuthResponse.class)
-            .thenAccept(response -> {
-                Platform.runLater(() -> {
-                    if (response.isSuccess()) {
-                        AuthResponse authData = (AuthResponse) response.getPayload();
-                        AppContext.setCurrentUser(authData);
-
-                        if (authData.getRole() == UserRole.ADMIN) {
-                            AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
-                        } else {
-                            AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
-                        }
+        btnSignIn.setOnAction(e ->
+            // Controller stays UI-focused:
+            // read form fields, call service, then update navigation/error state.
+            // Protocol details such as RequestMessage and ServerConnection live
+            // inside AuthClientService/BaseClientService.
+            authService.login(txtUsername.getText(), txtPassword.getText())
+                .thenAccept(authData -> Platform.runLater(() -> {
+                    if (authData.getRole() == UserRole.ADMIN) {
+                        AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
                     } else {
-                        showError("Login Failed", response.getError().getMessage());
-                        txtPassword.clear();
+                        AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
                     }
-                });
-            })
-            .exceptionally(ex -> {
-                Platform.runLater(() -> showError("Connection Error", "Server is down."));
-                return null;
-            });
-
-        });
+                }))
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> {
+                        // AuthClientService can fail before network I/O, so use
+                        // the shared unwrap helper instead of assuming a cause.
+                        showError("Login Failed", AuthClientService.extractFailure(ex).getMessage());
+                        txtPassword.clear();
+                    });
+                    return null;
+                })
+        );
     }
 
     private void showError(String title, String message) {
         try {
-           // 🔥 nếu đang mở thì không tạo mới
-            if (alertStage != null && alertStage.isShowing()) {
-                return;
-            }
+            if (alertStage != null && alertStage.isShowing()) return;
 
-            FXMLLoader loader = new FXMLLoader(
-                getClass().getResource("/views/custom_alert.fxml")
-            );
-
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/custom_alert.fxml"));
             Parent root = loader.load();
 
-            Label lblTitle = (Label) root.lookup("#lblTitle");
-            Label lblMessage = (Label) root.lookup("#lblMessage");
-
-            lblTitle.setText(title);
-            lblMessage.setText(message);
+            ((Label) root.lookup("#lblTitle")).setText(title);
+            ((Label) root.lookup("#lblMessage")).setText(message);
 
             Scene scene = new Scene(root);
             scene.setFill(null);
 
             alertStage = new Stage();
             alertStage.setScene(scene);
-
             alertStage.initStyle(StageStyle.TRANSPARENT);
 
-            Button btnClose = (Button) root.lookup("#btnClose");
-            btnClose.setOnAction(e -> alertStage.close());
-
-            // 🔥 khi đóng thì reset
+            ((Button) root.lookup("#btnClose")).setOnAction(e -> alertStage.close());
             alertStage.setOnHidden(e -> alertStage = null);
-
             alertStage.show();
-
-            
-
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-
 }

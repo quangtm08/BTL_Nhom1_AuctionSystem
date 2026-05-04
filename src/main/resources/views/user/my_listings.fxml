@@ -30,14 +30,17 @@
 
             <children>
 
-                <!-- TITLE -->
-                <Label text="See your networth grows" styleClass="title"/>
+                <HBox alignment="CENTER_LEFT">
+                    <Label text="See your networth grows" styleClass="title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="btnCreateListing" text="+ New listing" styleClass="btn-create" onAction="#handleCreateListing"/>
+                </HBox>
 
                 <!-- STATS -->
                 <HBox spacing="80">
                     <VBox>
                         <Label text="Active listings" styleClass="sub"/>
-                        <Label text="7" styleClass="big"/>
+                        <Label fx:id="activeListingsLabel" text="0" styleClass="big"/>
                     </VBox>
 
                     <VBox>
@@ -68,95 +71,40 @@
                 <!-- CARD LIST -->
                 <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
                 <content>
-                    <GridPane hgap="30.0" vgap="30.0">
+                    <GridPane fx:id="listingsGrid" hgap="30.0" vgap="30.0">
                         <padding>
                             <Insets bottom="30.0" right="20.0" />
                         </padding>
                         <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
                         </columnConstraints>
                         <children>
-                            <VBox styleClass="product-card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <!-- <VBox styleClass="product-card" spacing="12.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
                                 <HBox alignment="CENTER_LEFT">
                                     <VBox HBox.hgrow="ALWAYS">
                                         <Label text="Vintage Fender Guitar" styleClass="card-title-text"/>
                                         <Label text="Art &amp; Collectibles" styleClass="card-sub-text"/>
                                     </VBox>
-                                    <Label text="Winning" styleClass="status-badge"/>
+                                    <Label text="Running" styleClass="status-badge"/>
                                 </HBox>
-                                <Region prefHeight="50.0" />
                                 <HBox alignment="BOTTOM_LEFT">
                                     <VBox HBox.hgrow="ALWAYS">
                                         <Label text="Current bid" styleClass="card-sub-text"/>
                                         <Label text="\$5000" styleClass="card-price-text"/>
+                                        <Label text="12 bids" styleClass="card-sub-text"/>
                                     </VBox>
                                     <VBox alignment="BOTTOM_RIGHT" spacing="10">
-                                        <Label text="2 days" styleClass="card-sub-text"/>
+                                        <Label text="2 days left" styleClass="card-sub-text"/>
                                     </VBox>
                                 </HBox>
-                            </VBox>
-
-                            <VBox styleClass="product-card" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                <HBox alignment="CENTER_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Macintosh 1984" styleClass="card-title-text"/>
-                                        <Label text="Electronics" styleClass="card-sub-text"/>
-                                    </VBox>
-                                    <Label text="Outbid" styleClass="status-badge" style="-fx-text-fill: #ff4d4d; -fx-background-color: #331a1a;"/>
+                                <Separator styleClass="card-separator"/>
+                                <HBox spacing="10.0">
+                                    <Button text="Edit" styleClass="btn-card-edit" HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#handleEditListing"/>
+                                    <Button text="Delete" styleClass="btn-card-delete" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                                 </HBox>
-                                <Region prefHeight="50.0" />
-                                <HBox alignment="BOTTOM_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Current bid" styleClass="card-sub-text"/>
-                                        <Label text="\$2400" styleClass="card-price-text"/>
-                                    </VBox>
-                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
-                                        <Label text="5 hours" styleClass="card-sub-text"/>
-                                    </VBox>
-                                </HBox>
-                            </VBox>
-
-                            <VBox styleClass="product-card" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                                <HBox alignment="CENTER_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Leica M6 Camera" styleClass="card-title-text"/>
-                                        <Label text="Photography" styleClass="card-sub-text"/>
-                                    </VBox>
-                                    <Label text="Winning" styleClass="status-badge"/>
-                                </HBox>
-                                <Region prefHeight="50.0" />
-                                <HBox alignment="BOTTOM_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Current bid" styleClass="card-sub-text"/>
-                                        <Label text="\$3200" styleClass="card-price-text"/>
-                                    </VBox>
-                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
-                                        <Label text="12 hours" styleClass="card-sub-text"/>
-                                    </VBox>
-                                </HBox>
-                            </VBox>
-
-                            <VBox styleClass="product-card" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                <HBox alignment="CENTER_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Eames Lounge Chair" styleClass="card-title-text"/>
-                                        <Label text="Furniture" styleClass="card-sub-text"/>
-                                    </VBox>
-                                    <Label text="Winning" styleClass="status-badge"/>
-                                </HBox>
-                                <Region prefHeight="50.0" />
-                                <HBox alignment="BOTTOM_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Current bid" styleClass="card-sub-text"/>
-                                        <Label text="\$1800" styleClass="card-price-text"/>
-                                    </VBox>
-                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
-                                        <Label text="1 day" styleClass="card-sub-text"/>
-                                    </VBox>
-                                </HBox>
-                            </VBox>
-
+                            </VBox> -->
+                            
                         </children>
                     </GridPane>
                 </content>

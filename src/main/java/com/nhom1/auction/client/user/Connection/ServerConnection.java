@@ -8,7 +8,6 @@ import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,6 +24,7 @@ import java.util.function.Consumer;
  - It manages the persistent Socket connection and handles JSON deserialization
  */
 public class ServerConnection {
+
     private static ServerConnection instance;
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -33,21 +33,28 @@ public class ServerConnection {
     private BufferedReader in;
     private boolean connected = false;
 
+    private final Map<String, PendingRequest<?>> pendingRequests =
+        new ConcurrentHashMap<>();
+    private final Map<MessageType, Consumer<String>> pushHandlers =
+        new ConcurrentHashMap<>();
+
     // Helper to store the box and the blueprint
     private static class PendingRequest<T> {
+
         final CompletableFuture<ResponseMessage<T>> future;
         final Class<T> responseClass;
 
-        PendingRequest(CompletableFuture<ResponseMessage<T>> future, Class<T> responseClass) {
+        PendingRequest(
+            CompletableFuture<ResponseMessage<T>> future,
+            Class<T> responseClass
+        ) {
             this.future = future;
             this.responseClass = responseClass;
         }
     }
 
-    private final Map<String, PendingRequest<?>> pendingRequests = new ConcurrentHashMap<>();
-
     private ServerConnection() {
-        // Ensure Jackson understands Java 8 dates (LocalDateTime)
+        // Ensure Jackson understands Java LocalDateTime
         mapper.registerModule(new JavaTimeModule());
         connect();
     }
@@ -63,12 +70,16 @@ public class ServerConnection {
         try {
             this.socket = new Socket("localhost", 12345);
             this.out = new PrintWriter(socket.getOutputStream(), true);
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.in = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())
+            );
             this.connected = true;
             System.out.println("Connected to Auction Server.");
             startListening();
         } catch (IOException e) {
-            System.err.println("Could not connect to server: " + e.getMessage());
+            System.err.println(
+                "Could not connect to server: " + e.getMessage()
+            );
             this.connected = false;
         }
     }
@@ -90,10 +101,16 @@ public class ServerConnection {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> CompletableFuture<ResponseMessage<T>> sendRequest(RequestMessage<?> request, Class<T> responseClass) {
+    public <T> CompletableFuture<ResponseMessage<T>> sendRequest(
+        RequestMessage<?> request,
+        Class<T> responseClass
+    ) {
         if (!connected) {
-            CompletableFuture<ResponseMessage<T>> failed = new CompletableFuture<>();
-            failed.completeExceptionally(new IOException("Not connected to server"));
+            CompletableFuture<ResponseMessage<T>> failed =
+                new CompletableFuture<>();
+            failed.completeExceptionally(
+                new IOException("Not connected to server")
+            );
             return failed;
         }
 
@@ -103,8 +120,12 @@ public class ServerConnection {
             request.setRequestId(requestId);
         }
 
-        CompletableFuture<ResponseMessage<T>> future = new CompletableFuture<>();
-        pendingRequests.put(requestId, new PendingRequest<>(future, responseClass));
+        CompletableFuture<ResponseMessage<T>> future =
+            new CompletableFuture<>();
+        pendingRequests.put(
+            requestId,
+            new PendingRequest<>(future, responseClass)
+        );
 
         try {
             out.println(JsonUtil.toJson(request));
@@ -116,33 +137,49 @@ public class ServerConnection {
         return future;
     }
 
-
     private void handleRawResponse(String json) {
         try {
             JsonNode root = mapper.readTree(json);
-            String requestId = root.has("requestId") ? root.get("requestId").asText() : null;
+            String requestId =
+                root.has("requestId") && !root.get("requestId").isNull()
+                    ? root.get("requestId").asText()
+                    : null;
 
-            if (requestId == null) return;
-
-            PendingRequest<?> pending = pendingRequests.remove(requestId);
-            if (pending != null) {
-                // Construct the full type: ResponseMessage<pending.responseClass>
-                JavaType type = mapper.getTypeFactory()
-                                      .constructParametricType(ResponseMessage.class, pending.responseClass);
-                
-                // Jackson builds the AuthResponse (or other class) directly!
-                ResponseMessage<?> response = mapper.readValue(json, type);
-
-                // Use raw cast to resolve the promise safely
-                ((CompletableFuture) pending.future).complete(response);
+            if (requestId != null) {
+                PendingRequest<?> pending = pendingRequests.remove(requestId);
+                if (pending != null) {
+                    JavaType type = mapper
+                        .getTypeFactory()
+                        .constructParametricType(
+                            ResponseMessage.class,
+                            pending.responseClass
+                        );
+                    ResponseMessage<?> response = mapper.readValue(json, type);
+                    ((CompletableFuture) pending.future).complete(response);
+                }
+            } else if (root.has("type")) {
+                // Push notification
+                MessageType pushType = MessageType.valueOf(
+                    root.get("type").asText()
+                );
+                Consumer<String> handler = pushHandlers.get(pushType);
+                if (handler != null) {
+                    handler.accept(json);
+                }
             }
         } catch (Exception e) {
-            System.err.println("Error parsing server response: " + e.getMessage());
+            System.err.println(
+                "Error parsing server response: " + e.getMessage()
+            );
         }
     }
 
-    public void registerPushHandler(MessageType type, Consumer<String> handler){}
-
+    public void registerPushHandler(
+        MessageType type,
+        Consumer<String> handler
+    ) {
+        pushHandlers.put(type, handler);
+    }
 
     public boolean isConnected() {
         return connected;

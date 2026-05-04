@@ -2,12 +2,7 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.dto.auth.AuthResponse;
-import com.nhom1.auction.common.dto.auth.RegisterRequest;
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.RequestMessage;
-import com.nhom1.auction.common.utils.AppContext;
+import com.nhom1.auction.client.user.service.AuthClientService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -22,97 +17,52 @@ import javafx.stage.StageStyle;
 
 public class RegisterController {
 
+    private final AuthClientService authService = new AuthClientService();
     private Stage alertStage;
 
     @FXML private Button btnRegister;
-    @FXML private Button btnSignIn; 
-    @FXML private TextField txtUsername; 
-    @FXML private TextField txtEmail; 
-    @FXML private PasswordField txtPassword; 
-    @FXML private PasswordField txtRepeatPassword; 
+    @FXML private Button btnSignIn;
+    @FXML private TextField txtUsername;
+    @FXML private TextField txtEmail;
+    @FXML private PasswordField txtPassword;
+    @FXML private PasswordField txtRepeatPassword;
 
     @FXML
     public void initialize() {
-        // Navigate back to Sign In
-        btnSignIn.setOnAction(e -> {
-            AppNavigator.navigateTo(AppView.SIGN_IN);
-        });
-
-        // Handle Register button click
+        btnSignIn.setOnAction(e -> AppNavigator.navigateTo(AppView.SIGN_IN));
         btnRegister.setOnAction(e -> handleRegister());
     }
 
     private void handleRegister() {
-        String username = txtUsername.getText();
-        String password = txtPassword.getText();
-        String repeatPassword = txtRepeatPassword.getText();
-
-        // 1. Basic Validation
-        if (username.isEmpty() || password.isEmpty()) {
-            showError("Missing Info", "Username and password are required.");
-            return;
-        }
-
-        // Get email from UI, or use a dummy if field is missing/empty
-        String email = (txtEmail != null && !txtEmail.getText().isEmpty()) 
-                       ? txtEmail.getText() 
-                       : username + "@auction.com";
-
-        if (!password.equals(repeatPassword)) {
-            showError("Password Mismatch", "Passwords do not match.");
-            return;
-        }
-
-        // 2. Package the request
-        RegisterRequest registerDto = new RegisterRequest(username, email, password);
-        RequestMessage<RegisterRequest> request = new RequestMessage<>(MessageType.REGISTER, registerDto);
-
-        // 3. Send and handle response (Async)
-        ServerConnection.getInstance().sendRequest(request, AuthResponse.class)
-            .thenAccept(response -> {
-                Platform.runLater(() -> {
-                    try {
-                        if (response.isSuccess()) {
-                            System.out.println("[Register] Registration success. Payload type: " + response.getPayload().getClass().getName());
-
-                            // Success path: Store session and go to Dashboard
-                            AuthResponse authData = (AuthResponse) response.getPayload();
-                            AppContext.setCurrentUser(authData);
-
-                            System.out.println("Registration successful! Welcome, " + authData.getUsername());
-                            AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
-                        } else {
-                            // Failure path: Show server error
-                            showError("Registration Failed", response.getError().getMessage());
-                        }
-                    } catch (Exception ex) {
-                        System.err.println("[Register] Error processing registration response: " + ex.getMessage());
-                        ex.printStackTrace();
-                        showError("System Error", "Error processing server response.");
-                    }
-                });
-            })
-
-            .exceptionally(ex -> {
-                Platform.runLater(() -> showError("Connection Error", "Server is down."));
-                return null;
-            });
+        // This controller deliberately avoids building RegisterRequest or
+        // calling ServerConnection directly. It only collects UI input and
+        // delegates the client-server contract to AuthClientService.
+        authService.register(
+                txtUsername.getText(),
+                txtEmail != null ? txtEmail.getText() : "",
+                txtPassword.getText(),
+                txtRepeatPassword.getText()
+        )
+        .thenAccept(authData -> Platform.runLater(() ->
+            AppNavigator.navigateTo(AppView.AUCTION_BROWSE)
+        ))
+        .exceptionally(ex -> {
+            // Registration now shares the same fail-fast service layer as login,
+            // so validation errors may come directly without nested causes.
+            Platform.runLater(() -> showError("Registration Failed", AuthClientService.extractFailure(ex).getMessage()));
+            return null;
+        });
     }
 
     private void showError(String title, String message) {
         try {
-            if (alertStage != null && alertStage.isShowing()) {
-                return;
-            }
+            if (alertStage != null && alertStage.isShowing()) return;
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/custom_alert.fxml"));
             Parent root = loader.load();
 
-            Label lblTitle = (Label) root.lookup("#lblTitle");
-            Label lblMessage = (Label) root.lookup("#lblMessage");
-
-            lblTitle.setText(title);
-            lblMessage.setText(message);
+            ((Label) root.lookup("#lblTitle")).setText(title);
+            ((Label) root.lookup("#lblMessage")).setText(message);
 
             Scene scene = new Scene(root);
             scene.setFill(null);
@@ -121,10 +71,8 @@ public class RegisterController {
             alertStage.setScene(scene);
             alertStage.initStyle(StageStyle.TRANSPARENT);
 
-            Button btnClose = (Button) root.lookup("#btnClose");
-            btnClose.setOnAction(e -> alertStage.close());
+            ((Button) root.lookup("#btnClose")).setOnAction(e -> alertStage.close());
             alertStage.setOnHidden(e -> alertStage = null);
-
             alertStage.show();
         } catch (Exception e) {
             e.printStackTrace();
