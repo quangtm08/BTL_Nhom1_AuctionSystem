@@ -42,8 +42,8 @@
                             <Insets bottom="30.0" right="20.0" />
                         </padding>
                         <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
+                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
                         </columnConstraints>
                         <children>
                             <!-- Dynamic cards will be added here via Controller -->

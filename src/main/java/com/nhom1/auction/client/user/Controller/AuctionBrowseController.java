@@ -20,9 +20,11 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 
 public class AuctionBrowseController {
 
@@ -109,6 +111,7 @@ public class AuctionBrowseController {
 		priceLabel.getStyleClass().add("card-sub-text");
 		Label priceValue = new Label(formatMoney(dto.getCurrentHighestBid()));
 		priceValue.getStyleClass().add("card-price-text");
+		priceValue.setMaxWidth(Double.MAX_VALUE);
 		priceSection.getChildren().addAll(priceLabel, priceValue);
 
 		VBox timeSection = new VBox(2);
@@ -155,7 +158,7 @@ public class AuctionBrowseController {
 
 	private String formatMoney(BigDecimal amount) {
 		if (amount == null) return "$0";
-		return "$" + amount.toPlainString();
+		return "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
 	}
 
 	private String formatTimeLeft(LocalDateTime endTime) {
