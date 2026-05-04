@@ -91,7 +91,10 @@
             <!-- BIDDINGS -->
             <VBox styleClass="card" prefWidth="300">
                 <Label text="Biddings" styleClass="section-title"/>
-                <Label text="List | Chart" styleClass="sub-text"/>
+                <ScrollPane fitToWidth="true" prefHeight="260"
+                            styleClass="bid-history-scroll" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="bidHistoryList" spacing="8"/>
+                </ScrollPane>
             </VBox>
 
         </HBox>

@@ -128,3 +128,52 @@
     -fx-text-fill: #777;
     -fx-background-radius: 6;
 }
+
+/* ===== BID HISTORY ===== */
+.bid-history-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.bid-history-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.bid-row {
+    -fx-background-color: #0f2218;
+    -fx-background-radius: 8;
+    -fx-padding: 8 12 8 12;
+}
+
+.bid-rank {
+    -fx-text-fill: #55a07a;
+    -fx-font-size: 12;
+    -fx-min-width: 28;
+}
+
+.bid-amount {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14;
+}
+
+.bid-type {
+    -fx-background-radius: 4;
+    -fx-padding: 2 6 2 6;
+    -fx-font-size: 11;
+}
+
+.bid-type-auto {
+    -fx-background-color: #1a3a5c;
+    -fx-text-fill: #7ec8e3;
+}
+
+.bid-type-manual {
+    -fx-background-color: #1d3b32;
+    -fx-text-fill: #7ec8a0;
+}
+
+.bid-time {
+    -fx-text-fill: #777;
+    -fx-font-size: 11;
+}

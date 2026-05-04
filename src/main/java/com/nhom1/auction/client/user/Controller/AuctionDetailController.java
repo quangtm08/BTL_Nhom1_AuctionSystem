@@ -1,6 +1,8 @@
 package com.nhom1.auction.client.user.controller;
 
 import java.math.BigDecimal;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,44 +11,52 @@ import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.connection.ServerConnection;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
+import com.nhom1.auction.common.dto.bidding.BidSummaryDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
+import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 
 public class AuctionDetailController {
 
 	private final BiddingClientService biddingService = new BiddingClientService();
 	private final ObjectMapper mapper = new ObjectMapper();
+	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM");
 
 	@FXML
-	private TextField txtBidInput; // bound in FXML
+	private TextField txtBidInput;
 
 	@FXML
-	private Button btnBid; // bound in FXML
+	private Button btnBid;
 
 	@FXML
-	private Label lblCurrentBid; // newly added for real-time updates
+	private Label lblCurrentBid;
 
 	@FXML
-	private Label lblMinIncrement; // newly added for real-time updates
+	private Label lblMinIncrement;
 
 	@FXML
-	private Button btnBack; // newly added back button
+	private Button btnBack;
+
+	@FXML
+	private VBox bidHistoryList;
 
 	@FXML
 	public void initialize() {
-		// wire bid button if present
 		if (btnBid != null) {
 			btnBid.setOnAction(e -> onPlaceBid());
 		}
 
-		// load auction details if selected
 		String sel = AppContext.getSelectedAuctionId();
 		if (sel == null || sel.isBlank()) {
 			AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
@@ -63,42 +73,41 @@ public class AuctionDetailController {
 
 		btnBack.setOnAction(e -> AppNavigator.navigateTo(AppView.AUCTION_BROWSE));
 
-		// Register real-time push handler for bid updates
 		ServerConnection.getInstance().registerPushHandler(
 			MessageType.PUSH_BID_UPDATE,
 			json -> handleBidUpdatePush(json)
 		);
 	}
 
-	/**
-	 * Handle incoming real-time bid update push notification
-	 * Payload format: { "auctionId": "...", "currentHighestBid": 10000, "highestBidderId": "..." }
-	 */
 	private void handleBidUpdatePush(String json) {
 		try {
 			JsonNode node = mapper.readTree(json);
 			String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
-			
-			// Only update if this push is for the current auction
+
 			String currentAuctionId = AppContext.getSelectedAuctionId();
 			if (auctionId == null || !auctionId.equals(currentAuctionId)) {
 				return;
 			}
 
-			// Extract bid information
 			BigDecimal newBid = null;
 			if (node.has("currentHighestBid")) {
 				newBid = new BigDecimal(node.get("currentHighestBid").asText());
 			}
 
-			// Update UI on FX thread
 			final BigDecimal bid = newBid;
 			Platform.runLater(() -> {
 				if (bid != null && lblCurrentBid != null) {
 					lblCurrentBid.setText(formatMoney(bid));
-					System.out.println("[AuctionDetail] Updated bid to: " + bid);
 				}
 			});
+
+			// Re-fetch full detail to refresh bid history
+			biddingService.getAuctionDetail(currentAuctionId)
+				.thenAccept(dto -> Platform.runLater(() -> {
+					if (dto != null && dto.getBidHistory() != null) {
+						renderBidHistory(dto.getBidHistory());
+					}
+				}));
 
 		} catch (Exception e) {
 			System.err.println("Error parsing bid update push: " + e.getMessage());
@@ -108,12 +117,42 @@ public class AuctionDetailController {
 	private void applyDetail(AuctionDetailDto dto) {
 		if (dto == null)
 			return;
-		// UI updates: populate labels with auction details
 		if (lblCurrentBid != null && dto.getCurrentHighestBid() != null) {
 			lblCurrentBid.setText(formatMoney(dto.getCurrentHighestBid()));
 		}
 		if (lblMinIncrement != null && dto.getMinBidIncrement() != null) {
 			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
+		}
+		if (bidHistoryList != null && dto.getBidHistory() != null) {
+			renderBidHistory(dto.getBidHistory());
+		}
+	}
+
+	private void renderBidHistory(List<BidSummaryDto> history) {
+		bidHistoryList.getChildren().clear();
+		for (int i = 0; i < history.size(); i++) {
+			BidSummaryDto bid = history.get(i);
+
+			HBox row = new HBox(10);
+			row.getStyleClass().add("bid-row");
+			row.setAlignment(Pos.CENTER_LEFT);
+
+			Label rank = new Label("#" + (i + 1));
+			rank.getStyleClass().add("bid-rank");
+
+			Label amount = new Label(formatMoney(bid.getAmount()));
+			amount.getStyleClass().add("bid-amount");
+			HBox.setHgrow(amount, Priority.ALWAYS);
+
+			Label type = new Label(bid.getBidType() != null ? bid.getBidType().name() : "");
+			type.getStyleClass().addAll("bid-type",
+				bid.getBidType() == BidType.AUTO ? "bid-type-auto" : "bid-type-manual");
+
+			Label time = new Label(bid.getCreatedAt() != null ? bid.getCreatedAt().format(BID_TIME_FMT) : "");
+			time.getStyleClass().add("bid-time");
+
+			row.getChildren().addAll(rank, amount, type, time);
+			bidHistoryList.getChildren().add(row);
 		}
 	}
 
@@ -147,7 +186,6 @@ public class AuctionDetailController {
 	private void handlePlaceBidSuccess(PlaceBidResponse resp) {
 		if (resp == null)
 			return;
-		// simple UX: navigate back to browse or refresh detail
 		AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
 	}
 
