@@ -68,18 +68,20 @@ public class ServerConnection {
 
     private void connect() {
         try {
-            this.socket = new Socket("localhost", 12345);
+            // --- CONNECTION SETTINGS ---
+            // String host = "localhost"; int port = 12345; // LOCAL
+            String host = "hopper.proxy.rlwy.net"; int port = 16743; // CLOUD (Railway)
+            // ---------------------------
+
+            System.out.println("Server: Connecting to " + host + ":" + port + "...");
+            this.socket = new Socket(host, port);
             this.out = new PrintWriter(socket.getOutputStream(), true);
-            this.in = new BufferedReader(
-                new InputStreamReader(socket.getInputStream())
-            );
+            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.connected = true;
             System.out.println("Connected to Auction Server.");
             startListening();
         } catch (IOException e) {
-            System.err.println(
-                "Could not connect to server: " + e.getMessage()
-            );
+            System.err.println("Could not connect to server: " + e.getMessage());
             this.connected = false;
         }
     }

@@ -35,7 +35,7 @@ public class BidRepository {
 			ps.setString(3, bidTransaction.getBidderId().toString());
 			ps.setBigDecimal(4, bidTransaction.getAmount());
 			ps.setString(5, bidTransaction.getBidType().name());
-			ps.setString(6, bidTransaction.getCreatedAt().toString());
+			ps.setTimestamp(6, java.sql.Timestamp.valueOf(bidTransaction.getCreatedAt()));
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to save bid", e);
@@ -46,7 +46,7 @@ public class BidRepository {
 		String sql = """
 			SELECT id, auction_id, bidder_id, amount, bid_type, created_at
 			FROM bids
-			WHERE auction_id = ?
+			WHERE auction_id = CAST(? AS VARCHAR)
 			ORDER BY created_at ASC
 			""";
 
@@ -77,9 +77,9 @@ public class BidRepository {
 				   a.end_time,
 				   a.highest_bidder_id
 			FROM bids b
-			JOIN auctions a ON a.id = b.auction_id
-			JOIN items i ON i.id = a.item_id
-			WHERE b.bidder_id = ?
+			JOIN auctions a ON CAST(a.id AS VARCHAR) = CAST(b.auction_id AS VARCHAR)
+			JOIN items i ON CAST(i.id AS VARCHAR) = CAST(a.item_id AS VARCHAR)
+			WHERE b.bidder_id = CAST(? AS VARCHAR)
 			ORDER BY b.created_at DESC
 			""";
 
@@ -115,7 +115,7 @@ public class BidRepository {
 		String sql = """
 			SELECT MAX(created_at) AS last_bid_time
 			FROM bids
-			WHERE auction_id = ?
+			WHERE auction_id = CAST(? AS VARCHAR)
 			""";
 // PreparedStatement handles SQL injection and ensures proper resource management
 		try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -123,9 +123,9 @@ public class BidRepository {
 
     		try (ResultSet rs = ps.executeQuery()) {
 				if (rs.next()) {
-					String lastBidTime = rs.getString("last_bid_time");
-					if (lastBidTime != null) {
-						return Optional.of(LocalDateTime.parse(lastBidTime));
+					java.sql.Timestamp lastBidTs = rs.getTimestamp("last_bid_time");
+					if (lastBidTs != null) {
+						return Optional.of(lastBidTs.toLocalDateTime());
 					}
 				}
 			}
@@ -137,7 +137,7 @@ public class BidRepository {
 	}
 
     public int deleteByBidderId(UUID bidderId) {
-        String sql = "DELETE FROM bids WHERE bidder_id = ?";
+        String sql = "DELETE FROM bids WHERE bidder_id = CAST(? AS VARCHAR)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, bidderId.toString());
             return ps.executeUpdate();
@@ -147,7 +147,7 @@ public class BidRepository {
     }
 
     public int deleteByAuctionId(UUID auctionId) {
-        String sql = "DELETE FROM bids WHERE auction_id = ?";
+        String sql = "DELETE FROM bids WHERE auction_id = CAST(? AS VARCHAR)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, auctionId.toString());
             return ps.executeUpdate();
@@ -161,7 +161,8 @@ public class BidRepository {
         UUID auctionId = UUID.fromString(rs.getString("auction_id"));
         UUID bidderId = UUID.fromString(rs.getString("bidder_id"));
         BidType bidType = BidType.valueOf(rs.getString("bid_type"));
-        LocalDateTime createdAt = LocalDateTime.parse(rs.getString("created_at"));
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
 
         return new BidTransaction(
                 id,

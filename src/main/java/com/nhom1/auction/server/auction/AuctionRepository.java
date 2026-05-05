@@ -41,8 +41,8 @@ public class AuctionRepository {
 
             ps.setString(1, auction.getId().toString());
             ps.setString(2, auction.getItemId().toString());
-            ps.setString(3, formatSqliteDateTime(auction.getStartTime()));
-            ps.setString(4, formatSqliteDateTime(auction.getEndTime()));
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf(auction.getEndTime()));
             ps.setString(5, auction.getStatus().name());
             ps.setBigDecimal(6, auction.getStartingPrice());
 
@@ -58,9 +58,9 @@ public class AuctionRepository {
                 ps.setNull(8, Types.VARCHAR);
             }
 
-            LocalDateTime now = LocalDateTime.now();
-            ps.setString(9, formatSqliteDateTime(now));
-            ps.setString(10, formatSqliteDateTime(now));
+            java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+            ps.setTimestamp(9, now);
+            ps.setTimestamp(10, now);
 
             ps.executeUpdate();
 
@@ -74,12 +74,12 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
-                    WHERE a.id = ?
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
+                    WHERE a.id = CAST(? AS VARCHAR)
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setObject(1, id);
+            ps.setString(1, id.toString());
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -99,7 +99,7 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
                 """;
 
         List<Auction> list = new ArrayList<>();
@@ -123,8 +123,8 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
-                    WHERE i.seller_id = ?
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
+                    WHERE i.seller_id = CAST(? AS VARCHAR)
                 """;
 
         List<Auction> list = new ArrayList<>();
@@ -150,12 +150,12 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
-                    WHERE a.item_id = ?
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
+                    WHERE a.item_id = CAST(? AS VARCHAR)
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setObject(1, itemId);
+            ps.setString(1, itemId.toString());
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -175,13 +175,13 @@ public class AuctionRepository {
         String sql = """
                     UPDATE auctions
                     SET status = ?, updated_at = ?
-                    WHERE id = ?
+                    WHERE id = CAST(? AS VARCHAR)
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, status.name());
-            ps.setObject(2, LocalDateTime.now());
-            ps.setObject(3, auctionId);
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(3, auctionId.toString());
 
             ps.executeUpdate();
 
@@ -203,13 +203,13 @@ public class AuctionRepository {
             ps.setBigDecimal(1, amount);
 
             if (bidderId != null) {
-                ps.setObject(2, bidderId);
+                ps.setString(2, bidderId.toString());
             } else {
-                ps.setNull(2, Types.OTHER);
+                ps.setNull(2, java.sql.Types.VARCHAR);
             }
 
-            ps.setObject(3, LocalDateTime.now());
-            ps.setObject(4, auctionId);
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(4, auctionId.toString());
 
             ps.executeUpdate();
 
@@ -228,9 +228,9 @@ public class AuctionRepository {
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
 
-            ps.setObject(1, newEndTime);
-            ps.setObject(2, LocalDateTime.now());
-            ps.setObject(3, auctionId);
+            ps.setTimestamp(1, java.sql.Timestamp.valueOf(newEndTime));
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(3, auctionId.toString());
 
             ps.executeUpdate();
 
@@ -246,8 +246,10 @@ public class AuctionRepository {
         UUID itemId = UUID.fromString(rs.getString("item_id"));
         UUID sellerId = UUID.fromString(rs.getString("seller_id"));
 
-        LocalDateTime startTime = parseSqliteDateTime(rs.getString("start_time"));
-        LocalDateTime endTime = parseSqliteDateTime(rs.getString("end_time"));
+        java.sql.Timestamp startTs = rs.getTimestamp("start_time");
+        java.sql.Timestamp endTs = rs.getTimestamp("end_time");
+        LocalDateTime startTime = (startTs != null) ? startTs.toLocalDateTime() : null;
+        LocalDateTime endTime = (endTs != null) ? endTs.toLocalDateTime() : null;
 
         BigDecimal startingPrice = rs.getBigDecimal("starting_price");
         String highestBidderIdRaw = rs.getString("highest_bidder_id");
@@ -256,8 +258,10 @@ public class AuctionRepository {
 
         AuctionStatus status = AuctionStatus.valueOf(rs.getString("status"));
 
-        LocalDateTime createdAt = parseSqliteDateTime(rs.getString("created_at"));
-        LocalDateTime updatedAt = parseSqliteDateTime(rs.getString("updated_at"));
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
+        LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
+        LocalDateTime updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
 
         return new Auction(
                 id,

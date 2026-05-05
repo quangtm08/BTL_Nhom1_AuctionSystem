@@ -68,7 +68,7 @@ common/
 
 Yêu cầu **JDK 25**. Thứ tự: **server trước**, **client sau** (client kết nối `localhost:12345`).
 
-**Server**
+Dự án sử dụng Maven. Đảm bảo bạn đã cài đặt JDK 21 (hoặc mới hơn).
 
 ```bash
 ./mvnw -q exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"

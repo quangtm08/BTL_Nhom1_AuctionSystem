@@ -121,8 +121,8 @@ public class UserRepository {
             ps.setString(3, user.getEmail());
             ps.setString(4, user.getPassword());
             ps.setString(5, user.getRole().name());
-            ps.setString(6, user.getCreatedAt().toString());
-            ps.setString(7, user.getUpdatedAt().toString());
+            ps.setTimestamp(6, java.sql.Timestamp.valueOf(user.getCreatedAt()));
+            ps.setTimestamp(7, java.sql.Timestamp.valueOf(user.getUpdatedAt()));
             ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -142,8 +142,10 @@ public class UserRepository {
         LocalDateTime createdAt;
         LocalDateTime updatedAt;
         try {
-            createdAt = LocalDateTime.parse(rs.getString("created_at"));
-            updatedAt = LocalDateTime.parse(rs.getString("updated_at"));
+            java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+            java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
+            createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
+            updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
         } catch (Exception e) {
             System.err.println("Warning: Could not parse dates for user " + rs.getString("username")
                     + ". Using current time.");

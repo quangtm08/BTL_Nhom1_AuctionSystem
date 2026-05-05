@@ -93,9 +93,9 @@ public class ItemRepository {
                 }
             }
 
-            LocalDateTime now = LocalDateTime.now();
-            ps.setString(13, now.toString());
-            ps.setString(14, now.toString());
+            java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+            ps.setTimestamp(13, now);
+            ps.setTimestamp(14, now);
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -108,7 +108,7 @@ public class ItemRepository {
      * Find an Item by ID and reconstruct the correct subtype based on category column.
      */
     public Optional<Item> findById(UUID id) {
-        String sql = "SELECT * FROM items WHERE id = ?";
+        String sql = "SELECT * FROM items WHERE id = CAST(? AS VARCHAR)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, id.toString());
 
@@ -132,8 +132,10 @@ public class ItemRepository {
         String description = rs.getString("description");
         ItemCategory category = ItemCategory.valueOf(rs.getString("category"));
         ItemCondition condition = ItemCondition.valueOf(rs.getString("condition"));
-        LocalDateTime createdAt = parseSqliteDateTime(rs.getString("created_at"));
-        LocalDateTime updatedAt = parseSqliteDateTime(rs.getString("updated_at"));
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
+        LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
+        LocalDateTime updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
 
         return switch (category) {
             case ELECTRONICS -> new Electronics(

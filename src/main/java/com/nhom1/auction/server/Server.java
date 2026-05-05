@@ -16,7 +16,9 @@ import java.util.concurrent.Executors;
  */
 public class Server {
     public static void main(String[] args) {
-        int port = 12345;
+        // Use the PORT environment variable if available (required for Railway deployment)
+        String portEnv = System.getenv("PORT");
+        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 12345;
         int clientCount = 0;
         ExecutorService pool = Executors.newFixedThreadPool(10);
 
