@@ -38,19 +38,24 @@ public class AutoBidRepository {
     }
 
     public void save(AutoBidConfig config) {
+        // PostgreSQL compatible UPSERT
         String sql = """
-            INSERT OR REPLACE INTO auto_bid_configs (
+            INSERT INTO auto_bid_configs (
                 auction_id, bidder_id, max_amount, increment_amount, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT (auction_id, bidder_id) DO UPDATE SET
+                max_amount = EXCLUDED.max_amount,
+                increment_amount = EXCLUDED.increment_amount,
+                updated_at = EXCLUDED.updated_at
             """;
-        LocalDateTime now = LocalDateTime.now();
+        java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, config.getAuctionId().toString());
             ps.setString(2, config.getBidderId().toString());
             ps.setDouble(3, config.getMaxAmount().doubleValue());
             ps.setDouble(4, config.getIncrement().doubleValue());
-            ps.setString(5, now.toString());
-            ps.setString(6, now.toString());
+            ps.setTimestamp(5, now);
+            ps.setTimestamp(6, now);
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save auto bid config", e);

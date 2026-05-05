@@ -41,8 +41,8 @@ public class AuctionRepository {
 
             ps.setString(1, auction.getId().toString());
             ps.setString(2, auction.getItemId().toString());
-            ps.setString(3, formatSqliteDateTime(auction.getStartTime()));
-            ps.setString(4, formatSqliteDateTime(auction.getEndTime()));
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf(auction.getEndTime()));
             ps.setString(5, auction.getStatus().name());
             ps.setBigDecimal(6, auction.getStartingPrice());
 
@@ -58,9 +58,9 @@ public class AuctionRepository {
                 ps.setNull(8, Types.VARCHAR);
             }
 
-            LocalDateTime now = LocalDateTime.now();
-            ps.setString(9, formatSqliteDateTime(now));
-            ps.setString(10, formatSqliteDateTime(now));
+            java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+            ps.setTimestamp(9, now);
+            ps.setTimestamp(10, now);
 
             ps.executeUpdate();
 
@@ -246,8 +246,10 @@ public class AuctionRepository {
         UUID itemId = UUID.fromString(rs.getString("item_id"));
         UUID sellerId = UUID.fromString(rs.getString("seller_id"));
 
-        LocalDateTime startTime = parseSqliteDateTime(rs.getString("start_time"));
-        LocalDateTime endTime = parseSqliteDateTime(rs.getString("end_time"));
+        java.sql.Timestamp startTs = rs.getTimestamp("start_time");
+        java.sql.Timestamp endTs = rs.getTimestamp("end_time");
+        LocalDateTime startTime = (startTs != null) ? startTs.toLocalDateTime() : null;
+        LocalDateTime endTime = (endTs != null) ? endTs.toLocalDateTime() : null;
 
         BigDecimal startingPrice = rs.getBigDecimal("starting_price");
         String highestBidderIdRaw = rs.getString("highest_bidder_id");
@@ -256,8 +258,10 @@ public class AuctionRepository {
 
         AuctionStatus status = AuctionStatus.valueOf(rs.getString("status"));
 
-        LocalDateTime createdAt = parseSqliteDateTime(rs.getString("created_at"));
-        LocalDateTime updatedAt = parseSqliteDateTime(rs.getString("updated_at"));
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
+        LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
+        LocalDateTime updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
 
         return new Auction(
                 id,

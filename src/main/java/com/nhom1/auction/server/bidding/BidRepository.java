@@ -35,7 +35,7 @@ public class BidRepository {
 			ps.setString(3, bidTransaction.getBidderId().toString());
 			ps.setBigDecimal(4, bidTransaction.getAmount());
 			ps.setString(5, bidTransaction.getBidType().name());
-			ps.setString(6, bidTransaction.getCreatedAt().toString());
+			ps.setTimestamp(6, java.sql.Timestamp.valueOf(bidTransaction.getCreatedAt()));
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to save bid", e);
@@ -123,9 +123,9 @@ public class BidRepository {
 
     		try (ResultSet rs = ps.executeQuery()) {
 				if (rs.next()) {
-					String lastBidTime = rs.getString("last_bid_time");
-					if (lastBidTime != null) {
-						return Optional.of(LocalDateTime.parse(lastBidTime));
+					java.sql.Timestamp lastBidTs = rs.getTimestamp("last_bid_time");
+					if (lastBidTs != null) {
+						return Optional.of(lastBidTs.toLocalDateTime());
 					}
 				}
 			}
@@ -161,7 +161,8 @@ public class BidRepository {
         UUID auctionId = UUID.fromString(rs.getString("auction_id"));
         UUID bidderId = UUID.fromString(rs.getString("bidder_id"));
         BidType bidType = BidType.valueOf(rs.getString("bid_type"));
-        LocalDateTime createdAt = LocalDateTime.parse(rs.getString("created_at"));
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
 
         return new BidTransaction(
                 id,

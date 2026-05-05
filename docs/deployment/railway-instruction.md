@@ -49,6 +49,10 @@ String host = "hopper.proxy.rlwy.net"; int port = 16743; // CHẾ ĐỘ CLOUD (R
 - Khi làm việc nhóm hoặc test local, hãy bỏ comment dòng **LOCAL**.
 - Khi muốn kết nối tới server thực tế, hãy sử dụng dòng **CLOUD**.
 
-## 5. Lưu ý về Java Version
+## 5. Lưu ý về Java Version & DB Compatibility
 - Dự án sử dụng **JDK 21** (LTS) để đảm bảo tương thích tốt nhất với môi trường xây dựng của Railway.
-- Cấu hình Maven sử dụng profile `production` (trống) để tối ưu quy trình nhận diện build của Railway.
+- **Quan trọng:** PostgreSQL khắt khe hơn SQLite về kiểu dữ liệu. Luôn sử dụng `ps.setTimestamp()` và `rs.getTimestamp()` thay vì xử lý chuỗi (String) cho các cột thời gian (`created_at`, `end_time`, v.v.). Điều này đảm bảo code chạy tốt trên cả SQLite (Local) và PostgreSQL (Railway).
+- Tránh sử dụng cú pháp `INSERT OR REPLACE` của SQLite; hãy chuyển sang chuẩn SQL hoặc sử dụng `ON CONFLICT` cho PostgreSQL.
+
+---
+*Chúc may mắn với phiên bản Cloud đầu tiên của bạn!*
