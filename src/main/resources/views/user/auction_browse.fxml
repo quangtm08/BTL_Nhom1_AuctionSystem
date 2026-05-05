@@ -17,7 +17,7 @@
             <Insets top="60.0" left="60.0" right="60.0" bottom="30.0"/>
         </padding>
         <children>
-            <Label text="Hunt for the next deal, bruh" styleClass="header-title"/>
+            <Label text="Hunt for the next deal" fx:id="welcomeLabel" styleClass="header-title"/>
             
             <VBox spacing="20.0">
                 <TextField promptText="Search..." styleClass="search-field"/>

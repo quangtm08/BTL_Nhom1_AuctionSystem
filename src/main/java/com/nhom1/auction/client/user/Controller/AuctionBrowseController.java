@@ -1,5 +1,6 @@
 package com.nhom1.auction.client.user.controller;
 
+import com.nhom1.auction.common.utils.AppContext;
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.service.BiddingClientService;
@@ -31,28 +32,36 @@ public class AuctionBrowseController {
 	private final BiddingClientService biddingService = new BiddingClientService();
 
 	@FXML
-	private HBox mainContainer; // present in FXML as fx:id
+	private Label welcomeLabel;
 
 	@FXML
-	private GridPane cardsGridPane; // newly added for dynamic card rendering
+	private HBox mainContainer;
+
+	@FXML
+	private GridPane cardsGridPane;
 
 	@FXML
 	public void initialize() {
-		// Prefetch auctions for faster UX; UI binding left minimal to avoid heavy coupling here.
+		if (AppContext.getCurrentUser() != null) {
+			welcomeLabel.setText("Hunt for the next deal, " + AppContext.getCurrentUser().getUsername() + "!");
+		} else {
+			System.err.println("No user logged in!");
+		}
 		biddingService.listAuctions()
-			.thenAccept(resp -> Platform.runLater(() -> handleListResponse(resp)))
-			.exceptionally(ex -> {
-				Platform.runLater(() -> showError("Load auctions failed", ex.getCause().getMessage()));
-				return null;
-			});
+				.thenAccept(resp -> Platform.runLater(() -> handleListResponse(resp)))
+				.exceptionally(ex -> {
+					Platform.runLater(() -> showError("Load auctions failed", ex.getCause().getMessage()));
+					return null;
+				});
 	}
 
 	private void handleListResponse(ListAuctionsResponse resp) {
-		if (resp == null || resp.getAuctions() == null || resp.getAuctions().isEmpty()) return;
-		
+		if (resp == null || resp.getAuctions() == null || resp.getAuctions().isEmpty())
+			return;
+
 		// Render cards dynamically
 		renderAuctionCards(resp.getAuctions());
-		
+
 		// For now set selected auction to first item to simplify navigation flows
 		String firstAuctionId = resp.getAuctions().get(0).getId();
 		com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(firstAuctionId);
@@ -63,7 +72,7 @@ public class AuctionBrowseController {
 	 */
 	private void renderAuctionCards(List<AuctionSummaryDto> auctions) {
 		cardsGridPane.getChildren().clear();
-		
+
 		for (int i = 0; i < auctions.size(); i++) {
 			AuctionSummaryDto auction = auctions.get(i);
 			Node card = createAuctionCard(auction);
@@ -83,7 +92,7 @@ public class AuctionBrowseController {
 		// Top row: Title + Status badge
 		HBox topRow = new HBox();
 		topRow.setAlignment(Pos.CENTER_LEFT);
-		
+
 		VBox titleBox = new VBox(2);
 		Label title = new Label(dto.getItemName() != null ? dto.getItemName() : "Untitled");
 		title.getStyleClass().add("card-title-text");
@@ -93,7 +102,7 @@ public class AuctionBrowseController {
 
 		Label statusBadge = new Label(formatStatus(dto.getStatus()));
 		statusBadge.getStyleClass().add("status-badge");
-		
+
 		HBox.setHgrow(titleBox, Priority.ALWAYS);
 		topRow.getChildren().addAll(titleBox, statusBadge);
 
@@ -137,14 +146,17 @@ public class AuctionBrowseController {
 	}
 
 	private void showError(String title, String message) {
-		// lightweight: navigate to loading or show console; reuse AppNavigator to remain non-blocking
+		// lightweight: navigate to loading or show console; reuse AppNavigator to
+		// remain non-blocking
 		System.err.println(title + ": " + message);
 	}
 
 	// Navigation helper used by UI buttons (can be wired later)
 	public void navigateToDetail(String auctionId) {
-		if (auctionId != null) com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(auctionId);
-		if (AppNavigator.getCurrentView() == AppView.AUCTION_DETAIL) return;
+		if (auctionId != null)
+			com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(auctionId);
+		if (AppNavigator.getCurrentView() == AppView.AUCTION_DETAIL)
+			return;
 		AppNavigator.navigateTo(AppView.LOADING);
 		PauseTransition delay = new PauseTransition(Duration.seconds(0.4));
 		delay.setOnFinished(e -> AppNavigator.navigateTo(AppView.AUCTION_DETAIL));
@@ -152,28 +164,35 @@ public class AuctionBrowseController {
 	}
 
 	// ================= HELPER METHODS =================
-// Helper method để format status, money và thời gian còn lại cho hiển thị đẹp hơn
+	// Helper method để format status, money và thời gian còn lại cho hiển thị đẹp
+	// hơn
 	private String formatStatus(Object status) {
-		if (status == null) return "Unknown";
+		if (status == null)
+			return "Unknown";
 		return status.toString();
 	}
 
 	private String formatMoney(BigDecimal amount) {
-		if (amount == null) return "$0";
+		if (amount == null)
+			return "$0";
 		return "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
 	}
 
 	private String formatTimeLeft(LocalDateTime endTime) {
-		if (endTime == null) return "N/A";
-		
+		if (endTime == null)
+			return "N/A";
+
 		long daysLeft = ChronoUnit.DAYS.between(LocalDateTime.now(), endTime);
 		long hoursLeft = ChronoUnit.HOURS.between(LocalDateTime.now(), endTime);
 		long minutesLeft = ChronoUnit.MINUTES.between(LocalDateTime.now(), endTime);
 
-		if (daysLeft > 0) return daysLeft + " day" + (daysLeft > 1 ? "s" : "");
-		if (hoursLeft > 0) return hoursLeft + " hour" + (hoursLeft > 1 ? "s" : "");
-		if (minutesLeft > 0) return minutesLeft + " min" + (minutesLeft > 1 ? "s" : "");
-		
+		if (daysLeft > 0)
+			return daysLeft + " day" + (daysLeft > 1 ? "s" : "");
+		if (hoursLeft > 0)
+			return hoursLeft + " hour" + (hoursLeft > 1 ? "s" : "");
+		if (minutesLeft > 0)
+			return minutesLeft + " min" + (minutesLeft > 1 ? "s" : "");
+
 		return "Ended";
 	}
 }
