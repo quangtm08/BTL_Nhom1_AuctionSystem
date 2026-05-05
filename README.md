@@ -1,102 +1,109 @@
-# BTL_AuctionSystem - Nhóm 1
+# BTL Auction System — Nhóm 1
 
-Hệ thống đấu giá trực tuyến xây dựng trên nền tảng JavaFX (Client) và Socket (Server). Dự án đã được tái cấu trúc để chuẩn hóa quy trình đặt tên và tăng cường bảo mật kiến trúc.
+Ứng dụng đấu giá: **JavaFX (client)** giao tiếp với **máy chủ TCP** bằng **JSON** (Jackson). Server gom nghiệp vụ, router tin nhắn và truy cập **SQLite** (file trong thư mục `database/`). Client không kết nối DB trực tiếp.
 
-## 🏗️ Kiến trúc Hệ thống
+## Kiến trúc tóm tắt
 
-Dự án tuân thủ mô hình Client-Server rạch ròi:
-- **Client**: Giao diện người dùng JavaFX, giao tiếp với Server qua Socket.
-- **Server**: Xử lý logic nghiệp vụ, quản lý phiên đấu giá và kết nối trực tiếp cơ sở dữ liệu (SQLite/MySQL).
-- **Common**: Chứa các Entity (Item, Auction, User), Enum và các lớp tiện ích dùng chung cho cả hai phía.
+| Thành phần | Vai trò |
+|------------|---------|
+| **Client** | Giao diện FXML/CSS, điều hướng (`AppNavigator`), kết nối socket qua `ServerConnection`, DTO dùng chung từ `common`. |
+| **Server** | `ServerSocket` (mặc định cổng **12345**), mỗi client một luồng (`ClientHandler`), định tuyến `MessageType` qua `MessageRouter` và các module (auth, auction, bidding, admin, automation). |
+| **Common** | Entity, enum, DTO, protocol (`RequestMessage` / `ResponseMessage`), exception, value object, observer. |
 
-## 📁 Cấu trúc Thư mục Quan trọng
+Giao thức: client và server trao đổi theo dòng JSON; một số sự kiện được đẩy từ server (notification / realtime tùy luồng).
+
+## Công nghệ
+
+- **Java 25** (`--enable-preview` trong build), **JavaFX 25**
+- **Maven** (`mvnw` / `mvnw.cmd`)
+- **SQLite** — `jdbc:sqlite:database/auction-system.db` (WAL, busy timeout; xem `DBConnection`)
+- **Jackson** + JSR-310 cho `LocalDateTime`
+- **JUnit 5** cho unit test
+- **MySQL connector** có trong `pom.xml` (phục vụ mở rộng); triển khai hiện tại dùng SQLite
+
+## Tính năng chính (mức tổng quan)
+
+- Đăng ký / đăng nhập, phân quyền người dùng
+- Duyệt phiên đấu giá, chi tiết, đặt giá
+- Tin đăng của tôi, lịch sử đấu giá
+- Thanh toán (luồng payment trên client/server)
+- **Auto-bid** và lịch tự động (`AuctionScheduler` / automation)
+- **Admin**: tổng quan, quản lý phiên đấu giá, quản lý người dùng
+
+## Cấu trúc mã nguồn (`src/main/java/com/nhom1/auction/`)
 
 ```text
-src/main/java/com/nhom1/auction/
-├── client/                 # Logic phía người dùng
-│   ├── controller/         # Các Controller xử lý UI (đã chuẩn hóa tên)
-│   ├── connection/         # Quản lý kết nối Socket tới Server
-│   ├── ShellController     # Khung giao diện chính (Unified Shell)
-│   └── ClientApplication   # Điểm chạy ứng dụng Client
-├── server/                 # Logic phía máy chủ
-│   ├── service/            # Xử lý nghiệp vụ (AuthService, v.v.)
-│   ├── database/           # Kết nối DB (DBConnection) - Chỉ Server có quyền truy cập
-│   └── Server              # Điểm chạy ứng dụng Server
-└── common/                 # Code dùng chung
-    ├── entity/             # Các đối tượng dữ liệu (Art, Vehicle, Auction...)
-    ├── enums/              # AuctionStatus, UserRole...
-    └── BaseShellController # Interface khung giao diện
+client/
+├── ClientApplication.java      # Entry JavaFX
+├── ShellController.java        # Khung shell chung
+├── AppNavigator.java, AppView.java, AppAssets.java, BaseShellController.java
+├── user/
+│   ├── Controller/             # Đăng nhập, duyệt, chi tiết, đấu giá, listing, thanh toán, ...
+│   ├── Connection/             # ServerConnection (socket + JSON)
+│   └── service/                # *ClientService gọi server
+└── admin/
+    ├── controller/             # Admin overview, auction management, user management, ...
+    └── service/                # AdminClientService
+
+server/
+├── Server.java                 # main — lắng nghe cổng 12345
+├── infrastructure/             # ClientHandler, MessageRouter, ServerContext, ClientRegistry, NotificationService, database/DBConnection
+├── auth/                       # AuthModule, AuthHandler, AuthService, UserRepository
+├── auction/                    # Phiên đấu giá, item
+├── bidding/                    # Đặt giá, BidService
+├── admin/                      # Thao tác quản trị
+└── automation/                 # Auto-bid, scheduler, gateway đấu giá
+
+common/
+├── entity/, enums/, exception/, factory/, observer/, value/, utils/
+├── dto/                        # auth, auction, bidding, admin, payment, autobid, notification
+└── protocol/                   # MessageType, RequestMessage, ResponseMessage, ...
 ```
 
-## 🏷️ Quy chuẩn Đặt tên UI mới
-Các Controller và View hiện đã được đặt tên theo **Tính năng**:
-- `AuctionBrowseController` (Duyệt đấu giá)
-- `MyBidsController` (Đấu giá của tôi)
-- `MyListingsController` (Tin đăng của tôi)
-- `AuctionDetailController` (Chi tiết & Đặt giá)
-- `AdminOverviewController` (Tổng quan quản trị)
+**Tài nguyên UI:** `src/main/resources/` — `views/` (FXML), `css/`, `assets/`.
 
-## 🚀 Hướng dẫn Chạy ứng dụng
+**Cơ sở dữ liệu:** file SQLite trong `database/` (có thể có `.db`, `-wal`, `-shm` khi đang chạy). Chạy server từ **thư mục gốc repo** để đường dẫn `database/auction-system.db` khớp với JDBC.
+
+## Chạy ứng dụng
+
+Yêu cầu **JDK 25**. Thứ tự: **server trước**, **client sau** (client kết nối `localhost:12345`).
 
 Dự án sử dụng Maven. Đảm bảo bạn đã cài đặt JDK 21 (hoặc mới hơn).
 
-### 1. Chạy Server
-Mở terminal và chạy lệnh:
 ```bash
-mvn exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"
+./mvnw -q exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"
 ```
 
-```text
-BTL_AuctionSystem/
-├── .github/                # Cấu hình CI/CD, workflow GitHub Actions
-├── .idea/                  # Cấu hình IDE IntelliJ (không quan trọng khi deploy)
-├── .mvn/                   # Wrapper Maven
-├── .vscode/                # Cấu hình VS Code
-├── database/               # Script cơ sở dữ liệu (SQL, schema)
-├── design/                 # File thiết kế giao diện (Figma, ảnh mockup)
-├── docs/                   # Tài liệu đặc tả, yêu cầu bài toán
-├── src/
-│   ├── main/
-│   │   ├── java/com/nhom1/auction/
-│   │   │   ├── client/                 # Phía client (JavaFX - giao diện)
-│   │   │   │   ├── controller/         # Điều khiển UI (MVC Controller)
-│   │   │   │   ├── AppAssets.java      # Quản lý tài nguyên (ảnh, font,…)
-│   │   │   │   ├── AppNavigator.java   # Điều hướng giữa các màn hình
-│   │   │   │   └── ClientApplication.java # Entry point của ứng dụng client
-│   │   │   │
-│   │   │   ├── common/                 # Thành phần dùng chung (shared)
-│   │   │   │   ├── entity/             # Thực thể (User, Auction, Item,...)
-│   │   │   │   ├── enums/              # Kiểu liệt kê (Status, Role,...)
-│   │   │   │   ├── exception/          # Exception tùy chỉnh
-│   │   │   │   ├── factory/            # Factory Pattern tạo object
-│   │   │   │   ├── observer/           # Observer Pattern (real-time update)
-│   │   │   │   ├── value/              # Value Object (Money, TimeRange,...)
-│   │   │   │   └── utils/              #  Các lớp tiện ích (helper functions)
-│   │   │   │
-│   │   │   └── server/                 # Backend xử lý nghiệp vụ
-│   │   │       ├── controller/         # Xử lý request từ client
-│   │   │       ├── service/            # Business logic
-│   │   │       ├── repository/         # Truy cập dữ liệu (DB)
-│   │   │       └── ServerApplication.java # Entry point server
-│   │   │
-│   │   └── resources/
-│   │       ├── assets/                 # Ảnh, font
-│   │       ├── css/                    # File style JavaFX
-│   │       └── views/                  # File FXML giao diện
-│   │
-│   └── test/                           # Unit test (JUnit)
-├── target/                             # File build (auto sinh)
-├── .gitignore                          # Bỏ qua file không cần commit
-├── mvnw / mvnw.cmd                     # Maven wrapper
-├── nbactions.xml                       # Config NetBeans (nếu dùng)
-├── pom.xml                             # Cấu hình Maven (dependency, build)
-└── README.md                           # Mô tả project
+Windows (PowerShell):
+
+```powershell
+.\mvnw.cmd -q exec:java "-Dexec.mainClass=com.nhom1.auction.server.Server"
 ```
 
-## 📝 Tài liệu tham khảo
-Chi tiết về các thay đổi kiến trúc và sơ đồ ánh xạ UI có thể xem tại:
-- `docs/project-structure-refactor.md`
-- `docs/assignment-requirement.md`
+**Client (JavaFX)**
+
+```bash
+./mvnw -q javafx:run
+```
+
+Hoặc chạy class `com.nhom1.auction.client.ClientApplication` từ IDE.
+
+**Chạy test**
+
+```bash
+./mvnw -q test
+```
+
+GitHub Actions (nhánh `main`): build và test bằng Maven wrapper (JDK 25 Temurin).
+
+## Tài liệu trong repo
+
+- Yêu cầu bài: `docs/requirements/assignment-requirement.md`
+- Giao tiếp client–server: `docs/architecture/client-server-communication.md`
+- Schema / DB: `docs/architecture/database-schema.md`
+- Xử lý exception: `docs/architecture/exception-handling.md`
+- UI: `docs/guidelines/ui-standards.md`
+- Module theo thành viên / sprint: `docs/modules/`, `docs/sprints/`
 
 ---
-*Dự án đang trong quá trình phát triển (Tuần 7).*
+Dự án phát triển trong khuôn khổ BTL; chi tiết thay đổi kiến trúc nên cập nhật song song trong thư mục `docs/`.
