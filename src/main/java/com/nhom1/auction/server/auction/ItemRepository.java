@@ -108,7 +108,7 @@ public class ItemRepository {
      * Find an Item by ID and reconstruct the correct subtype based on category column.
      */
     public Optional<Item> findById(UUID id) {
-        String sql = "SELECT * FROM items WHERE id = ?";
+        String sql = "SELECT * FROM items WHERE id = CAST(? AS VARCHAR)";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, id.toString());
 

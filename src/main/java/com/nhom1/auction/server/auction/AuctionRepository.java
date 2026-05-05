@@ -74,12 +74,12 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
-                    WHERE a.id = ?
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
+                    WHERE a.id = CAST(? AS VARCHAR)
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setObject(1, id);
+            ps.setString(1, id.toString());
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -99,7 +99,7 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
                 """;
 
         List<Auction> list = new ArrayList<>();
@@ -123,8 +123,8 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
-                    WHERE i.seller_id = ?
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
+                    WHERE i.seller_id = CAST(? AS VARCHAR)
                 """;
 
         List<Auction> list = new ArrayList<>();
@@ -150,12 +150,12 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON a.item_id = i.id
-                    WHERE a.item_id = ?
+                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
+                    WHERE a.item_id = CAST(? AS VARCHAR)
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setObject(1, itemId);
+            ps.setString(1, itemId.toString());
 
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -175,13 +175,13 @@ public class AuctionRepository {
         String sql = """
                     UPDATE auctions
                     SET status = ?, updated_at = ?
-                    WHERE id = ?
+                    WHERE id = CAST(? AS VARCHAR)
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, status.name());
-            ps.setObject(2, LocalDateTime.now());
-            ps.setObject(3, auctionId);
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(3, auctionId.toString());
 
             ps.executeUpdate();
 
@@ -203,13 +203,13 @@ public class AuctionRepository {
             ps.setBigDecimal(1, amount);
 
             if (bidderId != null) {
-                ps.setObject(2, bidderId);
+                ps.setString(2, bidderId.toString());
             } else {
-                ps.setNull(2, Types.OTHER);
+                ps.setNull(2, java.sql.Types.VARCHAR);
             }
 
-            ps.setObject(3, LocalDateTime.now());
-            ps.setObject(4, auctionId);
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(4, auctionId.toString());
 
             ps.executeUpdate();
 
@@ -228,9 +228,9 @@ public class AuctionRepository {
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
 
-            ps.setObject(1, newEndTime);
-            ps.setObject(2, LocalDateTime.now());
-            ps.setObject(3, auctionId);
+            ps.setTimestamp(1, java.sql.Timestamp.valueOf(newEndTime));
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(3, auctionId.toString());
 
             ps.executeUpdate();
 
