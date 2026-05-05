@@ -38,7 +38,7 @@ Các Controller và View hiện đã được đặt tên theo **Tính năng**:
 
 ## 🚀 Hướng dẫn Chạy ứng dụng
 
-Dự án sử dụng Maven. Đảm bảo bạn đã cài đặt JDK 25.
+Dự án sử dụng Maven. Đảm bảo bạn đã cài đặt JDK 21 (hoặc mới hơn).
 
 ### 1. Chạy Server
 Mở terminal và chạy lệnh:

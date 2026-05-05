@@ -11,14 +11,14 @@
     <name>auction-app</name>
 
     <properties>
-        <!-- Compile with Java 25 -->
-        <maven.compiler.release>25</maven.compiler.release>
+        <!-- Compile with Java 21 (LTS for maximum cloud compatibility) -->
+        <maven.compiler.release>21</maven.compiler.release>
 
         <!-- Default text encoding  -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Keep JavaFX version in one place so it is easier to update later -->
-        <javafx.version>25</javafx.version>
+        <javafx.version>21</javafx.version>
 
         <!-- JUnit for unit test -->
         <junit.version>5.10.0</junit.version>
@@ -153,4 +153,14 @@
             </plugin>
         </plugins>
     </build>
+
+    <!-- Empty profile to satisfy Railway's default build command (-Pproduction) -->
+    <profiles>
+        <profile>
+            <id>production</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+        </profile>
+    </profiles>
 </project>
