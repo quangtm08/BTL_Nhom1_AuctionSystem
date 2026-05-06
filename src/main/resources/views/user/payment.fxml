@@ -27,18 +27,34 @@
                   
                   <Label styleClass="section-label" text="TO PAY" />
                   
-                  <HBox alignment="CENTER_LEFT" styleClass="payment-card">
+                  <VBox alignment="CENTER_LEFT" spacing="12.0" styleClass="payment-card">
                      <children>
-                        <VBox HBox.hgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
                            <children>
-                              <Label styleClass="item-name" text="Fender Black 1 Guitar" />
-                              <Label styleClass="item-category" text="Art &amp; Collectibles" />
+                              <VBox HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label styleClass="item-name" text="Fender Black 1 Guitar" />
+                                    <Label styleClass="item-category" text="Art &amp; Collectibles" />
+                                 </children>
+                              </VBox>
+                              <Label styleClass="price-tag" text="\$5000" />
+                              <Button styleClass="btn-pay" text="Pay now" />
                            </children>
-                        </VBox>
-                        <Label styleClass="price-tag" text="\$5000" />
-                        <Button styleClass="btn-pay" text="Pay now" />
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                           <children>
+                              <VBox HBox.hgrow="ALWAYS">
+                                 <children>
+                                    <Label styleClass="item-name" text="Fender Black 1 Guitar" />
+                                    <Label styleClass="item-category" text="Art &amp; Collectibles" />
+                                 </children>
+                              </VBox>
+                              <Label styleClass="price-tag" text="\$5000" />
+                              <Button styleClass="btn-pay" text="Pay now" />
+                           </children>
+                        </HBox>
                      </children>
-                  </HBox>
+                  </VBox>
 
                   <Separator styleClass="content-divider" />
 

@@ -40,10 +40,13 @@
 /* THẺ THANH TOÁN (PAYMENT CARD) */
 .payment-card {
     -fx-background-color: #161b1a;
+    -fx-display: flex;
+    -fx-flex-direction: column;
     -fx-background-radius: 12;
     -fx-padding: 20 25;
     -fx-border-color: #242927;
     -fx-border-radius: 12;
+    -fx-spacing: 24;
 }
 
 .item-name {
