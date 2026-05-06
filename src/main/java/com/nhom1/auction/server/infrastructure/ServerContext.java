@@ -38,7 +38,9 @@ public class ServerContext {
         // Auction — returns repositories needed by Bidding and Admin modules
         AuctionModule.AuctionRepositories auctionRepos = AuctionModule.init(
             this.connection,
-            this.router
+            this.router,
+            this.notificationService
+            
         );
 
         com.nhom1.auction.server.bidding.BidRepository bidRepository = new com.nhom1.auction.server.bidding.BidRepository(this.connection);
