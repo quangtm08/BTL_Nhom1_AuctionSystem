@@ -39,6 +39,9 @@ public class AuctionDetailController {
 	private TextField txtBidInput;
 
 	@FXML
+	private Label lblBidError;
+
+	@FXML
 	private Button btnBid;
 
 	@FXML
@@ -69,6 +72,15 @@ public class AuctionDetailController {
 	public void initialize() {
 		if (btnBid != null) {
 			btnBid.setOnAction(e -> onPlaceBid());
+		}
+
+		// Khi user click vào TextField (focus gained) → xóa lỗi ngay lập tức.
+		// Dùng focusedProperty listener thay vì setOnMouseClicked để bắt cả trường hợp
+		// user Tab vào field chứ không chỉ click chuột.
+		if (txtBidInput != null) {
+			txtBidInput.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+				if (isFocused) clearBidError();
+			});
 		}
 
 		String sel = AppContext.getSelectedAuctionId();
@@ -179,6 +191,37 @@ public class AuctionDetailController {
 		}
 	}
 
+	/**
+	 * Hiển thị thông báo lỗi ngay dưới TextField và đổi viền thành đỏ.
+	 * managed=true để label chiếm không gian trong layout khi hiện.
+	 */
+	private void showBidError(String message) {
+		if (lblBidError != null) {
+			lblBidError.setText(message);
+			lblBidError.setVisible(true);
+			lblBidError.setManaged(true);
+		}
+		if (txtBidInput != null) {
+			txtBidInput.getStyleClass().remove("bid-input-error");
+			txtBidInput.getStyleClass().add("bid-input-error");
+		}
+	}
+
+	/**
+	 * Ẩn thông báo lỗi và khôi phục viền TextField về bình thường.
+	 * managed=false để label không chiếm không gian trong layout khi ẩn.
+	 * Được gọi khi TextField được focus (user bắt đầu nhập lại).
+	 */
+	private void clearBidError() {
+		if (lblBidError != null) {
+			lblBidError.setVisible(false);
+			lblBidError.setManaged(false);
+		}
+		if (txtBidInput != null) {
+			txtBidInput.getStyleClass().remove("bid-input-error");
+		}
+	}
+
 	private void onPlaceBid() {
 		String auctionId = AppContext.getSelectedAuctionId();
 		if (auctionId == null)
@@ -186,7 +229,7 @@ public class AuctionDetailController {
 
 		String text = txtBidInput != null ? txtBidInput.getText() : null;
 		if (text == null || text.isBlank()) {
-			showError("Invalid bid", "Please enter a bid amount.");
+			showBidError("Please enter a bid amount.");
 			return;
 		}
 
@@ -194,7 +237,7 @@ public class AuctionDetailController {
 		try {
 			amount = new BigDecimal(text.trim());
 		} catch (Exception ex) {
-			showError("Invalid bid", "Enter a valid number.");
+			showBidError("Invalid amount — please enter a number.");
 			return;
 		}
 

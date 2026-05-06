@@ -58,6 +58,11 @@
                     <TextField promptText=" ENTER YOUR BID"
                                styleClass="bid-input" fx:id="txtBidInput"/>
 
+                    <!-- Label báo lỗi nhập bid. Mặc định ẩn (managed=false = không chiếm space).
+                         Hiện khi validate thất bại, ẩn ngay khi TextField được focus. -->
+                    <Label fx:id="lblBidError" text="" styleClass="bid-error-label"
+                           visible="false" managed="false"/>
+
                     <HBox spacing="10">
                         <Button text="Bid" styleClass="btn-green" fx:id="btnBid"/>
                         <Button text="Setup auto bid" styleClass="btn-green-outline"/>
