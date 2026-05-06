@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane prefHeight="760.0" prefWidth="1100.0"
-            stylesheets="@/css/client/edit_auction.css"
+            stylesheets="@/css/client/edit_auction.css, @/css/client/common_ui.css"
             styleClass="listing-root"
             xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -25,7 +25,7 @@
 
             <HBox alignment="CENTER_LEFT">
                 <VBox spacing="4.0" HBox.hgrow="ALWAYS">
-                    <Button text="←  My listings" styleClass="back-btn" onAction="#handleBackToListings"/>
+                    <Button text="←  My listings" styleClass="btn-ghost" onAction="#handleBackToListings"/>
                     <Label text="Edit listing" styleClass="page-title"/>
                     <Label text="Vintage Fender Guitar · Listed Mar 25, 2026" styleClass="meta-text"/>
                 </VBox>

@@ -130,7 +130,7 @@ public class AuctionBrowseController {
 		timeLeftLabel.getStyleClass().add("card-sub-text");
 
 		Button bidButton = new Button("Raise bid");
-		bidButton.getStyleClass().add("btn-action-green");
+		bidButton.getStyleClass().add("btn-primary");
 		bidButton.setMaxWidth(Double.MAX_VALUE);
 		timeSection.getChildren().addAll(timeLeftLabel, bidButton);
 

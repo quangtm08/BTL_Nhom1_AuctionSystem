@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane prefHeight="700.0" prefWidth="1100.0"
-            stylesheets="@/css/client/create_auction.css"
+            stylesheets="@/css/client/create_auction.css, @/css/client/common_ui.css"
             styleClass="listing-root"
             xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -23,7 +23,7 @@
                 <Insets top="34.0" right="32.0" bottom="28.0" left="32.0"/>
             </padding>
 
-            <Button text="←  My listings" styleClass="back-btn" onAction="#handleBackToListings"/>
+            <Button text="←  My listings" styleClass="btn-ghost" onAction="#handleBackToListings"/>
             <Label text="New listing" styleClass="page-title"/>
 
             <VBox spacing="8.0">

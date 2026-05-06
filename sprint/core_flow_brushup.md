@@ -8,7 +8,7 @@ Sau khi hoàn tất đợt hợp nhất (merge) mã nguồn lớn, mục tiêu h
 
 ## 📋 Phân công công việc
 
-### 🧑‍💻 Member 1 (Quang)
+### 🧑‍💻 Quang
 - **Nhiệm vụ 1:** Khắc phục lỗi phân tích cú pháp JSON cho kiểu dữ liệu thời gian.
   - **Mô tả:** Xử lý lỗi `DateTimeParseException` do sự khác biệt định dạng timestamp giữa PostgreSQL và Jackson.
 - **Nhiệm vụ 2:** Chuẩn hóa phong cách thiết kế (Style) cho toàn bộ nút bấm.
@@ -18,7 +18,7 @@ Sau khi hoàn tất đợt hợp nhất (merge) mã nguồn lớn, mục tiêu h
 - **Nhiệm vụ 4:** Xử lý loại bỏ khoảng trắng (Trim) trong Form xác thực.
   - **Mô tả:** Thêm logic vào Controller của màn hình Đăng ký/Đăng nhập để loại bỏ các khoảng trắng dư thừa ở Username và Email.
 
-### 🧑‍💻 Member 2
+### 🧑‍💻 Duy
 - **Nhiệm vụ 1:** Kết nối `NotificationService` vào luồng xử lý tại `AuctionHandler`.
   - **Mục tiêu:** Kích hoạt thông báo đẩy ngay khi đấu giá mới được tạo thành công.
 - **Nhiệm vụ 2:** Tối ưu hóa màn hình `My Listings`.
@@ -32,7 +32,7 @@ Sau khi hoàn tất đợt hợp nhất (merge) mã nguồn lớn, mục tiêu h
   - **Vấn đề:** Logic tạo Card hiện đang được viết thủ công bằng code (hardcoded) trong Controller, gây khó khăn cho việc bảo trì.
   - **Yêu cầu:** Đưa giao diện Card vào một file FXML riêng và sử dụng `FXMLLoader` để hiển thị danh sách đấu giá.
 
-### 🧑‍💻 Member 3
+### 🧑‍💻 Ngọc
 - **Nhiệm vụ 1:** Đăng ký và xử lý Push Notification tại màn hình Explore.
   - **Mục tiêu:** Giúp người mua thấy ngay các đấu giá mới mà không cần load lại trang.
 - **Nhiệm vụ 2:** Nâng cấp cấu trúc dữ liệu và hiển thị chi tiết đấu giá (`auction_detail.fxml`).
@@ -42,10 +42,10 @@ Sau khi hoàn tất đợt hợp nhất (merge) mã nguồn lớn, mục tiêu h
 - **Nhiệm vụ 3:** Đơn giản hóa UI hình ảnh sản phẩm.
   - **Mô tả:** Thay thế thiết kế 4 ảnh nhỏ hiện tại bằng một khung hình lớn duy nhất để tập trung vào ảnh chính.
 - **Nhiệm vụ 4:** Chuyển đổi Card UI sang FXML Template.
-  - **Vấn đề:** Tương tự Member 2, logic tạo Card tại màn hình Explore đang bị hardcoded trong code Java.
-  - **Yêu cầu:** Phối hợp với Member 2 để thống nhất thiết kế Card, đảm bảo tính nhất quán về UI/UX trên toàn ứng dụng.
+  - **Vấn đề:** Tương tự Duy, logic tạo Card tại màn hình Explore đang bị hardcoded trong code Java.
+  - **Yêu cầu:** Phối hợp với Duy để thống nhất thiết kế Card, đảm bảo tính nhất quán về UI/UX trên toàn ứng dụng.
 
-### 🧑‍💻 Member 4
+### 🧑‍💻 Bình
 - **Nhiệm vụ:** Duy trì và mở rộng hệ thống kiểm thử (Writing Tests).
 - **Mục tiêu:** Đảm bảo các luồng core flow không gây ra lỗi hồi quy (regression). Tập trung vào Integration tests cho toàn bộ vòng đời của một cuộc đấu giá.
 

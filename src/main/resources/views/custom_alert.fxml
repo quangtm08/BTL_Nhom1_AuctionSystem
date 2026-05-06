@@ -10,7 +10,7 @@
       alignment="CENTER"
       spacing="20"
    
-      stylesheets="@../css/custom_alert.css">
+      stylesheets="@../css/custom_alert.css, @/css/client/common_ui.css">
     <VBox styleClass="alert-container">
 
         <StackPane styleClass="alert-header">
@@ -22,7 +22,7 @@
             <Label fx:id="lblMessage" text="Error" styleClass="alert-message"/>
         </VBox>
 
-        <Button fx:id="btnClose" text="Try Again" styleClass="alert-button"/>
+        <Button fx:id="btnClose" text="Try Again" styleClass="btn-primary" maxWidth="Infinity"/>
 
     </VBox>
 </VBox>

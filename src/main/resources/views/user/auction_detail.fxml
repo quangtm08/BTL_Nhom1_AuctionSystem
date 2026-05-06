@@ -9,13 +9,13 @@
             xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.nhom1.auction.client.user.controller.AuctionDetailController"
-            stylesheets="@/css/client/auction_detail.css"
+            stylesheets="@/css/client/auction_detail.css, @/css/client/common_ui.css"
             styleClass="root">
 
     <VBox spacing="30" styleClass="container">
 
         <!-- ===== TOP CARD ===== -->
-        <Button text="Back" styleClass="btn-back" fx:id="btnBack"/>
+        <Button text="← Back" styleClass="btn-ghost" fx:id="btnBack"/>
 
         <HBox spacing="30" styleClass="main-card">
 
@@ -67,9 +67,9 @@
                                styleClass="bid-input" fx:id="txtBidInput"/>
 
                     <HBox spacing="10">
-                        <Button text="Bid" styleClass="btn-green" fx:id="btnBid"/>
-                        <Button text="Setup auto bid" styleClass="btn-green-outline"/>
-                        <Button text="Cancel" styleClass="btn-red"/>
+                        <Button text="Place Bid" styleClass="btn-primary" fx:id="btnBid" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button text="Auto-bid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button text="Cancel" styleClass="btn-danger" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                     </HBox>
 
                 </VBox>
