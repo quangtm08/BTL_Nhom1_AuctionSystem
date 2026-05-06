@@ -1,10 +1,11 @@
 package com.nhom1.auction.common.dto.bidding;
-import com.nhom1.auction.common.enums.ItemCategory;
-import com.nhom1.auction.common.enums.ItemCondition;
-import com.nhom1.auction.common.enums.AuctionStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.enums.ItemCategory;
+import com.nhom1.auction.common.enums.ItemCondition;
 public class AuctionDetailDto {
     private String auctionId;
     private String itemID;
@@ -20,6 +21,7 @@ public class AuctionDetailDto {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private List<BidSummaryDto> bidHistory;
+    private String sellerName;
     public AuctionDetailDto() {}
     public AuctionDetailDto(String auctionId, String itemID, String itemName, String itemDescription, ItemCategory itemCategory, ItemCondition itemCondition, String sellerID, BigDecimal currentHighestBid, String currentHighestBidderId, BigDecimal minBidIncrement, AuctionStatus status, LocalDateTime startTime, LocalDateTime endTime, List<BidSummaryDto> bidHistory) {
         this.auctionId = auctionId;
@@ -84,4 +86,11 @@ public class AuctionDetailDto {
         return bidHistory;
     }
 
+    public String getSellerName() {
+        return sellerName;
+    }
+
+    public void setSellerName(String sellerName) {
+        this.sellerName = sellerName;
+    }
 }
