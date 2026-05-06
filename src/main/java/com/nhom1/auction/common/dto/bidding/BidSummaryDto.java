@@ -9,15 +9,17 @@ public class BidSummaryDto {
     private BigDecimal amount;
     private BidType bidType;
     private LocalDateTime createdAt;
+    private String bidderName;
 
     public BidSummaryDto() {}
-    public BidSummaryDto(String bidId, String bidderId, BigDecimal amount, BidType bidType, LocalDateTime createdAt) {
+    public BidSummaryDto(String bidId, String bidderId, BigDecimal amount, BidType bidType, LocalDateTime createdAt, String bidderName) {
         this.bidId = bidId;
         this.bidderId = bidderId;
         this.amount = amount;
         this.bidType = bidType;
         this.createdAt = createdAt;
-    }   
+        this.bidderName = bidderName;
+    }
     // Getters and Setters
     public String getBidId() {
         return bidId;
@@ -37,5 +39,9 @@ public class BidSummaryDto {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getBidderName() {
+        return bidderName;
     }
 }
