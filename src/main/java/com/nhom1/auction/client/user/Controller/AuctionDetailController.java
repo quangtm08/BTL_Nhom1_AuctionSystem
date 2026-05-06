@@ -35,7 +35,7 @@ public class AuctionDetailController {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM");
 
-	@FXML
+@FXML
 	private TextField txtBidInput;
 
 	@FXML
@@ -244,7 +244,10 @@ public class AuctionDetailController {
 		biddingService.placeBid(auctionId, amount)
 				.thenAccept(resp -> Platform.runLater(() -> handlePlaceBidSuccess(resp)))
 				.exceptionally(ex -> {
-					Platform.runLater(() -> showError("Bid failed", ex.getCause().getMessage()));
+					// Hiển thị lỗi từ server (vd: bid thấp hơn minimum, auction đã kết thúc) lên UI.
+					String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+						: (ex != null ? ex.getMessage() : "Bid failed");
+					Platform.runLater(() -> showBidError(msg));
 					return null;
 				});
 	}
@@ -253,10 +256,6 @@ public class AuctionDetailController {
 		if (resp == null)
 			return;
 		AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
-	}
-
-	private void showError(String title, String message) {
-		System.err.println(title + ": " + message);
 	}
 
 	private String formatMoney(BigDecimal amount) {
