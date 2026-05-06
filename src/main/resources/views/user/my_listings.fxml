@@ -44,28 +44,14 @@
                     </VBox>
 
                     <VBox>
-                        <Label text="Ending soon" styleClass="sub"/>
-                        <Label text="2" styleClass="big-orange"/>
-                    </VBox>
-
-                    <VBox>
-                        <Label text="No bids yet" styleClass="sub"/>
-                        <Label text="0" styleClass="big"/>
-                    </VBox>
-
-                    <VBox>
                         <Label text="Accumulated revenue" styleClass="sub"/>
-                        <Label text="100,3500" styleClass="money"/>
+                        <Label text="0" styleClass="money"/>
                     </VBox>
                 </HBox>
 
                 <!-- FILTER -->
                 <HBox spacing="10">
-
                     <Button text="All" styleClass="filter-chip"/>
-                    <Button text="Winning" styleClass="filter-chip"/>
-                    <Button text="Losing" styleClass="filter-chip"/>
-                    <Button text="Watchlist" styleClass="filter-chip"/>
                 </HBox>
 
                 <!-- CARD LIST -->

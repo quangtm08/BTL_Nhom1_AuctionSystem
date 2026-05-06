@@ -2,11 +2,12 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.common.dto.auth.AuthResponse;
+import com.nhom1.auction.common.utils.AppContext;
 
-import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.util.Duration;
+import javafx.scene.control.Label;
 
 
 public class UserSidebarController {
@@ -16,10 +17,13 @@ public class UserSidebarController {
     @FXML Button btnListings;
     @FXML Button btnPayment;
     @FXML Button btnLogout;
+    @FXML Label userName;
     
     
     @FXML
     public void initialize(){
+
+        bindCurrentUsername();
 
         btnExplore.setOnAction(e -> navigateWithLoading(AppView.AUCTION_BROWSE));
         btnBids.setOnAction(e -> navigateWithLoading(AppView.MY_BIDS));
@@ -29,6 +33,15 @@ public class UserSidebarController {
 
         updateActiveButton();
 
+    }
+
+    private void bindCurrentUsername() {
+        AuthResponse currentUser = AppContext.getCurrentUser();
+        if (currentUser != null && currentUser.getUsername() != null && !currentUser.getUsername().isBlank()) {
+            userName.setText(currentUser.getUsername());
+            return;
+        }
+        userName.setText("Guest");
     }
 
     private void navigateWithLoading(AppView targetView) {

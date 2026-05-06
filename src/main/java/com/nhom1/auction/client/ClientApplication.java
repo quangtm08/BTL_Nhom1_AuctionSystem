@@ -10,8 +10,8 @@ public class ClientApplication extends Application {
 
     private static final double DESIGN_WIDTH = 1320;
     private static final double DESIGN_HEIGHT = 855;
-    private static final double MIN_WIDTH = 1080;
-    private static final double MIN_HEIGHT = 700;
+    private static final double MIN_WIDTH = 1980;
+    private static final double MIN_HEIGHT = 1080;
 
     private static Stage stage;
     private static FXMLLoader fxmlLoader;
@@ -37,11 +37,10 @@ public class ClientApplication extends Application {
         AppNavigator.setRoot(shellController);
 
         stage.setScene(scene);
-        stage.setMinWidth(MIN_WIDTH);
-        stage.setMinHeight(MIN_HEIGHT);
         stage.setWidth(DESIGN_WIDTH);
         stage.setHeight(DESIGN_HEIGHT);
-        stage.centerOnScreen();
+        stage.setFullScreen(false);
+        stage.setMaximized(true);
         stage.show();
 
         AppNavigator.navigateTo(AppView.SIGN_IN);
