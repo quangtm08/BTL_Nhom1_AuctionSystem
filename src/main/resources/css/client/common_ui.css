@@ -76,15 +76,9 @@
     -fx-font-size: 18px;
 }
 
-.user-label {
-    -fx-font-size: 18px;
-}
-
 .btn-ghost-active {
     -fx-background-color: #1a3327;
     -fx-text-fill: white;
     -fx-border-color: #2b6b4c;
     -fx-border-width: 0 0 0 3px; /* Accent bar on the left */
-}
-
 }

@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -59,16 +60,26 @@ public class ServerConnection {
     }
 
     private ServerConnection() {
-        DateTimeFormatter flexibleDateTimeFormatter = new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd")
-            .optionalStart().appendLiteral('T').optionalEnd()
-            .optionalStart().appendLiteral(' ').optionalEnd()
-            .appendPattern("HH:mm:ss")
-            .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd()
-            .toFormatter();
+        DateTimeFormatter flexibleDateTimeFormatter =
+            new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd")
+                .optionalStart()
+                .appendLiteral('T')
+                .optionalEnd()
+                .optionalStart()
+                .appendLiteral(' ')
+                .optionalEnd()
+                .appendPattern("HH:mm:ss")
+                .optionalStart()
+                .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
+                .optionalEnd()
+                .toFormatter();
 
         JavaTimeModule javaTimeModule = new JavaTimeModule();
-        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(flexibleDateTimeFormatter));
+        javaTimeModule.addDeserializer(
+            LocalDateTime.class,
+            new LocalDateTimeDeserializer(flexibleDateTimeFormatter)
+        );
         mapper.registerModule(javaTimeModule);
         connect();
     }
@@ -85,28 +96,60 @@ public class ServerConnection {
         int cloudPort = 16743;
         String localHost = "localhost";
         int localPort = 12345;
+        int timeoutMillis = 2000; // 2 seconds
 
         try {
-            System.out.println("Server: Connecting to Cloud (" + cloudHost + ":" + cloudPort + ")...");
-            this.socket = new Socket(cloudHost, cloudPort);
+            System.out.println(
+                "Server: Connecting to Cloud (" +
+                    cloudHost +
+                    ":" +
+                    cloudPort +
+                    ")..."
+            );
+            this.socket = new Socket();
+            this.socket.connect(
+                new InetSocketAddress(cloudHost, cloudPort),
+                timeoutMillis
+            );
+
             this.out = new PrintWriter(socket.getOutputStream(), true);
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.in = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())
+            );
             this.connected = true;
             System.out.println("Connected to Cloud Auction Server.");
             startListening();
         } catch (IOException e) {
-            System.err.println("Cloud connection failed: " + e.getMessage());
-            System.out.println("Falling back to Local Server (" + localHost + ":" + localPort + ")...");
-            
+            System.err.println(
+                "Cloud connection failed (timeout/unreachable): " +
+                    e.getMessage()
+            );
+            System.out.println(
+                "Falling back to Local Server (" +
+                    localHost +
+                    ":" +
+                    localPort +
+                    ")..."
+            );
+
             try {
-                this.socket = new Socket(localHost, localPort);
+                this.socket = new Socket();
+                this.socket.connect(
+                    new InetSocketAddress(localHost, localPort),
+                    timeoutMillis
+                );
+
                 this.out = new PrintWriter(socket.getOutputStream(), true);
-                this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                this.in = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream())
+                );
                 this.connected = true;
                 System.out.println("Connected to Local Auction Server.");
                 startListening();
             } catch (IOException ex) {
-                System.err.println("Could not connect to any server: " + ex.getMessage());
+                System.err.println(
+                    "Could not connect to any server: " + ex.getMessage()
+                );
                 this.connected = false;
             }
         }
