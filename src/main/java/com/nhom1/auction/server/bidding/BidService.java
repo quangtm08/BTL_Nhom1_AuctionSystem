@@ -21,17 +21,20 @@ import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
+import com.nhom1.auction.server.auth.UserRepository;
 
 public class BidService {
 
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
     private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
 
-    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository, ItemRepository itemRepository) {
+    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository, ItemRepository itemRepository, UserRepository userRepository) {
 	this.bidRepository = bidRepository;
 	this.auctionRepository = auctionRepository;
 	this.itemRepository = itemRepository;
+	this.userRepository = userRepository;
     }
 
     public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount)
@@ -54,11 +57,15 @@ public class BidService {
 	Item item = itemRepository.findById(auction.getItemId())
 		.orElseThrow(() -> new ValidationException("Item not found for auction"));
 
+	String sellerName = userRepository.findById(auction.getSellerId())
+		.map(u -> u.getUsername())
+		.orElse("Unknown");
+
 	List<BidSummaryDto> bidHistory = bidRepository.findByAuctionId(auctionId).stream()
-		.map(this::toBidSummaryDto) // Convert BidTransaction to BidSummaryDto for client consumption
+		.map(this::toBidSummaryDto)
 		.toList();
-// Convert Auction and Item to AuctionDetailDto for client consumption
-	return new AuctionDetailDto(
+
+	AuctionDetailDto dto = new AuctionDetailDto(
 		auction.getId().toString(),
 		item.getId().toString(),
 		item.getName(),
@@ -68,12 +75,14 @@ public class BidService {
 		auction.getSellerId().toString(),
 		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
 		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
-		auction.getMinBidIncrement(), // Use the actual calculation from entity
+		auction.getMinBidIncrement(),
 		auction.getStatus(),
 		auction.getStartTime(),
 		auction.getEndTime(),
 		bidHistory
 	);
+	dto.setSellerName(sellerName);
+	return dto;
     }
 
     public ListAuctionsResponse listAllAuctions() {
@@ -92,12 +101,16 @@ public class BidService {
     }
 
     private BidSummaryDto toBidSummaryDto(BidTransaction bidTransaction) {
+	String bidderName = userRepository.findById(bidTransaction.getBidderId())
+		.map(u -> u.getUsername())
+		.orElse("Unknown");
 	return new BidSummaryDto(
 		bidTransaction.getId().toString(),
 		bidTransaction.getBidderId().toString(),
 		bidTransaction.getAmount(),
 		bidTransaction.getBidType(),
-		bidTransaction.getCreatedAt()
+		bidTransaction.getCreatedAt(),
+		bidderName
 	);
     }
 

@@ -2,6 +2,7 @@ package com.nhom1.auction.server.bidding;
 
 import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
+import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
@@ -23,10 +24,11 @@ public class BidModule {
 			MessageRouter router,
 			AuctionRepository auctionRepository,
 			ItemRepository itemRepository,
-			NotificationService notificationService
+			NotificationService notificationService,
+			UserRepository userRepository
 	) {
 		BidRepository repository = new BidRepository(connection);
-		BidService service = new BidService(repository, auctionRepository, itemRepository);
+		BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository);
 		BidHandler handler = new BidHandler(service, notificationService);
 		handler.register(router);
 
