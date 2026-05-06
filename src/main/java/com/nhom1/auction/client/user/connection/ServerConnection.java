@@ -81,22 +81,34 @@ public class ServerConnection {
     }
 
     private void connect() {
-        try {
-            // --- CONNECTION SETTINGS ---
-            // String host = "localhost"; int port = 12345; // LOCAL
-            String host = "hopper.proxy.rlwy.net"; int port = 16743; // CLOUD (Railway)
-            // ---------------------------
+        String cloudHost = "hopper.proxy.rlwy.net";
+        int cloudPort = 16743;
+        String localHost = "localhost";
+        int localPort = 12345;
 
-            System.out.println("Server: Connecting to " + host + ":" + port + "...");
-            this.socket = new Socket(host, port);
+        try {
+            System.out.println("Server: Connecting to Cloud (" + cloudHost + ":" + cloudPort + ")...");
+            this.socket = new Socket(cloudHost, cloudPort);
             this.out = new PrintWriter(socket.getOutputStream(), true);
             this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             this.connected = true;
-            System.out.println("Connected to Auction Server.");
+            System.out.println("Connected to Cloud Auction Server.");
             startListening();
         } catch (IOException e) {
-            System.err.println("Could not connect to server: " + e.getMessage());
-            this.connected = false;
+            System.err.println("Cloud connection failed: " + e.getMessage());
+            System.out.println("Falling back to Local Server (" + localHost + ":" + localPort + ")...");
+            
+            try {
+                this.socket = new Socket(localHost, localPort);
+                this.out = new PrintWriter(socket.getOutputStream(), true);
+                this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                this.connected = true;
+                System.out.println("Connected to Local Auction Server.");
+                startListening();
+            } catch (IOException ex) {
+                System.err.println("Could not connect to any server: " + ex.getMessage());
+                this.connected = false;
+            }
         }
     }
 
