@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
@@ -13,6 +14,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -54,8 +59,17 @@ public class ServerConnection {
     }
 
     private ServerConnection() {
-        // Ensure Jackson understands Java LocalDateTime
-        mapper.registerModule(new JavaTimeModule());
+        DateTimeFormatter flexibleDateTimeFormatter = new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            .optionalStart().appendLiteral('T').optionalEnd()
+            .optionalStart().appendLiteral(' ').optionalEnd()
+            .appendPattern("HH:mm:ss")
+            .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd()
+            .toFormatter();
+
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(flexibleDateTimeFormatter));
+        mapper.registerModule(javaTimeModule);
         connect();
     }
 
