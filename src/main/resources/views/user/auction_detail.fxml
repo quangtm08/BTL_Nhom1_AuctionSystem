@@ -20,22 +20,14 @@
         <HBox spacing="30" styleClass="main-card">
 
             <!-- LEFT IMAGE -->
-            <VBox spacing="15">
-                <Pane styleClass="main-image"/>
-
-                <HBox spacing="15">
-                    <Pane styleClass="thumb"/>
-                    <Pane styleClass="thumb"/>
-                    <Pane styleClass="thumb"/>
-                </HBox>
-            </VBox>
+            <Pane styleClass="main-image"/>
 
             <!-- RIGHT CONTENT -->
             <VBox spacing="15" HBox.hgrow="ALWAYS">
 
-                <Label text="Macintosh 1984" styleClass="title"/>
+                <Label fx:id="lblTitle" text="Loading..." styleClass="title"/>
 
-                <Label text="Vintage 1984 Macintosh 128K: iconic all-in-one Mac, pioneering GUI and mouse..."
+                <Label fx:id="lblShortDesc" text=""
                        wrapText="true"
                        styleClass="description"/>
 
@@ -44,7 +36,7 @@
                     <Circle radius="20" styleClass="avatar"/>
                     <VBox>
                         <Label text="Seller" styleClass="sub-text"/>
-                        <Label text="Apple Glazer" styleClass="seller-name"/>
+                        <Label fx:id="lblSellerName" text="" styleClass="seller-name"/>
                     </VBox>
                 </HBox>
 
@@ -83,8 +75,8 @@
             <!-- DESCRIPTION -->
             <VBox styleClass="card" HBox.hgrow="ALWAYS">
                 <Label text="Description" styleClass="section-title"/>
-                <Label wrapText="true"
-                       text="This listing features a vintage Macintosh 128K from 1984..."
+                <Label fx:id="lblDescription" wrapText="true"
+                       text=""
                        styleClass="description"/>
             </VBox>
 
