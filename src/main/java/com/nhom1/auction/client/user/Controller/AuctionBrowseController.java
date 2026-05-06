@@ -2,8 +2,10 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.client.user.connection.ServerConnection;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
+import com.nhom1.auction.common.protocol.MessageType;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -40,8 +42,39 @@ public class AuctionBrowseController {
 
 	@FXML
 	public void initialize() {
+		// Tải danh sách auction lần đầu khi màn hình được khởi tạo.
+		loadAuctions();
+
+		// Đăng ký push handler cho sự kiện PUSH_NEW_AUCTION.
+		// Server sẽ broadcast event này mỗi khi có người tạo một auction mới (AuctionHandler.java).
+		// ServerConnection lưu handler trong ConcurrentHashMap<MessageType, Consumer<String>>,
+		// nên đăng ký lại mỗi lần initialize() chạy chỉ đơn giản là ghi đè — không bị trùng lặp.
+		// Khi nhận được push, ta re-fetch toàn bộ danh sách thay vì dùng dữ liệu từ payload,
+		// vì payload chỉ có auctionId/itemName/startingPrice — không đủ để render card đầy đủ.
+		ServerConnection.getInstance().registerPushHandler(
+			MessageType.PUSH_NEW_AUCTION,
+			json -> loadAuctions()
+		);
+	}
+
+	/**
+	 * Tải danh sách auction từ server, lọc ra những auction mà user hiện tại đã bid,
+	 * sau đó render danh sách đã lọc lên GridPane.
+	 *
+	 * Method này được gọi:
+	 * - Lúc khởi tạo màn hình (initialize)
+	 * - Tự động khi nhận push PUSH_NEW_AUCTION (có auction mới được tạo bởi người khác)
+	 *
+	 * Luồng bất đồng bộ:
+	 * 1. Gọi song song listAuctions() và getMyBids() qua socket TCP
+	 * 2. thenCombine() hợp nhất kết quả: lọc ra các auction user chưa bid
+	 * 3. thenAccept() cập nhật UI trên JavaFX Application Thread qua Platform.runLater()
+	 */
+	private void loadAuctions() {
 		biddingService.listAuctions()
 			.thenCombine(
+				// getMyBids() có thể thất bại (ví dụ user chưa có bid nào) — dùng exceptionally
+				// để trả về danh sách rỗng thay vì làm hỏng toàn bộ luồng.
 				biddingService.getMyBids().exceptionally(ex -> {
 					String msg = ex != null && ex.getCause() != null ? ex.getCause().getMessage() : "Unknown error";
 					System.err.println("Failed to load my bids for explore filter: " + msg);
@@ -51,6 +84,9 @@ public class AuctionBrowseController {
 				if (auctionsResp == null || auctionsResp.getAuctions() == null) {
 					return java.util.List.<AuctionSummaryDto>of();
 				}
+
+				// Thu thập tập hợp auctionId mà user hiện tại đã đặt bid,
+				// để loại ra khỏi danh sách Explore (tránh bid lại chính mình).
 				Set<String> myBidAuctionIds = myBidsResp == null || myBidsResp.getBids() == null
 					? Set.of()
 					: myBidsResp.getBids().stream()
@@ -64,7 +100,10 @@ public class AuctionBrowseController {
 			})
 			.thenAccept(filtered -> Platform.runLater(() -> handleFilteredAuctions(filtered)))
 			.exceptionally(ex -> {
-				Platform.runLater(() -> showError("Load auctions failed", ex.getCause().getMessage()));
+				// ex là CompletionException bọc lỗi thật; getCause() có thể null nếu exception không có cause.
+				String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+					: (ex != null ? ex.getMessage() : "Unknown error");
+				Platform.runLater(() -> showError("Load auctions failed", msg));
 				return null;
 			});
 	}
