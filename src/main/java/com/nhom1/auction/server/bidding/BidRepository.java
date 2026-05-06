@@ -92,6 +92,8 @@ public class BidRepository {
 				while (rs.next()) {
 					UUID highestBidderId = parseUuidNullable(rs.getString("highest_bidder_id"));
 					boolean isWinning = bidderId.equals(highestBidderId);
+                    java.sql.Timestamp endTs = rs.getTimestamp("end_time");
+                    LocalDateTime endTime = endTs != null ? endTs.toLocalDateTime() : null;
 
 					result.add(new BidWithAuctionDto(
 							rs.getString("auction_id"),
@@ -99,7 +101,7 @@ public class BidRepository {
 							rs.getBigDecimal("your_bid"),
 							rs.getBigDecimal("current_highest_bid"),
 							AuctionStatus.valueOf(rs.getString("status")),
-							LocalDateTime.parse(rs.getString("end_time")),
+							endTime,
 							isWinning
 					));
 				}

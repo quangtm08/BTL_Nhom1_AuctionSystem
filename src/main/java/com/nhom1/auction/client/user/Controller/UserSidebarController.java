@@ -2,15 +2,15 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.util.Duration;
+
 
 public class UserSidebarController {
-
     @FXML
     Button btnExplore;
     @FXML
@@ -26,16 +26,24 @@ public class UserSidebarController {
 
     @FXML
     public void initialize() {
+        bindCurrentUsername();
+
         btnExplore.setOnAction(e -> navigateWithLoading(AppView.AUCTION_BROWSE));
         btnBids.setOnAction(e -> navigateWithLoading(AppView.MY_BIDS));
         btnListings.setOnAction(e -> navigateWithLoading(AppView.MY_LISTINGS));
         btnPayment.setOnAction(e -> navigateWithLoading(AppView.PAYMENT));
         btnLogout.setOnAction(e -> navigateWithLoading(AppView.SIGN_IN));
 
-        if (AppContext.getCurrentUser() != null) {
-            usernameLabel.setText(AppContext.getCurrentUser().getUsername());
-        }
         updateActiveButton();
+    }
+
+    private void bindCurrentUsername() {
+        AuthResponse currentUser = AppContext.getCurrentUser();
+        if (currentUser != null && currentUser.getUsername() != null && !currentUser.getUsername().isBlank()) {
+            usernameLabel.setText(currentUser.getUsername());
+            return;
+        }
+        usernameLabel.setText("Guest");
     }
 
     private void navigateWithLoading(AppView targetView) {

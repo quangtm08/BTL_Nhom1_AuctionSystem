@@ -2,21 +2,338 @@ package com.nhom1.auction.common.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.BidType;
+import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 
 public class AuctionTest {
+
+    @Test
+    public void testConstructor_NullItemId_Throws() {
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            null,
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        ));
+    }
+
+    @Test
+    public void testConstructor_NullSellerId_Throws() {
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            UUID.randomUUID(),
+            null,
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        ));
+    }
+
+    @Test
+    public void testConstructor_NullStartingPrice_Throws() {
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            null,
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        ));
+    }
+
+    @Test
+    public void testConstructor_NegativeStartingPrice_Throws() {
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("-10.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        ));
+    }
+
+    @Test
+    public void testConstructor_NullStartTime_Throws() {
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            null,
+            LocalDateTime.now().plusHours(1)
+        ));
+    }
+
+    @Test
+    public void testConstructor_NullEndTime_Throws() {
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            null
+        ));
+    }
+
+    @Test
+    public void testConstructor_EndTimeBeforeStartTime_Throws() {
+        LocalDateTime now = LocalDateTime.now();
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            now,
+            now.minusHours(1)
+        ));
+    }
+
+    @Test
+    public void testConstructor_EndTimeEqualStartTime_Throws() {
+        LocalDateTime now = LocalDateTime.now();
+        assertThrows(IllegalArgumentException.class, () -> new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            now,
+            now
+        ));
+    }
+
+    @Test
+    public void testConstructor_ValidArgs_CreatesOpenAuction() {
+        UUID itemId = UUID.randomUUID();
+        UUID sellerId = UUID.randomUUID();
+        BigDecimal startingPrice = new BigDecimal("100.00");
+        LocalDateTime startTime = LocalDateTime.now();
+        LocalDateTime endTime = startTime.plusHours(1);
+
+        Auction auction = new Auction(itemId, sellerId, startingPrice, startTime, endTime);
+
+        assertEquals(itemId, auction.getItemId());
+        assertEquals(sellerId, auction.getSellerId());
+        assertEquals(startingPrice, auction.getStartingPrice());
+        assertEquals(startTime, auction.getStartTime());
+        assertEquals(endTime, auction.getEndTime());
+        assertEquals(AuctionStatus.OPEN, auction.getStatus());
+        assertNull(auction.getHighestBidderId());
+        assertNull(auction.getCurrentHighestBid());
+    }
+
+    @Test
+    public void testStartAuction_FromOpen_Succeeds() throws InvalidAuctionStateException {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusHours(1)
+        );
+
+        auction.startAuction();
+
+        assertEquals(AuctionStatus.RUNNING, auction.getStatus());
+    }
+
+    @Test
+    public void testStartAuction_FromRunning_Throws() throws InvalidAuctionStateException {
+        Auction auction = createRunningAuction();
+
+        assertThrows(InvalidAuctionStateException.class, auction::startAuction);
+    }
+
+    @Test
+    public void testStartAuction_FromFinished_Throws() throws InvalidAuctionStateException {
+        Auction auction = createRunningAuction();
+        auction.endAuction();
+
+        assertThrows(InvalidAuctionStateException.class, auction::startAuction);
+    }
+
+    @Test
+    public void testStartAuction_FromCanceled_Throws() throws InvalidAuctionStateException, UnauthorizedActionException {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        );
+        UUID sellerId = auction.getSellerId();
+        auction.cancelAuction(sellerId, UserRole.USER);
+
+        assertThrows(InvalidAuctionStateException.class, auction::startAuction);
+    }
+
+    @Test
+    public void testEndAuction_FromRunning_Succeeds() throws InvalidAuctionStateException {
+        Auction auction = createRunningAuction();
+
+        auction.endAuction();
+
+        assertEquals(AuctionStatus.FINISHED, auction.getStatus());
+    }
+
+    @Test
+    public void testEndAuction_FromOpen_Throws() throws InvalidAuctionStateException {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        );
+
+        assertThrows(InvalidAuctionStateException.class, auction::endAuction);
+    }
+
+    @Test
+    public void testEndAuction_FromFinished_Throws() throws InvalidAuctionStateException {
+        Auction auction = createRunningAuction();
+        auction.endAuction();
+
+        assertThrows(InvalidAuctionStateException.class, auction::endAuction);
+    }
+
+    @Test
+    public void testMarkAsPaid_FromFinished_Succeeds() throws InvalidAuctionStateException {
+        Auction auction = createRunningAuction();
+        auction.endAuction();
+
+        auction.markAsPaid();
+
+        assertEquals(AuctionStatus.PAID, auction.getStatus());
+    }
+
+    @Test
+    public void testMarkAsPaid_FromRunning_Throws() throws InvalidAuctionStateException {
+        Auction auction = createRunningAuction();
+
+        assertThrows(InvalidAuctionStateException.class, auction::markAsPaid);
+    }
+
+    @Test
+    public void testCancelAuction_SellerCancelsOwnOpen_Succeeds() {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        );
+        UUID sellerId = auction.getSellerId();
+
+        assertDoesNotThrow(() -> auction.cancelAuction(sellerId, UserRole.USER));
+
+        assertEquals(AuctionStatus.CANCELED, auction.getStatus());
+    }
+
+    @Test
+    public void testCancelAuction_SellerCancelsRunning_Throws() throws InvalidAuctionStateException, UnauthorizedActionException {
+        Auction auction = createRunningAuction();
+        UUID sellerId = auction.getSellerId();
+
+        assertThrows(InvalidAuctionStateException.class, () -> auction.cancelAuction(sellerId, UserRole.USER));
+    }
+
+    @Test
+    public void testCancelAuction_NonOwnerCancels_Throws() throws InvalidAuctionStateException, UnauthorizedActionException {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        );
+        UUID nonOwnerId = UUID.randomUUID();
+
+        assertThrows(UnauthorizedActionException.class, () -> auction.cancelAuction(nonOwnerId, UserRole.USER));
+    }
+
+    @Test
+    public void testCancelAuction_AdminCancelsOpen_Succeeds() {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        );
+        UUID adminId = UUID.randomUUID();
+
+        assertDoesNotThrow(() -> auction.cancelAuction(adminId, UserRole.ADMIN));
+
+        assertEquals(AuctionStatus.CANCELED, auction.getStatus());
+    }
+
+    @Test
+    public void testCancelAuction_AdminCancelsRunning_Succeeds() throws InvalidAuctionStateException, UnauthorizedActionException {
+        Auction auction = createRunningAuction();
+        UUID adminId = UUID.randomUUID();
+
+        assertDoesNotThrow(() -> auction.cancelAuction(adminId, UserRole.ADMIN));
+
+        assertEquals(AuctionStatus.CANCELED, auction.getStatus());
+    }
+
+    @Test
+    public void testGetMinBidIncrement_ReturnsCorrectValue() {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        );
+
+        BigDecimal minIncrement = auction.getMinBidIncrement();
+
+        assertEquals(new BigDecimal("5.00"), minIncrement);
+    }
+
+    @Test
+    public void testExtendEndTime_UpdatesEndTime() {
+        Auction auction = new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusHours(1)
+        );
+        LocalDateTime newEndTime = LocalDateTime.now().plusHours(2);
+
+        auction.extendEndTime(newEndTime);
+
+        assertEquals(newEndTime, auction.getEndTime());
+    }
+
+    @Test
+    public void testGetBidHistory_ReturnsCopy() throws Exception {
+        Auction auction = createRunningAuction();
+        LocalDateTime bidTime = auction.getStartTime().plusMinutes(10);
+
+        auction.placeBid(UUID.randomUUID(), new BigDecimal("100.00"), BidType.MANUAL, bidTime);
+
+        List<BidTransaction> history = auction.getBidHistory();
+        assertEquals(1, history.size());
+
+        // Modifying the returned list should not affect the auction's internal state
+        assertThrows(UnsupportedOperationException.class, history::clear);
+        assertEquals(1, auction.getBidHistory().size());
+    }
 
     @Test
     public void testPlaceBid_Success() throws Exception {

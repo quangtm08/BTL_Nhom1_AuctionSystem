@@ -5,7 +5,6 @@ import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
-import com.nhom1.auction.common.dto.bidding.ListAuctionsResponse;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -26,6 +25,9 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AuctionBrowseController {
 
@@ -47,23 +49,42 @@ public class AuctionBrowseController {
 		} else {
 			System.err.println("No user logged in!");
 		}
+		
 		biddingService.listAuctions()
-				.thenAccept(resp -> Platform.runLater(() -> handleListResponse(resp)))
-				.exceptionally(ex -> {
-					Platform.runLater(() -> showError("Load auctions failed", ex.getCause().getMessage()));
-					return null;
-				});
+			.thenCombine(
+				biddingService.getMyBids().exceptionally(ex -> {
+					String msg = ex != null && ex.getCause() != null ? ex.getCause().getMessage() : "Unknown error";
+					System.err.println("Failed to load my bids for explore filter: " + msg);
+					return new com.nhom1.auction.common.dto.bidding.MyBidsResponse(Collections.emptyList());
+				}),
+				(auctionsResp, myBidsResp) -> {
+				if (auctionsResp == null || auctionsResp.getAuctions() == null) {
+					return java.util.List.<AuctionSummaryDto>of();
+				}
+				Set<String> myBidAuctionIds = myBidsResp == null || myBidsResp.getBids() == null
+					? Set.of()
+					: myBidsResp.getBids().stream()
+						.map(b -> b.getAuctionId())
+						.filter(id -> id != null && !id.isBlank())
+						.collect(Collectors.toSet());
+
+				return auctionsResp.getAuctions().stream()
+					.filter(a -> a.getId() != null && !myBidAuctionIds.contains(a.getId()))
+					.toList();
+			})
+			.thenAccept(filtered -> Platform.runLater(() -> handleFilteredAuctions(filtered)))
+			.exceptionally(ex -> {
+				Platform.runLater(() -> showError("Load auctions failed", ex.getCause().getMessage()));
+				return null;
+			});
 	}
 
-	private void handleListResponse(ListAuctionsResponse resp) {
-		if (resp == null || resp.getAuctions() == null || resp.getAuctions().isEmpty())
-			return;
-
-		// Render cards dynamically
-		renderAuctionCards(resp.getAuctions());
-
-		// For now set selected auction to first item to simplify navigation flows
-		String firstAuctionId = resp.getAuctions().get(0).getId();
+	private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
+		if (auctions == null || auctions.isEmpty()) return;
+		
+		renderAuctionCards(auctions);
+		
+		String firstAuctionId = auctions.get(0).getId();
 		com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(firstAuctionId);
 	}
 
