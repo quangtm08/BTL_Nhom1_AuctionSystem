@@ -49,7 +49,8 @@ public class ServerContext {
             this.router,
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
-            this.notificationService
+            this.notificationService,
+            userRepository // Pass UserRepository for user validation in bidding logic
         );
 
         // 3. Initialize Automation features

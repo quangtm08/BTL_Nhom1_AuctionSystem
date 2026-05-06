@@ -53,6 +53,18 @@ public class AuctionDetailController {
 	@FXML
 	private VBox bidHistoryList;
 
+	@FXML // Reusing the same label for title and item name for simplicity
+	private Label lblTitle; 
+
+	@FXML
+	private Label lblShortDesc;
+
+	@FXML
+	private Label lblSellerName;
+
+	@FXML
+	private Label lblDescription;
+
 	@FXML
 	public void initialize() {
 		if (btnBid != null) {
@@ -119,15 +131,20 @@ public class AuctionDetailController {
 	private void applyDetail(AuctionDetailDto dto) {
 		if (dto == null)
 			return;
-		if (lblCurrentBid != null && dto.getCurrentHighestBid() != null) {
+		if (lblTitle != null)
+			lblTitle.setText(dto.getItemName() != null ? dto.getItemName() : "");
+		if (lblShortDesc != null)
+			lblShortDesc.setText(dto.getItemDescription() != null ? dto.getItemDescription() : "");
+		if (lblDescription != null)
+			lblDescription.setText(dto.getItemDescription() != null ? dto.getItemDescription() : "");
+		if (lblSellerName != null)
+			lblSellerName.setText(dto.getSellerName() != null ? dto.getSellerName() : "Unknown");
+		if (lblCurrentBid != null && dto.getCurrentHighestBid() != null)
 			lblCurrentBid.setText(formatMoney(dto.getCurrentHighestBid()));
-		}
-		if (lblMinIncrement != null && dto.getMinBidIncrement() != null) {
+		if (lblMinIncrement != null && dto.getMinBidIncrement() != null)
 			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
-		}
-		if (bidHistoryList != null && dto.getBidHistory() != null) {
+		if (bidHistoryList != null && dto.getBidHistory() != null)
 			renderBidHistory(dto.getBidHistory());
-		}
 	}
 
 	private void renderBidHistory(List<BidSummaryDto> history) {
@@ -142,6 +159,10 @@ public class AuctionDetailController {
 			Label rank = new Label("#" + (i + 1));
 			rank.getStyleClass().add("bid-rank");
 
+			Label bidderName = new Label(bid.getBidderName() != null ? bid.getBidderName() : "—");
+			bidderName.getStyleClass().add("bid-rank");
+			HBox.setHgrow(bidderName, Priority.SOMETIMES);
+
 			Label amount = new Label(formatMoney(bid.getAmount()));
 			amount.getStyleClass().add("bid-amount");
 			HBox.setHgrow(amount, Priority.ALWAYS);
@@ -153,7 +174,7 @@ public class AuctionDetailController {
 			Label time = new Label(bid.getCreatedAt() != null ? bid.getCreatedAt().format(BID_TIME_FMT) : "");
 			time.getStyleClass().add("bid-time");
 
-			row.getChildren().addAll(rank, amount, type, time);
+			row.getChildren().addAll(rank, bidderName, amount, type, time);
 			bidHistoryList.getChildren().add(row);
 		}
 	}
