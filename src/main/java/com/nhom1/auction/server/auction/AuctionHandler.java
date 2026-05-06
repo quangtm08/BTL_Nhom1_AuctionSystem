@@ -12,12 +12,15 @@ import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 
 public class AuctionHandler {
     private final AuctionService auctionService;
+    private final NotificationService notificationService;
 
-    public AuctionHandler(AuctionService auctionService) {
+    public AuctionHandler(AuctionService auctionService, NotificationService notificationService) {
         this.auctionService = auctionService;
+        this.notificationService = notificationService;
     }
 
     public void register(MessageRouter router) {
@@ -55,6 +58,11 @@ public class AuctionHandler {
     private ResponseMessage<CreateAuctionResponse> handleCreateAuction(String requestId, CreateAuctionRequest dto) {
         try {
             Auction auction = auctionService.createAuction(dto.getSellerId(), dto);
+            notificationService.broadcastNewAuction(
+                    auction.getId().toString(),
+                    dto.getName(),
+                    auction.getStartingPrice()
+            );
 
             CreateAuctionResponse response = new CreateAuctionResponse(
                     auction.getId().toString(),
