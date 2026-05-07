@@ -93,8 +93,8 @@ public class ServerConnection {
     }
 
     private void connect() {
-        String cloudHost = "turntable.proxy.rlwy.net";
-        int cloudPort = 32883;
+        String cloudHost = "hopper.proxy.rlwy.net";
+        int cloudPort = 16743;
         String localHost = "localhost";
         int localPort = 12345;
         int timeoutMillis = 2000;
