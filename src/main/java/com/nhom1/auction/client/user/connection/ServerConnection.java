@@ -162,6 +162,12 @@ public class ServerConnection {
                 while (connected && (responseJson = in.readLine()) != null) {
                     handleRawResponse(responseJson);
                 }
+                if (connected) {
+                    System.out.println(
+                        "DEBUG: Server closed connection (EOF)."
+                    );
+                    this.connected = false;
+                }
             } catch (IOException e) {
                 System.err.println("Server connection lost: " + e.getMessage());
                 this.connected = false;
@@ -185,22 +191,46 @@ public class ServerConnection {
             return failed;
         }
 
-        String requestId = request.getRequestId();
-        if (requestId == null || requestId.isEmpty()) {
-            requestId = UUID.randomUUID().toString();
-            request.setRequestId(requestId);
+        String initialRequestId = request.getRequestId();
+        if (initialRequestId == null || initialRequestId.isEmpty()) {
+            initialRequestId = UUID.randomUUID().toString();
+            request.setRequestId(initialRequestId);
         }
+        final String requestId = initialRequestId;
 
         CompletableFuture<ResponseMessage<T>> future =
             new CompletableFuture<>();
+
+        // Add a 10-second timeout to prevent indefinite hangs
+        future
+            .orTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+            .whenComplete((res, ex) -> {
+                if (ex instanceof java.util.concurrent.TimeoutException) {
+                    System.err.println(
+                        "DEBUG: Request timed out for ID: " + requestId
+                    );
+                    pendingRequests.remove(request.getRequestId());
+                }
+            });
+
         pendingRequests.put(
             requestId,
             new PendingRequest<>(future, responseClass)
         );
 
         try {
-            out.println(JsonUtil.toJson(request));
+            String json = JsonUtil.toJson(request);
+            System.out.println(
+                ">>> SENDING [" +
+                    socket.getInetAddress() +
+                    ":" +
+                    socket.getPort() +
+                    "]: " +
+                    json
+            );
+            out.println(json);
         } catch (Exception e) {
+            System.err.println("!!! SEND FAILURE: " + e.getMessage());
             pendingRequests.remove(requestId);
             future.completeExceptionally(e);
         }
@@ -209,6 +239,8 @@ public class ServerConnection {
     }
 
     private void handleRawResponse(String json) {
+        System.out.println("<<< RECEIVED: " + json);
+        PendingRequest<?> pending = null;
         try {
             JsonNode root = mapper.readTree(json);
             String requestId =
@@ -217,7 +249,7 @@ public class ServerConnection {
                     : null;
 
             if (requestId != null) {
-                PendingRequest<?> pending = pendingRequests.remove(requestId);
+                pending = pendingRequests.remove(requestId);
                 if (pending != null) {
                     JavaType type = mapper
                         .getTypeFactory()
@@ -227,6 +259,10 @@ public class ServerConnection {
                         );
                     ResponseMessage<?> response = mapper.readValue(json, type);
                     ((CompletableFuture) pending.future).complete(response);
+                } else {
+                    System.out.println(
+                        "DEBUG: No pending request found for ID: " + requestId
+                    );
                 }
             } else if (root.has("type")) {
                 // Push notification
@@ -237,11 +273,19 @@ public class ServerConnection {
                 if (handler != null) {
                     handler.accept(json);
                 }
+            } else {
+                System.out.println(
+                    "DEBUG: Response has no requestId or type: " + json
+                );
             }
         } catch (Exception e) {
             System.err.println(
-                "Error parsing server response: " + e.getMessage()
+                "DEBUG: Error processing server response: " + e.getMessage()
             );
+            e.printStackTrace();
+            if (pending != null) {
+                pending.future.completeExceptionally(e);
+            }
         }
     }
 
