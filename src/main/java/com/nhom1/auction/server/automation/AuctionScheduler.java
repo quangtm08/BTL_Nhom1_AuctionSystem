@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 public class AuctionScheduler {
     private final AuctionGateway auctionGateway;
@@ -20,6 +21,8 @@ public class AuctionScheduler {
 
     private final Duration antiSnipingWindow = Duration.ofSeconds(15);
     private final Duration antiSnipingExtension = Duration.ofSeconds(30);
+    
+    private String lastErrorMessage = null;
 
     public AuctionScheduler(
             AuctionGateway auctionGateway,
@@ -42,8 +45,17 @@ public class AuctionScheduler {
     private void safeTick() {
         try {
             tick();
+            // Reset error state on success
+            if (lastErrorMessage != null) {
+                lastErrorMessage = null;
+            }
         } catch (Exception e) {
-            System.err.println("AuctionScheduler tick failed: " + e.getMessage());
+            String currentErrorMessage = e.getMessage();
+            // Only log if the error message is different from the last one to avoid console spam
+            if (!Objects.equals(currentErrorMessage, lastErrorMessage)) {
+                System.err.println("AuctionScheduler tick failed: " + currentErrorMessage);
+                lastErrorMessage = currentErrorMessage;
+            }
         }
     }
 

@@ -28,7 +28,8 @@
     -fx-font-weight: 700;
 }
 
-.meta-text, .note-text {
+.meta-text,
+.note-text {
     -fx-text-fill: #74857b;
     -fx-font-size: 13px;
 }
@@ -58,13 +59,16 @@
     -fx-text-fill: #89aa99;
 }
 
-.field-label, .section-title {
+.field-label,
+.section-title {
     -fx-text-fill: #8ea096;
     -fx-font-size: 14px;
     -fx-font-weight: 600;
 }
 
-.field-input, .field-area, .combo-box.field-input {
+.field-input,
+.field-area,
+.combo-box.field-input {
     -fx-background-color: #2f3533;
     -fx-text-fill: #eff3f1;
     -fx-prompt-text-fill: #7e8c84;
@@ -117,7 +121,8 @@
     -fx-border-color: transparent;
 }
 
-.photo-box, .photo-add {
+.photo-box,
+.photo-add {
     -fx-pref-width: 64;
     -fx-pref-height: 64;
     -fx-alignment: CENTER;
@@ -150,7 +155,35 @@
     -fx-border-color: #1e2c25;
 }
 
-.btn-danger, .btn-secondary, .btn-primary {
+/* SCROLLPANE CUSTOMIZATION */
+.custom-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-hbar-policy: NEVER;
+}
+
+.custom-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.custom-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 6;
+}
+
+.custom-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #1a3327;
+    -fx-background-radius: 10;
+}
+
+.custom-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #2b6b4c;
+}
+
+.btn-danger,
+.btn-secondary,
+.btn-primary {
     -fx-padding: 9 16;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
@@ -176,7 +209,7 @@
     -fx-background-color: #1e8b4f;
     -fx-border-color: #2ab769;
     -fx-text-fill: #ebffee;
-    -fx-padding-left: 20
+    -fx-padding-left: 20;
 }
 
 .duration-chip {

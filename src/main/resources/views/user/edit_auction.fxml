@@ -9,19 +9,18 @@
             xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nhom1.auction.client.user.controller.EditAuctionController">
-    <padding>
-        <Insets top="0.0" right="20.0" bottom="0.0" left="20.0"/>
-    </padding>
 
     <left>
         <fx:include source="components/user_sidebar.fxml"/>
     </left>
 
     <center>
-        <VBox spacing="14.0" styleClass="listing-content">
-            <padding>
-                <Insets top="28.0" right="24.0" bottom="24.0" left="24.0"/>
-            </padding>
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll" style="-fx-background-color: transparent; -fx-background: transparent;">
+            <content>
+                <VBox spacing="14.0" styleClass="listing-content">
+                    <padding>
+                        <Insets top="28.0" right="24.0" bottom="24.0" left="24.0"/>
+                    </padding>
 
             <HBox alignment="CENTER_LEFT">
                 <VBox spacing="4.0" HBox.hgrow="ALWAYS">
@@ -109,6 +108,8 @@
                     <Button text="Save changes" styleClass="btn-primary"/>
                 </HBox>
             </HBox>
-        </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
     </center>
 </BorderPane>

@@ -24,6 +24,31 @@ public class AuctionRepository {
 
     public AuctionRepository(Connection connection) {
         this.connection = connection;
+        ensureTable();
+    }
+
+    private void ensureTable() {
+        String sql = """
+            CREATE TABLE IF NOT EXISTS auctions (
+                id VARCHAR(36) PRIMARY KEY,
+                item_id VARCHAR(36) NOT NULL,
+                start_time TIMESTAMP NOT NULL,
+                end_time TIMESTAMP NOT NULL,
+                status VARCHAR(50) NOT NULL,
+                starting_price NUMERIC(19, 2) NOT NULL,
+                current_highest_bid NUMERIC(19, 2) DEFAULT 0,
+                highest_bidder_id VARCHAR(36),
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                FOREIGN KEY (item_id) REFERENCES items(id),
+                FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
+            )
+            """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.execute();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to initialize auctions table", e);
+        }
     }
 
     // ===================== SAVE =====================

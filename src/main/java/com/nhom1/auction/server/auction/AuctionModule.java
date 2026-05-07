@@ -1,6 +1,7 @@
 package com.nhom1.auction.server.auction;
 
 import com.nhom1.auction.server.infrastructure.MessageRouter;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.sql.Connection;
 
 public class AuctionModule {
@@ -26,7 +27,8 @@ public class AuctionModule {
 
     public static AuctionRepositories init(
         Connection connection,
-        MessageRouter router
+        MessageRouter router,
+        NotificationService notificationService
     ) {
         ItemRepository itemRepository = new ItemRepository(connection);
         AuctionRepository auctionRepository = new AuctionRepository(connection);
@@ -35,7 +37,7 @@ public class AuctionModule {
             itemRepository,
             connection
         );
-        AuctionHandler auctionHandler = new AuctionHandler(auctionService);
+        AuctionHandler auctionHandler = new AuctionHandler(auctionService, notificationService);
 
         auctionHandler.register(router);
 
