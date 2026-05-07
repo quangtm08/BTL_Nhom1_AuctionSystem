@@ -1,5 +1,15 @@
 package com.nhom1.auction.client.user.controller;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.connection.ServerConnection;
@@ -19,16 +29,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-
-import java.math.BigDecimal;
-import java.text.NumberFormat;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Locale;
-import java.util.Collections;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class AuctionBrowseController {
 
@@ -115,8 +115,10 @@ public class AuctionBrowseController {
 	 * Được gọi trên JavaFX Application Thread (thông qua Platform.runLater trong loadAuctions).
 	 */
 	private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
-		if (auctions == null || auctions.isEmpty()) return;
-
+		if (auctions == null) return; 
+		cardsGridPane.getChildren().clear();
+		if (auctions.isEmpty()) return; // Nếu không có auction nào để hiển thị, giữ nguyên GridPane trống và không cần show error.
+// Render lại toàn bộ card từ đầu theo danh sách đã lọc.
 		renderAuctionCards(auctions);
 
 		// Lưu auction đầu tiên làm "selected" mặc định để AuctionDetailController biết
