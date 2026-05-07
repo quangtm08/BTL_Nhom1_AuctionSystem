@@ -1,14 +1,13 @@
 package com.nhom1.auction.server;
 
-import com.nhom1.auction.server.infrastructure.ClientHandler;
-import com.nhom1.auction.server.infrastructure.MessageRouter;
-import com.nhom1.auction.server.infrastructure.ServerContext;
-
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.nhom1.auction.server.infrastructure.ClientHandler;
+import com.nhom1.auction.server.infrastructure.MessageRouter;
+import com.nhom1.auction.server.infrastructure.ServerContext;
 
 /*
  - The entry point of the Auction System. Run this file will run the server
@@ -18,7 +17,7 @@ public class Server {
     public static void main(String[] args) {
         // Use the PORT environment variable if available (required for Railway deployment)
         String portEnv = System.getenv("PORT");
-        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 12345;
+        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 17896;
         int clientCount = 0;
         ExecutorService pool = Executors.newFixedThreadPool(10);
 
