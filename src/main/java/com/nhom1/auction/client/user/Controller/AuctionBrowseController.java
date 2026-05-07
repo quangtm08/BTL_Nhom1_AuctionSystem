@@ -51,9 +51,12 @@ public class AuctionBrowseController {
 		// nên đăng ký lại mỗi lần initialize() chạy chỉ đơn giản là ghi đè — không bị trùng lặp.
 		// Khi nhận được push, ta re-fetch toàn bộ danh sách thay vì dùng dữ liệu từ payload,
 		// vì payload chỉ có auctionId/itemName/startingPrice — không đủ để render card đầy đủ.
+		// Đồng thời, dispatch sang JavaFX Application Thread để tránh gọi loadAuctions()
+		// trực tiếp trên listener thread của ServerConnection, vốn có thể tạo socket request
+		// đồng thời với các thao tác UI khác và gây race/interleaved writes.
 		ServerConnection.getInstance().registerPushHandler(
 			MessageType.PUSH_NEW_AUCTION,
-			json -> loadAuctions()
+			json -> Platform.runLater(this::loadAuctions)
 		);
 	}
 
