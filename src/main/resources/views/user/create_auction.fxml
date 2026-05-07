@@ -9,19 +9,18 @@
             xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.nhom1.auction.client.user.controller.CreateAuctionController">
-    <padding>
-        <Insets top="0.0" right="20.0" bottom="0.0" left="20.0"/>
-    </padding>
 
     <left>
         <fx:include source="components/user_sidebar.fxml"/>
     </left>
 
     <center>
-        <VBox spacing="16.0" styleClass="listing-content">
-            <padding>
-                <Insets top="34.0" right="32.0" bottom="28.0" left="32.0"/>
-            </padding>
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll" style="-fx-background-color: transparent; -fx-background: transparent;">
+            <content>
+                <VBox spacing="16.0" styleClass="listing-content">
+                    <padding>
+                        <Insets top="34.0" right="32.0" bottom="28.0" left="32.0"/>
+                    </padding>
 
             <Button text="←  My listings" styleClass="back-btn" onAction="#handleBackToListings"/>
             <Label text="New listing" styleClass="page-title"/>
@@ -88,6 +87,8 @@
                 <Button text="Cancel" styleClass="btn-secondary"/>
                 <Button text="Publish listing" styleClass="btn-primary" onAction="#handlePublishListing"/>
             </HBox>
-        </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
     </center>
 </BorderPane>

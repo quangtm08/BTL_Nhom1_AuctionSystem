@@ -28,13 +28,16 @@
     -fx-font-weight: 700;
 }
 
-.section-title, .field-label {
+.section-title,
+.field-label {
     -fx-text-fill: #90a196;
     -fx-font-size: 14px;
     -fx-font-weight: 600;
 }
 
-.field-input, .field-area, .combo-box.field-input {
+.field-input,
+.field-area,
+.combo-box.field-input {
     -fx-background-color: #2f3533;
     -fx-text-fill: #ecefed;
     -fx-prompt-text-fill: #7f8b84;
@@ -110,6 +113,32 @@
     -fx-font-size: 13px;
 }
 
+/* SCROLLPANE CUSTOMIZATION */
+.custom-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-hbar-policy: NEVER;
+}
+
+.custom-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.custom-scroll .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 6;
+}
+
+.custom-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: #1a3327;
+    -fx-background-radius: 10;
+}
+
+.custom-scroll .scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #2b6b4c;
+}
+
 .line-separator .line {
     -fx-border-color: #1f2c26;
 }
@@ -139,7 +168,8 @@
     -fx-padding: 7 12;
 }
 
-.btn-secondary, .btn-primary {
+.btn-secondary,
+.btn-primary {
     -fx-padding: 9 18;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
