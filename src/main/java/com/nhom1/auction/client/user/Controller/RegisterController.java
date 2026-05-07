@@ -20,12 +20,23 @@ public class RegisterController {
     private final AuthClientService authService = new AuthClientService();
     private Stage alertStage;
 
-    @FXML private Button btnRegister;
-    @FXML private Button btnSignIn;
-    @FXML private TextField txtUsername;
-    @FXML private TextField txtEmail;
-    @FXML private PasswordField txtPassword;
-    @FXML private PasswordField txtRepeatPassword;
+    @FXML
+    private Button btnRegister;
+
+    @FXML
+    private Button btnSignIn;
+
+    @FXML
+    private TextField txtUsername;
+
+    @FXML
+    private TextField txtEmail;
+
+    @FXML
+    private PasswordField txtPassword;
+
+    @FXML
+    private PasswordField txtRepeatPassword;
 
     @FXML
     public void initialize() {
@@ -34,31 +45,36 @@ public class RegisterController {
     }
 
     private void handleRegister() {
-        // This controller deliberately avoids building RegisterRequest or
-        // calling ServerConnection directly. It only collects UI input and
-        // delegates the client-server contract to AuthClientService.
-        authService.register(
-                txtUsername.getText(),
-                txtEmail != null ? txtEmail.getText() : "",
+        authService
+            .register(
+                txtUsername.getText().trim(),
+                txtEmail != null ? txtEmail.getText().trim() : "",
                 txtPassword.getText(),
                 txtRepeatPassword.getText()
-        )
-        .thenAccept(authData -> Platform.runLater(() ->
-            AppNavigator.navigateTo(AppView.AUCTION_BROWSE)
-        ))
-        .exceptionally(ex -> {
-            // Registration now shares the same fail-fast service layer as login,
-            // so validation errors may come directly without nested causes.
-            Platform.runLater(() -> showError("Registration Failed", AuthClientService.extractFailure(ex).getMessage()));
-            return null;
-        });
+            )
+            .thenAccept(authData ->
+                Platform.runLater(() ->
+                    AppNavigator.navigateTo(AppView.AUCTION_BROWSE)
+                )
+            )
+            .exceptionally(ex -> {
+                Platform.runLater(() ->
+                    showError(
+                        "Registration Failed",
+                        AuthClientService.extractFailure(ex).getMessage()
+                    )
+                );
+                return null;
+            });
     }
 
     private void showError(String title, String message) {
         try {
             if (alertStage != null && alertStage.isShowing()) return;
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/custom_alert.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/views/custom_alert.fxml")
+            );
             Parent root = loader.load();
 
             ((Label) root.lookup("#lblTitle")).setText(title);
@@ -71,7 +87,9 @@ public class RegisterController {
             alertStage.setScene(scene);
             alertStage.initStyle(StageStyle.TRANSPARENT);
 
-            ((Button) root.lookup("#btnClose")).setOnAction(e -> alertStage.close());
+            ((Button) root.lookup("#btnClose")).setOnAction(e ->
+                alertStage.close()
+            );
             alertStage.setOnHidden(e -> alertStage = null);
             alertStage.show();
         } catch (Exception e) {

@@ -45,11 +45,12 @@ public class AuctionBrowseController {
 	@FXML
 	public void initialize() {
 		if (AppContext.getCurrentUser() != null) {
-			welcomeLabel.setText("Hunt for the next deal, " + AppContext.getCurrentUser().getUsername() + "!");
+		    if (AppContext.getCurrentUser().getUsername() != null && !AppContext.getCurrentUser().getUsername().isBlank()) {
+					welcomeLabel.setText("Hunt for the next deal, " + AppContext.getCurrentUser().getUsername() + "!");
 		} else {
 			System.err.println("No user logged in!");
 		}
-		
+
 		biddingService.listAuctions()
 			.thenCombine(
 				biddingService.getMyBids().exceptionally(ex -> {
@@ -81,9 +82,9 @@ public class AuctionBrowseController {
 
 	private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
 		if (auctions == null || auctions.isEmpty()) return;
-		
+
 		renderAuctionCards(auctions);
-		
+
 		String firstAuctionId = auctions.get(0).getId();
 		com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(firstAuctionId);
 	}
