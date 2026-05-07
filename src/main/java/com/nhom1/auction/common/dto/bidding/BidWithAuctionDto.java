@@ -10,16 +10,16 @@ public class BidWithAuctionDto {
     private BigDecimal currentHighestBid;
     private AuctionStatus status;
     private LocalDateTime endTime;
-    private boolean  isWinning;
+    private boolean winning;
     public BidWithAuctionDto() {}
-    public BidWithAuctionDto(String auctionId, String itemName, BigDecimal yourBid, BigDecimal currentHighestBid, AuctionStatus status, LocalDateTime endTime, boolean isWinning) {
+    public BidWithAuctionDto(String auctionId, String itemName, BigDecimal yourBid, BigDecimal currentHighestBid, AuctionStatus status, LocalDateTime endTime, boolean winning) {
         this.auctionId = auctionId;
         this.itemName = itemName;
         this.yourBid = yourBid;
         this.currentHighestBid = currentHighestBid;
         this.status = status;
         this.endTime = endTime;
-        this.isWinning = isWinning;
+        this.winning = winning;
     }
     // Getters and Setters
     public String getAuctionId() {
@@ -41,7 +41,11 @@ public class BidWithAuctionDto {
         return endTime;
     }
     public boolean isWinning() {
-        return isWinning;
+        return winning;
+    }
+
+    public void setWinning(boolean winning) {
+        this.winning = winning;
     }
 
 }
