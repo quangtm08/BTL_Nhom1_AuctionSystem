@@ -7,7 +7,7 @@
 <?import java.net.URL?> 
 
 <BorderPane prefHeight="700.0" prefWidth="1100.0"
-            stylesheets="@/css/client/my_listings.css"
+            stylesheets="@/css/client/my_listings.css, @/css/client/common_ui.css"
             styleClass="root-pane"
             xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -33,7 +33,7 @@
                 <HBox alignment="CENTER_LEFT">
                     <Label text="See your networth grows" styleClass="title"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="btnCreateListing" text="+ New listing" styleClass="btn-create" onAction="#handleCreateListing"/>
+                    <Button fx:id="btnCreateListing" text="+ New listing" styleClass="btn-primary" onAction="#handleCreateListing"/>
                 </HBox>
 
                 <!-- STATS -->

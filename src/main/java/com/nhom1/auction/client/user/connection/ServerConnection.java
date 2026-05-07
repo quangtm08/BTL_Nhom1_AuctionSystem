@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.fasterxml.jackson.databind.JavaType;
@@ -92,28 +94,63 @@ public class ServerConnection {
     }
 
     private void connect() {
-        try {
-            // --- CONNECTION SETTINGS ---
-            // String host = "localhost"; int port = 12345; // LOCAL
-            String host = "autorack.proxy.rlwy.net"; int port = 17896; // CLOUD (Railway)
-            // ---------------------------
+        String cloudHost = "hopper.proxy.rlwy.net";
+        int cloudPort = 16743;
+        String localHost = "localhost";
+        int localPort = 12345;
+        int timeoutMillis = 2000;
 
+        try {
             System.out.println(
-                "Server: Connecting to " + host + ":" + port + "..."
+                "Server: Connecting to Cloud (" +
+                    cloudHost +
+                    ":" +
+                    cloudPort +
+                    ")..."
             );
-            this.socket = new Socket(host, port);
+            this.socket = new Socket();
+            this.socket.connect(
+                new InetSocketAddress(cloudHost, cloudPort),
+                timeoutMillis
+            );
+
             this.out = new PrintWriter(socket.getOutputStream(), true);
             this.in = new BufferedReader(
                 new InputStreamReader(socket.getInputStream())
             );
             this.connected = true;
-            System.out.println("Connected to Auction Server.");
+            System.out.println("Connected to Cloud Auction Server.");
             startListening();
         } catch (IOException e) {
-            System.err.println(
-                "Could not connect to server: " + e.getMessage()
+            System.err.println("Cloud connection failed: " + e.getMessage());
+            System.out.println(
+                "Falling back to Local Server (" +
+                    localHost +
+                    ":" +
+                    localPort +
+                    ")..."
             );
-            this.connected = false;
+
+            try {
+                this.socket = new Socket();
+                this.socket.connect(
+                    new InetSocketAddress(localHost, localPort),
+                    timeoutMillis
+                );
+
+                this.out = new PrintWriter(socket.getOutputStream(), true);
+                this.in = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream())
+                );
+                this.connected = true;
+                System.out.println("Connected to Local Auction Server.");
+                startListening();
+            } catch (IOException ex) {
+                System.err.println(
+                    "Could not connect to any server: " + ex.getMessage()
+                );
+                this.connected = false;
+            }
         }
     }
 
@@ -123,6 +160,12 @@ public class ServerConnection {
                 String responseJson;
                 while (connected && (responseJson = in.readLine()) != null) {
                     handleRawResponse(responseJson);
+                }
+                if (connected) {
+                    System.out.println(
+                        "DEBUG: Server closed connection (EOF)."
+                    );
+                    this.connected = false;
                 }
             } catch (IOException e) {
                 System.err.println("Server connection lost: " + e.getMessage());
@@ -147,22 +190,45 @@ public class ServerConnection {
             return failed;
         }
 
-        String requestId = request.getRequestId();
-        if (requestId == null || requestId.isEmpty()) {
-            requestId = UUID.randomUUID().toString();
-            request.setRequestId(requestId);
+        String initialRequestId = request.getRequestId();
+        if (initialRequestId == null || initialRequestId.isEmpty()) {
+            initialRequestId = UUID.randomUUID().toString();
+            request.setRequestId(initialRequestId);
         }
+        final String requestId = initialRequestId;
 
         CompletableFuture<ResponseMessage<T>> future =
             new CompletableFuture<>();
+
+        future
+            .orTimeout(10, TimeUnit.SECONDS)
+            .whenComplete((res, ex) -> {
+                if (ex instanceof java.util.concurrent.TimeoutException) {
+                    System.err.println(
+                        "DEBUG: Request timed out for ID: " + requestId
+                    );
+                    pendingRequests.remove(requestId);
+                }
+            });
+
         pendingRequests.put(
             requestId,
             new PendingRequest<>(future, responseClass)
         );
 
         try {
-            out.println(JsonUtil.toJson(request));
+            String json = JsonUtil.toJson(request);
+            System.out.println(
+                ">>> SENDING [" +
+                    socket.getInetAddress() +
+                    ":" +
+                    socket.getPort() +
+                    "]: " +
+                    json
+            );
+            out.println(json);
         } catch (Exception e) {
+            System.err.println("!!! SEND FAILURE: " + e.getMessage());
             pendingRequests.remove(requestId);
             future.completeExceptionally(e);
         }
@@ -171,6 +237,8 @@ public class ServerConnection {
     }
 
     private void handleRawResponse(String json) {
+        System.out.println("<<< RECEIVED: " + json);
+        PendingRequest<?> pending = null;
         try {
             JsonNode root = mapper.readTree(json);
             String requestId =
@@ -179,7 +247,7 @@ public class ServerConnection {
                     : null;
 
             if (requestId != null) {
-                PendingRequest<?> pending = pendingRequests.remove(requestId);
+                pending = pendingRequests.remove(requestId);
                 if (pending != null) {
                     JavaType type = mapper
                         .getTypeFactory()
@@ -189,21 +257,23 @@ public class ServerConnection {
                         );
                     ResponseMessage<?> response = mapper.readValue(json, type);
                     ((CompletableFuture) pending.future).complete(response);
+                } else {
+                    System.out.println(
+                        "DEBUG: No pending request found for ID: " + requestId
+                    );
                 }
             } else if (root.has("type")) {
-                // Push notification
                 MessageType pushType = MessageType.valueOf(
                     root.get("type").asText()
                 );
                 Consumer<String> handler = pushHandlers.get(pushType);
-                if (handler != null) {
-                    handler.accept(json);
-                }
+                if (handler != null) handler.accept(json);
             }
         } catch (Exception e) {
             System.err.println(
-                "Error parsing server response: " + e.getMessage()
+                "DEBUG: Error processing server response: " + e.getMessage()
             );
+            if (pending != null) pending.future.completeExceptionally(e);
         }
     }
 

@@ -12,14 +12,18 @@ Each client interacts with the server through a ClientHandler
 It reads from the socket, asks the MessageRouter for an answer, and writes back.
  */
 public class ClientHandler implements Runnable {
+
     private final Socket socket;
     private final MessageRouter router;
     private PrintWriter out;
     private final UUID clientId;
     private final ClientRegistry registry;
 
-
-    public ClientHandler(Socket socket, MessageRouter router, ClientRegistry registry) throws IOException {
+    public ClientHandler(
+        Socket socket,
+        MessageRouter router,
+        ClientRegistry registry
+    ) throws IOException {
         this.socket = socket;
         this.router = router;
         this.out = new PrintWriter(socket.getOutputStream(), true);
@@ -27,21 +31,24 @@ public class ClientHandler implements Runnable {
         this.clientId = UUID.randomUUID();
     }
 
-
     @Override
     public void run() {
         registry.register(this);
 
         try (
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedReader in = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())
+            );
         ) {
             String inputLine;
-            while ((inputLine = in.readLine()) != null) { 
+            while ((inputLine = in.readLine()) != null) {
                 String response = router.handleRequest(inputLine);
                 push(response);
             }
         } catch (IOException e) {
-            System.err.println("ClientHandler Error (" + clientId + "): " + e.getMessage());
+            System.err.println(
+                "ClientHandler Error (" + clientId + "): " + e.getMessage()
+            );
         } finally {
             // Hủy đăng ký khi kết nối đóng
             registry.unregister(clientId);
@@ -63,4 +70,3 @@ public class ClientHandler implements Runnable {
         return clientId;
     }
 }
-

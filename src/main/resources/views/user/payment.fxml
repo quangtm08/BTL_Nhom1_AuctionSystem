@@ -10,7 +10,7 @@
 <?import javafx.scene.shape.Circle?>
 
 
-<BorderPane fx:id="root" stylesheets="@/css/client/payment.css" 
+<BorderPane fx:id="root" stylesheets="@/css/client/payment.css, @/css/client/common_ui.css" 
             prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" 
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.user.controller.PaymentController">
 
@@ -38,7 +38,7 @@
                                  </children>
                               </VBox>
                               <Label styleClass="price-tag" text="\$5000" />
-                              <Button styleClass="btn-pay" text="Pay now" />
+                              <Button styleClass="btn-primary" text="Pay now" />
                            </children>
                         </HBox>
                         <HBox alignment="CENTER_LEFT" spacing="12.0">
@@ -50,7 +50,7 @@
                                  </children>
                               </VBox>
                               <Label styleClass="price-tag" text="\$5000" />
-                              <Button styleClass="btn-pay" text="Pay now" />
+                              <Button styleClass="btn-primary" text="Pay now" />
                            </children>
                         </HBox>
                      </children>

@@ -22,33 +22,40 @@ public class SignInController {
     private final AuthClientService authService = new AuthClientService();
     private Stage alertStage;
 
-    @FXML private Button btnSignIn;
-    @FXML private Button btnRegister;
-    @FXML private TextField txtUsername;
-    @FXML private PasswordField txtPassword;
+    @FXML
+    private Button btnSignIn;
+
+    @FXML
+    private Button btnRegister;
+
+    @FXML
+    private TextField txtUsername;
+
+    @FXML
+    private PasswordField txtPassword;
 
     @FXML
     public void initialize() {
         btnRegister.setOnAction(e -> AppNavigator.navigateTo(AppView.REGISTER));
 
         btnSignIn.setOnAction(e ->
-            // Controller stays UI-focused:
-            // read form fields, call service, then update navigation/error state.
-            // Protocol details such as RequestMessage and ServerConnection live
-            // inside AuthClientService/BaseClientService.
-            authService.login(txtUsername.getText(), txtPassword.getText())
-                .thenAccept(authData -> Platform.runLater(() -> {
-                    if (authData.getRole() == UserRole.ADMIN) {
-                        AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
-                    } else {
-                        AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
-                    }
-                }))
+            authService
+                .login(txtUsername.getText().trim(), txtPassword.getText())
+                .thenAccept(authData ->
+                    Platform.runLater(() -> {
+                        if (authData.getRole() == UserRole.ADMIN) {
+                            AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
+                        } else {
+                            AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
+                        }
+                    })
+                )
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
-                        // AuthClientService can fail before network I/O, so use
-                        // the shared unwrap helper instead of assuming a cause.
-                        showError("Login Failed", AuthClientService.extractFailure(ex).getMessage());
+                        showError(
+                            "Login Failed",
+                            AuthClientService.extractFailure(ex).getMessage()
+                        );
                         txtPassword.clear();
                     });
                     return null;
@@ -60,7 +67,9 @@ public class SignInController {
         try {
             if (alertStage != null && alertStage.isShowing()) return;
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/custom_alert.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/views/custom_alert.fxml")
+            );
             Parent root = loader.load();
 
             ((Label) root.lookup("#lblTitle")).setText(title);
@@ -73,7 +82,9 @@ public class SignInController {
             alertStage.setScene(scene);
             alertStage.initStyle(StageStyle.TRANSPARENT);
 
-            ((Button) root.lookup("#btnClose")).setOnAction(e -> alertStage.close());
+            ((Button) root.lookup("#btnClose")).setOnAction(e ->
+                alertStage.close()
+            );
             alertStage.setOnHidden(e -> alertStage = null);
             alertStage.show();
         } catch (Exception e) {

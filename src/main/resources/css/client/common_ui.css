@@ -1,0 +1,84 @@
+/* GLOBAL UI STANDARDIZATION */
+
+/* Root variables for easy maintenance */
+.root {
+    -fx-accent: #2b6b4c;
+    -fx-focus-color: #2b6b4c;
+}
+
+/* Base Button Style */
+.button {
+    -fx-cursor: hand;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-font-size: 16px;
+    -fx-padding: 10 20;
+}
+
+/* Primary Green Button (Filled) */
+.btn-primary {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 1px;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #2b6b4c;
+}
+
+.btn-primary:pressed {
+    -fx-background-color: #1a3327;
+}
+
+/* Secondary Button (Outlined Green) */
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-border-color: #1a3327;
+    -fx-border-width: 1.5px;
+    -fx-text-fill: #4caf50;
+    -fx-font-weight: bold;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: rgba(26, 51, 39, 0.1);
+    -fx-border-color: #2b6b4c;
+}
+
+/* Danger Button (Red Outlined/Filled on Hover) */
+.btn-danger {
+    -fx-background-color: rgba(255, 92, 92, 0.05);
+    -fx-border-color: #ff5c5c;
+    -fx-border-width: 1.5px;
+    -fx-text-fill: #ff5c5c;
+    -fx-font-weight: bold;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #ff5c5c;
+    -fx-text-fill: white;
+}
+
+/* Ghost/Sidebar Button (Transparent) */
+.btn-ghost {
+    -fx-background-color: transparent;
+    -fx-text-fill: #777777;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.btn-ghost:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-text-fill: white;
+}
+
+.user-label {
+    -fx-font-size: 18px;
+}
+
+.btn-ghost-active {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: white;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 0 0 0 3px; /* Accent bar on the left */
+}

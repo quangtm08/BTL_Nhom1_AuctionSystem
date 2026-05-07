@@ -12,7 +12,7 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.text.TextFlow?>
 
-<StackPane prefHeight="855.0" prefWidth="1320.0" styleClass="root-pane" stylesheets="@../css/register.css" 
+<StackPane prefHeight="855.0" prefWidth="1320.0" styleClass="root-pane" stylesheets="@../css/register.css, @/css/client/common_ui.css" 
             xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" 
             fx:controller="com.nhom1.auction.client.user.controller.RegisterController">
    <children>
@@ -97,12 +97,12 @@
                            </children>
                         </VBox>
 
-                        <Button fx:id="btnRegister" maxWidth="Infinity" mnemonicParsing="false" prefHeight="71.1489" styleClass="primary-button" text="Register" />
+                        <Button fx:id="btnRegister" maxWidth="Infinity" mnemonicParsing="false" prefHeight="50.0" styleClass="btn-primary" text="Register" />
 
                         <HBox alignment="CENTER_LEFT" spacing="4.0">
                            <children>
                               <Label styleClass="supporting-text" text="Already have an account?" />
-                              <Button fx:id="btnSignIn" focusTraversable="false" mnemonicParsing="false" styleClass="inline-link" text="Sign in" />
+                              <Button fx:id="btnSignIn" focusTraversable="false" mnemonicParsing="false" styleClass="btn-ghost" text="Sign in" />
                            </children>
                         </HBox>
                      </children>

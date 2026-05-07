@@ -4,44 +4,56 @@ import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.utils.AppContext;
-
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
-
 public class UserSidebarController {
-    
-    @FXML Button btnExplore;
-    @FXML Button btnBids;
-    @FXML Button btnListings;
-    @FXML Button btnPayment;
-    @FXML Button btnLogout;
-    @FXML Label userName;
-    
-    
-    @FXML
-    public void initialize(){
 
+    @FXML
+    private Button btnExplore;
+
+    @FXML
+    private Button btnBids;
+
+    @FXML
+    private Button btnListings;
+
+    @FXML
+    private Button btnPayment;
+
+    @FXML
+    private Button btnLogout;
+
+    @FXML
+    private Label usernameLabel;
+
+    @FXML
+    public void initialize() {
         bindCurrentUsername();
 
-        btnExplore.setOnAction(e -> navigateWithLoading(AppView.AUCTION_BROWSE));
+        btnExplore.setOnAction(e ->
+            navigateWithLoading(AppView.AUCTION_BROWSE)
+        );
         btnBids.setOnAction(e -> navigateWithLoading(AppView.MY_BIDS));
         btnListings.setOnAction(e -> navigateWithLoading(AppView.MY_LISTINGS));
         btnPayment.setOnAction(e -> navigateWithLoading(AppView.PAYMENT));
         btnLogout.setOnAction(e -> navigateWithLoading(AppView.SIGN_IN));
 
         updateActiveButton();
-
     }
 
     private void bindCurrentUsername() {
         AuthResponse currentUser = AppContext.getCurrentUser();
-        if (currentUser != null && currentUser.getUsername() != null && !currentUser.getUsername().isBlank()) {
-            userName.setText(currentUser.getUsername());
+        if (
+            currentUser != null &&
+            currentUser.getUsername() != null &&
+            !currentUser.getUsername().isBlank()
+        ) {
+            usernameLabel.setText(currentUser.getUsername());
             return;
         }
-        userName.setText("Guest");
+        usernameLabel.setText("Guest");
     }
 
     private void navigateWithLoading(AppView targetView) {
@@ -54,23 +66,25 @@ public class UserSidebarController {
 
     private void updateActiveButton() {
         AppView current = AppNavigator.getCurrentView();
-        
-        btnExplore.getStyleClass().remove("side-btn-active");
-        btnBids.getStyleClass().remove("side-btn-active");
-        btnListings.getStyleClass().remove("side-btn-active");
-        btnPayment.getStyleClass().remove("side-btn-active");
 
-            if (current == null) return;
+        btnExplore.getStyleClass().remove("btn-ghost-active");
+        btnBids.getStyleClass().remove("btn-ghost-active");
+        btnListings.getStyleClass().remove("btn-ghost-active");
+        btnPayment.getStyleClass().remove("btn-ghost-active");
 
-    
+        if (current == null) return;
+
         switch (current) {
-            case AUCTION_BROWSE -> btnExplore.getStyleClass().add("side-btn-active");
-            case MY_BIDS -> btnBids.getStyleClass().add("side-btn-active");
-            case MY_LISTINGS -> btnListings.getStyleClass().add("side-btn-active");
-            case PAYMENT -> btnPayment.getStyleClass().add("side-btn-active");
+            case AUCTION_BROWSE -> btnExplore
+                .getStyleClass()
+                .add("btn-ghost-active");
+            case MY_BIDS -> btnBids.getStyleClass().add("btn-ghost-active");
+            case MY_LISTINGS -> btnListings
+                .getStyleClass()
+                .add("btn-ghost-active");
+            case PAYMENT -> btnPayment.getStyleClass().add("btn-ghost-active");
             default -> {
             }
         }
     }
-
 }

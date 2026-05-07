@@ -7,7 +7,7 @@
 
 <HBox fx:id="mainContainer"
     prefHeight="800.0" prefWidth="1280.0" styleClass="root-pane" 
-    stylesheets="@/css/client/auction_browse.css" xmlns="http://javafx.com/javafx/17"
+    stylesheets="@/css/client/auction_browse.css, @/css/client/common_ui.css" xmlns="http://javafx.com/javafx/17"
     xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.user.controller.AuctionBrowseController" >
 
     <fx:include source="components/user_sidebar.fxml" />
@@ -17,7 +17,7 @@
             <Insets top="60.0" left="60.0" right="60.0" bottom="30.0"/>
         </padding>
         <children>
-            <Label text="Hunt for the next deal, bruh" styleClass="header-title"/>
+            <Label text="Hunt for the next deal" fx:id="welcomeLabel" styleClass="header-title"/>
             
             <VBox spacing="20.0">
                 <TextField promptText="Search..." styleClass="search-field"/>
