@@ -1,14 +1,5 @@
 package com.nhom1.auction.client.user.connection;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.RequestMessage;
-import com.nhom1.auction.common.protocol.ResponseMessage;
-import com.nhom1.auction.common.utils.JsonUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,6 +16,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.nhom1.auction.common.protocol.MessageType;
+import com.nhom1.auction.common.protocol.RequestMessage;
+import com.nhom1.auction.common.protocol.ResponseMessage;
+import com.nhom1.auction.common.utils.JsonUtil;
 
 /*
  - Bridge between the Client and the Server.

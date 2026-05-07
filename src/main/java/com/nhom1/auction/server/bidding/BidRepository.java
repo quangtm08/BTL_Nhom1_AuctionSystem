@@ -101,6 +101,12 @@ public class BidRepository {
 			JOIN auctions a ON CAST(a.id AS VARCHAR) = CAST(b.auction_id AS VARCHAR)
 			JOIN items i ON CAST(i.id AS VARCHAR) = CAST(a.item_id AS VARCHAR)
 			WHERE b.bidder_id = CAST(? AS VARCHAR)
+			  AND b.created_at = (
+			    SELECT MAX(b2.created_at)
+			    FROM bids b2
+			    WHERE CAST(b2.bidder_id AS VARCHAR) = CAST(? AS VARCHAR)
+			      AND CAST(b2.auction_id AS VARCHAR) = CAST(b.auction_id AS VARCHAR)
+			  )
 			ORDER BY b.created_at DESC
 			""";
 
@@ -108,6 +114,7 @@ public class BidRepository {
 
 		try (PreparedStatement ps = connection.prepareStatement(sql)) {
 			ps.setString(1, bidderId.toString());
+			ps.setString(2, bidderId.toString());
 
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {

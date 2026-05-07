@@ -35,8 +35,11 @@ public class AuctionDetailController {
 	private final ObjectMapper mapper = new ObjectMapper();
 	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM");
 
-	@FXML
+@FXML
 	private TextField txtBidInput;
+
+	@FXML
+	private Label lblBidError;
 
 	@FXML
 	private Button btnBid;
@@ -53,10 +56,31 @@ public class AuctionDetailController {
 	@FXML
 	private VBox bidHistoryList;
 
+	@FXML // Reusing the same label for title and item name for simplicity
+	private Label lblTitle; 
+
+	@FXML
+	private Label lblShortDesc;
+
+	@FXML
+	private Label lblSellerName;
+
+	@FXML
+	private Label lblDescription;
+
 	@FXML
 	public void initialize() {
 		if (btnBid != null) {
 			btnBid.setOnAction(e -> onPlaceBid());
+		}
+
+		// Khi user click vào TextField (focus gained) → xóa lỗi ngay lập tức.
+		// Dùng focusedProperty listener thay vì setOnMouseClicked để bắt cả trường hợp
+		// user Tab vào field chứ không chỉ click chuột.
+		if (txtBidInput != null) {
+			txtBidInput.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+				if (isFocused) clearBidError();
+			});
 		}
 
 		String sel = AppContext.getSelectedAuctionId();
@@ -119,15 +143,20 @@ public class AuctionDetailController {
 	private void applyDetail(AuctionDetailDto dto) {
 		if (dto == null)
 			return;
-		if (lblCurrentBid != null && dto.getCurrentHighestBid() != null) {
+		if (lblTitle != null)
+			lblTitle.setText(dto.getItemName() != null ? dto.getItemName() : "");
+		if (lblShortDesc != null)
+			lblShortDesc.setText(dto.getItemDescription() != null ? dto.getItemDescription() : "");
+		if (lblDescription != null)
+			lblDescription.setText(dto.getItemDescription() != null ? dto.getItemDescription() : "");
+		if (lblSellerName != null)
+			lblSellerName.setText(dto.getSellerName() != null ? dto.getSellerName() : "Unknown");
+		if (lblCurrentBid != null && dto.getCurrentHighestBid() != null)
 			lblCurrentBid.setText(formatMoney(dto.getCurrentHighestBid()));
-		}
-		if (lblMinIncrement != null && dto.getMinBidIncrement() != null) {
+		if (lblMinIncrement != null && dto.getMinBidIncrement() != null)
 			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
-		}
-		if (bidHistoryList != null && dto.getBidHistory() != null) {
+		if (bidHistoryList != null && dto.getBidHistory() != null)
 			renderBidHistory(dto.getBidHistory());
-		}
 	}
 
 	private void renderBidHistory(List<BidSummaryDto> history) {
@@ -142,6 +171,10 @@ public class AuctionDetailController {
 			Label rank = new Label("#" + (i + 1));
 			rank.getStyleClass().add("bid-rank");
 
+			Label bidderName = new Label(bid.getBidderName() != null ? bid.getBidderName() : "—");
+			bidderName.getStyleClass().add("bid-rank");
+			HBox.setHgrow(bidderName, Priority.SOMETIMES);
+
 			Label amount = new Label(formatMoney(bid.getAmount()));
 			amount.getStyleClass().add("bid-amount");
 			HBox.setHgrow(amount, Priority.ALWAYS);
@@ -153,8 +186,39 @@ public class AuctionDetailController {
 			Label time = new Label(bid.getCreatedAt() != null ? bid.getCreatedAt().format(BID_TIME_FMT) : "");
 			time.getStyleClass().add("bid-time");
 
-			row.getChildren().addAll(rank, amount, type, time);
+			row.getChildren().addAll(rank, bidderName, amount, type, time);
 			bidHistoryList.getChildren().add(row);
+		}
+	}
+
+	/**
+	 * Hiển thị thông báo lỗi ngay dưới TextField và đổi viền thành đỏ.
+	 * managed=true để label chiếm không gian trong layout khi hiện.
+	 */
+	private void showBidError(String message) {
+		if (lblBidError != null) {
+			lblBidError.setText(message);
+			lblBidError.setVisible(true);
+			lblBidError.setManaged(true);
+		}
+		if (txtBidInput != null) {
+			txtBidInput.getStyleClass().remove("bid-input-error");
+			txtBidInput.getStyleClass().add("bid-input-error");
+		}
+	}
+
+	/**
+	 * Ẩn thông báo lỗi và khôi phục viền TextField về bình thường.
+	 * managed=false để label không chiếm không gian trong layout khi ẩn.
+	 * Được gọi khi TextField được focus (user bắt đầu nhập lại).
+	 */
+	private void clearBidError() {
+		if (lblBidError != null) {
+			lblBidError.setVisible(false);
+			lblBidError.setManaged(false);
+		}
+		if (txtBidInput != null) {
+			txtBidInput.getStyleClass().remove("bid-input-error");
 		}
 	}
 
@@ -165,7 +229,7 @@ public class AuctionDetailController {
 
 		String text = txtBidInput != null ? txtBidInput.getText() : null;
 		if (text == null || text.isBlank()) {
-			showError("Invalid bid", "Please enter a bid amount.");
+			showBidError("Please enter a bid amount.");
 			return;
 		}
 
@@ -173,14 +237,17 @@ public class AuctionDetailController {
 		try {
 			amount = new BigDecimal(text.trim());
 		} catch (Exception ex) {
-			showError("Invalid bid", "Enter a valid number.");
+			showBidError("Invalid amount — please enter a number.");
 			return;
 		}
 
 		biddingService.placeBid(auctionId, amount)
 				.thenAccept(resp -> Platform.runLater(() -> handlePlaceBidSuccess(resp)))
 				.exceptionally(ex -> {
-					Platform.runLater(() -> showError("Bid failed", ex.getCause().getMessage()));
+					// Hiển thị lỗi từ server (vd: bid thấp hơn minimum, auction đã kết thúc) lên UI.
+					String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+						: (ex != null ? ex.getMessage() : "Bid failed");
+					Platform.runLater(() -> showBidError(msg));
 					return null;
 				});
 	}
@@ -189,10 +256,6 @@ public class AuctionDetailController {
 		if (resp == null)
 			return;
 		AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
-	}
-
-	private void showError(String title, String message) {
-		System.err.println(title + ": " + message);
 	}
 
 	private String formatMoney(BigDecimal amount) {

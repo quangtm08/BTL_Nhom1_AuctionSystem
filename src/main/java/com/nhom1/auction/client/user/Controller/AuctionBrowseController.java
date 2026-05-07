@@ -1,10 +1,5 @@
 package com.nhom1.auction.client.user.controller;
 
-import com.nhom1.auction.client.AppNavigator;
-import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.service.BiddingClientService;
-import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
-import com.nhom1.auction.common.utils.AppContext;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
@@ -14,6 +9,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.nhom1.auction.client.AppNavigator;
+import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.client.user.service.BiddingClientService;
+import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
+import com.nhom1.auction.common.utils.AppContext;
+import com.nhom1.auction.common.protocol.MessageType;
+
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
