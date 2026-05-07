@@ -24,10 +24,13 @@ public class SignInController {
 
     @FXML
     private Button btnSignIn;
+
     @FXML
     private Button btnRegister;
+
     @FXML
     private TextField txtUsername;
+
     @FXML
     private PasswordField txtPassword;
 
@@ -35,29 +38,38 @@ public class SignInController {
     public void initialize() {
         btnRegister.setOnAction(e -> AppNavigator.navigateTo(AppView.REGISTER));
 
-        btnSignIn.setOnAction(e -> authService.login(txtUsername.getText().trim(), txtPassword.getText().trim())
-                .thenAccept(authData -> Platform.runLater(() -> {
-                    if (authData.getRole() == UserRole.ADMIN) {
-                        AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
-                    } else {
-                        AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
-                    }
-                }))
+        btnSignIn.setOnAction(e ->
+            authService
+                .login(txtUsername.getText().trim(), txtPassword.getText())
+                .thenAccept(authData ->
+                    Platform.runLater(() -> {
+                        if (authData.getRole() == UserRole.ADMIN) {
+                            AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
+                        } else {
+                            AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
+                        }
+                    })
+                )
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
-                        showError("Login Failed", AuthClientService.extractFailure(ex).getMessage());
+                        showError(
+                            "Login Failed",
+                            AuthClientService.extractFailure(ex).getMessage()
+                        );
                         txtPassword.clear();
                     });
                     return null;
-                }));
+                })
+        );
     }
 
     private void showError(String title, String message) {
         try {
-            if (alertStage != null && alertStage.isShowing())
-                return;
+            if (alertStage != null && alertStage.isShowing()) return;
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/custom_alert.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                getClass().getResource("/views/custom_alert.fxml")
+            );
             Parent root = loader.load();
 
             ((Label) root.lookup("#lblTitle")).setText(title);
@@ -70,7 +82,9 @@ public class SignInController {
             alertStage.setScene(scene);
             alertStage.initStyle(StageStyle.TRANSPARENT);
 
-            ((Button) root.lookup("#btnClose")).setOnAction(e -> alertStage.close());
+            ((Button) root.lookup("#btnClose")).setOnAction(e ->
+                alertStage.close()
+            );
             alertStage.setOnHidden(e -> alertStage = null);
             alertStage.show();
         } catch (Exception e) {

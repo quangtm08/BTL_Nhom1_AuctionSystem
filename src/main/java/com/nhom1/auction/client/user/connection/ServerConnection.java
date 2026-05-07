@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /*
@@ -92,11 +93,11 @@ public class ServerConnection {
     }
 
     private void connect() {
-        String cloudHost = "hopper.proxy.rlwy.net";
-        int cloudPort = 16743;
+        String cloudHost = "turntable.proxy.rlwy.net";
+        int cloudPort = 32883;
         String localHost = "localhost";
         int localPort = 12345;
-        int timeoutMillis = 2000; // 2 seconds
+        int timeoutMillis = 2000;
 
         try {
             System.out.println(
@@ -120,10 +121,7 @@ public class ServerConnection {
             System.out.println("Connected to Cloud Auction Server.");
             startListening();
         } catch (IOException e) {
-            System.err.println(
-                "Cloud connection failed (timeout/unreachable): " +
-                    e.getMessage()
-            );
+            System.err.println("Cloud connection failed: " + e.getMessage());
             System.out.println(
                 "Falling back to Local Server (" +
                     localHost +
@@ -201,15 +199,14 @@ public class ServerConnection {
         CompletableFuture<ResponseMessage<T>> future =
             new CompletableFuture<>();
 
-        // Add a 10-second timeout to prevent indefinite hangs
         future
-            .orTimeout(10, java.util.concurrent.TimeUnit.SECONDS)
+            .orTimeout(10, TimeUnit.SECONDS)
             .whenComplete((res, ex) -> {
                 if (ex instanceof java.util.concurrent.TimeoutException) {
                     System.err.println(
                         "DEBUG: Request timed out for ID: " + requestId
                     );
-                    pendingRequests.remove(request.getRequestId());
+                    pendingRequests.remove(requestId);
                 }
             });
 
@@ -265,27 +262,17 @@ public class ServerConnection {
                     );
                 }
             } else if (root.has("type")) {
-                // Push notification
                 MessageType pushType = MessageType.valueOf(
                     root.get("type").asText()
                 );
                 Consumer<String> handler = pushHandlers.get(pushType);
-                if (handler != null) {
-                    handler.accept(json);
-                }
-            } else {
-                System.out.println(
-                    "DEBUG: Response has no requestId or type: " + json
-                );
+                if (handler != null) handler.accept(json);
             }
         } catch (Exception e) {
             System.err.println(
                 "DEBUG: Error processing server response: " + e.getMessage()
             );
-            e.printStackTrace();
-            if (pending != null) {
-                pending.future.completeExceptionally(e);
-            }
+            if (pending != null) pending.future.completeExceptionally(e);
         }
     }
 
