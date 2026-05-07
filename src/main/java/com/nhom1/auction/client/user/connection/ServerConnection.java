@@ -60,16 +60,26 @@ public class ServerConnection {
     }
 
     private ServerConnection() {
-        DateTimeFormatter flexibleDateTimeFormatter = new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd")
-            .optionalStart().appendLiteral('T').optionalEnd()
-            .optionalStart().appendLiteral(' ').optionalEnd()
-            .appendPattern("HH:mm:ss")
-            .optionalStart().appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true).optionalEnd()
-            .toFormatter();
+        DateTimeFormatter flexibleDateTimeFormatter =
+            new DateTimeFormatterBuilder()
+                .appendPattern("yyyy-MM-dd")
+                .optionalStart()
+                .appendLiteral('T')
+                .optionalEnd()
+                .optionalStart()
+                .appendLiteral(' ')
+                .optionalEnd()
+                .appendPattern("HH:mm:ss")
+                .optionalStart()
+                .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
+                .optionalEnd()
+                .toFormatter();
 
         JavaTimeModule javaTimeModule = new JavaTimeModule();
-        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(flexibleDateTimeFormatter));
+        javaTimeModule.addDeserializer(
+            LocalDateTime.class,
+            new LocalDateTimeDeserializer(flexibleDateTimeFormatter)
+        );
         mapper.registerModule(javaTimeModule);
         connect();
     }
@@ -88,15 +98,21 @@ public class ServerConnection {
             String host = "autorack.proxy.rlwy.net"; int port = 17896; // CLOUD (Railway)
             // ---------------------------
 
-            System.out.println("Server: Connecting to " + host + ":" + port + "...");
+            System.out.println(
+                "Server: Connecting to " + host + ":" + port + "..."
+            );
             this.socket = new Socket(host, port);
             this.out = new PrintWriter(socket.getOutputStream(), true);
-            this.in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            this.in = new BufferedReader(
+                new InputStreamReader(socket.getInputStream())
+            );
             this.connected = true;
             System.out.println("Connected to Auction Server.");
             startListening();
         } catch (IOException e) {
-            System.err.println("Could not connect to server: " + e.getMessage());
+            System.err.println(
+                "Could not connect to server: " + e.getMessage()
+            );
             this.connected = false;
         }
     }
