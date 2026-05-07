@@ -10,6 +10,7 @@ import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
+import com.nhom1.auction.server.auth.UserRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,12 +37,15 @@ public class BidServiceTest {
     @Mock
     private ItemRepository itemRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     private BidService bidService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        bidService = new BidService(bidRepository, auctionRepository, itemRepository);
+        bidService = new BidService(bidRepository, auctionRepository, itemRepository, userRepository);
     }
 
     @Test
