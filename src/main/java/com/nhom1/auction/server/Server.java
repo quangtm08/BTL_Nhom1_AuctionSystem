@@ -17,7 +17,7 @@ public class Server {
     public static void main(String[] args) {
         // Use the PORT environment variable if available (required for Railway deployment)
         String portEnv = System.getenv("PORT");
-        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 17896;
+        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 16743;
         int clientCount = 0;
         ExecutorService pool = Executors.newFixedThreadPool(10);
 
