@@ -107,7 +107,9 @@ public class AuctionDetailController {
 
 	private void handleBidUpdatePush(String json) {
 		try {
-			JsonNode node = mapper.readTree(json);
+			JsonNode root = mapper.readTree(json);
+			JsonNode node = root.has("payload") && !root.get("payload").isNull()
+				? root.get("payload") : root;
 			String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
 
 			String currentAuctionId = AppContext.getSelectedAuctionId();
@@ -116,8 +118,8 @@ public class AuctionDetailController {
 			}
 
 			BigDecimal newBid = null;
-			if (node.has("currentHighestBid")) {
-				newBid = new BigDecimal(node.get("currentHighestBid").asText());
+			if (node.has("newHighestBid")) {
+				newBid = new BigDecimal(node.get("newHighestBid").asText());
 			}
 
 			final BigDecimal bid = newBid;

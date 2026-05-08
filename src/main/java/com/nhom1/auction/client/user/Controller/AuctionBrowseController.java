@@ -61,61 +61,70 @@ public class AuctionBrowseController {
                 System.err.println("No user logged in!");
             }
 
-            biddingService
-                .listAuctions()
-                .thenCombine(biddingService
-                    .getMyBids()
-                    .exceptionally(ex -> {
-                        String msg =
-                            ex != null && ex.getCause() != null
-                                ? ex.getCause().getMessage()
-                                : "Unknown error";
-                        System.err.println(
-                            "Failed to load my bids for explore filter: " + msg
-                        );
-                        return new com.nhom1.auction.common.dto.bidding.MyBidsResponse(
-                            Collections.emptyList()
-                        );
-                    }), (auctionsResp, myBidsResp) -> {
-                    if (
-                        auctionsResp == null ||
-                        auctionsResp.getAuctions() == null
-                    ) {
-                        return java.util.List.<AuctionSummaryDto>of();
-                    }
-                    Set<String> myBidAuctionIds =
-                        myBidsResp == null || myBidsResp.getBids() == null
-                            ? Set.of()
-                            : myBidsResp
-                                  .getBids()
-                                  .stream()
-                                  .map(b -> b.getAuctionId())
-                                  .filter(id -> id != null && !id.isBlank())
-                                  .collect(Collectors.toSet());
+            loadAuctions();
 
-                    return auctionsResp
-                        .getAuctions()
-                        .stream()
-                        .filter(
-                            a ->
-                                a.getId() != null &&
-                                !myBidAuctionIds.contains(a.getId())
-                        )
-                        .toList();
-                })
-                .thenAccept(filtered ->
-                    Platform.runLater(() -> handleFilteredAuctions(filtered))
-                )
-                .exceptionally(ex -> {
-                    Platform.runLater(() ->
-                        showError(
-                            "Load auctions failed",
-                            ex.getCause().getMessage()
-                        )
-                    );
-                    return null;
-                });
+            ServerConnection.getInstance().registerPushHandler(
+                MessageType.PUSH_NEW_AUCTION,
+                json -> Platform.runLater(this::loadAuctions)
+            );
         }
+    }
+
+    private void loadAuctions() {
+        biddingService
+            .listAuctions()
+            .thenCombine(biddingService
+                .getMyBids()
+                .exceptionally(ex -> {
+                    String msg =
+                        ex != null && ex.getCause() != null
+                            ? ex.getCause().getMessage()
+                            : "Unknown error";
+                    System.err.println(
+                        "Failed to load my bids for explore filter: " + msg
+                    );
+                    return new com.nhom1.auction.common.dto.bidding.MyBidsResponse(
+                        Collections.emptyList()
+                    );
+                }), (auctionsResp, myBidsResp) -> {
+                if (
+                    auctionsResp == null ||
+                    auctionsResp.getAuctions() == null
+                ) {
+                    return java.util.List.<AuctionSummaryDto>of();
+                }
+                Set<String> myBidAuctionIds =
+                    myBidsResp == null || myBidsResp.getBids() == null
+                        ? Set.of()
+                        : myBidsResp
+                              .getBids()
+                              .stream()
+                              .map(b -> b.getAuctionId())
+                              .filter(id -> id != null && !id.isBlank())
+                              .collect(Collectors.toSet());
+
+                return auctionsResp
+                    .getAuctions()
+                    .stream()
+                    .filter(
+                        a ->
+                            a.getId() != null &&
+                            !myBidAuctionIds.contains(a.getId())
+                    )
+                    .toList();
+            })
+            .thenAccept(filtered ->
+                Platform.runLater(() -> handleFilteredAuctions(filtered))
+            )
+            .exceptionally(ex -> {
+                Platform.runLater(() ->
+                    showError(
+                        "Load auctions failed",
+                        ex.getCause().getMessage()
+                    )
+                );
+                return null;
+            });
     }
 
     private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
