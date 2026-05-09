@@ -4,8 +4,12 @@ package com.nhom1.auction.client.user.controller;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
@@ -37,6 +41,9 @@ import javafx.scene.layout.VBox;
 
 public class MyListingsController {
 
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final Map<String, Label> priceLabels = new HashMap<>();
+
     @FXML
     private Label activeListingsLabel;
     @FXML
@@ -45,6 +52,10 @@ public class MyListingsController {
     @FXML
     private void initialize() {
         loadMyListings();
+        ServerConnection.getInstance().registerPushHandler(
+            MessageType.PUSH_BID_UPDATE,
+            json -> handleBidUpdatePush(json)
+        );
     }
 
     @FXML
@@ -109,6 +120,7 @@ public class MyListingsController {
     }
 
     private void renderListings(List<AuctionSummaryDto> listings) {
+        priceLabels.clear();
         listingsGrid.getChildren().clear();
         for (int i = 0; i < listings.size(); i++) {
             AuctionSummaryDto dto = listings.get(i);
@@ -145,6 +157,7 @@ public class MyListingsController {
         Label price = new Label(formatMoney(dto.getCurrentHighestBid()));
         price.getStyleClass().add("card-price-text");
         price.setMaxWidth(Double.MAX_VALUE);
+        if (dto.getId() != null) priceLabels.put(dto.getId(), price);
         Label bidsText = new Label("Listing");
         bidsText.getStyleClass().add("card-sub-text");
         left.getChildren().addAll(currentBidText, price, bidsText);
@@ -182,6 +195,26 @@ public class MyListingsController {
 
         card.getChildren().addAll(topRow, priceRow, sep, actions);
         return card;
+    }
+
+    private void handleBidUpdatePush(String json) {
+        try {
+            JsonNode root = mapper.readTree(json);
+            JsonNode node = root.has("payload") && !root.get("payload").isNull()
+                ? root.get("payload") : root;
+            String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
+            if (auctionId == null) return;
+            BigDecimal newBid = node.has("newHighestBid")
+                ? new BigDecimal(node.get("newHighestBid").asText()) : null;
+            if (newBid == null) return;
+            final BigDecimal bid = newBid;
+            Platform.runLater(() -> {
+                Label label = priceLabels.get(auctionId);
+                if (label != null) label.setText(formatMoney(bid));
+            });
+        } catch (Exception e) {
+            System.err.println("Error parsing bid update push: " + e.getMessage());
+        }
     }
 
     private void renderMessage(String message) {

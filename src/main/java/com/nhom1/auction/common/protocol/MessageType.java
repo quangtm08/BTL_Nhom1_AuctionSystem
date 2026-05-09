@@ -24,4 +24,5 @@ public enum MessageType {
     PUSH_BID_UPDATE,
     PUSH_AUCTION_ENDED,
     PUSH_NEW_AUCTION,
+    PUSH_AUCTION_DELETED,
 }

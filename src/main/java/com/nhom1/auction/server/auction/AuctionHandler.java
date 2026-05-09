@@ -99,6 +99,7 @@ public class AuctionHandler {
     private ResponseMessage<String> handleDeleteAuction(String requestId, String sellerId, String auctionId) {
         try {
             auctionService.deleteAuction(sellerId, auctionId);
+            notificationService.broadcastAuctionDeleted(auctionId);
             return new ResponseMessage<>(requestId, "Deleted");
         } catch (Exception e) {
             return new ResponseMessage<>(requestId, "DELETE_AUCTION_FAILED", e.getMessage());
