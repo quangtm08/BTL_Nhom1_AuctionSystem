@@ -204,10 +204,10 @@ public class MyListingsController {
                 ? root.get("payload") : root;
             String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
             if (auctionId == null) return;
-            java.math.BigDecimal newBid = node.has("newHighestBid")
-                ? new java.math.BigDecimal(node.get("newHighestBid").asText()) : null;
+            BigDecimal newBid = node.has("newHighestBid")
+                ? new BigDecimal(node.get("newHighestBid").asText()) : null;
             if (newBid == null) return;
-            final java.math.BigDecimal bid = newBid;
+            final BigDecimal bid = newBid;
             Platform.runLater(() -> {
                 Label label = priceLabels.get(auctionId);
                 if (label != null) label.setText(formatMoney(bid));
