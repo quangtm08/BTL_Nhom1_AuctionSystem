@@ -69,7 +69,7 @@ public class AuctionManagementController {
         addLabel(0, row, nvl(auction.getItemName()), "table-text-main");
 
         // Category (DTO không có → để "-")
-        addLabel(1, row, "-", "table-text-sub");
+        addLabel(1, row, nvl(auction.getItemCategory()), "table-text-sub");
 
         // Seller
         addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");

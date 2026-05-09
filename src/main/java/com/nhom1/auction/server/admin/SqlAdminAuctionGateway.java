@@ -21,6 +21,7 @@ public List<AuctionSummaryDto> findAllAuctionSummaries() {
     String sql = """
             SELECT a.id,
                    i.name AS item_name,
+                   i.category AS category,
                    a.starting_price,
                    a.current_highest_bid,
                    a.start_time,
@@ -60,7 +61,7 @@ public List<AuctionSummaryDto> findAllAuctionSummaries() {
 
     @Override
     public boolean cancelAuctionById(String auctionId) {
-        String sql = "UPDATE auctions SET status='CANCELED', updated_at=datetime('now') WHERE id=? AND status IN ('OPEN','RUNNING')";
+        String sql = "UPDATE auctions SET status='FINISHED', updated_at=datetime('now') WHERE id=? AND status IN ('OPEN','RUNNING')";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, auctionId);
             return ps.executeUpdate() > 0;

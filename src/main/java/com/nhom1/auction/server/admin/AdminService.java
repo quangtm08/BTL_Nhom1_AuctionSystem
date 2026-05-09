@@ -114,7 +114,7 @@ public class AdminService {
         if (!changed) {
             throw new ValidationException("Auction not found or cannot be canceled in current status.");
         }
-        return "CANCELED";
+        return "FINISHED";
     }
 
     public AdminAuctionListResponse getAllAuctions(String callerId)
