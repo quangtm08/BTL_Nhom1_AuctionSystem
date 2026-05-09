@@ -61,6 +61,11 @@ public class NotificationService {
         sendPush(MessageType.PUSH_NEW_AUCTION, payload);
     }
 
+    public void broadcastAuctionDeleted(String auctionId) {
+        java.util.Map<String, Object> payload = java.util.Map.of("auctionId", auctionId);
+        sendPush(MessageType.PUSH_AUCTION_DELETED, payload);
+    }
+
     private void sendPush(MessageType type, Object payload) {
         try {
             ResponseMessage<Object> responseMessage = new ResponseMessage<>();

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +44,7 @@ public class AuctionBrowseController {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final Map<String, Label> priceLabels = new HashMap<>();
+    private List<AuctionSummaryDto> currentAuctions = new ArrayList<>();
 
     @FXML
     private Label welcomeLabel;
@@ -79,6 +81,11 @@ public class AuctionBrowseController {
             ServerConnection.getInstance().registerPushHandler(
                 MessageType.PUSH_BID_UPDATE,
                 json -> handleBidUpdatePush(json)
+            );
+
+            ServerConnection.getInstance().registerPushHandler(
+                MessageType.PUSH_AUCTION_DELETED,
+                json -> handleAuctionDeletedPush(json)
             );
         }
     }
@@ -163,12 +170,30 @@ public class AuctionBrowseController {
     private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
         if (auctions == null || auctions.isEmpty()) return;
 
+        currentAuctions = new ArrayList<>(auctions);
         renderAuctionCards(auctions);
 
         String firstAuctionId = auctions.get(0).getId();
         com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(
             firstAuctionId
         );
+    }
+
+    private void handleAuctionDeletedPush(String json) {
+        try {
+            JsonNode root = mapper.readTree(json);
+            JsonNode node = root.has("payload") && !root.get("payload").isNull()
+                ? root.get("payload") : root;
+            String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
+            if (auctionId == null) return;
+            final String id = auctionId;
+            Platform.runLater(() -> {
+                currentAuctions.removeIf(a -> id.equals(a.getId()));
+                renderAuctionCards(currentAuctions);
+            });
+        } catch (Exception e) {
+            System.err.println("Error parsing auction deleted push: " + e.getMessage());
+        }
     }
 
     /**
