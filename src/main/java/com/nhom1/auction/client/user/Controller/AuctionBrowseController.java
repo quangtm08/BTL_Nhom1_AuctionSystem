@@ -5,10 +5,15 @@ import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
@@ -35,6 +40,9 @@ public class AuctionBrowseController {
 
     private final BiddingClientService biddingService =
         new BiddingClientService();
+
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final Map<String, Label> priceLabels = new HashMap<>();
 
     @FXML
     private Label welcomeLabel;
@@ -67,6 +75,31 @@ public class AuctionBrowseController {
                 MessageType.PUSH_NEW_AUCTION,
                 json -> Platform.runLater(this::loadAuctions)
             );
+
+            ServerConnection.getInstance().registerPushHandler(
+                MessageType.PUSH_BID_UPDATE,
+                json -> handleBidUpdatePush(json)
+            );
+        }
+    }
+
+    private void handleBidUpdatePush(String json) {
+        try {
+            JsonNode root = mapper.readTree(json);
+            JsonNode node = root.has("payload") && !root.get("payload").isNull()
+                ? root.get("payload") : root;
+            String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
+            if (auctionId == null) return;
+            BigDecimal newBid = node.has("newHighestBid")
+                ? new BigDecimal(node.get("newHighestBid").asText()) : null;
+            if (newBid == null) return;
+            final BigDecimal bid = newBid;
+            Platform.runLater(() -> {
+                Label label = priceLabels.get(auctionId);
+                if (label != null) label.setText(formatMoney(bid));
+            });
+        } catch (Exception e) {
+            System.err.println("Error parsing bid update push: " + e.getMessage());
         }
     }
 
@@ -142,6 +175,7 @@ public class AuctionBrowseController {
      * Render auction cards dynamically in the GridPane
      */
     private void renderAuctionCards(List<AuctionSummaryDto> auctions) {
+        priceLabels.clear();
         cardsGridPane.getChildren().clear();
 
         for (int i = 0; i < auctions.size(); i++) {
@@ -198,6 +232,7 @@ public class AuctionBrowseController {
         Label priceValue = new Label(formatMoney(dto.getCurrentHighestBid()));
         priceValue.getStyleClass().add("card-price-text");
         priceValue.setMaxWidth(Double.MAX_VALUE);
+        if (dto.getId() != null) priceLabels.put(dto.getId(), priceValue);
         priceSection.getChildren().addAll(priceLabel, priceValue);
 
         VBox timeSection = new VBox(2);
