@@ -168,10 +168,17 @@ public class AuctionBrowseController {
     }
 
     private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
-        if (auctions == null || auctions.isEmpty()) return;
+        if (auctions == null || auctions.isEmpty()) {
+            currentAuctions = new ArrayList<>();
+            renderAuctionCards(currentAuctions);
+            com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(
+                null
+            );
+            return;
+        }
 
         currentAuctions = new ArrayList<>(auctions);
-        renderAuctionCards(auctions);
+        renderAuctionCards(currentAuctions);
 
         String firstAuctionId = auctions.get(0).getId();
         com.nhom1.auction.common.utils.AppContext.setSelectedAuctionId(
