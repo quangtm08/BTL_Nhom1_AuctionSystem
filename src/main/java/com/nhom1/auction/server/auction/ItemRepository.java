@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -50,10 +51,11 @@ public class ItemRepository {
                 created_at TIMESTAMP NOT NULL,
                 updated_at TIMESTAMP NOT NULL,
                 FOREIGN KEY (seller_id) REFERENCES users(id)
-            )
+            );
+            CREATE INDEX IF NOT EXISTS idx_items_seller_id ON items(seller_id);
             """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.execute();
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize items table", e);
         }
@@ -66,10 +68,10 @@ public class ItemRepository {
      * - Based on category, fills additional columns (Art/Electronics/Vehicle)
      */
 
-     
+
     public void save(Item item, UUID sellerId) {
         String sql = """
-            INSERT INTO items(id, seller_id, name, description, category, condition, 
+            INSERT INTO items(id, seller_id, name, description, category, condition,
                               brand, warranty_months, artist, era, production_year, fuel_type,
                               created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -136,7 +138,7 @@ public class ItemRepository {
      * Find an Item by ID and reconstruct the correct subtype based on category column.
      */
     public Optional<Item> findById(UUID id) {
-        String sql = "SELECT * FROM items WHERE id = CAST(? AS VARCHAR)";
+        String sql = "SELECT * FROM items WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, id.toString());
 
