@@ -21,13 +21,15 @@ public class AutoBidRepository {
     private void ensureTable() {
         String sql = """
             CREATE TABLE IF NOT EXISTS auto_bid_configs (
-                auction_id TEXT NOT NULL,
-                bidder_id TEXT NOT NULL,
-                max_amount REAL NOT NULL,
-                increment_amount REAL NOT NULL,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                PRIMARY KEY (auction_id, bidder_id)
+                auction_id VARCHAR(36) NOT NULL,
+                bidder_id VARCHAR(36) NOT NULL,
+                max_amount DECIMAL(19, 2) NOT NULL,
+                increment_amount DECIMAL(19, 2) NOT NULL,
+                created_at TIMESTAMP NOT NULL,
+                updated_at TIMESTAMP NOT NULL,
+                PRIMARY KEY (auction_id, bidder_id),
+                FOREIGN KEY (auction_id) REFERENCES auctions(id),
+                FOREIGN KEY (bidder_id) REFERENCES users(id)
             )
             """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -38,7 +40,7 @@ public class AutoBidRepository {
     }
 
     public void save(AutoBidConfig config) {
-        // PostgreSQL compatible UPSERT
+        // PostgreSQL and SQLite 3.24+ compatible UPSERT
         String sql = """
             INSERT INTO auto_bid_configs (
                 auction_id, bidder_id, max_amount, increment_amount, created_at, updated_at
@@ -52,8 +54,8 @@ public class AutoBidRepository {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, config.getAuctionId().toString());
             ps.setString(2, config.getBidderId().toString());
-            ps.setDouble(3, config.getMaxAmount().doubleValue());
-            ps.setDouble(4, config.getIncrement().doubleValue());
+            ps.setBigDecimal(3, config.getMaxAmount());
+            ps.setBigDecimal(4, config.getIncrement());
             ps.setTimestamp(5, now);
             ps.setTimestamp(6, now);
             ps.executeUpdate();
@@ -76,8 +78,8 @@ public class AutoBidRepository {
                     result.add(new AutoBidConfig(
                         UUID.fromString(rs.getString("auction_id")),
                         UUID.fromString(rs.getString("bidder_id")),
-                        BigDecimal.valueOf(rs.getDouble("max_amount")),
-                        BigDecimal.valueOf(rs.getDouble("increment_amount"))
+                        rs.getBigDecimal("max_amount"),
+                        rs.getBigDecimal("increment_amount")
                     ));
                 }
             }

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,10 +36,12 @@ public class BidRepository {
 				created_at TIMESTAMP NOT NULL,
 				FOREIGN KEY (auction_id) REFERENCES auctions(id),
 				FOREIGN KEY (bidder_id) REFERENCES users(id)
-			)
+			);
+			CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids(auction_id);
+			CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);
 			""";
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			ps.execute();
+		try (Statement stmt = connection.createStatement()) {
+			stmt.execute(sql);
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to initialize bids table", e);
 		}
@@ -67,7 +70,7 @@ public class BidRepository {
 		String sql = """
 			SELECT id, auction_id, bidder_id, amount, bid_type, created_at
 			FROM bids
-			WHERE auction_id = CAST(? AS VARCHAR)
+			WHERE auction_id = ?
 			ORDER BY created_at ASC
 			""";
 
@@ -98,14 +101,14 @@ public class BidRepository {
 				   a.end_time,
 				   a.highest_bidder_id
 			FROM bids b
-			JOIN auctions a ON CAST(a.id AS VARCHAR) = CAST(b.auction_id AS VARCHAR)
-			JOIN items i ON CAST(i.id AS VARCHAR) = CAST(a.item_id AS VARCHAR)
-			WHERE b.bidder_id = CAST(? AS VARCHAR)
+			JOIN auctions a ON a.id = b.auction_id
+			JOIN items i ON i.id = a.item_id
+			WHERE b.bidder_id = ?
 			  AND b.created_at = (
 			    SELECT MAX(b2.created_at)
 			    FROM bids b2
-			    WHERE CAST(b2.bidder_id AS VARCHAR) = CAST(? AS VARCHAR)
-			      AND CAST(b2.auction_id AS VARCHAR) = CAST(b.auction_id AS VARCHAR)
+			    WHERE b2.bidder_id = ?
+			      AND b2.auction_id = b.auction_id
 			  )
 			ORDER BY b.created_at DESC
 			""";
@@ -145,7 +148,7 @@ public class BidRepository {
 		String sql = """
 			SELECT MAX(created_at) AS last_bid_time
 			FROM bids
-			WHERE auction_id = CAST(? AS VARCHAR)
+			WHERE auction_id = ?
 			""";
 // PreparedStatement handles SQL injection and ensures proper resource management
 		try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -167,7 +170,7 @@ public class BidRepository {
 	}
 
     public int deleteByBidderId(UUID bidderId) {
-        String sql = "DELETE FROM bids WHERE bidder_id = CAST(? AS VARCHAR)";
+        String sql = "DELETE FROM bids WHERE bidder_id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, bidderId.toString());
             return ps.executeUpdate();
@@ -177,7 +180,7 @@ public class BidRepository {
     }
 
     public int deleteByAuctionId(UUID auctionId) {
-        String sql = "DELETE FROM bids WHERE auction_id = CAST(? AS VARCHAR)";
+        String sql = "DELETE FROM bids WHERE auction_id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, auctionId.toString());
             return ps.executeUpdate();

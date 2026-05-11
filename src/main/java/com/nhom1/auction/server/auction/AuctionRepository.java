@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -42,10 +43,13 @@ public class AuctionRepository {
                 updated_at TIMESTAMP NOT NULL,
                 FOREIGN KEY (item_id) REFERENCES items(id),
                 FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
-            )
+            );
+            CREATE INDEX IF NOT EXISTS idx_auctions_item_id ON auctions(item_id);
+            CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);
+            CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id);
             """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.execute();
+        try (Statement stmt = connection.createStatement()) {
+            stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize auctions table", e);
         }
@@ -99,8 +103,8 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
-                    WHERE a.id = CAST(? AS VARCHAR)
+                    JOIN items i ON a.item_id = i.id
+                    WHERE a.id = ?
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -124,7 +128,7 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
+                    JOIN items i ON a.item_id = i.id
                 """;
 
         List<Auction> list = new ArrayList<>();
@@ -148,8 +152,8 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
-                    WHERE i.seller_id = CAST(? AS VARCHAR)
+                    JOIN items i ON a.item_id = i.id
+                    WHERE i.seller_id = ?
                 """;
 
         List<Auction> list = new ArrayList<>();
@@ -175,8 +179,8 @@ public class AuctionRepository {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
-                    JOIN items i ON CAST(a.item_id AS VARCHAR) = CAST(i.id AS VARCHAR)
-                    WHERE a.item_id = CAST(? AS VARCHAR)
+                    JOIN items i ON a.item_id = i.id
+                    WHERE a.item_id = ?
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
@@ -200,7 +204,7 @@ public class AuctionRepository {
         String sql = """
                     UPDATE auctions
                     SET status = ?, updated_at = ?
-                    WHERE id = CAST(? AS VARCHAR)
+                    WHERE id = ?
                 """;
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {

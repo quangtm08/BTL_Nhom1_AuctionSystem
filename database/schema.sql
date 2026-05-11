@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS items (
     FOREIGN KEY (seller_id) REFERENCES users(id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_items_seller_id ON items(seller_id);
+
 -- 3. Table: auctions
 CREATE TABLE IF NOT EXISTS auctions (
     id VARCHAR(36) PRIMARY KEY,
@@ -46,6 +48,10 @@ CREATE TABLE IF NOT EXISTS auctions (
     FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_auctions_item_id ON auctions(item_id);
+CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);
+CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id);
+
 -- 4. Table: bids
 CREATE TABLE IF NOT EXISTS bids (
     id VARCHAR(36) PRIMARY KEY,
@@ -57,6 +63,9 @@ CREATE TABLE IF NOT EXISTS bids (
     FOREIGN KEY (auction_id) REFERENCES auctions(id),
     FOREIGN KEY (bidder_id) REFERENCES users(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids(auction_id);
+CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);
 
 -- 5. Table: auto_bid_configs
 CREATE TABLE IF NOT EXISTS auto_bid_configs (
