@@ -15,14 +15,13 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.connection.ServerConnection;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
-import com.nhom1.auction.common.utils.AppContext;
 import com.nhom1.auction.common.protocol.MessageType;
+import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -80,16 +79,15 @@ public class AuctionBrowseController {
 
             ServerConnection.getInstance().registerPushHandler(
                 MessageType.PUSH_BID_UPDATE,
-                json -> handleBidUpdatePush(json)
+                json -> Platform.runLater(() -> handleBidUpdatePush(json))
             );
 
             ServerConnection.getInstance().registerPushHandler(
                 MessageType.PUSH_AUCTION_DELETED,
-                json -> handleAuctionDeletedPush(json)
+                json -> Platform.runLater(() -> handleAuctionDeletedPush(json))   
             );
         }
     }
-
     private void handleBidUpdatePush(String json) {
         try {
             JsonNode root = mapper.readTree(json);
