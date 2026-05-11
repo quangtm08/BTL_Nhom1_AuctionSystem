@@ -98,7 +98,7 @@ public class ServerConnection {
         int cloudPort = 16743;
         String localHost = "localhost";
         int localPort = 12345;
-        int timeoutMillis = 2000;
+        int timeoutMillis = 6000;
 
         try {
             System.out.println(

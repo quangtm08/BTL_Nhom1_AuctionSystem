@@ -27,10 +27,6 @@
 
                 <Label fx:id="lblTitle" text="Loading..." styleClass="title"/>
 
-                <Label fx:id="lblShortDesc" text=""
-                       wrapText="true"
-                       styleClass="description"/>
-
                 <!-- SELLER -->
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <Circle radius="20" styleClass="avatar"/>
@@ -75,10 +71,14 @@
         </HBox>
 
         <!-- ===== BOTTOM ===== -->
-        <HBox spacing="20">
+        <GridPane hgap="20">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="60" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="40" hgrow="ALWAYS"/>
+            </columnConstraints>
 
             <!-- DESCRIPTION -->
-            <VBox styleClass="card" HBox.hgrow="ALWAYS">
+            <VBox styleClass="card" GridPane.columnIndex="0">
                 <Label text="Description" styleClass="section-title"/>
                 <Label fx:id="lblDescription" wrapText="true"
                        text=""
@@ -86,15 +86,15 @@
             </VBox>
 
             <!-- BIDDINGS -->
-            <VBox styleClass="card" prefWidth="300">
+            <VBox styleClass="card" GridPane.columnIndex="1">
                 <Label text="Biddings" styleClass="section-title"/>
-                <ScrollPane fitToWidth="true" prefHeight="260"
+                <ScrollPane fitToWidth="true" prefHeight="400"
                             styleClass="bid-history-scroll" VBox.vgrow="ALWAYS">
                     <VBox fx:id="bidHistoryList" spacing="8"/>
                 </ScrollPane>
             </VBox>
 
-        </HBox>
+        </GridPane>
 
     </VBox>
 </ScrollPane>
