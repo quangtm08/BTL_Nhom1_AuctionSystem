@@ -71,10 +71,14 @@
         </HBox>
 
         <!-- ===== BOTTOM ===== -->
-        <HBox spacing="20">
+        <GridPane hgap="20">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="60" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="40" hgrow="ALWAYS"/>
+            </columnConstraints>
 
             <!-- DESCRIPTION -->
-            <VBox styleClass="card" prefWidth="300">
+            <VBox styleClass="card" GridPane.columnIndex="0">
                 <Label text="Description" styleClass="section-title"/>
                 <Label fx:id="lblDescription" wrapText="true"
                        text=""
@@ -82,7 +86,7 @@
             </VBox>
 
             <!-- BIDDINGS -->
-            <VBox styleClass="card" HBox.hgrow="ALWAYS">
+            <VBox styleClass="card" GridPane.columnIndex="1">
                 <Label text="Biddings" styleClass="section-title"/>
                 <ScrollPane fitToWidth="true" prefHeight="400"
                             styleClass="bid-history-scroll" VBox.vgrow="ALWAYS">
@@ -90,7 +94,7 @@
                 </ScrollPane>
             </VBox>
 
-        </HBox>
+        </GridPane>
 
     </VBox>
 </ScrollPane>
