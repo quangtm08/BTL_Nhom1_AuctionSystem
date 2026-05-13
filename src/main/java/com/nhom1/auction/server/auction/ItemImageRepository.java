@@ -42,7 +42,9 @@ public class ItemImageRepository {
             }
             ps.executeBatch();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save item images", e);
+            throw new RuntimeException(
+                    "Failed to save item images: " + e.getMessage() + " (SQLState=" + e.getSQLState() + ")",
+                    e);
         }
     }
 
