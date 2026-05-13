@@ -18,6 +18,8 @@ public enum MessageType {
     ADMIN_DELETE_USER,
     ADMIN_LIST_AUCTIONS,
     ADMIN_CANCEL_AUCTION,
+    LIST_PENDING_PAYMENTS,
+    LIST_PAYMENT_HISTORY,
     PROCESS_PAYMENT,
 
     //Push notifications
