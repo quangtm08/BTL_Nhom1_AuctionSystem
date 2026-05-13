@@ -1,6 +1,8 @@
 package com.nhom1.auction.server.bidding;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -29,25 +31,57 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final Connection connection;
 
-    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository, ItemRepository itemRepository, UserRepository userRepository) {
-	this.bidRepository = bidRepository;
-	this.auctionRepository = auctionRepository;
-	this.itemRepository = itemRepository;
-	this.userRepository = userRepository;
+    public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
+                      ItemRepository itemRepository, UserRepository userRepository,
+                      Connection connection) {
+        this.bidRepository = bidRepository;
+        this.auctionRepository = auctionRepository;
+        this.itemRepository = itemRepository;
+        this.userRepository = userRepository;
+        this.connection = connection;
     }
 
-    public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount)
-	    throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, ValidationException {
-	Auction auction = auctionRepository.findById(auctionId)
-		.orElseThrow(() -> new ValidationException("Auction not found"));
-// Validate auction status
-	BidTransaction bidTransaction = auction.placeBid(bidderId, amount, BidType.MANUAL, LocalDateTime.now());
-//
-	bidRepository.save(bidTransaction);
-	auctionRepository.updateHighestBid(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
-//
-	return bidTransaction;
+    public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType)
+            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, ValidationException {
+        synchronized (connection) {
+            try {
+                connection.setAutoCommit(false);
+
+                Auction auction = auctionRepository.findById(auctionId)
+                        .orElseThrow(() -> new ValidationException("Auction not found"));
+
+                BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
+
+                bidRepository.save(bidTransaction);
+                auctionRepository.updateHighestBid(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
+
+                connection.commit();
+                return bidTransaction;
+
+            } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | ValidationException e) {
+                safeRollback();
+                throw e;
+            } catch (Exception e) {
+                safeRollback();
+                throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
+            } finally {
+                safeSetAutoCommit(true);
+            }
+        }
+    }
+
+    private void safeRollback() {
+        try { connection.rollback(); } catch (SQLException ex) {
+            System.err.println("BidService: rollback failed: " + ex.getMessage());
+        }
+    }
+
+    private void safeSetAutoCommit(boolean value) {
+        try { connection.setAutoCommit(value); } catch (SQLException ex) {
+            System.err.println("BidService: setAutoCommit failed: " + ex.getMessage());
+        }
     }
 
     public AuctionDetailDto getAuctionDetail(UUID auctionId) throws ValidationException {

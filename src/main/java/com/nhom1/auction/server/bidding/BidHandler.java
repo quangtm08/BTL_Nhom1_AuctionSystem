@@ -17,8 +17,10 @@ import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
+import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.server.automation.AutoBidService;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 public class BidHandler {
@@ -78,21 +80,25 @@ public class BidHandler {
 			UUID auctionId = UUID.fromString(request.getAuctionId());
 			UUID bidderId = UUID.fromString(request.getBidderId());
 
-			BidTransaction bidTransaction = bidService.placeBid(bidderId, auctionId, request.getBidAmount());
+			BidTransaction bidTransaction = bidService.placeBid(bidderId, auctionId, request.getBidAmount(), BidType.MANUAL);
 			notificationService.broadcastBidUpdate(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
-
-			// Trigger auto-bidders to respond to this manual bid
-			if (autoBidService != null) {
-				autoBidService.triggerAutoBids(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
-			}
 
 			PlaceBidResponse response = new PlaceBidResponse(
 					bidTransaction.getId().toString(),
 					bidTransaction.getBidderId().toString(),
 					bidTransaction.getAmount().toPlainString()
 			);
+			ResponseMessage<PlaceBidResponse> result = new ResponseMessage<>(requestId, response);
 
-			return new ResponseMessage<>(requestId, response);
+			// Fire-and-forget: schedule auto-bids asynchronously, do NOT block
+			if (autoBidService != null) {
+				final UUID finalAuctionId = auctionId;
+				final BigDecimal finalAmount = bidTransaction.getAmount();
+				final UUID finalBidderId = bidTransaction.getBidderId();
+				autoBidService.scheduleAutoBids(finalAuctionId, finalAmount, finalBidderId);
+			}
+
+			return result;
 		} catch (InvalidBidException e) {
 			return new ResponseMessage<>(requestId, "INVALID_BID", e.getMessage());
 		} catch (AuctionClosedException e) {
