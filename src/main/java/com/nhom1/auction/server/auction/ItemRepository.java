@@ -129,7 +129,6 @@ public class ItemRepository {
 
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException("Failed to save item", e);
         }
     }
@@ -148,7 +147,7 @@ public class ItemRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find item by id", e);
         }
         return Optional.empty();
     }

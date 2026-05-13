@@ -56,7 +56,7 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find all users", e);
         }
         return users;
     }
@@ -79,7 +79,7 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find user by identifier", e);
         }
         return Optional.empty();
     }
@@ -98,7 +98,7 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find user by id", e);
         }
         return Optional.empty();
     }
@@ -112,9 +112,8 @@ public class UserRepository {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to check username existence", e);
         }
-        return false;
     }
 
     // Take in email. Returns boolean if user exists
@@ -126,9 +125,8 @@ public class UserRepository {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to check email existence", e);
         }
-        return false;
     }
 
     // Take in user object. Convert it to SQL fields and save user to database
@@ -145,7 +143,7 @@ public class UserRepository {
             ps.setTimestamp(7, java.sql.Timestamp.valueOf(user.getUpdatedAt()));
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to save user", e);
         }
     }
 
