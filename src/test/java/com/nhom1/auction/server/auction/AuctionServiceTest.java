@@ -30,6 +30,9 @@ public class AuctionServiceTest {
     private ItemRepository itemRepository;
 
     @Mock
+    private ItemImageRepository itemImageRepository;
+
+    @Mock
     private Connection connection;
 
     private AuctionService auctionService;
@@ -37,7 +40,7 @@ public class AuctionServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        auctionService = new AuctionService(auctionRepository, itemRepository, connection);
+        auctionService = new AuctionService(auctionRepository, itemRepository, itemImageRepository, connection);
     }
 
     @Test
