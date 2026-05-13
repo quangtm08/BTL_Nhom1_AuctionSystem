@@ -1,6 +1,7 @@
 package com.nhom1.auction.server.bidding;
 
 import com.nhom1.auction.common.entity.BidTransaction;
+import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.server.automation.BidGateway;
 
 import java.math.BigDecimal;
@@ -20,7 +21,7 @@ public class BidGatewayImpl implements BidGateway {
     @Override
     public BidTransaction placeAutoBid(UUID bidderId, UUID auctionId, BigDecimal amount) {
         try {
-            return bidService.placeBid(bidderId, auctionId, amount);
+            return bidService.placeBid(bidderId, auctionId, amount, BidType.AUTO);
         } catch (Exception e) {
             throw new RuntimeException("Failed to place auto bid", e);
         }
