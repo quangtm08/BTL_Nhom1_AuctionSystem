@@ -2,6 +2,7 @@
 
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.shape.*?>
 <?import javafx.geometry.Insets?>
 
@@ -20,7 +21,9 @@
         <HBox spacing="30" styleClass="main-card">
 
             <!-- LEFT IMAGE -->
-            <Pane styleClass="main-image"/>
+            <StackPane styleClass="main-image">
+                <ImageView fx:id="itemImageView" preserveRatio="true" fitWidth="420" fitHeight="320"/>
+            </StackPane>
 
             <!-- RIGHT CONTENT -->
             <VBox spacing="15" HBox.hgrow="ALWAYS">

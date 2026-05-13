@@ -25,6 +25,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -67,6 +69,9 @@ public class AuctionDetailController {
 
 	@FXML
 	private Label lblDescription;
+
+	@FXML
+	private ImageView itemImageView;
 
 	@FXML
 	public void initialize() {
@@ -159,6 +164,14 @@ public class AuctionDetailController {
 			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
 		if (bidHistoryList != null && dto.getBidHistory() != null)
 			renderBidHistory(dto.getBidHistory());
+		if (itemImageView != null) {
+			String imageUrl = (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) ? dto.getImageUrls().get(0) : null;
+			if (imageUrl != null && !imageUrl.isBlank()) {
+				itemImageView.setImage(new Image(imageUrl, true));
+			} else {
+				itemImageView.setImage(null);
+			}
+		}
 	}
 
 	private void renderBidHistory(List<BidSummaryDto> history) {

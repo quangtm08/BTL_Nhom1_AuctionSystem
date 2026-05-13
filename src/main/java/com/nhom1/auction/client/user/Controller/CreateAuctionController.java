@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import com.nhom1.auction.client.AppNavigator;
@@ -32,6 +33,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 public class CreateAuctionController {
+    private final List<File> selectedImageFiles = new ArrayList<>();
 
     @FXML
     private ComboBox<ItemCategory> categoryComboBox;
@@ -108,9 +110,12 @@ public class CreateAuctionController {
         List<File> selectedFiles = fileChooser.showOpenMultipleDialog(window);
 
         if (selectedFiles == null || selectedFiles.isEmpty()) {
+            selectedImageFiles.clear();
             uploadCountLabel.setText("No photo selected");
             return;
         }
+        selectedImageFiles.clear();
+        selectedImageFiles.addAll(selectedFiles);
 
         String selectedNames = selectedFiles.stream()
                 .limit(2)
@@ -165,6 +170,9 @@ public class CreateAuctionController {
         dto.setStartingPrice(startingBid);
         dto.setStartTime(startTime);
         dto.setEndTime(endTime);
+        dto.setImageUrls(selectedImageFiles.stream()
+                .map(file -> file.toURI().toString())
+                .toList());
 
         // Minimal category-specific defaults to satisfy backend validation
         switch (dto.getCategory()) {
