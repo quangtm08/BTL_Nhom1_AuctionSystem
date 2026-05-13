@@ -12,7 +12,7 @@ public class DBConnection {
     private DBConnection() {
     }
 
-    public static Connection getConnection() {
+    public static synchronized Connection getConnection() {
         if (connection == null) {
             try {
                 String pgHost = System.getenv("PGHOST");
