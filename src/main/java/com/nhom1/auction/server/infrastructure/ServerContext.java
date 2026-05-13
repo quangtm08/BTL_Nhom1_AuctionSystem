@@ -62,8 +62,9 @@ public class ServerContext {
         com.nhom1.auction.server.automation.BidGateway bidGateway = 
             new com.nhom1.auction.server.bidding.BidGatewayImpl(bidComponents.bidService, bidRepository);
 
-        com.nhom1.auction.server.automation.AutoBidService autoBidService = 
-            com.nhom1.auction.server.automation.AutoBidModule.init(this.connection, this.router, bidGateway);
+        com.nhom1.auction.server.automation.AutoBidService autoBidService =
+            com.nhom1.auction.server.automation.AutoBidModule.init(
+                this.connection, this.router, bidGateway, this.notificationService);
 
         // Resolve circular dependency
         bidComponents.bidHandler.setAutoBidService(autoBidService);

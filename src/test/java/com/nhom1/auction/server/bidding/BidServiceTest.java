@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -40,12 +41,15 @@ public class BidServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private Connection connection;
+
     private BidService bidService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        bidService = new BidService(bidRepository, auctionRepository, itemRepository, userRepository);
+        bidService = new BidService(bidRepository, auctionRepository, itemRepository, userRepository, connection);
     }
 
     @Test
@@ -57,7 +61,7 @@ public class BidServiceTest {
         UUID auctionId = auction.getId();
         when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
 
-        BidTransaction result = bidService.placeBid(bidderId, auctionId, amount);
+        BidTransaction result = bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL);
 
         assertNotNull(result);
         assertEquals(amount, result.getAmount());
@@ -73,7 +77,7 @@ public class BidServiceTest {
         BigDecimal amount = new BigDecimal("150.00");
         when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
 
-        assertThrows(ValidationException.class, () -> bidService.placeBid(bidderId, auctionId, amount));
+        assertThrows(ValidationException.class, () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
     }
 
     @Test

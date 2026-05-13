@@ -28,7 +28,7 @@ public class BidModule {
 			UserRepository userRepository
 	) {
 		BidRepository repository = new BidRepository(connection);
-		BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository);
+		BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository, connection);
 		BidHandler handler = new BidHandler(service, notificationService);
 		handler.register(router);
 
