@@ -1,9 +1,5 @@
 package com.nhom1.auction.client.user.controller;
 
-import com.nhom1.auction.client.user.service.PaymentClientService;
-import com.nhom1.auction.common.dto.payment.PaymentItemDto;
-import com.nhom1.auction.common.dto.payment.PaymentListResponse;
-import com.nhom1.auction.common.dto.payment.ProcessPaymentResponse;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
@@ -11,6 +7,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
+
+import com.nhom1.auction.client.user.service.PaymentClientService;
+import com.nhom1.auction.common.dto.payment.PaymentItemDto;
+import com.nhom1.auction.common.dto.payment.PaymentListResponse;
+import com.nhom1.auction.common.dto.payment.ProcessPaymentResponse;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -196,7 +198,7 @@ public class PaymentController {
     private void handlePaymentSuccess(ProcessPaymentResponse response) {
         feedbackMessage = response != null && response.getMessage() != null
                 ? response.getMessage()
-                : "Payment recorded successfully.");
+                : "Payment recorded successfully.";
         renderFeedback(feedbackMessage, "feedback-banner", "feedback-success");
         reload();
     }
