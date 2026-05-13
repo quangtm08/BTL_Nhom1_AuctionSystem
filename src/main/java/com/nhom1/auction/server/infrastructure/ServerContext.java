@@ -7,6 +7,7 @@ import com.nhom1.auction.server.admin.SqlAdminAuctionGateway;
 import com.nhom1.auction.server.auction.AuctionModule;
 import com.nhom1.auction.server.auth.AuthModule;
 import com.nhom1.auction.server.auth.UserRepository;
+import com.nhom1.auction.server.payment.PaymentModule;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
 
 public class ServerContext {
@@ -81,6 +82,13 @@ public class ServerContext {
             bidRepository,
             new SqlAdminAuctionGateway(this.connection),
             this.connection
+        );
+
+        PaymentModule.init(
+            this.connection,
+            this.router,
+            userRepository,
+            auctionRepos.auctionRepository
         );
 
         System.out.println("========================================");
