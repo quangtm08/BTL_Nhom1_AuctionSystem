@@ -56,3 +56,6 @@ build/
 
 # Personal documents
 personal-docs
+
+# Local secrets
+config.local.properties
