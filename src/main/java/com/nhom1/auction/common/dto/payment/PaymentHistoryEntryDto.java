@@ -3,18 +3,21 @@ package com.nhom1.auction.common.dto.payment;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-public class ProcessPaymentResponse {
+public class PaymentHistoryEntryDto {
     private String auctionId;
+    private String itemName;
     private BigDecimal amount;
-    private String status;
+    private String direction;
     private LocalDateTime paidAt;
 
-    public ProcessPaymentResponse() {}
+    public PaymentHistoryEntryDto() {
+    }
 
-    public ProcessPaymentResponse(String auctionId, BigDecimal amount, String status, LocalDateTime paidAt) {
+    public PaymentHistoryEntryDto(String auctionId, String itemName, BigDecimal amount, String direction, LocalDateTime paidAt) {
         this.auctionId = auctionId;
+        this.itemName = itemName;
         this.amount = amount;
-        this.status = status;
+        this.direction = direction;
         this.paidAt = paidAt;
     }
 
@@ -26,6 +29,14 @@ public class ProcessPaymentResponse {
         this.auctionId = auctionId;
     }
 
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
     public BigDecimal getAmount() {
         return amount;
     }
@@ -34,12 +45,12 @@ public class ProcessPaymentResponse {
         this.amount = amount;
     }
 
-    public String getStatus() {
-        return status;
+    public String getDirection() {
+        return direction;
     }
 
-    public void setStatus(String status) {
-        this.status = status;
+    public void setDirection(String direction) {
+        this.direction = direction;
     }
 
     public LocalDateTime getPaidAt() {
