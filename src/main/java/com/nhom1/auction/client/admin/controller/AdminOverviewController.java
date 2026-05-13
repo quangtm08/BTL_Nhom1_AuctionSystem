@@ -10,7 +10,6 @@ import com.nhom1.auction.common.enums.UserRole;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -35,14 +34,12 @@ public class AdminOverviewController {
         lblRecentActivityTime.setText("now");
         lblSessionStatus.setText("Loading...");
 
-        // Keep both requests independent, then merge the successful payloads
-        // into one snapshot for a single UI render pass.
         adminClientService.listUsers()
                 .thenCombine(adminClientService.listAllAuctions(), DashboardSnapshot::new)
                 .thenAccept(snapshot -> Platform.runLater(() ->
                         renderDashboard(snapshot.usersResponse(), snapshot.auctionsResponse())))
                 .exceptionally(ex -> {
-                    Platform.runLater(() -> renderFailure(ex));
+                    Platform.runLater(() -> renderFailure(AdminClientService.extractFailure(ex)));
                     return null;
                 });
     }
@@ -51,40 +48,25 @@ public class AdminOverviewController {
         List<UserSummaryDto> users = usersResponse.getUsers() != null ? usersResponse.getUsers() : List.of();
         List<AuctionSummaryDto> auctions = auctionsResponse.getAuctions() != null ? auctionsResponse.getAuctions() : List.of();
 
-        int totalUsers = users.size();
         long adminCount = users.stream().filter(user -> user.getRole() == UserRole.ADMIN).count();
-        long memberCount = Math.max(0, totalUsers - adminCount);
+        long memberCount = Math.max(0, users.size() - adminCount);
+        long openAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.OPEN).count();
+        long runningAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.RUNNING).count();
+        long finishedAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.FINISHED).count();
+        long paidAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.PAID).count();
+        long canceledAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.CANCELED).count();
 
-        int totalAuctions = auctions.size();
-        long runningAuctions = auctions.stream()
-                .filter(auction -> AuctionStatus.RUNNING.name().equals(auction.getStatus()))
-                .count();
-        long finishedAuctions = auctions.stream()
-                .filter(auction -> AuctionStatus.FINISHED.name().equals(auction.getStatus()))
-                .count();
-
-        lblTotalUsersValue.setText(String.valueOf(totalUsers));
-        lblTotalUsersBreakdown.setText(memberCount + " Members | " + adminCount + " Admins");
+        lblTotalUsersValue.setText(String.valueOf(users.size()));
+        lblTotalUsersBreakdown.setText(memberCount + " members | " + adminCount + " admins");
         lblActiveAuctionsValue.setText(String.valueOf(runningAuctions));
-        lblActiveAuctionsBreakdown.setText(totalAuctions + " total | " + finishedAuctions + " finished");
-
-        // Team overlap note:
-        // Recent activity feed is not defined in the current DTO/contracts, so we
-        // use a safe summary placeholder until a real activity source exists.
-        lblRecentActivityBody.setText("Loaded " + totalUsers + " users and " + totalAuctions
-                + " auctions from the admin endpoints.");
+        lblActiveAuctionsBreakdown.setText(openAuctions + " open | " + finishedAuctions + " finished | " + paidAuctions + " paid");
+        lblRecentActivityBody.setText("Loaded " + users.size() + " users and " + auctions.size()
+                + " auctions. Current mix: " + runningAuctions + " running, " + canceledAuctions + " canceled.");
         lblRecentActivityTime.setText("live");
-
-        // Team overlap note:
-        // Current shared DTOs are enough for counts but not for a richer chart
-        // model, so the dashboard keeps this area textual for now.
-        lblSessionStatus.setText(runningAuctions + " running / " + finishedAuctions + " finished");
+        lblSessionStatus.setText(runningAuctions + " running / " + finishedAuctions + " finished / " + paidAuctions + " paid");
     }
 
-    private void renderFailure(Throwable ex) {
-        // Reuse the shared future-unwrapping helper so UI error text reflects
-        // the original validation/server exception instead of CompletionException.
-        Throwable cause = AdminClientService.extractFailure(ex);
+    private void renderFailure(Throwable cause) {
         lblTotalUsersValue.setText("--");
         lblTotalUsersBreakdown.setText("Could not load users");
         lblActiveAuctionsValue.setText("--");

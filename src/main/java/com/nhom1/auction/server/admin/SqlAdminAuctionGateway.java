@@ -21,6 +21,7 @@ public List<AuctionSummaryDto> findAllAuctionSummaries() {
     String sql = """
             SELECT a.id,
                    i.name AS item_name,
+                   i.category AS category,
                    a.starting_price,
                    a.current_highest_bid,
                    a.start_time,
@@ -52,7 +53,7 @@ public List<AuctionSummaryDto> findAllAuctionSummaries() {
         }
 
     } catch (Exception e) {
-        e.printStackTrace();
+        throw new RuntimeException("Failed to list auction summaries", e);
     }
 
     return result;
@@ -65,8 +66,7 @@ public List<AuctionSummaryDto> findAllAuctionSummaries() {
             ps.setString(1, auctionId);
             return ps.executeUpdate() > 0;
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            throw new RuntimeException("Failed to cancel auction", e);
         }
     }
 }

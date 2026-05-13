@@ -5,6 +5,9 @@ import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
+import com.nhom1.auction.common.exception.NotFoundException;
+import com.nhom1.auction.common.exception.UnauthorizedActionException;
+import com.nhom1.auction.common.exception.ValidationException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +44,7 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testCreateAuction_ValidRequest_SavesItemAndAuctionReturnsAuction() {
+    public void testCreateAuction_ValidRequest_SavesItemAndAuctionReturnsAuction() throws ValidationException {
         String sellerId = UUID.randomUUID().toString();
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
 
@@ -59,14 +62,14 @@ public class AuctionServiceTest {
     public void testCreateAuction_NullSellerId_Throws() {
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.createAuction(null, dto));
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(null, dto));
     }
 
     @Test
     public void testCreateAuction_InvalidSellerId_Throws() {
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.createAuction("invalid", dto));
+        assertThrows(ValidationException.class, () -> auctionService.createAuction("invalid", dto));
     }
 
     @Test
@@ -75,7 +78,7 @@ public class AuctionServiceTest {
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
         dto.setStartingPrice(BigDecimal.ZERO);
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.createAuction(sellerId, dto));
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
     }
 
     @Test
@@ -84,7 +87,7 @@ public class AuctionServiceTest {
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
         dto.setStartingPrice(new BigDecimal("-10.00"));
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.createAuction(sellerId, dto));
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
     }
 
     @Test
@@ -93,7 +96,7 @@ public class AuctionServiceTest {
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
         dto.setEndTime(dto.getStartTime().minusHours(1));
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.createAuction(sellerId, dto));
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
     }
 
     @Test
@@ -102,7 +105,7 @@ public class AuctionServiceTest {
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
         dto.setSellerId(UUID.randomUUID().toString());
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.createAuction(sellerId, dto));
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
     }
 
     @Test
@@ -137,7 +140,7 @@ public class AuctionServiceTest {
         when(auction.getSellerId()).thenReturn(UUID.randomUUID()); // different seller
         when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
+        assertThrows(UnauthorizedActionException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
     }
 
     @Test
@@ -147,7 +150,7 @@ public class AuctionServiceTest {
         UUID parsedAuctionId = UUID.fromString(auctionId);
         when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
+        assertThrows(NotFoundException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
     }
 
     private CreateAuctionRequest createValidCreateAuctionRequest() {
