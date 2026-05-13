@@ -23,8 +23,6 @@ public class AppNavigator {
         try {
             if (view == currentView) return;
 
-            currentView = view;
-
             FXMLLoader loader = new FXMLLoader(
                 AppNavigator.class.getResource(view.getFxml())
             );
@@ -32,8 +30,10 @@ public class AppNavigator {
             Parent root = loader.load();
 
             mainController.setView(root);
+            currentView = view;
 
         } catch (Exception e) {
+            System.err.println("Failed to navigate to view: " + view + " (" + view.getFxml() + ")");
             e.printStackTrace();
         }
     }
