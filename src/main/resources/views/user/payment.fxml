@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?import java.net.URL?> 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.shape.Circle?> 
-<?import javafx.geometry.Insets?> 
-<?import javafx.scene.control.*?> 
-<?import javafx.scene.layout.*?> 
-<?import javafx.scene.shape.Circle?>
 
 
 <BorderPane fx:id="root" stylesheets="@/css/client/payment.css, @/css/client/common_ui.css" 
@@ -21,78 +15,51 @@
    <center>
       <ScrollPane fitToWidth="true" styleClass="main-scroll-pane">
          <content>
-            <VBox spacing="20.0" styleClass="main-content">
+            <VBox spacing="26.0" styleClass="main-content">
                <children>
                   <Label styleClass="header-title" text="Cha-ching $" />
-                  
-                  <Label styleClass="section-label" text="TO PAY" />
-                  
-                  <VBox alignment="CENTER_LEFT" spacing="12.0" styleClass="payment-card">
+                  <Label fx:id="lblFeedback" styleClass="feedback-banner" text="Loading payments..." wrapText="true" />
+
+                  <HBox spacing="24.0">
                      <children>
-                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="stat-card">
                            <children>
-                              <VBox HBox.hgrow="ALWAYS">
-                                 <children>
-                                    <Label styleClass="item-name" text="Fender Black 1 Guitar" />
-                                    <Label styleClass="item-category" text="Art &amp; Collectibles" />
-                                 </children>
-                              </VBox>
-                              <Label styleClass="price-tag" text="\$5000" />
-                              <Button styleClass="btn-primary" text="Pay now" />
+                              <Label text="Pending to settle" styleClass="stat-label" />
+                              <Label fx:id="lblPendingAmount" text="$0" styleClass="stat-value" />
+                              <Label fx:id="lblPendingSummary" styleClass="stat-subtext" text="0 pending" />
                            </children>
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        </VBox>
+                        <VBox HBox.hgrow="ALWAYS" spacing="6.0" styleClass="stat-card">
                            <children>
-                              <VBox HBox.hgrow="ALWAYS">
-                                 <children>
-                                    <Label styleClass="item-name" text="Fender Black 1 Guitar" />
-                                    <Label styleClass="item-category" text="Art &amp; Collectibles" />
-                                 </children>
-                              </VBox>
-                              <Label styleClass="price-tag" text="\$5000" />
-                              <Button styleClass="btn-primary" text="Pay now" />
+                              <Label text="Completed payments" styleClass="stat-label" />
+                              <Label fx:id="lblHistoryAmount" text="$0" styleClass="stat-value" />
+                              <Label fx:id="lblHistorySummary" styleClass="stat-subtext" text="0 completed" />
                            </children>
-                        </HBox>
+                        </VBox>
                      </children>
-                  </VBox>
+                  </HBox>
+                  
+                  <HBox alignment="CENTER_LEFT">
+                     <children>
+                        <Label styleClass="section-label" text="TO PAY" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label styleClass="section-helper" text="Win an auction and settle it here." />
+                     </children>
+                  </HBox>
+                  
+                  <VBox fx:id="pendingContainer" alignment="CENTER_LEFT" spacing="12.0" styleClass="payment-card" />
 
                   <Separator styleClass="content-divider" />
 
-                  <Label styleClass="section-label" text="HISTORY" />
-                  
-                  <HBox alignment="CENTER_LEFT" styleClass="history-row">
+                  <HBox alignment="CENTER_LEFT">
                      <children>
-                        <VBox HBox.hgrow="ALWAYS">
-                           <children>
-                              <Label styleClass="history-name" text="Gibson Les Paul 1970" />
-                              <Label styleClass="history-date" text="Dec 2, 2024" />
-                           </children>
-                        </VBox>
-                        <VBox alignment="CENTER_RIGHT" spacing="5.0">
-                           <children>
-                              <Label styleClass="badge-pay" text="Pay" />
-                              <Label styleClass="history-price" text="\$3000" />
-                           </children>
-                        </VBox>
+                        <Label styleClass="section-label" text="HISTORY" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label styleClass="section-helper" text="Paid wins are archived here." />
                      </children>
                   </HBox>
                   
-                  <HBox alignment="CENTER_LEFT" styleClass="history-row">
-                     <children>
-                        <VBox HBox.hgrow="ALWAYS">
-                           <children>
-                              <Label styleClass="history-name" text="Gibson Les Paul 1970" />
-                              <Label styleClass="history-date" text="Dec 2, 2024" />
-                           </children>
-                        </VBox>
-                        <VBox alignment="CENTER_RIGHT" spacing="5.0">
-                           <children>
-                              <Label styleClass="badge-receive" text="Receive" />
-                              <Label styleClass="history-price" text="\$3000" />
-                           </children>
-                        </VBox>
-                     </children>
-                  </HBox>
+                  <VBox fx:id="historyContainer" spacing="0.0" styleClass="history-card" />
                </children>
             </VBox>
          </content>
