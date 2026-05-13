@@ -51,6 +51,7 @@ public class ServerContext {
             this.router,
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
+            auctionRepos.itemImageRepository,
             this.notificationService,
             userRepository // Pass UserRepository for user validation in bidding logic
         );

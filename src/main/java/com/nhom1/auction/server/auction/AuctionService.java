@@ -16,11 +16,13 @@ public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final ItemRepository itemRepository;
+    private final ItemImageRepository itemImageRepository;
     private final Connection connection;
 
-    public AuctionService(AuctionRepository auctionRepository, ItemRepository itemRepository, Connection connection) {
+    public AuctionService(AuctionRepository auctionRepository, ItemRepository itemRepository, ItemImageRepository itemImageRepository, Connection connection) {
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
+        this.itemImageRepository = itemImageRepository;
         this.connection = connection;
     }
 
@@ -30,20 +32,33 @@ public class AuctionService {
         UUID parsedSellerId = UUID.fromString(sellerId);
         Item item = createItem(dto);
 
-        itemRepository.save(item, parsedSellerId);
+        try {
+            boolean oldAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                itemRepository.save(item, parsedSellerId);
+                itemImageRepository.saveImageUrls(item.getId(), dto.getImageUrls());
 
-        Auction auction = new Auction(
-                item.getId(),
-                parsedSellerId,
-                dto.getStartingPrice(),
-                dto.getStartTime(),
-                dto.getEndTime()
-        );
-        auctionRepository.save(auction);
-        // Keep the opening price in auction state for listing/display and first-bid validation.
-        auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null);
-
-        return auction;
+                Auction auction = new Auction(
+                        item.getId(),
+                        parsedSellerId,
+                        dto.getStartingPrice(),
+                        dto.getStartTime(),
+                        dto.getEndTime()
+                );
+                auctionRepository.save(auction);
+                auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null);
+                connection.commit();
+                return auction;
+            } catch (Exception ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(oldAutoCommit);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Create auction transaction failed", ex);
+        }
     }
 
     public List<AuctionSummaryDto> getMyListings(String sellerId) {
