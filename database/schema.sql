@@ -80,20 +80,19 @@ CREATE TABLE IF NOT EXISTS auto_bid_configs (
     FOREIGN KEY (bidder_id) REFERENCES users(id)
 );
 
--- 6. Table: item_images (Cloudflare R2 metadata)
+-- 6. Table: item_images (image URLs for auction items)
 CREATE TABLE IF NOT EXISTS item_images (
     id VARCHAR(36) PRIMARY KEY,
     item_id VARCHAR(36) NOT NULL,
     object_key VARCHAR(512) NOT NULL UNIQUE,
     public_url TEXT NOT NULL,
-    content_type VARCHAR(100),
-    file_size BIGINT,
     is_primary BOOLEAN NOT NULL DEFAULT FALSE,
     sort_order INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    FOREIGN KEY (item_id) REFERENCES items(id)
+    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id);
 CREATE INDEX IF NOT EXISTS idx_item_images_is_primary ON item_images(is_primary);
+CREATE INDEX IF NOT EXISTS idx_item_images_item_sort ON item_images(item_id, sort_order);
