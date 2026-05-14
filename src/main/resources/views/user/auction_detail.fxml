@@ -13,7 +13,12 @@
             stylesheets="@/css/client/auction_detail.css, @/css/client/common_ui.css"
             styleClass="root">
 
-    <VBox spacing="30" styleClass="container">
+    <VBox fx:id="loadingBox" spacing="10" alignment="CENTER" styleClass="container">
+        <ProgressIndicator/>
+        <Label text="Loading auction detail..."/>
+    </VBox>
+
+    <VBox fx:id="contentBox" spacing="30" styleClass="container" visible="false" managed="false">
 
         <!-- ===== TOP CARD ===== -->
         <Button text="← Back" styleClass="btn-ghost" fx:id="btnBack"/>
@@ -22,7 +27,7 @@
 
             <!-- LEFT IMAGE -->
             <StackPane styleClass="main-image">
-                <ImageView fx:id="itemImageView" preserveRatio="true" fitWidth="420" fitHeight="320"/>
+                <ImageView fx:id="itemImageView" preserveRatio="false" smooth="true" fitWidth="420" fitHeight="320"/>
             </StackPane>
 
             <!-- RIGHT CONTENT -->

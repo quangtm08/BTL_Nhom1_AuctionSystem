@@ -31,10 +31,16 @@
 
 /* IMAGE */
 .main-image {
-    -fx-pref-width: 280;
-    -fx-pref-height: 220;
+    -fx-pref-width: 420;
+    -fx-pref-height: 320;
+    -fx-min-width: 420;
+    -fx-min-height: 320;
+    -fx-max-width: 420;
+    -fx-max-height: 320;
     -fx-background-color: #cccccc;
     -fx-background-radius: 10;
+    -fx-alignment: center;
+    -fx-padding: 0;
 }
 
 .thumb {
