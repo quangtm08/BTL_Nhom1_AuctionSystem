@@ -4,6 +4,7 @@ import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
@@ -149,7 +150,8 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testCancelAuction_AdminCancels_ReturnsCanceled() throws ValidationException, AuthenticationException, UnauthorizedActionException {
+    public void testCancelAuction_AdminCancels_ReturnsCanceled()
+            throws ValidationException, AuthenticationException, UnauthorizedActionException, InvalidAuctionStateException {
         User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
         String callerId = admin.getId().toString();
         String auctionId = UUID.randomUUID().toString();
@@ -169,5 +171,30 @@ public class AdminServiceTest {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
 
         assertThrows(UnauthorizedActionException.class, () -> adminService.cancelAuction(auctionId, callerId));
+    }
+
+    @Test
+    public void testCancelAuction_InvalidStatus_ThrowsInvalidAuctionStateException() {
+        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+        String callerId = admin.getId().toString();
+        String auctionId = UUID.randomUUID().toString();
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+        when(adminAuctionGateway.cancelAuctionById(auctionId)).thenReturn(false);
+
+        assertThrows(InvalidAuctionStateException.class, () -> adminService.cancelAuction(auctionId, callerId));
+    }
+
+    @Test
+    public void testDeleteUser_RollsBackWhenDeleteFails() throws SQLException {
+        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+        User target = new User("user", "user@example.com", "password", UserRole.USER);
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+        when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(userRepository.deleteById(target.getId())).thenReturn(false);
+
+        assertThrows(ValidationException.class,
+                () -> adminService.deleteUser(target.getId().toString(), admin.getId().toString()));
+        verify(connection).rollback();
     }
 }

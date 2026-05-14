@@ -62,6 +62,6 @@ public class MessageRouterTest {
 
         String result = messageRouter.handleRequest(json);
 
-        assertTrue(result.contains("SERVER_ERROR"));
+        assertTrue(result.contains("INVALID_FORMAT"));
     }
 }

@@ -3,7 +3,6 @@ package com.nhom1.auction.server.admin;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,8 +51,8 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
                         rs.getString("seller_id")));
             }
 
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all auction summaries", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to list auction summaries", e);
         }
 
         return result;
@@ -65,8 +64,8 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, auctionId);
             return ps.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to cancel auction by id", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to cancel auction", e);
         }
     }
 }

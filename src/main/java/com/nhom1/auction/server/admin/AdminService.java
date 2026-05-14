@@ -2,6 +2,7 @@ package com.nhom1.auction.server.admin;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import com.nhom1.auction.common.dto.admin.UserSummaryDto;
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
@@ -93,7 +95,7 @@ public class AdminService {
                 } catch (ValidationException ve) {
                     connection.rollback();
                     throw ve;
-                } catch (RuntimeException re) {
+                } catch (Exception re) {
                     connection.rollback();
                     throw new ValidationException("User deletion failed: " + re.getMessage());
                 } finally {
@@ -107,14 +109,14 @@ public class AdminService {
     }
 
     public String cancelAuction(String auctionId, String callerId)
-            throws ValidationException, AuthenticationException, UnauthorizedActionException {
+            throws ValidationException, AuthenticationException, UnauthorizedActionException, InvalidAuctionStateException {
         requireAdmin(callerId);
         if (auctionId == null || auctionId.isBlank()) {
             throw new ValidationException("Auction ID is required.");
         }
         boolean changed = adminAuctionGateway.cancelAuctionById(auctionId);
         if (!changed) {
-            throw new ValidationException("Auction not found or cannot be canceled in current status.");
+            throw new InvalidAuctionStateException("Auction not found or cannot be canceled in current status.");
         }
         return "CANCELED";
     }
@@ -152,6 +154,7 @@ public class AdminService {
                 user.getId().toString(),
                 user.getUsername(),
                 user.getEmail(),
-                user.getRole());
+                user.getRole(),
+                user.getCreatedAt() != null ? user.getCreatedAt() : LocalDateTime.now());
     }
 }

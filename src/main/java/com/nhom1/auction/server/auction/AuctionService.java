@@ -2,6 +2,7 @@ package com.nhom1.auction.server.auction;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,6 +11,9 @@ import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.ItemCategory;
+import com.nhom1.auction.common.exception.NotFoundException;
+import com.nhom1.auction.common.exception.UnauthorizedActionException;
+import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.factory.ItemFactory;
 
 public class AuctionService {
@@ -24,7 +28,7 @@ public class AuctionService {
         this.connection = connection;
     }
 
-    public Auction createAuction(String sellerId, CreateAuctionRequest dto) {
+    public Auction createAuction(String sellerId, CreateAuctionRequest dto) throws ValidationException {
         validateCreateAuctionRequest(sellerId, dto);
 
         UUID parsedSellerId = UUID.fromString(sellerId);
@@ -62,7 +66,7 @@ public class AuctionService {
         }
     }
 
-    public List<AuctionSummaryDto> getMyListings(String sellerId) {
+    public List<AuctionSummaryDto> getMyListings(String sellerId) throws ValidationException {
         UUID parsedSellerId = parseSellerId(sellerId);
 
         return auctionRepository.findBySellerId(parsedSellerId).stream()
@@ -87,24 +91,25 @@ public class AuctionService {
                 .toList();
     }
 
-    public void deleteAuction(String sellerId, String auctionId) {
+    public void deleteAuction(String sellerId, String auctionId)
+            throws ValidationException, NotFoundException, UnauthorizedActionException {
         UUID parsedSellerId = parseSellerId(sellerId);
         if (auctionId == null || auctionId.isBlank()) {
-            throw new IllegalArgumentException("auctionId must not be blank");
+            throw new ValidationException("auctionId must not be blank");
         }
 
         UUID parsedAuctionId;
         try {
             parsedAuctionId = UUID.fromString(auctionId);
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("auctionId is not a valid UUID", ex);
+            throw new ValidationException("auctionId is not a valid UUID");
         }
 
         Auction auction = auctionRepository.findById(parsedAuctionId)
-                .orElseThrow(() -> new IllegalArgumentException("Auction not found"));
+                .orElseThrow(() -> new NotFoundException("Auction not found"));
 
         if (!parsedSellerId.equals(auction.getSellerId())) {
-            throw new IllegalArgumentException("You are not allowed to delete this auction");
+            throw new UnauthorizedActionException("You are not allowed to delete this auction");
         }
 
         synchronized (connection) {
@@ -127,47 +132,47 @@ public class AuctionService {
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
-            } catch (Exception ex) {
-                throw new RuntimeException("Delete auction transaction failed", ex);
+            } catch (SQLException ex) {
+                throw new RuntimeException("Delete transaction failed", ex);
             }
         }
     }
 
-    private void validateCreateAuctionRequest(String sellerId, CreateAuctionRequest dto) {
+    private void validateCreateAuctionRequest(String sellerId, CreateAuctionRequest dto) throws ValidationException {
         parseSellerId(sellerId);
 
         if (dto == null) {
-            throw new IllegalArgumentException("CreateAuctionRequest must not be null");
+            throw new ValidationException("CreateAuctionRequest must not be null");
         }
         if (dto.getStartingPrice() == null || dto.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("startingPrice must be greater than 0");
+            throw new ValidationException("startingPrice must be greater than 0");
         }
         if (dto.getStartTime() == null || dto.getEndTime() == null) {
-            throw new IllegalArgumentException("startTime and endTime must not be null");
+            throw new ValidationException("startTime and endTime must not be null");
         }
         if (!dto.getEndTime().isAfter(dto.getStartTime())) {
-            throw new IllegalArgumentException("endTime must be after startTime");
+            throw new ValidationException("endTime must be after startTime");
         }
 
         if (dto.getSellerId() != null && !dto.getSellerId().isBlank() && !dto.getSellerId().equals(sellerId)) {
-            throw new IllegalArgumentException("sellerId in request must match sellerId parameter");
+            throw new ValidationException("sellerId in request must match sellerId parameter");
         }
     }
 
-    private UUID parseSellerId(String sellerId) {
+    private UUID parseSellerId(String sellerId) throws ValidationException {
         if (sellerId == null || sellerId.isBlank()) {
-            throw new IllegalArgumentException("sellerId must not be blank");
+            throw new ValidationException("sellerId must not be blank");
         }
         try {
             return UUID.fromString(sellerId);
         } catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("sellerId is not a valid UUID", ex);
+            throw new ValidationException("sellerId is not a valid UUID");
         }
     }
 
-    private Item createItem(CreateAuctionRequest dto) {
+    private Item createItem(CreateAuctionRequest dto) throws ValidationException {
         if (dto.getCategory() == null) {
-            throw new IllegalArgumentException("category must not be null");
+            throw new ValidationException("category must not be null");
         }
 
         ItemCategory category = dto.getCategory();
@@ -182,7 +187,7 @@ public class AuctionService {
             case ELECTRONICS -> {
                 Integer warrantyMonths = dto.getWarrantyMonths();
                 if (warrantyMonths == null) {
-                    throw new IllegalArgumentException("warrantyMonths must not be null for ELECTRONICS");
+                    throw new ValidationException("warrantyMonths must not be null for ELECTRONICS");
                 }
                 yield ItemFactory.createElectronics(
                         dto.getName(),
@@ -195,7 +200,7 @@ public class AuctionService {
             case VEHICLE -> {
                 Integer productionYear = dto.getProductionYear();
                 if (productionYear == null) {
-                    throw new IllegalArgumentException("productionYear must not be null for VEHICLE");
+                    throw new ValidationException("productionYear must not be null for VEHICLE");
                 }
                 yield ItemFactory.createVehicle(
                         dto.getName(),

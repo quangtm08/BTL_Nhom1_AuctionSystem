@@ -1,0 +1,8 @@
+package com.nhom1.auction.common.exception;
+
+public class NotFoundException extends Exception {
+
+    public NotFoundException(String message) {
+        super(message);
+    }
+}

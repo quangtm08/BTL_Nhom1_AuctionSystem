@@ -47,7 +47,7 @@
                         <children>
                             <HBox styleClass="table-header-row" GridPane.columnSpan="5" GridPane.rowIndex="0"/>
                             <Label text="USERNAME" styleClass="table-header-text" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                            <Label text="FULL NAME" styleClass="table-header-text" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                            <Label text="EMAIL" styleClass="table-header-text" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
                             <Label text="STATUS" styleClass="table-header-text" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
                             <Label text="REGISTERED" styleClass="table-header-text" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
                             <Label text="ACTIONS" styleClass="table-header-text" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
