@@ -67,39 +67,41 @@ public class AdminService {
             throw new UnauthorizedActionException("Admin accounts cannot be deleted from this flow.");
         }
 
-        try {
-            boolean oldAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
+        synchronized (connection) {
             try {
-                auctionRepository.clearHighestBidderByUserId(target.getId());
-                bidRepository.deleteByBidderId(target.getId());
+                boolean oldAutoCommit = connection.getAutoCommit();
+                connection.setAutoCommit(false);
+                try {
+                    auctionRepository.clearHighestBidderByUserId(target.getId());
+                    bidRepository.deleteByBidderId(target.getId());
 
-                List<com.nhom1.auction.common.entity.Auction> sellerAuctions = auctionRepository.findBySellerId(target.getId());
-                for (com.nhom1.auction.common.entity.Auction auction : sellerAuctions) {
-                    bidRepository.deleteByAuctionId(auction.getId());
-                    int deletedAuctions = auctionRepository.deleteById(auction.getId());
-                    int deletedItems = itemRepository.deleteById(auction.getItemId());
-                    if (deletedAuctions == 0 || deletedItems == 0) {
-                        throw new ValidationException("Failed to delete auction or item for user.");
+                    List<com.nhom1.auction.common.entity.Auction> sellerAuctions = auctionRepository.findBySellerId(target.getId());
+                    for (com.nhom1.auction.common.entity.Auction auction : sellerAuctions) {
+                        bidRepository.deleteByAuctionId(auction.getId());
+                        int deletedAuctions = auctionRepository.deleteById(auction.getId());
+                        int deletedItems = itemRepository.deleteById(auction.getItemId());
+                        if (deletedAuctions == 0 || deletedItems == 0) {
+                            throw new ValidationException("Failed to delete auction or item for user.");
+                        }
                     }
-                }
 
-                boolean deleted = userRepository.deleteById(target.getId());
-                if (!deleted) {
-                    throw new ValidationException("Failed to delete target user.");
+                    boolean deleted = userRepository.deleteById(target.getId());
+                    if (!deleted) {
+                        throw new ValidationException("Failed to delete target user.");
+                    }
+                    connection.commit();
+                } catch (ValidationException ve) {
+                    connection.rollback();
+                    throw ve;
+                } catch (RuntimeException re) {
+                    connection.rollback();
+                    throw new ValidationException("User deletion failed: " + re.getMessage());
+                } finally {
+                    connection.setAutoCommit(oldAutoCommit);
                 }
-                connection.commit();
-            } catch (ValidationException ve) {
-                connection.rollback();
-                throw ve;
-            } catch (RuntimeException re) {
-                connection.rollback();
-                throw new ValidationException("User deletion failed: " + re.getMessage());
-            } finally {
-                connection.setAutoCommit(oldAutoCommit);
+            } catch (SQLException e) {
+                throw new ValidationException("User deletion failed: " + e.getMessage());
             }
-        } catch (SQLException e) {
-            throw new ValidationException("User deletion failed: " + e.getMessage());
         }
         return "DELETED";
     }

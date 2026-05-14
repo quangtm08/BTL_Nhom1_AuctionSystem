@@ -2,7 +2,6 @@ package com.nhom1.auction.server.bidding;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -47,40 +46,34 @@ public class BidService {
             throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, ValidationException {
         synchronized (connection) {
             try {
+                boolean oldAutoCommit = connection.getAutoCommit();
                 connection.setAutoCommit(false);
+                try {
+                    Auction auction = auctionRepository.findById(auctionId)
+                            .orElseThrow(() -> new ValidationException("Auction not found"));
 
-                Auction auction = auctionRepository.findById(auctionId)
-                        .orElseThrow(() -> new ValidationException("Auction not found"));
+                    BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
 
-                BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
+                    bidRepository.save(bidTransaction);
+                    auctionRepository.updateHighestBid(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
 
-                bidRepository.save(bidTransaction);
-                auctionRepository.updateHighestBid(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
+                    connection.commit();
+                    return bidTransaction;
 
-                connection.commit();
-                return bidTransaction;
-
+                } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | ValidationException e) {
+                    connection.rollback();
+                    throw e;
+                } catch (Exception e) {
+                    connection.rollback();
+                    throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
+                } finally {
+                    connection.setAutoCommit(oldAutoCommit);
+                }
             } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | ValidationException e) {
-                safeRollback();
                 throw e;
             } catch (Exception e) {
-                safeRollback();
                 throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
-            } finally {
-                safeSetAutoCommit(true);
             }
-        }
-    }
-
-    private void safeRollback() {
-        try { connection.rollback(); } catch (SQLException ex) {
-            System.err.println("BidService: rollback failed: " + ex.getMessage());
-        }
-    }
-
-    private void safeSetAutoCommit(boolean value) {
-        try { connection.setAutoCommit(value); } catch (SQLException ex) {
-            System.err.println("BidService: setAutoCommit failed: " + ex.getMessage());
         }
     }
 

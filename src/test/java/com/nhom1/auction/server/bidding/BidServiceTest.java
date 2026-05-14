@@ -19,6 +19,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -59,6 +60,7 @@ public class BidServiceTest {
         Auction auction = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"), LocalDateTime.now().minusHours(1), LocalDateTime.now().plusHours(1));
         auction.startAuction();
         UUID auctionId = auction.getId();
+        when(connection.getAutoCommit()).thenReturn(true);
         when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
 
         BidTransaction result = bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL);
@@ -68,16 +70,47 @@ public class BidServiceTest {
         assertEquals(bidderId, result.getBidderId());
         verify(bidRepository).save(any(BidTransaction.class));
         verify(auctionRepository).updateHighestBid(auctionId, amount, bidderId);
+        verify(connection).setAutoCommit(false);
+        verify(connection).commit();
+        verify(connection).setAutoCommit(true);
     }
 
     @Test
-    public void testPlaceBid_AuctionNotFound_ThrowsValidationException() {
+    public void testPlaceBid_AuctionNotFound_ThrowsValidationException() throws SQLException {
         UUID bidderId = UUID.randomUUID();
         UUID auctionId = UUID.randomUUID();
         BigDecimal amount = new BigDecimal("150.00");
+        when(connection.getAutoCommit()).thenReturn(true);
         when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
 
         assertThrows(ValidationException.class, () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
+        verify(connection).rollback();
+        verify(connection).setAutoCommit(true);
+        verify(connection, never()).commit();
+    }
+
+    @Test
+    public void testPlaceBid_UpdateHighestBidFails_RollsBackAndRestoresAutoCommit() throws Exception {
+        UUID bidderId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("150.00");
+        Auction auction = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"),
+                LocalDateTime.now().minusHours(1), LocalDateTime.now().plusHours(1));
+        auction.startAuction();
+        UUID auctionId = auction.getId();
+        when(connection.getAutoCommit()).thenReturn(false);
+        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        doThrow(new RuntimeException("update failed")).when(auctionRepository)
+                .updateHighestBid(eq(auctionId), eq(amount), eq(bidderId));
+
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+                () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
+
+        assertTrue(thrown.getMessage().startsWith("Bid placement failed"));
+        verify(bidRepository).save(any(BidTransaction.class));
+        verify(connection).rollback();
+        verify(connection, times(2)).setAutoCommit(false);
+        verify(connection, never()).setAutoCommit(true);
+        verify(connection, never()).commit();
     }
 
     @Test

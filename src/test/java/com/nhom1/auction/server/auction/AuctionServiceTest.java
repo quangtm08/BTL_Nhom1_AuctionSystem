@@ -41,9 +41,10 @@ public class AuctionServiceTest {
     }
 
     @Test
-    public void testCreateAuction_ValidRequest_SavesItemAndAuctionReturnsAuction() {
+    public void testCreateAuction_ValidRequest_SavesItemAndAuctionReturnsAuction() throws SQLException {
         String sellerId = UUID.randomUUID().toString();
         CreateAuctionRequest dto = createValidCreateAuctionRequest();
+        when(connection.getAutoCommit()).thenReturn(true);
 
         Auction result = auctionService.createAuction(sellerId, dto);
 
@@ -53,6 +54,28 @@ public class AuctionServiceTest {
         verify(itemRepository).save(any(Item.class), eq(UUID.fromString(sellerId)));
         verify(auctionRepository).save(any(Auction.class));
         verify(auctionRepository).updateHighestBid(any(UUID.class), eq(dto.getStartingPrice()), isNull());
+        verify(connection).setAutoCommit(false);
+        verify(connection).commit();
+        verify(connection).setAutoCommit(true);
+    }
+
+    @Test
+    public void testCreateAuction_AuctionSaveFails_RollsBackAndRestoresAutoCommit() throws SQLException {
+        String sellerId = UUID.randomUUID().toString();
+        CreateAuctionRequest dto = createValidCreateAuctionRequest();
+        when(connection.getAutoCommit()).thenReturn(true);
+        doThrow(new RuntimeException("save auction failed")).when(auctionRepository).save(any(Auction.class));
+
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+                () -> auctionService.createAuction(sellerId, dto));
+
+        assertEquals("Create auction transaction failed", thrown.getMessage());
+        verify(itemRepository).save(any(Item.class), eq(UUID.fromString(sellerId)));
+        verify(auctionRepository).save(any(Auction.class));
+        verify(auctionRepository, never()).updateHighestBid(any(UUID.class), any(BigDecimal.class), any());
+        verify(connection).rollback();
+        verify(connection).setAutoCommit(true);
+        verify(connection, never()).commit();
     }
 
     @Test
@@ -126,6 +149,29 @@ public class AuctionServiceTest {
         verify(connection).setAutoCommit(true);
         verify(auctionRepository).deleteById(parsedAuctionId);
         verify(itemRepository).deleteById(any(UUID.class));
+    }
+
+    @Test
+    public void testDeleteAuction_ItemDeleteFails_RollsBackAndRestoresAutoCommit() throws SQLException {
+        String sellerId = UUID.randomUUID().toString();
+        String auctionId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.fromString(auctionId);
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(auctionRepository.deleteById(parsedAuctionId)).thenReturn(1);
+        when(itemRepository.deleteById(any(UUID.class))).thenReturn(0);
+
+        RuntimeException thrown = assertThrows(RuntimeException.class,
+                () -> auctionService.deleteAuction(sellerId, auctionId));
+
+        assertEquals("Delete auction transaction failed", thrown.getMessage());
+        verify(connection).rollback();
+        verify(connection).setAutoCommit(true);
+        verify(connection, never()).commit();
     }
 
     @Test

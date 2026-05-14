@@ -30,20 +30,36 @@ public class AuctionService {
         UUID parsedSellerId = UUID.fromString(sellerId);
         Item item = createItem(dto);
 
-        itemRepository.save(item, parsedSellerId);
+        synchronized (connection) {
+            try {
+                boolean oldAutoCommit = connection.getAutoCommit();
+                connection.setAutoCommit(false);
+                try {
+                    itemRepository.save(item, parsedSellerId);
 
-        Auction auction = new Auction(
-                item.getId(),
-                parsedSellerId,
-                dto.getStartingPrice(),
-                dto.getStartTime(),
-                dto.getEndTime()
-        );
-        auctionRepository.save(auction);
-        // Keep the opening price in auction state for listing/display and first-bid validation.
-        auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null);
+                    Auction auction = new Auction(
+                            item.getId(),
+                            parsedSellerId,
+                            dto.getStartingPrice(),
+                            dto.getStartTime(),
+                            dto.getEndTime()
+                    );
+                    auctionRepository.save(auction);
+                    // Keep the opening price in auction state for listing/display and first-bid validation.
+                    auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null);
 
-        return auction;
+                    connection.commit();
+                    return auction;
+                } catch (Exception ex) {
+                    connection.rollback();
+                    throw ex;
+                } finally {
+                    connection.setAutoCommit(oldAutoCommit);
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException("Create auction transaction failed", ex);
+            }
+        }
     }
 
     public List<AuctionSummaryDto> getMyListings(String sellerId) {
@@ -91,27 +107,29 @@ public class AuctionService {
             throw new IllegalArgumentException("You are not allowed to delete this auction");
         }
 
-        try {
-            boolean oldAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
+        synchronized (connection) {
             try {
-                int deletedAuctions = auctionRepository.deleteById(parsedAuctionId);
-                int deletedItems = itemRepository.deleteById(auction.getItemId());
-                if (deletedAuctions == 0) {
-                    throw new IllegalStateException("Auction was not deleted.");
+                boolean oldAutoCommit = connection.getAutoCommit();
+                connection.setAutoCommit(false);
+                try {
+                    int deletedAuctions = auctionRepository.deleteById(parsedAuctionId);
+                    int deletedItems = itemRepository.deleteById(auction.getItemId());
+                    if (deletedAuctions == 0) {
+                        throw new IllegalStateException("Auction was not deleted.");
+                    }
+                    if (deletedItems == 0) {
+                        throw new IllegalStateException("Item was not deleted.");
+                    }
+                    connection.commit();
+                } catch (Exception ex) {
+                    connection.rollback();
+                    throw ex;
+                } finally {
+                    connection.setAutoCommit(oldAutoCommit);
                 }
-                if (deletedItems == 0) {
-                    throw new IllegalStateException("Item was not deleted.");
-                }
-                connection.commit();
             } catch (Exception ex) {
-                connection.rollback();
-                throw ex;
-            } finally {
-                connection.setAutoCommit(oldAutoCommit);
+                throw new RuntimeException("Delete auction transaction failed", ex);
             }
-        } catch (Exception ex) {
-            throw new RuntimeException("Delete transaction failed", ex);
         }
     }
 

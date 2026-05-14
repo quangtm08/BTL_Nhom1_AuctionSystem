@@ -96,6 +96,27 @@ public class AdminServiceTest {
     }
 
     @Test
+    public void testDeleteUser_BidDeleteFails_RollsBackAndRestoresAutoCommit()
+            throws ValidationException, AuthenticationException, SQLException {
+        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+        User target = new User("user", "user@example.com", "password", UserRole.USER);
+        String callerId = admin.getId().toString();
+        String targetId = target.getId().toString();
+        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+        when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+        when(connection.getAutoCommit()).thenReturn(true);
+        doThrow(new RuntimeException("delete bids failed")).when(bidRepository).deleteByBidderId(target.getId());
+
+        ValidationException thrown = assertThrows(ValidationException.class,
+                () -> adminService.deleteUser(targetId, callerId));
+
+        assertTrue(thrown.getMessage().startsWith("User deletion failed"));
+        verify(connection).rollback();
+        verify(connection).setAutoCommit(true);
+        verify(connection, never()).commit();
+    }
+
+    @Test
     public void testDeleteUser_AdminDeletesSelf_ThrowsUnauthorizedActionException() throws ValidationException, AuthenticationException {
         User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
         String callerId = admin.getId().toString();

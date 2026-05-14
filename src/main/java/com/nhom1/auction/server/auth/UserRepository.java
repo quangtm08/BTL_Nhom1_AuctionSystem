@@ -148,11 +148,13 @@ public class UserRepository {
     }
 
     // Shared dependency point for Binh's admin feature.
-    public boolean deleteById(UUID id) throws SQLException {
+    public boolean deleteById(UUID id) {
         String sql = "DELETE FROM users WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, id.toString());
             return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete user", e);
         }
     }
 
