@@ -8,6 +8,7 @@ import com.nhom1.auction.server.auction.AuctionModule;
 import com.nhom1.auction.server.auth.AuthModule;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
+import com.nhom1.auction.server.payment.PaymentModule;
 
 public class ServerContext {
 
@@ -81,6 +82,13 @@ public class ServerContext {
             bidRepository,
             new SqlAdminAuctionGateway(this.connection),
             this.connection
+        );
+
+        // Payment — depends on Auction infrastructure
+        PaymentModule.init(
+            this.connection,
+            this.router,
+            auctionRepos.auctionRepository
         );
 
         System.out.println("========================================");
