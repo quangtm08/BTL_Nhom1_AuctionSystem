@@ -1,0 +1,98 @@
+package com.nhom1.auction.server.infrastructure;
+
+import com.nhom1.auction.common.exception.AuthenticationException;
+import com.nhom1.auction.common.exception.NotFoundException;
+import com.nhom1.auction.common.exception.ValidationException;
+import com.nhom1.auction.common.protocol.ErrorCode;
+import com.nhom1.auction.common.protocol.ResponseMessage;
+import org.junit.jupiter.api.Test;
+
+import java.sql.SQLException;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class ResponseFactoryTest {
+
+    @Test
+    public void testSuccess_ReturnsSuccessfulResponse() {
+        String requestId = "req-123";
+        String payload = "data";
+        ResponseMessage<String> response = ResponseFactory.success(requestId, payload);
+
+        assertTrue(response.isSuccess());
+        assertEquals(requestId, response.getRequestId());
+        assertEquals(payload, response.getPayload());
+        assertNull(response.getError());
+    }
+
+    @Test
+    public void testInvalidFormat_ReturnsErrorResponse() {
+        String requestId = "req-456";
+        String message = "Bad JSON";
+        ResponseMessage<Object> response = ResponseFactory.invalidFormat(requestId, message);
+
+        assertFalse(response.isSuccess());
+        assertEquals(requestId, response.getRequestId());
+        assertEquals(ErrorCode.INVALID_FORMAT, response.getError().getCode());
+        assertEquals(message, response.getError().getMessage());
+    }
+
+    @Test
+    public void testFromException_ValidationException_MapsToValidationError() {
+        String requestId = "req-789";
+        Exception ex = new ValidationException("Invalid price");
+        ResponseMessage<Object> response = ResponseFactory.fromException(requestId, ex);
+
+        assertFalse(response.isSuccess());
+        assertEquals(ErrorCode.VALIDATION_ERROR, response.getError().getCode());
+        assertEquals("Invalid price", response.getError().getMessage());
+    }
+
+    @Test
+    public void testFromException_AuthenticationException_MapsToAuthenticationFailed() {
+        String requestId = "req-000";
+        Exception ex = new AuthenticationException("Wrong password");
+        ResponseMessage<Object> response = ResponseFactory.fromException(requestId, ex);
+
+        assertFalse(response.isSuccess());
+        assertEquals(ErrorCode.AUTHENTICATION_FAILED, response.getError().getCode());
+        assertEquals("Wrong password", response.getError().getMessage());
+    }
+
+    @Test
+    public void testFromException_NotFoundException_MapsToNotFound() {
+        Exception ex = new NotFoundException("User not found");
+        ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
+
+        assertEquals(ErrorCode.NOT_FOUND, response.getError().getCode());
+    }
+
+    @Test
+    public void testFromException_SQLException_MapsToServerError() {
+        Exception ex = new SQLException("Connection lost");
+        ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
+
+        assertEquals(ErrorCode.SERVER_ERROR, response.getError().getCode());
+        // For SERVER_ERROR, we check if details contains the exception class name
+        assertEquals("SQLException", response.getError().getDetails());
+    }
+
+    @Test
+    public void testFromException_RuntimeException_MapsToServerError() {
+        Exception ex = new RuntimeException("Something went wrong");
+        ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
+
+        assertEquals(ErrorCode.SERVER_ERROR, response.getError().getCode());
+        assertEquals("Something went wrong", response.getError().getMessage());
+    }
+
+    @Test
+    public void testUnwrap_NestedException_ReturnsRootCause() {
+        Exception root = new ValidationException("Root error");
+        Exception wrapper = new RuntimeException("Wrapper", root);
+
+        Throwable result = ResponseFactory.unwrap(wrapper);
+
+        assertEquals(root, result);
+    }
+}

@@ -14,6 +14,7 @@ import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
+import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
@@ -54,7 +55,7 @@ public class AdminService {
     }
 
     public String deleteUser(String targetUserId, String callerId)
-            throws ValidationException, AuthenticationException, UnauthorizedActionException {
+            throws ValidationException, AuthenticationException, UnauthorizedActionException, NotFoundException {
         if (targetUserId == null || targetUserId.isBlank()) {
             throw new ValidationException("Target user ID is required.");
         }
@@ -65,7 +66,7 @@ public class AdminService {
         }
 
         User target = userRepository.findById(parseUserId(targetUserId, "Target user ID"))
-                .orElseThrow(() -> new ValidationException("Target user not found."));
+                .orElseThrow(() -> new NotFoundException("Target user not found."));
         if (target.getRole() == UserRole.ADMIN) {
             throw new UnauthorizedActionException("Admin accounts cannot be deleted from this flow.");
         }
@@ -84,26 +85,29 @@ public class AdminService {
                         int deletedAuctions = auctionRepository.deleteById(auction.getId());
                         int deletedItems = itemRepository.deleteById(auction.getItemId());
                         if (deletedAuctions == 0 || deletedItems == 0) {
-                            throw new ValidationException("Failed to delete auction or item for user.");
+                            throw new IllegalStateException("Failed to delete auction or item for user.");
                         }
                     }
 
                     boolean deleted = userRepository.deleteById(target.getId());
                     if (!deleted) {
-                        throw new ValidationException("Failed to delete target user.");
+                        throw new IllegalStateException("Failed to delete target user.");
                     }
                     connection.commit();
-                } catch (ValidationException ve) {
+                } catch (IllegalStateException ise) {
                     connection.rollback();
-                    throw ve;
-                } catch (Exception re) {
+                    throw ise;
+                } catch (RuntimeException re) {
                     connection.rollback();
-                    throw new ValidationException("User deletion failed: " + re.getMessage());
+                    throw new RuntimeException("User deletion failed", re);
+                } catch (SQLException se) {
+                    connection.rollback();
+                    throw se;
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
             } catch (SQLException e) {
-                throw new ValidationException("User deletion failed: " + e.getMessage());
+                throw new RuntimeException("User deletion failed", e);
             }
         }
         return "DELETED";
@@ -115,6 +119,7 @@ public class AdminService {
         if (auctionId == null || auctionId.isBlank()) {
             throw new ValidationException("Auction ID is required.");
         }
+        parseUserId(auctionId, "Auction ID");
         boolean changed = adminAuctionGateway.cancelAuctionById(auctionId);
         if (!changed) {
             throw new InvalidAuctionStateException("Auction not found or cannot be canceled in current status.");

@@ -20,7 +20,6 @@ import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
-import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
@@ -44,8 +43,8 @@ public class BidService {
     }
 
     public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType)
-            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, ValidationException,
-            NotFoundException, IllegalStateException {
+            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, NotFoundException,
+            IllegalStateException {
         synchronized (connection) {
             try {
                 boolean oldAutoCommit = connection.getAutoCommit();
@@ -80,7 +79,7 @@ public class BidService {
     }
 
     public AuctionDetailDto getAuctionDetail(UUID auctionId)
-        throws ValidationException, IllegalStateException, NotFoundException {
+        throws IllegalStateException, NotFoundException {
     	Auction auction = auctionRepository.findById(auctionId)
     		.orElseThrow(() -> new NotFoundException("Auction not found"));
 

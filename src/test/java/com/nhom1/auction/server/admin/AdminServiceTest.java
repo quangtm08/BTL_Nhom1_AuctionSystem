@@ -5,6 +5,7 @@ import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
+import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
@@ -78,7 +79,8 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testDeleteUser_AdminDeletesNormalUser_DeletesSuccessfully() throws ValidationException, AuthenticationException, UnauthorizedActionException, SQLException {
+    public void testDeleteUser_AdminDeletesNormalUser_DeletesSuccessfully()
+            throws ValidationException, AuthenticationException, UnauthorizedActionException, NotFoundException, SQLException {
         User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
         User target = new User("user", "user@example.com", "password", UserRole.USER);
         String callerId = admin.getId().toString();
@@ -108,10 +110,11 @@ public class AdminServiceTest {
         when(connection.getAutoCommit()).thenReturn(true);
         doThrow(new RuntimeException("delete bids failed")).when(bidRepository).deleteByBidderId(target.getId());
 
-        ValidationException thrown = assertThrows(ValidationException.class,
+        RuntimeException thrown = assertThrows(RuntimeException.class,
                 () -> adminService.deleteUser(targetId, callerId));
 
-        assertTrue(thrown.getMessage().startsWith("User deletion failed"));
+        assertEquals("User deletion failed", thrown.getMessage());
+        assertEquals("delete bids failed", thrown.getCause().getMessage());
         verify(connection).rollback();
         verify(connection).setAutoCommit(true);
         verify(connection, never()).commit();
@@ -139,14 +142,14 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testDeleteUser_TargetNotFound_ThrowsValidationException() throws ValidationException, AuthenticationException {
+    public void testDeleteUser_TargetNotFound_ThrowsNotFoundException() throws ValidationException, AuthenticationException {
         User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
         String callerId = admin.getId().toString();
         String targetId = UUID.randomUUID().toString();
         when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
         when(userRepository.findById(UUID.fromString(targetId))).thenReturn(Optional.empty());
 
-        assertThrows(ValidationException.class, () -> adminService.deleteUser(targetId, callerId));
+        assertThrows(NotFoundException.class, () -> adminService.deleteUser(targetId, callerId));
     }
 
     @Test
@@ -193,7 +196,7 @@ public class AdminServiceTest {
         when(connection.getAutoCommit()).thenReturn(true);
         when(userRepository.deleteById(target.getId())).thenReturn(false);
 
-        assertThrows(ValidationException.class,
+        assertThrows(IllegalStateException.class,
                 () -> adminService.deleteUser(target.getId().toString(), admin.getId().toString()));
         verify(connection).rollback();
     }
