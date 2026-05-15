@@ -9,6 +9,7 @@ import java.util.UUID;
 import com.nhom1.auction.common.dto.admin.AdminAuctionListResponse;
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
 import com.nhom1.auction.common.dto.admin.UserSummaryDto;
+import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
@@ -77,8 +78,8 @@ public class AdminService {
                     auctionRepository.clearHighestBidderByUserId(target.getId());
                     bidRepository.deleteByBidderId(target.getId());
 
-                    List<com.nhom1.auction.common.entity.Auction> sellerAuctions = auctionRepository.findBySellerId(target.getId());
-                    for (com.nhom1.auction.common.entity.Auction auction : sellerAuctions) {
+                    List<Auction> sellerAuctions = auctionRepository.findBySellerId(target.getId());
+                    for (Auction auction : sellerAuctions) {
                         bidRepository.deleteByAuctionId(auction.getId());
                         int deletedAuctions = auctionRepository.deleteById(auction.getId());
                         int deletedItems = itemRepository.deleteById(auction.getItemId());

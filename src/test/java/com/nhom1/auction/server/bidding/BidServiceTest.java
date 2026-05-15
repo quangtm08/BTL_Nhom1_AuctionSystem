@@ -7,6 +7,7 @@ import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
+import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
@@ -76,14 +77,14 @@ public class BidServiceTest {
     }
 
     @Test
-    public void testPlaceBid_AuctionNotFound_ThrowsValidationException() throws SQLException {
+    public void testPlaceBid_AuctionNotFound_ThrowsNotFoundException() throws SQLException {
         UUID bidderId = UUID.randomUUID();
         UUID auctionId = UUID.randomUUID();
         BigDecimal amount = new BigDecimal("150.00");
         when(connection.getAutoCommit()).thenReturn(true);
         when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
 
-        assertThrows(ValidationException.class, () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
+        assertThrows(NotFoundException.class, () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
         verify(connection).rollback();
         verify(connection).setAutoCommit(true);
         verify(connection, never()).commit();
@@ -146,10 +147,10 @@ public class BidServiceTest {
     }
 
     @Test
-    public void testGetAuctionDetail_AuctionNotFound_ThrowsValidationException() {
+    public void testGetAuctionDetail_AuctionNotFound_ThrowsNotFoundException() {
         UUID auctionId = UUID.randomUUID();
         when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
 
-        assertThrows(ValidationException.class, () -> bidService.getAuctionDetail(auctionId));
+        assertThrows(NotFoundException.class, () -> bidService.getAuctionDetail(auctionId));
     }
 }

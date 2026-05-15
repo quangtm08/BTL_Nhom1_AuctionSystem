@@ -18,6 +18,7 @@ import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.InvalidBidException;
+import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
@@ -43,14 +44,15 @@ public class BidService {
     }
 
     public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType)
-            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, ValidationException {
+            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, ValidationException,
+            NotFoundException, IllegalStateException {
         synchronized (connection) {
             try {
                 boolean oldAutoCommit = connection.getAutoCommit();
                 connection.setAutoCommit(false);
                 try {
                     Auction auction = auctionRepository.findById(auctionId)
-                            .orElseThrow(() -> new ValidationException("Auction not found"));
+                            .orElseThrow(() -> new NotFoundException("Auction not found"));
 
                     BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
 
@@ -60,7 +62,7 @@ public class BidService {
                     connection.commit();
                     return bidTransaction;
 
-                } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | ValidationException e) {
+                } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | NotFoundException e) {
                     connection.rollback();
                     throw e;
                 } catch (Exception e) {
@@ -69,7 +71,7 @@ public class BidService {
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
-            } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | ValidationException e) {
+            } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | NotFoundException | IllegalStateException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
@@ -77,85 +79,86 @@ public class BidService {
         }
     }
 
-    public AuctionDetailDto getAuctionDetail(UUID auctionId) throws ValidationException {
-	Auction auction = auctionRepository.findById(auctionId)
-		.orElseThrow(() -> new ValidationException("Auction not found"));
+    public AuctionDetailDto getAuctionDetail(UUID auctionId)
+        throws ValidationException, IllegalStateException, NotFoundException {
+    	Auction auction = auctionRepository.findById(auctionId)
+    		.orElseThrow(() -> new NotFoundException("Auction not found"));
 
-	Item item = itemRepository.findById(auction.getItemId())
-		.orElseThrow(() -> new ValidationException("Item not found for auction"));
+    	Item item = itemRepository.findById(auction.getItemId())
+    		.orElseThrow(() -> new IllegalStateException("Item not found for auction"));
 
-	String sellerName = userRepository.findById(auction.getSellerId())
-		.map(u -> u.getUsername())
-		.orElse("Unknown");
+    	String sellerName = userRepository.findById(auction.getSellerId())
+    		.map(u -> u.getUsername())
+    		.orElse("Unknown");
 
-	List<BidSummaryDto> bidHistory = bidRepository.findByAuctionId(auctionId).stream()
-		.map(this::toBidSummaryDto)
-		.toList();
+    	List<BidSummaryDto> bidHistory = bidRepository.findByAuctionId(auctionId).stream()
+    		.map(this::toBidSummaryDto)
+    		.toList();
 
-	AuctionDetailDto dto = new AuctionDetailDto(
-		auction.getId().toString(),
-		item.getId().toString(),
-		item.getName(),
-		item.getDescription(),
-		item.getCategory(),
-		item.getCondition(),
-		auction.getSellerId().toString(),
-		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
-		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
-		auction.getMinBidIncrement(),
-		auction.getStatus(),
-		auction.getStartTime(),
-		auction.getEndTime(),
-		bidHistory
-	);
-	dto.setSellerName(sellerName);
-	return dto;
+    	AuctionDetailDto dto = new AuctionDetailDto(
+    		auction.getId().toString(),
+    		item.getId().toString(),
+    		item.getName(),
+    		item.getDescription(),
+    		item.getCategory(),
+    		item.getCondition(),
+    		auction.getSellerId().toString(),
+    		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
+    		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
+    		auction.getMinBidIncrement(),
+    		auction.getStatus(),
+    		auction.getStartTime(),
+    		auction.getEndTime(),
+    		bidHistory
+    	);
+    	dto.setSellerName(sellerName);
+    	return dto;
     }
 
     public ListAuctionsResponse listAllAuctions() {
-	List<AuctionSummaryDto> auctions = auctionRepository.findAll().stream()
-		.map(this::toAuctionSummaryDto)
-		.toList(); // Convert Auction to AuctionSummaryDto for client consumption
+    	List<AuctionSummaryDto> auctions = auctionRepository.findAll().stream()
+    		.map(this::toAuctionSummaryDto)
+    		.toList(); // Convert Auction to AuctionSummaryDto for client consumption
 
-	ListAuctionsResponse response = new ListAuctionsResponse();
-	response.setAuctions(auctions);
-	return response;
+    	ListAuctionsResponse response = new ListAuctionsResponse();
+    	response.setAuctions(auctions);
+    	return response;
     }
 
     public MyBidsResponse getMyBids(UUID bidderId) {
-	List<BidWithAuctionDto> bids = bidRepository.findByBidderId(bidderId);
-	return new MyBidsResponse(bids);
+    	List<BidWithAuctionDto> bids = bidRepository.findByBidderId(bidderId);
+    	return new MyBidsResponse(bids);
     }
 
     private BidSummaryDto toBidSummaryDto(BidTransaction bidTransaction) {
-	String bidderName = userRepository.findById(bidTransaction.getBidderId())
-		.map(u -> u.getUsername())
-		.orElse("Unknown");
-	return new BidSummaryDto(
-		bidTransaction.getId().toString(),
-		bidTransaction.getBidderId().toString(),
-		bidTransaction.getAmount(),
-		bidTransaction.getBidType(),
-		bidTransaction.getCreatedAt(),
-		bidderName
-	);
+    	String bidderName = userRepository.findById(bidTransaction.getBidderId())
+    		.map(u -> u.getUsername())
+    		.orElse("Unknown");
+    	return new BidSummaryDto(
+    		bidTransaction.getId().toString(),
+    		bidTransaction.getBidderId().toString(),
+    		bidTransaction.getAmount(),
+    		bidTransaction.getBidType(),
+    		bidTransaction.getCreatedAt(),
+    		bidderName
+    	);
     }
 
     private AuctionSummaryDto toAuctionSummaryDto(Auction auction) {
-	Item item = itemRepository.findById(auction.getItemId()).orElse(null);
-	String itemName = item == null ? "Unknown item" : item.getName();
-	String itemCategory = item == null ? "UNKNOWN" : item.getCategory().name();
+    	Item item = itemRepository.findById(auction.getItemId()).orElse(null);
+    	String itemName = item == null ? "Unknown item" : item.getName();
+    	String itemCategory = item == null ? "UNKNOWN" : item.getCategory().name();
 
-	return new AuctionSummaryDto(
-		auction.getId().toString(),
-		itemName,
-		itemCategory,
-		auction.getStartingPrice(),
-		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
-		auction.getStartTime(),
-		auction.getEndTime(),
-		auction.getStatus(),
-		auction.getSellerId().toString()
-	);
+    	return new AuctionSummaryDto(
+    		auction.getId().toString(),
+    		itemName,
+    		itemCategory,
+    		auction.getStartingPrice(),
+    		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
+    		auction.getStartTime(),
+    		auction.getEndTime(),
+    		auction.getStatus(),
+    		auction.getSellerId().toString()
+    	);
     }
 }

@@ -3,6 +3,7 @@ package com.nhom1.auction.server.admin;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,8 +52,10 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
                         rs.getString("seller_id")));
             }
 
-        } catch (Exception e) {
+        } catch (SQLException e) {
             throw new RuntimeException("Failed to list auction summaries", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map auction summaries", e);
         }
 
         return result;
@@ -60,12 +63,18 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
 
     @Override
     public boolean cancelAuctionById(String auctionId) {
-        String sql = "UPDATE auctions SET status='CANCELED', updated_at=datetime('now') WHERE id=? AND status IN ('OPEN','RUNNING')";
+        String sql = """
+                UPDATE auctions
+                SET status = 'CANCELED', updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND status IN ('OPEN', 'RUNNING')
+                """;
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, auctionId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to cancel auction", e);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to cancel auction by id", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auction id while canceling auction", e);
         }
     }
 }

@@ -11,7 +11,7 @@ Hệ thống sử dụng mô hình **Synchronous-over-Asynchronous** (Đồng b�
 ## 1. Luồng Gửi Yêu cầu (Client đến Server)
 
 Khi người dùng thực hiện một hành động (ví dụ: nhấn nút "Login"), luồng xử lý diễn ra như sau:
-
+x
 ### A. Tầng UI
 
 - **Thành phần**: `View.fxml` & `Controller` (ví dụ: `LoginController`)

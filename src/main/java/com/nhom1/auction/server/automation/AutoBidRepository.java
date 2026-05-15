@@ -36,6 +36,8 @@ public class AutoBidRepository {
             ps.execute();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize auto_bid_configs table", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid data while initializing auto_bid_configs table", e);
         }
     }
 
@@ -61,6 +63,8 @@ public class AutoBidRepository {
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save auto bid config", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auto bid config data while saving", e);
         }
     }
 
@@ -85,6 +89,8 @@ public class AutoBidRepository {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Failed to read auto bid configs", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map auto bid configs", e);
         }
         return result;
     }

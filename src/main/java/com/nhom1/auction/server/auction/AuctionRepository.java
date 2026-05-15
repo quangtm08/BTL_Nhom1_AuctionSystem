@@ -52,6 +52,8 @@ public class AuctionRepository {
             stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize auctions table", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid data while initializing auctions table", e);
         }
     }
 
@@ -95,6 +97,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save auction", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auction data while saving auction", e);
         }
     }
 
@@ -118,6 +122,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find auction by id", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map auction by id", e);
         }
 
         return Optional.empty();
@@ -142,6 +148,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find all auctions", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map auctions", e);
         }
 
         return list;
@@ -169,6 +177,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find by sellerId", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map auctions by sellerId", e);
         }
 
         return list;
@@ -194,6 +204,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find by itemId", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map auction by itemId", e);
         }
 
         return Optional.empty();
@@ -216,6 +228,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update status", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auction status data while updating status", e);
         }
     }
 
@@ -244,6 +258,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update highest bid", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auction bid data while updating highest bid", e);
         }
     }
 
@@ -265,6 +281,8 @@ public class AuctionRepository {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update end time", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auction end time data while updating end time", e);
         }
     }
 
@@ -313,6 +331,8 @@ public class AuctionRepository {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete auction", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auction id while deleting auction", e);
         }
     }
 
@@ -323,6 +343,8 @@ public class AuctionRepository {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to clear highest bidder on auctions", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid bidder id while clearing highest bidder on auctions", e);
         }
     }
 

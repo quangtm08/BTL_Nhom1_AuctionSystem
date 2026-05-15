@@ -44,6 +44,8 @@ public class BidRepository {
 			stmt.execute(sql);
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to initialize bids table", e);
+		} catch (RuntimeException e) {
+			throw new RuntimeException("Invalid data while initializing bids table", e);
 		}
 	}
 
@@ -63,6 +65,8 @@ public class BidRepository {
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to save bid", e);
+		} catch (RuntimeException e) {
+			throw new RuntimeException("Invalid bid data while saving bid", e);
 		}
 	}
 
@@ -86,8 +90,9 @@ public class BidRepository {
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to find bids by auction id", e);
+		} catch (RuntimeException e) {
+			throw new RuntimeException("Failed to map bids by auction id", e);
 		}
-
 		return bids;
 	}
 
@@ -139,6 +144,8 @@ public class BidRepository {
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to find bids by bidder id", e);
+		} catch (RuntimeException e) {
+			throw new RuntimeException("Failed to map bids by bidder id", e);
 		}
 
 		return result;
@@ -150,7 +157,6 @@ public class BidRepository {
 			FROM bids
 			WHERE auction_id = ?
 			""";
-// PreparedStatement handles SQL injection and ensures proper resource management
 		try (PreparedStatement ps = connection.prepareStatement(sql)) {
 			ps.setString(1, auctionId.toString());
 
@@ -164,6 +170,8 @@ public class BidRepository {
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to find last bid time", e);
+		} catch (RuntimeException e) {
+			throw new RuntimeException("Failed to map last bid time", e);
 		}
 
 		return Optional.empty();
@@ -176,6 +184,8 @@ public class BidRepository {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete bids by bidder id", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid bidder id while deleting bids", e);
         }
     }
 
@@ -186,6 +196,8 @@ public class BidRepository {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete bids by auction id", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid auction id while deleting bids", e);
         }
     }
 
