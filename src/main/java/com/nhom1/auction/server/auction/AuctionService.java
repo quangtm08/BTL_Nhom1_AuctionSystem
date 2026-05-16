@@ -68,8 +68,6 @@ public class AuctionService {
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
-            } catch (RuntimeException ex) {
-                throw ex;
             } catch (Exception ex) {
                 throw new RuntimeException(
                     "Create auction transaction failed",
@@ -163,8 +161,6 @@ public class AuctionService {
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
-            } catch (RuntimeException ex) {
-                throw ex;
             } catch (Exception ex) {
                 throw new RuntimeException("Delete transaction failed", ex);
             }

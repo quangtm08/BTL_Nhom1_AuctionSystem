@@ -124,8 +124,6 @@ public class AdminService {
                     "User deletion failed due to database error",
                     e
                 );
-            } catch (RuntimeException e) {
-                throw e;
             } catch (Exception e) {
                 // For other checked exceptions (ValidationException, etc.) that might be thrown by called methods
                 throw new RuntimeException("User deletion failed", e);

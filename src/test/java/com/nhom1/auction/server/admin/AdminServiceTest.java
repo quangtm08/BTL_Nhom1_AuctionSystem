@@ -1,5 +1,8 @@
 package com.nhom1.auction.server.admin;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
@@ -12,20 +15,15 @@ import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.bidding.BidRepository;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 public class AdminServiceTest {
 
@@ -52,14 +50,29 @@ public class AdminServiceTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        adminService = new AdminService(userRepository, auctionRepository, itemRepository, bidRepository, adminAuctionGateway, connection);
+        adminService = new AdminService(
+            userRepository,
+            auctionRepository,
+            itemRepository,
+            bidRepository,
+            adminAuctionGateway,
+            connection
+        );
     }
 
     @Test
-    public void testGetAllUsers_AdminCaller_ReturnsUserList() throws ValidationException, AuthenticationException, UnauthorizedActionException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    public void testGetAllUsers_AdminCaller_ReturnsUserList()
+        throws ValidationException, AuthenticationException, UnauthorizedActionException {
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
         String callerId = admin.getId().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
         List<User> users = List.of(admin);
         when(userRepository.findAll()).thenReturn(users);
 
@@ -71,22 +84,45 @@ public class AdminServiceTest {
 
     @Test
     public void testGetAllUsers_NonAdminCaller_ThrowsUnauthorizedActionException() {
-        User user = new User("user", "user@example.com", "password", UserRole.USER);
+        User user = new User(
+            "user",
+            "user@example.com",
+            "password",
+            UserRole.USER
+        );
         String callerId = user.getId().toString();
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.findById(user.getId())).thenReturn(
+            Optional.of(user)
+        );
 
-        assertThrows(UnauthorizedActionException.class, () -> adminService.getAllUsers(callerId));
+        assertThrows(UnauthorizedActionException.class, () ->
+            adminService.getAllUsers(callerId)
+        );
     }
 
     @Test
     public void testDeleteUser_AdminDeletesNormalUser_DeletesSuccessfully()
-            throws ValidationException, AuthenticationException, UnauthorizedActionException, NotFoundException, SQLException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User target = new User("user", "user@example.com", "password", UserRole.USER);
+        throws ValidationException, AuthenticationException, UnauthorizedActionException, NotFoundException, SQLException {
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
+        User target = new User(
+            "user",
+            "user@example.com",
+            "password",
+            UserRole.USER
+        );
         String callerId = admin.getId().toString();
         String targetId = target.getId().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
+        when(userRepository.findById(target.getId())).thenReturn(
+            Optional.of(target)
+        );
         when(connection.getAutoCommit()).thenReturn(true);
         when(userRepository.deleteById(target.getId())).thenReturn(true);
 
@@ -100,18 +136,35 @@ public class AdminServiceTest {
 
     @Test
     public void testDeleteUser_BidDeleteFails_RollsBackAndRestoresAutoCommit()
-            throws ValidationException, AuthenticationException, SQLException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User target = new User("user", "user@example.com", "password", UserRole.USER);
+        throws ValidationException, AuthenticationException, SQLException {
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
+        User target = new User(
+            "user",
+            "user@example.com",
+            "password",
+            UserRole.USER
+        );
         String callerId = admin.getId().toString();
         String targetId = target.getId().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
+        when(userRepository.findById(target.getId())).thenReturn(
+            Optional.of(target)
+        );
         when(connection.getAutoCommit()).thenReturn(true);
-        doThrow(new RuntimeException("delete bids failed")).when(bidRepository).deleteByBidderId(target.getId());
+        doThrow(new RuntimeException("delete bids failed"))
+            .when(bidRepository)
+            .deleteByBidderId(target.getId());
 
-        RuntimeException thrown = assertThrows(RuntimeException.class,
-                () -> adminService.deleteUser(targetId, callerId));
+        RuntimeException thrown = assertThrows(RuntimeException.class, () ->
+            adminService.deleteUser(targetId, callerId)
+        );
 
         assertEquals("User deletion failed", thrown.getMessage());
         assertEquals("delete bids failed", thrown.getCause().getMessage());
@@ -121,44 +174,90 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testDeleteUser_AdminDeletesSelf_ThrowsUnauthorizedActionException() throws ValidationException, AuthenticationException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    public void testDeleteUser_AdminDeletesSelf_ThrowsUnauthorizedActionException()
+        throws ValidationException, AuthenticationException {
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
         String callerId = admin.getId().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
 
-        assertThrows(UnauthorizedActionException.class, () -> adminService.deleteUser(callerId, callerId));
+        assertThrows(UnauthorizedActionException.class, () ->
+            adminService.deleteUser(callerId, callerId)
+        );
     }
 
     @Test
-    public void testDeleteUser_AdminDeletesAnotherAdmin_ThrowsUnauthorizedActionException() throws ValidationException, AuthenticationException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User targetAdmin = new User("admin2", "admin2@example.com", "password", UserRole.ADMIN);
+    public void testDeleteUser_AdminDeletesAnotherAdmin_ThrowsUnauthorizedActionException()
+        throws ValidationException, AuthenticationException {
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
+        User targetAdmin = new User(
+            "admin2",
+            "admin2@example.com",
+            "password",
+            UserRole.ADMIN
+        );
         String callerId = admin.getId().toString();
         String targetId = targetAdmin.getId().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(targetAdmin.getId())).thenReturn(Optional.of(targetAdmin));
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
+        when(userRepository.findById(targetAdmin.getId())).thenReturn(
+            Optional.of(targetAdmin)
+        );
 
-        assertThrows(UnauthorizedActionException.class, () -> adminService.deleteUser(targetId, callerId));
+        assertThrows(UnauthorizedActionException.class, () ->
+            adminService.deleteUser(targetId, callerId)
+        );
     }
 
     @Test
-    public void testDeleteUser_TargetNotFound_ThrowsNotFoundException() throws ValidationException, AuthenticationException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    public void testDeleteUser_TargetNotFound_ThrowsNotFoundException()
+        throws ValidationException, AuthenticationException {
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
         String callerId = admin.getId().toString();
         String targetId = UUID.randomUUID().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(UUID.fromString(targetId))).thenReturn(Optional.empty());
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
+        when(userRepository.findById(UUID.fromString(targetId))).thenReturn(
+            Optional.empty()
+        );
 
-        assertThrows(NotFoundException.class, () -> adminService.deleteUser(targetId, callerId));
+        assertThrows(NotFoundException.class, () ->
+            adminService.deleteUser(targetId, callerId)
+        );
     }
 
     @Test
     public void testCancelAuction_AdminCancels_ReturnsCanceled()
-            throws ValidationException, AuthenticationException, UnauthorizedActionException, InvalidAuctionStateException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+        throws ValidationException, AuthenticationException, UnauthorizedActionException, InvalidAuctionStateException {
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
         String callerId = admin.getId().toString();
         String auctionId = UUID.randomUUID().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
         when(adminAuctionGateway.cancelAuctionById(auctionId)).thenReturn(true);
 
         String result = adminService.cancelAuction(auctionId, callerId);
@@ -168,36 +267,76 @@ public class AdminServiceTest {
 
     @Test
     public void testCancelAuction_NonAdmin_ThrowsUnauthorizedActionException() {
-        User user = new User("user", "user@example.com", "password", UserRole.USER);
+        User user = new User(
+            "user",
+            "user@example.com",
+            "password",
+            UserRole.USER
+        );
         String callerId = user.getId().toString();
         String auctionId = UUID.randomUUID().toString();
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(userRepository.findById(user.getId())).thenReturn(
+            Optional.of(user)
+        );
 
-        assertThrows(UnauthorizedActionException.class, () -> adminService.cancelAuction(auctionId, callerId));
+        assertThrows(UnauthorizedActionException.class, () ->
+            adminService.cancelAuction(auctionId, callerId)
+        );
     }
 
     @Test
     public void testCancelAuction_InvalidStatus_ThrowsInvalidAuctionStateException() {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
         String callerId = admin.getId().toString();
         String auctionId = UUID.randomUUID().toString();
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(adminAuctionGateway.cancelAuctionById(auctionId)).thenReturn(false);
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
+        when(adminAuctionGateway.cancelAuctionById(auctionId)).thenReturn(
+            false
+        );
 
-        assertThrows(InvalidAuctionStateException.class, () -> adminService.cancelAuction(auctionId, callerId));
+        assertThrows(InvalidAuctionStateException.class, () ->
+            adminService.cancelAuction(auctionId, callerId)
+        );
     }
 
     @Test
     public void testDeleteUser_RollsBackWhenDeleteFails() throws SQLException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User target = new User("user", "user@example.com", "password", UserRole.USER);
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+        User admin = new User(
+            "admin",
+            "admin@example.com",
+            "password",
+            UserRole.ADMIN
+        );
+        User target = new User(
+            "user",
+            "user@example.com",
+            "password",
+            UserRole.USER
+        );
+        when(userRepository.findById(admin.getId())).thenReturn(
+            Optional.of(admin)
+        );
+        when(userRepository.findById(target.getId())).thenReturn(
+            Optional.of(target)
+        );
         when(connection.getAutoCommit()).thenReturn(true);
         when(userRepository.deleteById(target.getId())).thenReturn(false);
 
-        assertThrows(IllegalStateException.class,
-                () -> adminService.deleteUser(target.getId().toString(), admin.getId().toString()));
+        RuntimeException thrown = assertThrows(RuntimeException.class, () ->
+            adminService.deleteUser(
+                target.getId().toString(),
+                admin.getId().toString()
+            )
+        );
+        assertEquals("User deletion failed", thrown.getMessage());
+        assertTrue(thrown.getCause() instanceof IllegalStateException);
         verify(connection).rollback();
     }
 }
