@@ -96,6 +96,7 @@ public class AutoBidService {
                 finalBidderId = currentHighestBidderId;
                 anyBidPlaced = true;
             } catch (Exception ignored) {
+                System.err.println("Auto-bid failed for auction " + auctionId + ": " + ignored.getMessage());
                 break;
             }
         }

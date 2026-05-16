@@ -1,7 +1,9 @@
 package com.nhom1.auction.server.infrastructure;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nhom1.auction.common.protocol.ErrorCode;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
@@ -54,11 +56,12 @@ public class MessageRouter {
             // Use common/utils/JsonUtil (to simplify and hide Jackson library)
             return JsonUtil.toJson(response);
 
+        } catch (JsonProcessingException e) {
+            return serializeError(requestId, ErrorCode.INVALID_FORMAT, "Malformed JSON request");
         } catch (IllegalArgumentException e) {
             return serializeError(requestId, "INVALID_TYPE", "Unknown message type");
         } catch (Exception e) {
-            e.printStackTrace();
-            return serializeError(requestId, "SERVER_ERROR", "Internal error: " + e.getMessage());
+            return serializeError(requestId, ErrorCode.SERVER_ERROR, "Internal error: " + e.getMessage());
         }
     }
 

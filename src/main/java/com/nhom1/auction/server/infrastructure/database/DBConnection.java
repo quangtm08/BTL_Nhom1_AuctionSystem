@@ -47,8 +47,9 @@ public class DBConnection {
                     System.out.println("Database: Connected to SQLite (Local)");
                 }
             } catch (ClassNotFoundException | SQLException e) {
-                System.err.println("Database connection error: " + e.getMessage());
-                e.printStackTrace();
+                throw new RuntimeException("Database connection error", e);
+            } catch (RuntimeException e) {
+                throw new RuntimeException("Invalid database configuration", e);
             }
         }
         return connection;

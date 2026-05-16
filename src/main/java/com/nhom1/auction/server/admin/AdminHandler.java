@@ -10,6 +10,7 @@ import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
+import com.nhom1.auction.server.infrastructure.ResponseFactory;
 
 public class AdminHandler {
     private final AdminService adminService;
@@ -23,7 +24,7 @@ public class AdminHandler {
             try {
                 return handleListUsers(requestId, JsonUtil.fromJson(payloadJson, AdminListUsersRequest.class));
             } catch (Exception e) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid admin list users JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid admin list users JSON");
             }
         });
 
@@ -31,7 +32,7 @@ public class AdminHandler {
             try {
                 return handleListAuctions(requestId, JsonUtil.fromJson(payloadJson, AdminListAuctionsRequest.class));
             } catch (Exception e) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid admin list auctions JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid admin list auctions JSON");
             }
         });
 
@@ -39,7 +40,7 @@ public class AdminHandler {
             try {
                 return handleDeleteUser(requestId, JsonUtil.fromJson(payloadJson, AdminDeleteUserRequest.class));
             } catch (Exception e) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid delete user JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid delete user JSON");
             }
         });
 
@@ -47,44 +48,52 @@ public class AdminHandler {
             try {
                 return handleCancelAuction(requestId, JsonUtil.fromJson(payloadJson, AdminCancelAuctionRequest.class));
             } catch (Exception e) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid cancel auction JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid cancel auction JSON");
             }
         });
     }
 
     private ResponseMessage<String> handleDeleteUser(String requestId, AdminDeleteUserRequest dto) {
         try {
-            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing delete user payload.");
-            return new ResponseMessage<>(requestId, adminService.deleteUser(dto.getTargetUserId(), dto.getCallerId()));
+            if (dto == null) {
+                return ResponseFactory.invalidFormat(requestId, "Missing delete user payload.");
+            }
+            return ResponseFactory.success(requestId, adminService.deleteUser(dto.getTargetUserId(), dto.getCallerId()));
         } catch (Exception e) {
-            return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
+            return ResponseFactory.fromException(requestId, e);
         }
     }
 
     private ResponseMessage<String> handleCancelAuction(String requestId, AdminCancelAuctionRequest dto) {
         try {
-            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing cancel auction payload.");
-            return new ResponseMessage<>(requestId, adminService.cancelAuction(dto.getAuctionId(), dto.getCallerId()));
+            if (dto == null) {
+                return ResponseFactory.invalidFormat(requestId, "Missing cancel auction payload.");
+            }
+            return ResponseFactory.success(requestId, adminService.cancelAuction(dto.getAuctionId(), dto.getCallerId()));
         } catch (Exception e) {
-            return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
+            return ResponseFactory.fromException(requestId, e);
         }
     }
 
     private ResponseMessage<AdminUserListResponse> handleListUsers(String requestId, AdminListUsersRequest dto) {
         try {
-            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing admin list users payload.");
-            return new ResponseMessage<>(requestId, adminService.getAllUsers(dto.getCallerId()));
+            if (dto == null) {
+                return ResponseFactory.invalidFormat(requestId, "Missing admin list users payload.");
+            }
+            return ResponseFactory.success(requestId, adminService.getAllUsers(dto.getCallerId()));
         } catch (Exception e) {
-            return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
+            return ResponseFactory.fromException(requestId, e);
         }
     }
 
     private ResponseMessage<AdminAuctionListResponse> handleListAuctions(String requestId, AdminListAuctionsRequest dto) {
         try {
-            if (dto == null) return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Missing admin list auctions payload.");
-            return new ResponseMessage<>(requestId, adminService.getAllAuctions(dto.getCallerId()));
+            if (dto == null) {
+                return ResponseFactory.invalidFormat(requestId, "Missing admin list auctions payload.");
+            }
+            return ResponseFactory.success(requestId, adminService.getAllAuctions(dto.getCallerId()));
         } catch (Exception e) {
-            return new ResponseMessage<>(requestId, "ADMIN_ACTION_FAILED", e.getMessage());
+            return ResponseFactory.fromException(requestId, e);
         }
     }
 }

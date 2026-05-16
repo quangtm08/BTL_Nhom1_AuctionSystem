@@ -1,11 +1,20 @@
 package com.nhom1.auction.client.user.service;
 
 import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.AuctionException;
+import com.nhom1.auction.common.exception.AuthenticationException;
+import com.nhom1.auction.common.exception.ConflictException;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
+import com.nhom1.auction.common.exception.InvalidBidException;
+import com.nhom1.auction.common.exception.NotFoundException;
+import com.nhom1.auction.common.exception.PaymentException;
+import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
+import com.nhom1.auction.common.protocol.ErrorCode;
+import com.nhom1.auction.common.protocol.ErrorResponse;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -13,14 +22,8 @@ import java.util.concurrent.CompletionException;
  * Abstract base for all client-side services.
  * Responsibilities handled here so subclasses don't repeat them:
  *   1. Sending a RequestMessage through ServerConnection.
- *   2. Unwrapping ResponseMessage<T> → T on success.
- *   3. Wrapping server errors and network failures into AuctionException.
- *
- * Subclasses: build the RequestMessage, call send(), return the future.
- * Controllers: only do Platform.runLater() + UI updates.
- *
- * TODO: once team agrees on standardized server error codes, add typed
- *       mapping in unwrap() (e.g. "AUTH_FAILED" → AuthenticationException).
+ *   2. Unwrapping ResponseMessage<T> -> T on success.
+ *   3. Mapping standardized server errors to typed exceptions.
  */
 public abstract class BaseClientService {
 
@@ -30,21 +33,23 @@ public abstract class BaseClientService {
         this.connection = ServerConnection.getInstance();
     }
 
-    protected <T> CompletableFuture<T> send(RequestMessage<?> request, Class<T> responseClass) {
+    protected <T> CompletableFuture<T> send(
+        RequestMessage<?> request,
+        Class<T> responseClass
+    ) {
         return connection
             .sendRequest(request, responseClass)
             .thenApply(this::unwrap)
             .exceptionally(ex -> {
-                // Keep validation errors intact so controllers can show the
-                // original fail-fast message instead of a generic network error.
                 Throwable cause = extractFailure(ex);
-                if (cause instanceof AuctionException ae) {
-                    throw new CompletionException(ae);
+                if (cause instanceof Exception typedException) {
+                    throw new CompletionException(typedException);
                 }
-                if (cause instanceof ValidationException ve) {
-                    throw new CompletionException(ve);
-                }
-                throw new CompletionException(new AuctionException("Server unreachable: " + cause.getMessage()));
+                throw new CompletionException(
+                    new AuctionException(
+                        "Server unreachable: " + cause.getMessage()
+                    )
+                );
             });
     }
 
@@ -52,18 +57,53 @@ public abstract class BaseClientService {
         if (response.isSuccess()) {
             return response.getPayload();
         }
-        String message = response.getError() != null ? response.getError().getMessage() : "Unknown server error";
-        throw new CompletionException(new AuctionException(message));
+        throw new CompletionException(mapServerError(response.getError()));
     }
 
-    // Fail fast before hitting the network. Usage: if (x.isBlank()) return validationError("...");
     protected <T> CompletableFuture<T> validationError(String message) {
         return CompletableFuture.failedFuture(new ValidationException(message));
     }
 
-    // CompletableFuture often wraps the real failure in CompletionException.
-    // Controllers/services can reuse this instead of duplicating unwrap logic.
     public static Throwable extractFailure(Throwable throwable) {
-        return throwable.getCause() != null ? throwable.getCause() : throwable;
+        Throwable current = throwable;
+        while (
+            current.getCause() != null &&
+            current.getCause() != current &&
+            current instanceof CompletionException
+        ) {
+            current = current.getCause();
+        }
+        return current;
+    }
+
+    private Exception mapServerError(ErrorResponse error) {
+        String message =
+            error != null && error.getMessage() != null
+                ? error.getMessage()
+                : "Unknown server error";
+        String code = error != null ? error.getCode() : ErrorCode.SERVER_ERROR;
+
+        return switch (code) {
+            case
+                ErrorCode.VALIDATION_ERROR,
+                ErrorCode.INVALID_FORMAT -> new ValidationException(message);
+            case ErrorCode.AUTHENTICATION_FAILED -> new AuthenticationException(
+                message
+            );
+            case ErrorCode.UNAUTHORIZED -> new UnauthorizedActionException(
+                message
+            );
+            case ErrorCode.NOT_FOUND -> new NotFoundException(message);
+            case ErrorCode.INVALID_BID -> new InvalidBidException(message);
+            case ErrorCode.AUCTION_CLOSED -> new AuctionClosedException(
+                message
+            );
+            case ErrorCode.INVALID_AUCTION_STATE -> new InvalidAuctionStateException(
+                message
+            );
+            case ErrorCode.PAYMENT_FAILED -> new PaymentException(message);
+            case ErrorCode.CONFLICT -> new ConflictException(message);
+            default -> new AuctionException(message);
+        };
     }
 }

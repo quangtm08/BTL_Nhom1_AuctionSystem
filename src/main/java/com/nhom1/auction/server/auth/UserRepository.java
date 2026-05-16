@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +41,8 @@ public class UserRepository {
             ps.execute();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize users table", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid data while initializing users table", e);
         }
     }
 
@@ -56,7 +57,9 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find all users", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map users", e);
         }
         return users;
     }
@@ -79,7 +82,9 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find user by identifier", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map user by identifier", e);
         }
         return Optional.empty();
     }
@@ -98,7 +103,9 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find user by id", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map user by id", e);
         }
         return Optional.empty();
     }
@@ -112,9 +119,10 @@ public class UserRepository {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to check username existence", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid data while checking username existence", e);
         }
-        return false;
     }
 
     // Take in email. Returns boolean if user exists
@@ -126,9 +134,10 @@ public class UserRepository {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to check email existence", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid data while checking email existence", e);
         }
-        return false;
     }
 
     // Take in user object. Convert it to SQL fields and save user to database
@@ -145,32 +154,30 @@ public class UserRepository {
             ps.setTimestamp(7, java.sql.Timestamp.valueOf(user.getUpdatedAt()));
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to save user", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid user data while saving user", e);
         }
     }
 
     // Shared dependency point for Binh's admin feature.
-    public boolean deleteById(UUID id) throws SQLException {
+    public boolean deleteById(UUID id) {
         String sql = "DELETE FROM users WHERE id = ?";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setString(1, id.toString());
             return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete user", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid user id while deleting user", e);
         }
     }
 
     private User mapUser(ResultSet rs) throws SQLException {
-        LocalDateTime createdAt;
-        LocalDateTime updatedAt;
-        try {
-            java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
-            java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
-            createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
-            updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
-        } catch (Exception e) {
-            System.err.println("Warning: Could not parse dates for user " + rs.getString("username")
-                    + ". Using current time.");
-            createdAt = LocalDateTime.now();
-            updatedAt = LocalDateTime.now();
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
+        if (createdTs == null || updatedTs == null) {
+            throw new IllegalStateException("User row has null created_at or updated_at: " + rs.getString("id"));
         }
 
         return new User(
@@ -179,7 +186,7 @@ public class UserRepository {
                 rs.getString("email"),
                 rs.getString("password"),
                 UserRole.valueOf(rs.getString("role")),
-                createdAt,
-                updatedAt);
+                createdTs.toLocalDateTime(),
+                updatedTs.toLocalDateTime());
     }
 }

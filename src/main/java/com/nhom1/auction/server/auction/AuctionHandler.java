@@ -1,7 +1,5 @@
 package com.nhom1.auction.server.auction;
 
-import java.util.List;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
@@ -13,6 +11,8 @@ import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
+import com.nhom1.auction.server.infrastructure.ResponseFactory;
+import java.util.List;
 
 public class AuctionHandler {
     private final AuctionService auctionService;
@@ -29,7 +29,7 @@ public class AuctionHandler {
                 CreateAuctionRequest dto = JsonUtil.fromJson(payloadJson, CreateAuctionRequest.class);
                 return handleCreateAuction(requestId, dto);
             } catch (Exception e) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid CreateAuction JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid CreateAuction JSON");
             }
         });
 
@@ -39,7 +39,7 @@ public class AuctionHandler {
                 String sellerId = payload.has("sellerId") ? payload.get("sellerId").asText() : null;
                 return handleListMyListings(requestId, sellerId);
             } catch (Exception e) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid ListMyListings JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid ListMyListings JSON");
             }
         });
 
@@ -50,7 +50,7 @@ public class AuctionHandler {
                 String auctionId = payload.has("auctionId") ? payload.get("auctionId").asText() : null;
                 return handleDeleteAuction(requestId, sellerId, auctionId);
             } catch (Exception e) {
-                return new ResponseMessage<>(requestId, "INVALID_FORMAT", "Invalid DeleteAuction JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid DeleteAuction JSON");
             }
         });
     }
@@ -76,23 +76,18 @@ public class AuctionHandler {
                     auction.getCreatedAt(),
                     auction.getUpdatedAt()
             );
-
-            return new ResponseMessage<>(requestId, response);
+            return ResponseFactory.success(requestId, response);
         } catch (Exception e) {
-            String detail = e.getMessage();
-            if (e.getCause() != null && e.getCause().getMessage() != null) {
-                detail = detail + " | cause: " + e.getCause().getMessage();
-            }
-            return new ResponseMessage<>(requestId, "CREATE_AUCTION_FAILED", detail);
+            return ResponseFactory.fromException(requestId, e);
         }
     }
 
     private ResponseMessage<MyListingsResponse> handleListMyListings(String requestId, String sellerId) {
         try {
             List<AuctionSummaryDto> listings = auctionService.getMyListings(sellerId);
-            return new ResponseMessage<>(requestId, new MyListingsResponse(listings));
+            return ResponseFactory.success(requestId, new MyListingsResponse(listings));
         } catch (Exception e) {
-            return new ResponseMessage<>(requestId, "LIST_MY_LISTINGS_FAILED", e.getMessage());
+            return ResponseFactory.fromException(requestId, e);
         }
     }
 
@@ -100,9 +95,9 @@ public class AuctionHandler {
         try {
             auctionService.deleteAuction(sellerId, auctionId);
             notificationService.broadcastAuctionDeleted(auctionId);
-            return new ResponseMessage<>(requestId, "Deleted");
+            return ResponseFactory.success(requestId, "Deleted");
         } catch (Exception e) {
-            return new ResponseMessage<>(requestId, "DELETE_AUCTION_FAILED", e.getMessage());
+            return ResponseFactory.fromException(requestId, e);
         }
     }
 }

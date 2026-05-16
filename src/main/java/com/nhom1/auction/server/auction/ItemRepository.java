@@ -58,6 +58,8 @@ public class ItemRepository {
             stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize items table", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid data while initializing items table", e);
         }
     }
 
@@ -129,8 +131,9 @@ public class ItemRepository {
 
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException("Failed to save item", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid item data while saving item", e);
         }
     }
 
@@ -148,7 +151,9 @@ public class ItemRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find item by id", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Failed to map item by id", e);
         }
         return Optional.empty();
     }
@@ -197,6 +202,8 @@ public class ItemRepository {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete item", e);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Invalid item id while deleting item", e);
         }
     }
 

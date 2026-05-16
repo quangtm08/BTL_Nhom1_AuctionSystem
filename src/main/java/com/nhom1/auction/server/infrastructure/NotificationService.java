@@ -2,6 +2,7 @@ package com.nhom1.auction.server.infrastructure;
 
 import com.nhom1.auction.common.dto.notification.AuctionEndedEvent;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
+import com.nhom1.auction.common.dto.notification.NewAuctionEvent;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
@@ -50,19 +51,19 @@ public class NotificationService {
         String itemName,
         BigDecimal startingPrice
     ) {
-        java.util.Map<String, Object> payload = java.util.Map.of(
-            "auctionId",
+        NewAuctionEvent event = new NewAuctionEvent(
             auctionId,
-            "itemName",
             itemName,
-            "startingPrice",
             startingPrice
         );
-        sendPush(MessageType.PUSH_NEW_AUCTION, payload);
+        sendPush(MessageType.PUSH_NEW_AUCTION, event);
     }
 
     public void broadcastAuctionDeleted(String auctionId) {
-        java.util.Map<String, Object> payload = java.util.Map.of("auctionId", auctionId);
+        java.util.Map<String, Object> payload = java.util.Map.of(
+            "auctionId",
+            auctionId
+        );
         sendPush(MessageType.PUSH_AUCTION_DELETED, payload);
     }
 

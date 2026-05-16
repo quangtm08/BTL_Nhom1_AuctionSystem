@@ -1,14 +1,12 @@
 package com.nhom1.auction.client.admin.controller;
 
+import com.nhom1.auction.client.admin.service.AdminClientService;
+import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-import com.nhom1.auction.client.admin.service.AdminClientService;
-import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
-import com.nhom1.auction.common.enums.AuctionStatus;
-
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -18,13 +16,13 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
 public class AuctionManagementController {
-
     private final AdminClientService adminClientService = new AdminClientService();
 
     @FXML private Label lblAuctionSummary;
     @FXML private GridPane auctionGrid;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private String cancelingAuctionId;
 
     @FXML
     public void initialize() {
@@ -38,26 +36,27 @@ public class AuctionManagementController {
                 .thenAccept(res -> Platform.runLater(() -> renderAuctions(res.getAuctions())))
                 .exceptionally(ex -> {
                     Throwable cause = AdminClientService.extractFailure(ex);
-                    Platform.runLater(() ->
-                            lblAuctionSummary.setText("Load auctions failed: " + cause.getMessage()));
+                    Platform.runLater(() -> lblAuctionSummary.setText("Load auctions failed: " + cause.getMessage()));
                     return null;
                 });
     }
 
     private void renderAuctions(List<AuctionSummaryDto> auctions) {
         clearRowsFrom(1);
-
         List<AuctionSummaryDto> safeAuctions = auctions != null ? auctions : List.of();
-
         for (int i = 0; i < safeAuctions.size(); i++) {
             addRow(i + 1, safeAuctions.get(i));
         }
 
-        long running = safeAuctions.stream()
-                .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
-                .count();
+        long open = safeAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.OPEN).count();
+        long running = safeAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.RUNNING).count();
+        long finished = safeAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.FINISHED).count();
+        long paid = safeAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.PAID).count();
+        long canceled = safeAuctions.stream().filter(a -> a.getStatus() == AuctionStatus.CANCELED).count();
 
-        lblAuctionSummary.setText(safeAuctions.size() + " total auctions - " + running + " running");
+        lblAuctionSummary.setText(safeAuctions.size() + " total auctions - "
+                + open + " open, " + running + " running, " + finished + " finished, "
+                + paid + " paid, " + canceled + " canceled");
     }
 
     private void addRow(int row, AuctionSummaryDto auction) {
@@ -65,60 +64,47 @@ public class AuctionManagementController {
         bg.getStyleClass().add("table-row-bg");
         auctionGrid.add(bg, 0, row, 8, 1);
 
-        // Item name
         addLabel(0, row, nvl(auction.getItemName()), "table-text-main");
-
-        // Category (DTO không có → để "-")
-        addLabel(1, row, "-", "table-text-sub");
-
-        // Seller
+        addLabel(1, row, nvl(auction.getItemCategory()), "table-text-sub");
         addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");
-
-        // Starting price
         addLabel(3, row, formatPrice(auction.getStartingPrice()), "table-text-sub");
-
-        // Current highest bid
         addLabel(4, row, formatPrice(auction.getCurrentHighestBid()), "price-highlight");
-
-        // End time
         addLabel(5, row, formatDateTime(auction.getEndTime()), "table-text-sub");
 
-        // Status (enum)
-        Label status = new Label(
-                auction.getStatus() != null ? auction.getStatus().name() : "-"
-        );
-
-        status.getStyleClass().add(
-                auction.getStatus() == AuctionStatus.RUNNING
-                        ? "status-running"
-                        : "table-text-sub"
-        );
-
+        Label status = new Label(auction.getStatus() != null ? auction.getStatus().name() : "-");
+        status.getStyleClass().add(statusStyle(auction.getStatus()));
         auctionGrid.add(status, 6, row);
 
-        // Cancel button
         Button cancelBtn = new Button("Cancel");
         cancelBtn.getStyleClass().add("btn-cancel");
-
-        boolean canCancel = auction.getStatus() == AuctionStatus.OPEN
-                || auction.getStatus() == AuctionStatus.RUNNING;
-
-        cancelBtn.setDisable(!canCancel);
-
-        cancelBtn.setOnAction(e ->
-                adminClientService.cancelAuction(auction.getId())
-                        .thenAccept(ok -> Platform.runLater(this::reloadAuctions))
-                        .exceptionally(ex -> {
-                            Throwable cause = AdminClientService.extractFailure(ex);
-                            Platform.runLater(() ->
-                                    lblAuctionSummary.setText("Cancel failed: " + cause.getMessage()));
-                            return null;
-                        })
-        );
+        boolean canCancel = auction.getStatus() == AuctionStatus.OPEN || auction.getStatus() == AuctionStatus.RUNNING;
+        cancelBtn.setDisable(!canCancel || auction.getId().equals(cancelingAuctionId));
+        cancelBtn.setOnAction(e -> cancelAuction(auction.getId(), cancelBtn));
 
         HBox actions = new HBox(cancelBtn);
         actions.setAlignment(Pos.CENTER);
         auctionGrid.add(actions, 7, row);
+    }
+
+    private void cancelAuction(String auctionId, Button cancelBtn) {
+        cancelingAuctionId = auctionId;
+        cancelBtn.setDisable(true);
+        lblAuctionSummary.setText("Canceling auction...");
+
+        adminClientService.cancelAuction(auctionId)
+                .thenAccept(ok -> Platform.runLater(() -> {
+                    cancelingAuctionId = null;
+                    reloadAuctions();
+                }))
+                .exceptionally(ex -> {
+                    Throwable cause = AdminClientService.extractFailure(ex);
+                    Platform.runLater(() -> {
+                        cancelingAuctionId = null;
+                        cancelBtn.setDisable(false);
+                        lblAuctionSummary.setText("Cancel failed: " + cause.getMessage());
+                    });
+                    return null;
+                });
     }
 
     private void addLabel(int col, int row, String text, String styleClass) {
@@ -134,16 +120,12 @@ public class AuctionManagementController {
         });
     }
 
-    // ================= HELPER =================
-
     private String nvl(String value) {
         return value == null || value.isBlank() ? "-" : value;
     }
 
     private String shortId(String id) {
-        return (id == null || id.length() < 8)
-                ? nvl(id)
-                : id.substring(0, 8) + "...";
+        return (id == null || id.length() < 8) ? nvl(id) : id.substring(0, 8) + "...";
     }
 
     private String formatPrice(BigDecimal price) {
@@ -152,5 +134,18 @@ public class AuctionManagementController {
 
     private String formatDateTime(LocalDateTime time) {
         return time == null ? "-" : time.format(formatter);
+    }
+
+    private String statusStyle(AuctionStatus status) {
+        if (status == AuctionStatus.RUNNING) {
+            return "status-running";
+        }
+        if (status == AuctionStatus.PAID) {
+            return "status-pill-active";
+        }
+        if (status == AuctionStatus.CANCELED) {
+            return "status-pill-banned";
+        }
+        return "table-text-sub";
     }
 }
