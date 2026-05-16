@@ -7,6 +7,7 @@ import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.bidding.BidRepository;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 
 public class AdminModule {
 
@@ -22,8 +23,9 @@ public class AdminModule {
             ItemRepository itemRepository,
             BidRepository bidRepository,
             AdminAuctionGateway adminAuctionGateway,
+            NotificationService notificationService,
             Connection connection) {
-        AdminService adminService = new AdminService(userRepository, auctionRepository, itemRepository, bidRepository, adminAuctionGateway, connection);
+        AdminService adminService = new AdminService(userRepository, auctionRepository, itemRepository, bidRepository, adminAuctionGateway, notificationService, connection);
         AdminHandler adminHandler = new AdminHandler(adminService);
         adminHandler.register(router);
 

@@ -1,6 +1,7 @@
 package com.nhom1.auction.server.auth;
 
 import com.nhom1.auction.server.infrastructure.MessageRouter;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.sql.Connection;
 
 /*
@@ -12,14 +13,15 @@ public class AuthModule {
     /*
      * @param connection The shared database connection from ServerContext.
      * @param router The shared MessageRouter from ServerContext.
+     * @param notificationService The shared NotificationService from ServerContext.
      * @return The UserRepository instance, so ServerContext can share it with other modules.
      */
-    public static UserRepository init(Connection connection, MessageRouter router) {
+    public static UserRepository init(Connection connection, MessageRouter router, NotificationService notificationService) {
         // 1. Build Repository
         UserRepository repository = new UserRepository(connection);
         
         // 2. Build Service
-        AuthService service = new AuthService(repository);
+        AuthService service = new AuthService(repository, notificationService);
         
         // 3. Build Handler
         AuthHandler handler = new AuthHandler(service);

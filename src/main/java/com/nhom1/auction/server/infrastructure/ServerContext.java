@@ -40,7 +40,8 @@ public class ServerContext {
         // 2. Core Modules (Auth, Auction, Bidding)
         UserRepository userRepository = AuthModule.init(
             this.connection,
-            this.router
+            this.router,
+            this.notificationService
         );
 
         AuctionModule.AuctionRepositories auctionRepos = AuctionModule.init(
@@ -91,6 +92,7 @@ public class ServerContext {
             auctionRepos.itemRepository,
             bidRepository,
             new SqlAdminAuctionGateway(this.connection),
+            this.notificationService,
             this.connection
         );
 

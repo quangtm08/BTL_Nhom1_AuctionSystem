@@ -67,6 +67,23 @@ public class NotificationService {
         sendPush(MessageType.PUSH_AUCTION_DELETED, payload);
     }
 
+    public void broadcastUserDeleted(String userId) {
+        java.util.Map<String, Object> payload = java.util.Map.of(
+            "userId",
+            userId
+        );
+        sendPush(MessageType.PUSH_USER_DELETED, payload);
+    }
+
+    public void broadcastUserCreated(String userId, String username, String email) {
+        java.util.Map<String, Object> payload = java.util.Map.of(
+            "userId", userId,
+            "username", username,
+            "email", email
+        );
+        sendPush(MessageType.PUSH_USER_CREATED, payload);
+    }
+
     private void sendPush(MessageType type, Object payload) {
         try {
             ResponseMessage<Object> responseMessage = new ResponseMessage<>();
