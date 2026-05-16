@@ -1,11 +1,5 @@
 package com.nhom1.auction.server.auction;
 
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.UUID;
-
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
@@ -15,6 +9,11 @@ import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.factory.ItemFactory;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.UUID;
 
 public class AuctionService {
 
@@ -22,13 +21,18 @@ public class AuctionService {
     private final ItemRepository itemRepository;
     private final Connection connection;
 
-    public AuctionService(AuctionRepository auctionRepository, ItemRepository itemRepository, Connection connection) {
+    public AuctionService(
+        AuctionRepository auctionRepository,
+        ItemRepository itemRepository,
+        Connection connection
+    ) {
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
         this.connection = connection;
     }
 
-    public Auction createAuction(String sellerId, CreateAuctionRequest dto) throws ValidationException {
+    public Auction createAuction(String sellerId, CreateAuctionRequest dto)
+        throws ValidationException {
         validateCreateAuctionRequest(sellerId, dto);
 
         UUID parsedSellerId = UUID.fromString(sellerId);
@@ -42,15 +46,19 @@ public class AuctionService {
                     itemRepository.save(item, parsedSellerId);
 
                     Auction auction = new Auction(
-                            item.getId(),
-                            parsedSellerId,
-                            dto.getStartingPrice(),
-                            dto.getStartTime(),
-                            dto.getEndTime()
+                        item.getId(),
+                        parsedSellerId,
+                        dto.getStartingPrice(),
+                        dto.getStartTime(),
+                        dto.getEndTime()
                     );
                     auctionRepository.save(auction);
                     // Keep the opening price in auction state for listing/display and first-bid validation.
-                    auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null);
+                    auctionRepository.updateHighestBid(
+                        auction.getId(),
+                        dto.getStartingPrice(),
+                        null
+                    );
 
                     connection.commit();
                     return auction;
@@ -60,39 +68,51 @@ public class AuctionService {
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
+            } catch (RuntimeException ex) {
+                throw ex;
             } catch (Exception ex) {
-                throw new RuntimeException("Create auction transaction failed", ex);
+                throw new RuntimeException(
+                    "Create auction transaction failed",
+                    ex
+                );
             }
         }
     }
 
-    public List<AuctionSummaryDto> getMyListings(String sellerId) throws ValidationException {
+    public List<AuctionSummaryDto> getMyListings(String sellerId)
+        throws ValidationException {
         UUID parsedSellerId = parseSellerId(sellerId);
 
-        return auctionRepository.findBySellerId(parsedSellerId).stream()
-                .map(auction -> {
-                    Item item = itemRepository.findById(auction.getItemId())
-                            .orElseThrow(() -> new IllegalStateException(
-                                    "Item not found for auction id: " + auction.getId()));
-
-                    BigDecimal startingPrice = auction.getStartingPrice();
-                    return new AuctionSummaryDto(
-                            auction.getId().toString(),
-                            item.getName(),
-                            item.getCategory().name(),
-                            startingPrice,
-                            auction.getCurrentHighestBid(),
-                            auction.getStartTime(),
-                            auction.getEndTime(),
-                            auction.getStatus(),
-                            auction.getSellerId().toString()
+        return auctionRepository
+            .findBySellerId(parsedSellerId)
+            .stream()
+            .map(auction -> {
+                Item item = itemRepository
+                    .findById(auction.getItemId())
+                    .orElseThrow(() ->
+                        new IllegalStateException(
+                            "Item not found for auction id: " + auction.getId()
+                        )
                     );
-                })
-                .toList();
+
+                BigDecimal startingPrice = auction.getStartingPrice();
+                return new AuctionSummaryDto(
+                    auction.getId().toString(),
+                    item.getName(),
+                    item.getCategory().name(),
+                    startingPrice,
+                    auction.getCurrentHighestBid(),
+                    auction.getStartTime(),
+                    auction.getEndTime(),
+                    auction.getStatus(),
+                    auction.getSellerId().toString()
+                );
+            })
+            .toList();
     }
 
     public void deleteAuction(String sellerId, String auctionId)
-            throws ValidationException, NotFoundException, UnauthorizedActionException {
+        throws ValidationException, NotFoundException, UnauthorizedActionException {
         UUID parsedSellerId = parseSellerId(sellerId);
         if (auctionId == null || auctionId.isBlank()) {
             throw new ValidationException("auctionId must not be blank");
@@ -105,11 +125,14 @@ public class AuctionService {
             throw new ValidationException("auctionId is not a valid UUID");
         }
 
-        Auction auction = auctionRepository.findById(parsedAuctionId)
-                .orElseThrow(() -> new NotFoundException("Auction not found"));
+        Auction auction = auctionRepository
+            .findById(parsedAuctionId)
+            .orElseThrow(() -> new NotFoundException("Auction not found"));
 
         if (!parsedSellerId.equals(auction.getSellerId())) {
-            throw new UnauthorizedActionException("You are not allowed to delete this auction");
+            throw new UnauthorizedActionException(
+                "You are not allowed to delete this auction"
+            );
         }
 
         synchronized (connection) {
@@ -117,13 +140,21 @@ public class AuctionService {
                 boolean oldAutoCommit = connection.getAutoCommit();
                 connection.setAutoCommit(false);
                 try {
-                    int deletedAuctions = auctionRepository.deleteById(parsedAuctionId);
-                    int deletedItems = itemRepository.deleteById(auction.getItemId());
+                    int deletedAuctions = auctionRepository.deleteById(
+                        parsedAuctionId
+                    );
+                    int deletedItems = itemRepository.deleteById(
+                        auction.getItemId()
+                    );
                     if (deletedAuctions == 0) {
-                        throw new IllegalStateException("Auction was not deleted.");
+                        throw new IllegalStateException(
+                            "Auction was not deleted."
+                        );
                     }
                     if (deletedItems == 0) {
-                        throw new IllegalStateException("Item was not deleted.");
+                        throw new IllegalStateException(
+                            "Item was not deleted."
+                        );
                     }
                     connection.commit();
                 } catch (Exception ex) {
@@ -132,30 +163,50 @@ public class AuctionService {
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
-            } catch (SQLException ex) {
+            } catch (RuntimeException ex) {
+                throw ex;
+            } catch (Exception ex) {
                 throw new RuntimeException("Delete transaction failed", ex);
             }
         }
     }
 
-    private void validateCreateAuctionRequest(String sellerId, CreateAuctionRequest dto) throws ValidationException {
+    private void validateCreateAuctionRequest(
+        String sellerId,
+        CreateAuctionRequest dto
+    ) throws ValidationException {
         parseSellerId(sellerId);
 
         if (dto == null) {
-            throw new ValidationException("CreateAuctionRequest must not be null");
+            throw new ValidationException(
+                "CreateAuctionRequest must not be null"
+            );
         }
-        if (dto.getStartingPrice() == null || dto.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ValidationException("startingPrice must be greater than 0");
+        if (
+            dto.getStartingPrice() == null ||
+            dto.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0
+        ) {
+            throw new ValidationException(
+                "startingPrice must be greater than 0"
+            );
         }
         if (dto.getStartTime() == null || dto.getEndTime() == null) {
-            throw new ValidationException("startTime and endTime must not be null");
+            throw new ValidationException(
+                "startTime and endTime must not be null"
+            );
         }
         if (!dto.getEndTime().isAfter(dto.getStartTime())) {
             throw new ValidationException("endTime must be after startTime");
         }
 
-        if (dto.getSellerId() != null && !dto.getSellerId().isBlank() && !dto.getSellerId().equals(sellerId)) {
-            throw new ValidationException("sellerId in request must match sellerId parameter");
+        if (
+            dto.getSellerId() != null &&
+            !dto.getSellerId().isBlank() &&
+            !dto.getSellerId().equals(sellerId)
+        ) {
+            throw new ValidationException(
+                "sellerId in request must match sellerId parameter"
+            );
         }
     }
 
@@ -170,7 +221,8 @@ public class AuctionService {
         }
     }
 
-    private Item createItem(CreateAuctionRequest dto) throws ValidationException {
+    private Item createItem(CreateAuctionRequest dto)
+        throws ValidationException {
         if (dto.getCategory() == null) {
             throw new ValidationException("category must not be null");
         }
@@ -178,37 +230,41 @@ public class AuctionService {
         ItemCategory category = dto.getCategory();
         return switch (category) {
             case ART -> ItemFactory.createArt(
-                    dto.getName(),
-                    dto.getDescription(),
-                    dto.getCondition(),
-                    dto.getArtist(),
-                    dto.getEra()
+                dto.getName(),
+                dto.getDescription(),
+                dto.getCondition(),
+                dto.getArtist(),
+                dto.getEra()
             );
             case ELECTRONICS -> {
                 Integer warrantyMonths = dto.getWarrantyMonths();
                 if (warrantyMonths == null) {
-                    throw new ValidationException("warrantyMonths must not be null for ELECTRONICS");
+                    throw new ValidationException(
+                        "warrantyMonths must not be null for ELECTRONICS"
+                    );
                 }
                 yield ItemFactory.createElectronics(
-                        dto.getName(),
-                        dto.getDescription(),
-                        dto.getCondition(),
-                        dto.getBrand(),
-                        warrantyMonths
+                    dto.getName(),
+                    dto.getDescription(),
+                    dto.getCondition(),
+                    dto.getBrand(),
+                    warrantyMonths
                 );
             }
             case VEHICLE -> {
                 Integer productionYear = dto.getProductionYear();
                 if (productionYear == null) {
-                    throw new ValidationException("productionYear must not be null for VEHICLE");
+                    throw new ValidationException(
+                        "productionYear must not be null for VEHICLE"
+                    );
                 }
                 yield ItemFactory.createVehicle(
-                        dto.getName(),
-                        dto.getDescription(),
-                        dto.getCondition(),
-                        dto.getBrand(),
-                        productionYear,
-                        dto.getFuelType()
+                    dto.getName(),
+                    dto.getDescription(),
+                    dto.getCondition(),
+                    dto.getBrand(),
+                    productionYear,
+                    dto.getFuelType()
                 );
             }
         };
