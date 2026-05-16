@@ -1,12 +1,13 @@
 package com.nhom1.auction.client.user.service;
 
 import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.AuctionException;
+import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.ConflictException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.InvalidBidException;
+import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.PaymentException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
@@ -32,17 +33,24 @@ public abstract class BaseClientService {
         this.connection = ServerConnection.getInstance();
     }
 
-    protected <T> CompletableFuture<T> send(RequestMessage<?> request, Class<T> responseClass) {
+    protected <T> CompletableFuture<T> send(
+        RequestMessage<?> request,
+        Class<T> responseClass
+    ) {
         return connection
-                .sendRequest(request, responseClass)
-                .thenApply(this::unwrap)
-                .exceptionally(ex -> {
-                    Throwable cause = extractFailure(ex);
-                    if (cause instanceof Exception typedException) {
-                        throw new CompletionException(typedException);
-                    }
-                    throw new CompletionException(new AuctionException("Server unreachable: " + cause.getMessage()));
-                });
+            .sendRequest(request, responseClass)
+            .thenApply(this::unwrap)
+            .exceptionally(ex -> {
+                Throwable cause = extractFailure(ex);
+                if (cause instanceof Exception typedException) {
+                    throw new CompletionException(typedException);
+                }
+                throw new CompletionException(
+                    new AuctionException(
+                        "Server unreachable: " + cause.getMessage()
+                    )
+                );
+            });
     }
 
     private <T> T unwrap(ResponseMessage<T> response) {
@@ -58,27 +66,41 @@ public abstract class BaseClientService {
 
     public static Throwable extractFailure(Throwable throwable) {
         Throwable current = throwable;
-        while (current.getCause() != null
-                && current.getCause() != current
-                && current instanceof CompletionException) {
+        while (
+            current.getCause() != null &&
+            current.getCause() != current &&
+            current instanceof CompletionException
+        ) {
             current = current.getCause();
         }
         return current;
     }
 
     private Exception mapServerError(ErrorResponse error) {
-        String message = error != null && error.getMessage() != null
+        String message =
+            error != null && error.getMessage() != null
                 ? error.getMessage()
                 : "Unknown server error";
         String code = error != null ? error.getCode() : ErrorCode.SERVER_ERROR;
 
         return switch (code) {
-            case ErrorCode.VALIDATION_ERROR, ErrorCode.INVALID_FORMAT -> new ValidationException(message);
-            case ErrorCode.AUTHENTICATION_FAILED -> new AuthenticationException(message);
-            case ErrorCode.UNAUTHORIZED -> new UnauthorizedActionException(message);
+            case
+                ErrorCode.VALIDATION_ERROR,
+                ErrorCode.INVALID_FORMAT -> new ValidationException(message);
+            case ErrorCode.AUTHENTICATION_FAILED -> new AuthenticationException(
+                message
+            );
+            case ErrorCode.UNAUTHORIZED -> new UnauthorizedActionException(
+                message
+            );
+            case ErrorCode.NOT_FOUND -> new NotFoundException(message);
             case ErrorCode.INVALID_BID -> new InvalidBidException(message);
-            case ErrorCode.AUCTION_CLOSED -> new AuctionClosedException(message);
-            case ErrorCode.INVALID_AUCTION_STATE -> new InvalidAuctionStateException(message);
+            case ErrorCode.AUCTION_CLOSED -> new AuctionClosedException(
+                message
+            );
+            case ErrorCode.INVALID_AUCTION_STATE -> new InvalidAuctionStateException(
+                message
+            );
             case ErrorCode.PAYMENT_FAILED -> new PaymentException(message);
             case ErrorCode.CONFLICT -> new ConflictException(message);
             default -> new AuctionException(message);

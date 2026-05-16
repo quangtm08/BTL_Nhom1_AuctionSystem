@@ -76,3 +76,14 @@ Shared mapping nằm trong `server/infrastructure/ResponseFactory`.
 - Lỗi Validation/business được hiển thị trực tiếp cho người dùng.
 - Lỗi Network/server fallback về một thông báo "không khả dụng" chung khi không có typed error cụ thể.
 - Controllers nên sử dụng `BaseClientService.extractFailure(...)` thay vì unwrap `CompletionException` thủ công.
+
+## Ghi chú kỹ thuật cho Devs
+
+### SQL và Checked Exceptions
+Trong các lớp `Repository`, chúng ta bọc `SQLException` (checked) vào `RuntimeException` để giữ interface sạch sẽ. `ResponseFactory.unwrap()` trên server được thiết kế để tự động bóc tách lớp vỏ `RuntimeException` này và lấy ra nguyên nhân gốc (`SQLException`) để map code `SERVER_ERROR` chính xác.
+
+**Lưu ý:** Khi tạo các exception mới, nếu bọc chúng trong một exception khác, hãy luôn truyền `cause` vào constructor (vd: `new RuntimeException("message", originalException)`) để luồng unwrapping không bị đứt đoạn.
+
+### Phân biệt IllegalStateException
+- Sử dụng `IllegalStateException` cho các lỗi logic "không thể xảy ra" (vd: DB vừa báo record tồn tại nhưng delete ngay sau đó trả về 0 row). 
+- Những lỗi này được map thành `SERVER_ERROR` và ghi log chi tiết, giúp phân biệt rõ ràng với các lỗi validation do người dùng gây ra.
