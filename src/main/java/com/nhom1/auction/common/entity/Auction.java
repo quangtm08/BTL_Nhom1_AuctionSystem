@@ -65,7 +65,7 @@ public class Auction extends BaseEntity {
 
         this.highestBidderId = null;
         this.currentHighestBid = null;
-        this.status = AuctionStatus.OPEN;
+        this.status = AuctionStatus.RUNNING;
         this.bidHistory = new ArrayList<>();
     }
 
