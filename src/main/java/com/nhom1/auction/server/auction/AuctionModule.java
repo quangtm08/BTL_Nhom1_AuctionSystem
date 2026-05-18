@@ -3,14 +3,11 @@ package com.nhom1.auction.server.auction;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.sql.Connection;
+import java.sql.SQLException;
+import javax.sql.DataSource;
 
 public class AuctionModule {
 
-    /**
-     * Container to hold repositories created within the AuctionModule.
-     * This allows the Coordinator (ServerContext) to pass these repositories
-     * to other modules (like BidModule or AdminModule) that depend on them.
-     */
     public static class AuctionRepositories {
 
         public final AuctionRepository auctionRepository;
@@ -26,22 +23,25 @@ public class AuctionModule {
     }
 
     public static AuctionRepositories init(
-        Connection connection,
+        DataSource dataSource,
         MessageRouter router,
         NotificationService notificationService
     ) {
-        ItemRepository itemRepository = new ItemRepository(connection);
-        AuctionRepository auctionRepository = new AuctionRepository(connection);
-        AuctionService auctionService = new AuctionService(
-            auctionRepository,
-            itemRepository,
-            connection
-        );
-        AuctionHandler auctionHandler = new AuctionHandler(auctionService, notificationService);
-
-        auctionHandler.register(router);
-
-        System.out.println("AuctionModule: Feature initialized successfully.");
-        return new AuctionRepositories(auctionRepository, itemRepository);
+        try {
+            Connection conn = dataSource.getConnection();
+            ItemRepository itemRepository = new ItemRepository(conn);
+            AuctionRepository auctionRepository = new AuctionRepository(conn);
+            AuctionService auctionService = new AuctionService(
+                auctionRepository,
+                itemRepository,
+                conn
+            );
+            AuctionHandler auctionHandler = new AuctionHandler(auctionService, notificationService);
+            auctionHandler.register(router);
+            System.out.println("AuctionModule: Feature initialized successfully.");
+            return new AuctionRepositories(auctionRepository, itemRepository);
+        } catch (SQLException e) {
+            throw new RuntimeException("AuctionModule: Failed to obtain connection from pool", e);
+        }
     }
 }

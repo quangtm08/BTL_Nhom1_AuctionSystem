@@ -7,6 +7,8 @@ import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
 import java.sql.Connection;
+import java.sql.SQLException;
+import javax.sql.DataSource;
 
 public class BidModule {
 
@@ -20,19 +22,23 @@ public class BidModule {
 	}
 
 	public static BidComponents init(
-			Connection connection,
+			DataSource dataSource,
 			MessageRouter router,
 			AuctionRepository auctionRepository,
 			ItemRepository itemRepository,
 			NotificationService notificationService,
 			UserRepository userRepository
 	) {
-		BidRepository repository = new BidRepository(connection);
-		BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository, connection);
-		BidHandler handler = new BidHandler(service, notificationService);
-		handler.register(router);
-
-		System.out.println("BidModule: Feature initialized successfully.");
-		return new BidComponents(service, handler);
+		try {
+			Connection conn = dataSource.getConnection();
+			BidRepository repository = new BidRepository(conn);
+			BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository, conn);
+			BidHandler handler = new BidHandler(service, notificationService);
+			handler.register(router);
+			System.out.println("BidModule: Feature initialized successfully.");
+			return new BidComponents(service, handler);
+		} catch (SQLException e) {
+			throw new RuntimeException("BidModule: Failed to obtain connection from pool", e);
+		}
 	}
 }
