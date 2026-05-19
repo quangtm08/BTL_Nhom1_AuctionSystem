@@ -16,7 +16,8 @@ public final class DatabaseInitializer {
 
     private DatabaseInitializer() {}
 
-    private static final String SCHEMA_SQL = """
+    private static final String[] STATEMENTS = {
+        """
         CREATE TABLE IF NOT EXISTS users (
             id VARCHAR(36) PRIMARY KEY,
             username VARCHAR(255) UNIQUE NOT NULL,
@@ -25,8 +26,9 @@ public final class DatabaseInitializer {
             role VARCHAR(50) NOT NULL,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL
-        );
-
+        )
+        """,
+        """
         CREATE TABLE IF NOT EXISTS items (
             id VARCHAR(36) PRIMARY KEY,
             seller_id VARCHAR(36) NOT NULL,
@@ -43,9 +45,10 @@ public final class DatabaseInitializer {
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
             FOREIGN KEY (seller_id) REFERENCES users(id)
-        );
-        CREATE INDEX IF NOT EXISTS idx_items_seller_id ON items(seller_id);
-
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_items_seller_id ON items(seller_id)",
+        """
         CREATE TABLE IF NOT EXISTS auctions (
             id VARCHAR(36) PRIMARY KEY,
             item_id VARCHAR(36) NOT NULL,
@@ -59,11 +62,12 @@ public final class DatabaseInitializer {
             updated_at TIMESTAMP NOT NULL,
             FOREIGN KEY (item_id) REFERENCES items(id),
             FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
-        );
-        CREATE INDEX IF NOT EXISTS idx_auctions_item_id ON auctions(item_id);
-        CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);
-        CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id);
-
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_auctions_item_id ON auctions(item_id)",
+        "CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status)",
+        "CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id)",
+        """
         CREATE TABLE IF NOT EXISTS bids (
             id VARCHAR(36) PRIMARY KEY,
             auction_id VARCHAR(36) NOT NULL,
@@ -73,10 +77,11 @@ public final class DatabaseInitializer {
             created_at TIMESTAMP NOT NULL,
             FOREIGN KEY (auction_id) REFERENCES auctions(id),
             FOREIGN KEY (bidder_id) REFERENCES users(id)
-        );
-        CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids(auction_id);
-        CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);
-
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids(auction_id)",
+        "CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id)",
+        """
         CREATE TABLE IF NOT EXISTS auto_bid_configs (
             auction_id VARCHAR(36) NOT NULL,
             bidder_id VARCHAR(36) NOT NULL,
@@ -87,17 +92,15 @@ public final class DatabaseInitializer {
             PRIMARY KEY (auction_id, bidder_id),
             FOREIGN KEY (auction_id) REFERENCES auctions(id),
             FOREIGN KEY (bidder_id) REFERENCES users(id)
-        );
-        """;
+        )
+        """
+    };
 
     public static void init(DataSource dataSource) {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
-            for (String ddl : SCHEMA_SQL.split(";")) {
-                String trimmed = ddl.trim();
-                if (!trimmed.isEmpty()) {
-                    stmt.execute(trimmed);
-                }
+            for (String ddl : STATEMENTS) {
+                stmt.execute(ddl);
             }
             System.out.println("DatabaseInitializer: schema ready.");
         } catch (SQLException e) {

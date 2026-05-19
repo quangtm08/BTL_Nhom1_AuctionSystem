@@ -11,7 +11,6 @@ import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.factory.ItemFactory;
 import java.math.BigDecimal;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 import javax.sql.DataSource;
@@ -69,8 +68,6 @@ public class AuctionService {
             } finally {
                 connection.setAutoCommit(oldAutoCommit);
             }
-        } catch (SQLException ex) {
-            throw new RuntimeException("Create auction transaction failed", ex);
         } catch (Exception ex) {
             throw new RuntimeException("Create auction transaction failed", ex);
         }
@@ -161,8 +158,6 @@ public class AuctionService {
             } finally {
                 connection.setAutoCommit(oldAutoCommit);
             }
-        } catch (SQLException ex) {
-            throw new RuntimeException("Delete transaction failed", ex);
         } catch (Exception ex) {
             throw new RuntimeException("Delete transaction failed", ex);
         }
