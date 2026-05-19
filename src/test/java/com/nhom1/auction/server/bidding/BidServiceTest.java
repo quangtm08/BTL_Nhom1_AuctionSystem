@@ -62,15 +62,15 @@ public class BidServiceTest {
         auction.startAuction();
         UUID auctionId = auction.getId();
         when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
 
         BidTransaction result = bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL);
 
         assertNotNull(result);
         assertEquals(amount, result.getAmount());
         assertEquals(bidderId, result.getBidderId());
-        verify(bidRepository).save(any(BidTransaction.class));
-        verify(auctionRepository).updateHighestBid(auctionId, amount, bidderId);
+        verify(bidRepository).save(any(BidTransaction.class), eq(connection));
+        verify(auctionRepository).updateHighestBid(auctionId, amount, bidderId, connection);
         verify(connection).setAutoCommit(false);
         verify(connection).commit();
         verify(connection).setAutoCommit(true);
@@ -82,7 +82,7 @@ public class BidServiceTest {
         UUID auctionId = UUID.randomUUID();
         BigDecimal amount = new BigDecimal("150.00");
         when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
+        when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
         verify(connection).rollback();
@@ -99,15 +99,15 @@ public class BidServiceTest {
         auction.startAuction();
         UUID auctionId = auction.getId();
         when(connection.getAutoCommit()).thenReturn(false);
-        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
         doThrow(new RuntimeException("update failed")).when(auctionRepository)
-                .updateHighestBid(eq(auctionId), eq(amount), eq(bidderId));
+                .updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(connection));
 
         RuntimeException thrown = assertThrows(RuntimeException.class,
                 () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
 
         assertTrue(thrown.getMessage().startsWith("Bid placement failed"));
-        verify(bidRepository).save(any(BidTransaction.class));
+        verify(bidRepository).save(any(BidTransaction.class), eq(connection));
         verify(connection).rollback();
         verify(connection, times(2)).setAutoCommit(false);
         verify(connection, never()).setAutoCommit(true);

@@ -124,7 +124,7 @@ public class AdminServiceTest {
             Optional.of(target)
         );
         when(connection.getAutoCommit()).thenReturn(true);
-        when(userRepository.deleteById(target.getId())).thenReturn(true);
+        when(userRepository.deleteById(target.getId(), connection)).thenReturn(true);
 
         String result = adminService.deleteUser(targetId, callerId);
 
@@ -160,7 +160,7 @@ public class AdminServiceTest {
         when(connection.getAutoCommit()).thenReturn(true);
         doThrow(new RuntimeException("delete bids failed"))
             .when(bidRepository)
-            .deleteByBidderId(target.getId());
+            .deleteByBidderId(target.getId(), connection);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () ->
             adminService.deleteUser(targetId, callerId)
@@ -327,7 +327,7 @@ public class AdminServiceTest {
             Optional.of(target)
         );
         when(connection.getAutoCommit()).thenReturn(true);
-        when(userRepository.deleteById(target.getId())).thenReturn(false);
+        when(userRepository.deleteById(target.getId(), connection)).thenReturn(false);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () ->
             adminService.deleteUser(
