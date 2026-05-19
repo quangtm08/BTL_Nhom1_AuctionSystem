@@ -1,20 +1,20 @@
 package com.nhom1.auction.server.automation;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class AutoBidRepository {
-    private final Connection connection;
+import javax.sql.DataSource;
 
-    public AutoBidRepository(Connection connection) {
-        this.connection = connection;
+public class AutoBidRepository {
+    private final DataSource dataSource;
+
+    public AutoBidRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
         ensureTable();
     }
 
@@ -32,17 +32,15 @@ public class AutoBidRepository {
                 FOREIGN KEY (bidder_id) REFERENCES users(id)
             )
             """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.execute();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize auto_bid_configs table", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid data while initializing auto_bid_configs table", e);
         }
     }
 
     public void save(AutoBidConfig config) {
-        // PostgreSQL and SQLite 3.24+ compatible UPSERT
         String sql = """
             INSERT INTO auto_bid_configs (
                 auction_id, bidder_id, max_amount, increment_amount, created_at, updated_at
@@ -53,7 +51,8 @@ public class AutoBidRepository {
                 updated_at = EXCLUDED.updated_at
             """;
         java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, config.getAuctionId().toString());
             ps.setString(2, config.getBidderId().toString());
             ps.setBigDecimal(3, config.getMaxAmount());
@@ -63,8 +62,6 @@ public class AutoBidRepository {
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save auto bid config", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auto bid config data while saving", e);
         }
     }
 
@@ -75,7 +72,8 @@ public class AutoBidRepository {
             WHERE auction_id = ?
             """;
         List<AutoBidConfig> result = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auctionId.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -89,8 +87,6 @@ public class AutoBidRepository {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Failed to read auto bid configs", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to map auto bid configs", e);
         }
         return result;
     }

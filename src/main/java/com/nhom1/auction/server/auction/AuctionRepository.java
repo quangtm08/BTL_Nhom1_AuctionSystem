@@ -8,23 +8,21 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
 
 public class AuctionRepository {
-    private static final DateTimeFormatter SQLITE_DATE_TIME_FORMATTER = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd HH:mm:ss");
+    private final DataSource dataSource;
 
-    private final Connection connection;
-
-    public AuctionRepository(Connection connection) {
-        this.connection = connection;
+    public AuctionRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
         ensureTable();
     }
 
@@ -48,17 +46,24 @@ public class AuctionRepository {
             CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);
             CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id);
             """;
-        try (Statement stmt = connection.createStatement()) {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize auctions table", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid data while initializing auctions table", e);
         }
     }
 
     // ===================== SAVE =====================
     public void save(Auction auction) {
+        try (Connection conn = dataSource.getConnection()) {
+            save(auction, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to save auction", e);
+        }
+    }
+
+    public void save(Auction auction, Connection conn) {
         String sql = """
                     INSERT INTO auctions(
                         id, item_id, start_time, end_time, status, starting_price,
@@ -68,8 +73,7 @@ public class AuctionRepository {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auction.getId().toString());
             ps.setString(2, auction.getItemId().toString());
             ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
@@ -94,16 +98,21 @@ public class AuctionRepository {
             ps.setTimestamp(10, now);
 
             ps.executeUpdate();
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save auction", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auction data while saving auction", e);
         }
     }
 
     // ===================== FIND BY ID =====================
     public Optional<Auction> findById(UUID id) {
+        try (Connection conn = dataSource.getConnection()) {
+            return findById(id, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find auction by id", e);
+        }
+    }
+
+    public Optional<Auction> findById(UUID id, Connection conn) {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
@@ -111,21 +120,16 @@ public class AuctionRepository {
                     WHERE a.id = ?
                 """;
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, id.toString());
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(map(rs));
                 }
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find auction by id", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to map auction by id", e);
         }
-
         return Optional.empty();
     }
 
@@ -139,24 +143,28 @@ public class AuctionRepository {
 
         List<Auction> list = new ArrayList<>();
 
-        try (PreparedStatement ps = connection.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
-
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(map(rs));
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find all auctions", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to map auctions", e);
         }
-
         return list;
     }
 
     // ===================== FIND BY SELLER =====================
     public List<Auction> findBySellerId(UUID sellerId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return findBySellerId(sellerId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find by sellerId", e);
+        }
+    }
+
+    public List<Auction> findBySellerId(UUID sellerId, Connection conn) {
         String sql = """
                     SELECT a.*, i.seller_id
                     FROM auctions a
@@ -166,21 +174,16 @@ public class AuctionRepository {
 
         List<Auction> list = new ArrayList<>();
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, sellerId.toString());
-
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(map(rs));
                 }
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find by sellerId", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to map auctions by sellerId", e);
         }
-
         return list;
     }
 
@@ -193,21 +196,17 @@ public class AuctionRepository {
                     WHERE a.item_id = ?
                 """;
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, itemId.toString());
-
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(map(rs));
                 }
             }
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to find by itemId", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to map auction by itemId", e);
         }
-
         return Optional.empty();
     }
 
@@ -219,30 +218,34 @@ public class AuctionRepository {
                     WHERE id = ?
                 """;
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status.name());
             ps.setTimestamp(2, java.sql.Timestamp.valueOf(LocalDateTime.now()));
             ps.setString(3, auctionId.toString());
-
             ps.executeUpdate();
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update status", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auction status data while updating status", e);
         }
     }
 
     // ===================== UPDATE BID =====================
     public void updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId) {
+        try (Connection conn = dataSource.getConnection()) {
+            updateHighestBid(auctionId, amount, bidderId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update highest bid", e);
+        }
+    }
+
+    public void updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId, Connection conn) {
         String sql = """
                     UPDATE auctions
                     SET current_highest_bid = ?, highest_bidder_id = ?, updated_at = ?
                     WHERE id = ?
                 """;
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBigDecimal(1, amount);
 
             if (bidderId != null) {
@@ -255,11 +258,8 @@ public class AuctionRepository {
             ps.setString(4, auctionId.toString());
 
             ps.executeUpdate();
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update highest bid", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auction bid data while updating highest bid", e);
         }
     }
 
@@ -271,24 +271,57 @@ public class AuctionRepository {
                     WHERE id = ?
                 """;
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setTimestamp(1, java.sql.Timestamp.valueOf(newEndTime));
             ps.setTimestamp(2, java.sql.Timestamp.valueOf(LocalDateTime.now()));
             ps.setString(3, auctionId.toString());
-
             ps.executeUpdate();
-
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update end time", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auction end time data while updating end time", e);
+        }
+    }
+
+    // ===================== DELETE BY ID =====================
+    public int deleteById(UUID auctionId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return deleteById(auctionId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete auction", e);
+        }
+    }
+
+    public int deleteById(UUID auctionId, Connection conn) {
+        String sql = "DELETE FROM auctions WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, auctionId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete auction", e);
+        }
+    }
+
+    // ===================== CLEAR HIGHEST BIDDER =====================
+    public int clearHighestBidderByUserId(UUID bidderId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return clearHighestBidderByUserId(bidderId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to clear highest bidder on auctions", e);
+        }
+    }
+
+    public int clearHighestBidderByUserId(UUID bidderId, Connection conn) {
+        String sql = "UPDATE auctions SET highest_bidder_id = NULL WHERE highest_bidder_id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, bidderId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to clear highest bidder on auctions", e);
         }
     }
 
     // ===================== MAPPER =====================
     private Auction map(ResultSet rs) throws SQLException {
-
         UUID id = UUID.fromString(rs.getString("id"));
         UUID itemId = UUID.fromString(rs.getString("item_id"));
         UUID sellerId = UUID.fromString(rs.getString("seller_id"));
@@ -322,46 +355,5 @@ public class AuctionRepository {
                 status,
                 createdAt,
                 updatedAt);
-    }
-
-    public int deleteById(UUID auctionId) {
-        String sql = "DELETE FROM auctions WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, auctionId.toString());
-            return ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete auction", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auction id while deleting auction", e);
-        }
-    }
-
-    public int clearHighestBidderByUserId(UUID bidderId) {
-        String sql = "UPDATE auctions SET highest_bidder_id = NULL WHERE highest_bidder_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, bidderId.toString());
-            return ps.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to clear highest bidder on auctions", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid bidder id while clearing highest bidder on auctions", e);
-        }
-    }
-
-    private LocalDateTime parseSqliteDateTime(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        if (value.contains("T")) {
-            return LocalDateTime.parse(value);
-        }
-        return LocalDateTime.parse(value, SQLITE_DATE_TIME_FORMATTER);
-    }
-
-    private String formatSqliteDateTime(LocalDateTime value) {
-        if (value == null) {
-            return null;
-        }
-        return value.format(SQLITE_DATE_TIME_FORMATTER);
     }
 }
