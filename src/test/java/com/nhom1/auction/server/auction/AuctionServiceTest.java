@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -31,17 +32,21 @@ public class AuctionServiceTest {
     private ItemRepository itemRepository;
 
     @Mock
+    private DataSource dataSource;
+
+    @Mock
     private Connection connection;
 
     private AuctionService auctionService;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
+        when(dataSource.getConnection()).thenReturn(connection);
         auctionService = new AuctionService(
             auctionRepository,
             itemRepository,
-            connection
+            dataSource
         );
     }
 

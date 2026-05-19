@@ -25,6 +25,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.sql.DataSource;
+
+import com.nhom1.auction.common.exception.ConflictException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -44,14 +47,18 @@ public class BidServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private DataSource dataSource;
+
+    @Mock
     private Connection connection;
 
     private BidService bidService;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
-        bidService = new BidService(bidRepository, auctionRepository, itemRepository, userRepository, connection);
+        when(dataSource.getConnection()).thenReturn(connection);
+        bidService = new BidService(bidRepository, auctionRepository, itemRepository, userRepository, dataSource);
     }
 
     @Test
@@ -63,6 +70,8 @@ public class BidServiceTest {
         UUID auctionId = auction.getId();
         when(connection.getAutoCommit()).thenReturn(true);
         when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
+        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(connection)))
+                .thenReturn(1);
 
         BidTransaction result = bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL);
 
@@ -74,6 +83,29 @@ public class BidServiceTest {
         verify(connection).setAutoCommit(false);
         verify(connection).commit();
         verify(connection).setAutoCommit(true);
+    }
+
+    @Test
+    public void testPlaceBid_LostRace_RollsBackAndThrowsConflictException() throws Exception {
+        UUID bidderId = UUID.randomUUID();
+        BigDecimal amount = new BigDecimal("150.00");
+        Auction auction = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"),
+                LocalDateTime.now().minusHours(1), LocalDateTime.now().plusHours(1));
+        auction.startAuction();
+        UUID auctionId = auction.getId();
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
+        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(connection)))
+                .thenReturn(0);
+
+        ConflictException thrown = assertThrows(ConflictException.class,
+                () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
+
+        assertTrue(thrown.getMessage().contains("Bid lost race"));
+        verify(bidRepository).save(any(BidTransaction.class), eq(connection));
+        verify(connection).rollback();
+        verify(connection).setAutoCommit(true);
+        verify(connection, never()).commit();
     }
 
     @Test

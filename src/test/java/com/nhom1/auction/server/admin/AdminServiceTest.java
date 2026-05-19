@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -43,20 +44,24 @@ public class AdminServiceTest {
     private AdminAuctionGateway adminAuctionGateway;
 
     @Mock
+    private DataSource dataSource;
+
+    @Mock
     private Connection connection;
 
     private AdminService adminService;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
+        when(dataSource.getConnection()).thenReturn(connection);
         adminService = new AdminService(
             userRepository,
             auctionRepository,
             itemRepository,
             bidRepository,
             adminAuctionGateway,
-            connection
+            dataSource
         );
     }
 
