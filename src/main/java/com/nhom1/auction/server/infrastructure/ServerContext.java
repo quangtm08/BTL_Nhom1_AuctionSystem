@@ -44,7 +44,7 @@ public class ServerContext {
             this.notificationService
         );
 
-        BidRepository bidRepository = new BidRepository(this.dataSource.getConnection());
+        BidRepository bidRepository = new BidRepository(this.dataSource);
         BidComponents bidComponents = BidModule.init(
             this.dataSource,
             this.router,
