@@ -15,29 +15,6 @@ public class AutoBidRepository {
 
     public AutoBidRepository(DataSource dataSource) {
         this.dataSource = dataSource;
-        ensureTable();
-    }
-
-    private void ensureTable() {
-        String sql = """
-            CREATE TABLE IF NOT EXISTS auto_bid_configs (
-                auction_id VARCHAR(36) NOT NULL,
-                bidder_id VARCHAR(36) NOT NULL,
-                max_amount DECIMAL(19, 2) NOT NULL,
-                increment_amount DECIMAL(19, 2) NOT NULL,
-                created_at TIMESTAMP NOT NULL,
-                updated_at TIMESTAMP NOT NULL,
-                PRIMARY KEY (auction_id, bidder_id),
-                FOREIGN KEY (auction_id) REFERENCES auctions(id),
-                FOREIGN KEY (bidder_id) REFERENCES users(id)
-            )
-            """;
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.execute();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize auto_bid_configs table", e);
-        }
     }
 
     public void save(AutoBidConfig config) {

@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,30 +23,6 @@ public class BidRepository {
 
 	public BidRepository(DataSource dataSource) {
 		this.dataSource = dataSource;
-		ensureTable();
-	}
-
-	private void ensureTable() {
-		String sql = """
-			CREATE TABLE IF NOT EXISTS bids (
-				id VARCHAR(36) PRIMARY KEY,
-				auction_id VARCHAR(36) NOT NULL,
-				bidder_id VARCHAR(36) NOT NULL,
-				amount NUMERIC(19, 2) NOT NULL,
-				bid_type VARCHAR(50) NOT NULL,
-				created_at TIMESTAMP NOT NULL,
-				FOREIGN KEY (auction_id) REFERENCES auctions(id),
-				FOREIGN KEY (bidder_id) REFERENCES users(id)
-			);
-			CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids(auction_id);
-			CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);
-			""";
-		try (Connection conn = dataSource.getConnection();
-		     Statement stmt = conn.createStatement()) {
-			stmt.execute(sql);
-		} catch (SQLException e) {
-			throw new RuntimeException("Failed to initialize bids table", e);
-		}
 	}
 
 	// ===================== SAVE =====================

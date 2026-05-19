@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -25,36 +24,6 @@ public class ItemRepository {
 
     public ItemRepository(DataSource dataSource) {
         this.dataSource = dataSource;
-        ensureTable();
-    }
-
-    private void ensureTable() {
-        String sql = """
-            CREATE TABLE IF NOT EXISTS items (
-                id VARCHAR(36) PRIMARY KEY,
-                seller_id VARCHAR(36) NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                description TEXT,
-                category VARCHAR(50) NOT NULL,
-                condition VARCHAR(50) NOT NULL,
-                brand VARCHAR(100),
-                warranty_months INTEGER,
-                artist VARCHAR(255),
-                era VARCHAR(100),
-                production_year INTEGER,
-                fuel_type VARCHAR(50),
-                created_at TIMESTAMP NOT NULL,
-                updated_at TIMESTAMP NOT NULL,
-                FOREIGN KEY (seller_id) REFERENCES users(id)
-            );
-            CREATE INDEX IF NOT EXISTS idx_items_seller_id ON items(seller_id);
-            """;
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize items table", e);
-        }
     }
 
     // ===================== SAVE =====================
