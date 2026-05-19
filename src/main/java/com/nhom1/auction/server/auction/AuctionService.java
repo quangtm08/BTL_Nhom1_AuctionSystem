@@ -43,7 +43,7 @@ public class AuctionService {
                 boolean oldAutoCommit = connection.getAutoCommit();
                 connection.setAutoCommit(false);
                 try {
-                    itemRepository.save(item, parsedSellerId);
+                    itemRepository.save(item, parsedSellerId, connection);
 
                     Auction auction = new Auction(
                         item.getId(),
@@ -52,12 +52,13 @@ public class AuctionService {
                         dto.getStartTime(),
                         dto.getEndTime()
                     );
-                    auctionRepository.save(auction);
+                    auctionRepository.save(auction, connection);
                     // Keep the opening price in auction state for listing/display and first-bid validation.
                     auctionRepository.updateHighestBid(
                         auction.getId(),
                         dto.getStartingPrice(),
-                        null
+                        null,
+                        connection
                     );
 
                     connection.commit();
@@ -139,10 +140,12 @@ public class AuctionService {
                 connection.setAutoCommit(false);
                 try {
                     int deletedAuctions = auctionRepository.deleteById(
-                        parsedAuctionId
+                        parsedAuctionId,
+                        connection
                     );
                     int deletedItems = itemRepository.deleteById(
-                        auction.getItemId()
+                        auction.getItemId(),
+                        connection
                     );
                     if (deletedAuctions == 0) {
                         throw new IllegalStateException(

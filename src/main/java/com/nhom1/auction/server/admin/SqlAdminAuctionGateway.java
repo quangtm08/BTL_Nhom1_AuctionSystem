@@ -7,14 +7,16 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.sql.DataSource;
+
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
 
 public class SqlAdminAuctionGateway implements AdminAuctionGateway {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public SqlAdminAuctionGateway(Connection connection) {
-        this.connection = connection;
+    public SqlAdminAuctionGateway(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
@@ -36,8 +38,9 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
 
         List<AuctionSummaryDto> result = new ArrayList<>();
 
-        try (PreparedStatement ps = connection.prepareStatement(sql);
-                ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 result.add(new AuctionSummaryDto(
@@ -54,8 +57,6 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to list auction summaries", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Failed to map auction summaries", e);
         }
 
         return result;
@@ -68,13 +69,12 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
                 SET status = 'CANCELED', updated_at = CURRENT_TIMESTAMP
                 WHERE id = ? AND status IN ('OPEN', 'RUNNING')
                 """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auctionId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to cancel auction by id", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auction id while canceling auction", e);
         }
     }
 }

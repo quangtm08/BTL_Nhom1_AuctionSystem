@@ -85,19 +85,22 @@ public class AdminService {
                 connection.setAutoCommit(false);
                 try {
                     auctionRepository.clearHighestBidderByUserId(
-                        target.getId()
+                        target.getId(),
+                        connection
                     );
-                    bidRepository.deleteByBidderId(target.getId());
+                    bidRepository.deleteByBidderId(target.getId(), connection);
 
                     List<Auction> sellerAuctions =
-                        auctionRepository.findBySellerId(target.getId());
+                        auctionRepository.findBySellerId(target.getId(), connection);
                     for (Auction auction : sellerAuctions) {
-                        bidRepository.deleteByAuctionId(auction.getId());
+                        bidRepository.deleteByAuctionId(auction.getId(), connection);
                         int deletedAuctions = auctionRepository.deleteById(
-                            auction.getId()
+                            auction.getId(),
+                            connection
                         );
                         int deletedItems = itemRepository.deleteById(
-                            auction.getItemId()
+                            auction.getItemId(),
+                            connection
                         );
                         if (deletedAuctions == 0 || deletedItems == 0) {
                             throw new IllegalStateException(
@@ -106,7 +109,7 @@ public class AdminService {
                         }
                     }
 
-                    boolean deleted = userRepository.deleteById(target.getId());
+                    boolean deleted = userRepository.deleteById(target.getId(), connection);
                     if (!deleted) {
                         throw new IllegalStateException(
                             "Failed to delete target user."

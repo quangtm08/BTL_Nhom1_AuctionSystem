@@ -50,13 +50,13 @@ public class BidService {
                 boolean oldAutoCommit = connection.getAutoCommit();
                 connection.setAutoCommit(false);
                 try {
-                    Auction auction = auctionRepository.findById(auctionId)
+                    Auction auction = auctionRepository.findById(auctionId, connection)
                             .orElseThrow(() -> new NotFoundException("Auction not found"));
 
                     BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
 
-                    bidRepository.save(bidTransaction);
-                    auctionRepository.updateHighestBid(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
+                    bidRepository.save(bidTransaction, connection);
+                    auctionRepository.updateHighestBid(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId(), connection);
 
                     connection.commit();
                     return bidTransaction;
