@@ -28,9 +28,9 @@ public class AuctionModule {
         NotificationService notificationService
     ) {
         try {
-            Connection conn = dataSource.getConnection();
-            ItemRepository itemRepository = new ItemRepository(conn);
-            AuctionRepository auctionRepository = new AuctionRepository(conn);
+            ItemRepository itemRepository = new ItemRepository(dataSource);
+            AuctionRepository auctionRepository = new AuctionRepository(dataSource);
+            Connection conn = dataSource.getConnection(); // Service still uses Connection — Phase C migrates
             AuctionService auctionService = new AuctionService(
                 auctionRepository,
                 itemRepository,

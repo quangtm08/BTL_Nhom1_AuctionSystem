@@ -20,8 +20,8 @@ public class AdminModule {
             BidRepository bidRepository,
             DataSource dataSource) {
         try {
-            Connection conn = dataSource.getConnection();
-            AdminAuctionGateway adminAuctionGateway = new SqlAdminAuctionGateway(conn);
+            AdminAuctionGateway adminAuctionGateway = new SqlAdminAuctionGateway(dataSource);
+            Connection conn = dataSource.getConnection(); // Service still uses Connection — Phase C migrates
             AdminService adminService = new AdminService(
                 userRepository, auctionRepository, itemRepository,
                 bidRepository, adminAuctionGateway, conn);

@@ -30,8 +30,8 @@ public class BidModule {
 			UserRepository userRepository
 	) {
 		try {
-			Connection conn = dataSource.getConnection();
-			BidRepository repository = new BidRepository(conn);
+			BidRepository repository = new BidRepository(dataSource);
+			Connection conn = dataSource.getConnection(); // Service still uses Connection — Phase C migrates
 			BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository, conn);
 			BidHandler handler = new BidHandler(service, notificationService);
 			handler.register(router);
