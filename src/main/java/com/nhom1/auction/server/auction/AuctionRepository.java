@@ -23,35 +23,6 @@ public class AuctionRepository {
 
     public AuctionRepository(DataSource dataSource) {
         this.dataSource = dataSource;
-        ensureTable();
-    }
-
-    private void ensureTable() {
-        String sql = """
-            CREATE TABLE IF NOT EXISTS auctions (
-                id VARCHAR(36) PRIMARY KEY,
-                item_id VARCHAR(36) NOT NULL,
-                start_time TIMESTAMP NOT NULL,
-                end_time TIMESTAMP NOT NULL,
-                status VARCHAR(50) NOT NULL,
-                starting_price NUMERIC(19, 2) NOT NULL,
-                current_highest_bid NUMERIC(19, 2) DEFAULT 0,
-                highest_bidder_id VARCHAR(36),
-                created_at TIMESTAMP NOT NULL,
-                updated_at TIMESTAMP NOT NULL,
-                FOREIGN KEY (item_id) REFERENCES items(id),
-                FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
-            );
-            CREATE INDEX IF NOT EXISTS idx_auctions_item_id ON auctions(item_id);
-            CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);
-            CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id);
-            """;
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize auctions table", e);
-        }
     }
 
     // ===================== SAVE =====================
@@ -230,19 +201,16 @@ public class AuctionRepository {
     }
 
     // ===================== UPDATE BID =====================
-    public void updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId) {
-        try (Connection conn = dataSource.getConnection()) {
-            updateHighestBid(auctionId, amount, bidderId, conn);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to update highest bid", e);
-        }
-    }
-
-    public void updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId, Connection conn) {
+    /**
+     * Atomic optimistic update. The predicate ensures we only overwrite a strictly-lower
+     * current highest bid, preventing the lost-update race when two bidders compete
+     * concurrently. Returns rows updated: 0 means caller lost the race.
+     */
+    public int updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId, Connection conn) {
         String sql = """
                     UPDATE auctions
                     SET current_highest_bid = ?, highest_bidder_id = ?, updated_at = ?
-                    WHERE id = ?
+                    WHERE id = ? AND (current_highest_bid IS NULL OR current_highest_bid < ?)
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -256,8 +224,9 @@ public class AuctionRepository {
 
             ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
             ps.setString(4, auctionId.toString());
+            ps.setBigDecimal(5, amount);
 
-            ps.executeUpdate();
+            return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update highest bid", e);
         }
