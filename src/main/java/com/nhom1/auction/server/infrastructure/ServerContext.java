@@ -15,6 +15,7 @@ import com.nhom1.auction.server.bidding.BidModule;
 import com.nhom1.auction.server.bidding.BidModule.BidComponents;
 import com.nhom1.auction.server.bidding.BidRepository;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
+import com.nhom1.auction.server.infrastructure.database.DatabaseInitializer;
 import javax.sql.DataSource;
 
 public class ServerContext {
@@ -28,6 +29,7 @@ public class ServerContext {
         // 1. Core Infrastructure
         this.router = new MessageRouter();
         this.dataSource = DBConnection.getDataSource();
+        DatabaseInitializer.init(this.dataSource);
 
         this.clientRegistry = new ClientRegistry();
         this.notificationService = new NotificationService(clientRegistry);
