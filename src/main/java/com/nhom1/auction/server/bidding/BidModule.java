@@ -6,8 +6,6 @@ import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import javax.sql.DataSource;
 
 public class BidModule {
@@ -29,16 +27,11 @@ public class BidModule {
 			NotificationService notificationService,
 			UserRepository userRepository
 	) {
-		try {
-			BidRepository repository = new BidRepository(dataSource);
-			Connection conn = dataSource.getConnection(); // Service still uses Connection — Phase C migrates
-			BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository, conn);
-			BidHandler handler = new BidHandler(service, notificationService);
-			handler.register(router);
-			System.out.println("BidModule: Feature initialized successfully.");
-			return new BidComponents(service, handler);
-		} catch (SQLException e) {
-			throw new RuntimeException("BidModule: Failed to obtain connection from pool", e);
-		}
+		BidRepository repository = new BidRepository(dataSource);
+		BidService service = new BidService(repository, auctionRepository, itemRepository, userRepository, dataSource);
+		BidHandler handler = new BidHandler(service, notificationService);
+		handler.register(router);
+		System.out.println("BidModule: Feature initialized successfully.");
+		return new BidComponents(service, handler);
 	}
 }

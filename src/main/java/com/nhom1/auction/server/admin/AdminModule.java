@@ -1,7 +1,5 @@
 package com.nhom1.auction.server.admin;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import javax.sql.DataSource;
 
 import com.nhom1.auction.server.auction.AuctionRepository;
@@ -19,17 +17,12 @@ public class AdminModule {
             ItemRepository itemRepository,
             BidRepository bidRepository,
             DataSource dataSource) {
-        try {
-            AdminAuctionGateway adminAuctionGateway = new SqlAdminAuctionGateway(dataSource);
-            Connection conn = dataSource.getConnection(); // Service still uses Connection — Phase C migrates
-            AdminService adminService = new AdminService(
-                userRepository, auctionRepository, itemRepository,
-                bidRepository, adminAuctionGateway, conn);
-            AdminHandler adminHandler = new AdminHandler(adminService);
-            adminHandler.register(router);
-            System.out.println("AdminModule: Feature initialized successfully.");
-        } catch (SQLException e) {
-            throw new RuntimeException("AdminModule: Failed to obtain connection from pool", e);
-        }
+        AdminAuctionGateway adminAuctionGateway = new SqlAdminAuctionGateway(dataSource);
+        AdminService adminService = new AdminService(
+            userRepository, auctionRepository, itemRepository,
+            bidRepository, adminAuctionGateway, dataSource);
+        AdminHandler adminHandler = new AdminHandler(adminService);
+        adminHandler.register(router);
+        System.out.println("AdminModule: Feature initialized successfully.");
     }
 }
