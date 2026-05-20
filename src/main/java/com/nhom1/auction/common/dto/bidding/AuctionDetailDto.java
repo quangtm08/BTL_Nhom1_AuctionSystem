@@ -22,6 +22,7 @@ public class AuctionDetailDto {
     private LocalDateTime endTime;
     private List<BidSummaryDto> bidHistory;
     private String sellerName;
+    private List<String> imageUrls;
     public AuctionDetailDto() {}
     public AuctionDetailDto(String auctionId, String itemID, String itemName, String itemDescription, ItemCategory itemCategory, ItemCondition itemCondition, String sellerID, BigDecimal currentHighestBid, String currentHighestBidderId, BigDecimal minBidIncrement, AuctionStatus status, LocalDateTime startTime, LocalDateTime endTime, List<BidSummaryDto> bidHistory) {
         this.auctionId = auctionId;
@@ -92,5 +93,13 @@ public class AuctionDetailDto {
 
     public void setSellerName(String sellerName) {
         this.sellerName = sellerName;
+    }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
 }

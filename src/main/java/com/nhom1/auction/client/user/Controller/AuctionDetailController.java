@@ -5,6 +5,7 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,14 +23,19 @@ import com.nhom1.auction.common.utils.AppContext;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class AuctionDetailController {
+	private static final double IMAGE_BOX_WIDTH = 420;
+	private static final double IMAGE_BOX_HEIGHT = 320;
 
 	private final BiddingClientService biddingService = new BiddingClientService();
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -69,10 +75,20 @@ public class AuctionDetailController {
 	private Label lblDescription;
 
 	@FXML
+	private ImageView itemImageView;
+
+	@FXML
+	private VBox contentBox;
+
+	@FXML
+	private VBox loadingBox;
+
+	@FXML
 	public void initialize() {
 		if (btnBid != null) {
 			btnBid.setOnAction(e -> onPlaceBid());
 		}
+		setLoadingState(true);
 
 		// Khi user click vào TextField (focus gained) → xóa lỗi ngay lập tức.
 		// Dùng focusedProperty listener thay vì setOnMouseClicked để bắt cả trường hợp
@@ -90,10 +106,17 @@ public class AuctionDetailController {
 		}
 
 		biddingService.getAuctionDetail(sel)
-				.thenAccept(dto -> Platform.runLater(() -> applyDetail(dto)))
+				.thenCompose(dto -> waitForPrimaryImageLoaded(dto).thenApply(ignored -> dto))
+				.thenAccept(dto -> Platform.runLater(() -> {
+					applyDetail(dto);
+					setLoadingState(false);
+				}))
 				.exceptionally(ex -> {
-					Platform.runLater(
-							() -> System.err.println("Failed to load auction detail: " + ex.getCause().getMessage()));
+					Platform.runLater(() -> {
+						setLoadingState(false);
+						String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+						System.err.println("Failed to load auction detail: " + message);
+					});
 					return null;
 				});
 
@@ -159,6 +182,100 @@ public class AuctionDetailController {
 			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
 		if (bidHistoryList != null && dto.getBidHistory() != null)
 			renderBidHistory(dto.getBidHistory());
+		if (itemImageView != null) {
+			String imageUrl = (dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()) ? dto.getImageUrls().get(0) : null;
+			if (imageUrl != null && !imageUrl.isBlank()) {
+				loadPrimaryImage(imageUrl);
+			} else {
+				itemImageView.setImage(null);
+				itemImageView.setViewport(null);
+			}
+		}
+	}
+
+	private CompletableFuture<Void> waitForPrimaryImageLoaded(AuctionDetailDto dto) {
+		if (dto == null || dto.getImageUrls() == null || dto.getImageUrls().isEmpty()) {
+			return CompletableFuture.completedFuture(null);
+		}
+		String imageUrl = dto.getImageUrls().get(0);
+		if (imageUrl == null || imageUrl.isBlank()) {
+			return CompletableFuture.completedFuture(null);
+		}
+
+		CompletableFuture<Void> loaded = new CompletableFuture<>();
+		Image image = new Image(imageUrl, IMAGE_BOX_WIDTH, IMAGE_BOX_HEIGHT, true, true, true);
+		image.progressProperty().addListener((obs, oldValue, newValue) -> {
+			if (newValue.doubleValue() >= 1.0 && !loaded.isDone()) {
+				loaded.complete(null);
+			}
+		});
+		image.errorProperty().addListener((obs, wasError, isError) -> {
+			if (Boolean.TRUE.equals(isError) && !loaded.isDone()) {
+				loaded.complete(null);
+			}
+		});
+		return loaded;
+	}
+
+	private void setLoadingState(boolean loading) {
+		if (btnBid != null) btnBid.setDisable(loading);
+		if (txtBidInput != null) txtBidInput.setDisable(loading);
+		if (lblTitle != null && loading) lblTitle.setText("Loading...");
+		if (contentBox != null) {
+			contentBox.setVisible(!loading);
+			contentBox.setManaged(!loading);
+		}
+		if (loadingBox != null) {
+			loadingBox.setVisible(loading);
+			loadingBox.setManaged(loading);
+		}
+	}
+
+	private void loadPrimaryImage(String imageUrl) {
+		Image image = new Image(imageUrl, IMAGE_BOX_WIDTH, IMAGE_BOX_HEIGHT, true, true, true);
+		itemImageView.setFitWidth(IMAGE_BOX_WIDTH);
+		itemImageView.setFitHeight(IMAGE_BOX_HEIGHT);
+		itemImageView.setPreserveRatio(false);
+		itemImageView.setImage(image);
+
+		image.progressProperty().addListener((obs, oldValue, newValue) -> {
+			if (newValue.doubleValue() >= 1.0) {
+				Platform.runLater(() -> applyCoverViewport(image));
+			}
+		});
+
+		image.errorProperty().addListener((obs, wasError, isError) -> {
+			if (Boolean.TRUE.equals(isError)) {
+				Platform.runLater(() -> {
+					itemImageView.setImage(null);
+					itemImageView.setViewport(null);
+				});
+			}
+		});
+	}
+
+	private void applyCoverViewport(Image image) {
+		double width = image.getWidth();
+		double height = image.getHeight();
+		if (width <= 0 || height <= 0) {
+			itemImageView.setViewport(null);
+			return;
+		}
+
+		double targetRatio = IMAGE_BOX_WIDTH / IMAGE_BOX_HEIGHT;
+		double sourceRatio = width / height;
+		double viewWidth = width;
+		double viewHeight = height;
+
+		if (sourceRatio > targetRatio) {
+			viewWidth = height * targetRatio;
+		} else {
+			viewHeight = width / targetRatio;
+		}
+
+		double x = (width - viewWidth) / 2.0;
+		double y = (height - viewHeight) / 2.0;
+		itemImageView.setViewport(new Rectangle2D(x, y, viewWidth, viewHeight));
 	}
 
 	private void renderBidHistory(List<BidSummaryDto> history) {

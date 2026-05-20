@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.nhom1.auction.client.user.controller.components.AuctionCardComponentController"
+      spacing="12.0" styleClass="product-card">
+    <HBox alignment="CENTER_LEFT">
+        <VBox fx:id="titleBox" spacing="2" HBox.hgrow="ALWAYS">
+            <Label fx:id="titleLabel" text="Untitled" styleClass="card-title-text"/>
+            <Label fx:id="categoryLabel" text="Uncategorized" styleClass="card-sub-text"/>
+        </VBox>
+        <Label fx:id="statusBadgeLabel" text="Unknown" styleClass="status-badge"/>
+    </HBox>
+
+    <VBox prefHeight="50.0"/>
+
+    <HBox alignment="BOTTOM_LEFT" spacing="10">
+        <VBox spacing="2" HBox.hgrow="ALWAYS">
+            <Label text="Current bid" styleClass="card-sub-text"/>
+            <Label fx:id="priceValueLabel" text="0" styleClass="card-price-text" maxWidth="Infinity"/>
+        </VBox>
+        <VBox alignment="BOTTOM_RIGHT" spacing="2">
+            <Label fx:id="timeLeftLabel" text="N/A" styleClass="card-sub-text"/>
+            <Button fx:id="actionButton" text="Raise bid" styleClass="btn-primary" maxWidth="Infinity"/>
+        </VBox>
+    </HBox>
+</VBox>

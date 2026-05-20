@@ -32,7 +32,7 @@ public class AuctionServiceTest {
     private ItemRepository itemRepository;
 
     @Mock
-    private DataSource dataSource;
+    private ItemImageRepository itemImageRepository;
 
     @Mock
     private Connection connection;
@@ -42,12 +42,7 @@ public class AuctionServiceTest {
     @BeforeEach
     public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
-        when(dataSource.getConnection()).thenReturn(connection);
-        auctionService = new AuctionService(
-            auctionRepository,
-            itemRepository,
-            dataSource
-        );
+        auctionService = new AuctionService(auctionRepository, itemRepository, itemImageRepository, connection);
     }
 
     @Test

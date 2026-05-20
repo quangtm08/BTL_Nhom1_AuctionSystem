@@ -10,6 +10,7 @@ import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
+import com.nhom1.auction.server.auction.ItemImageRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 
@@ -44,6 +45,9 @@ public class BidServiceTest {
     private ItemRepository itemRepository;
 
     @Mock
+    private ItemImageRepository itemImageRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -57,8 +61,14 @@ public class BidServiceTest {
     @BeforeEach
     public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
-        when(dataSource.getConnection()).thenReturn(connection);
-        bidService = new BidService(bidRepository, auctionRepository, itemRepository, userRepository, dataSource);
+        bidService = new BidService(
+                bidRepository,
+                auctionRepository,
+                itemRepository,
+                itemImageRepository,
+                userRepository,
+                connection
+        );
     }
 
     @Test

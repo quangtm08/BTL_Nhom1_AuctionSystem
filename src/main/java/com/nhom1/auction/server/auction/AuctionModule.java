@@ -10,13 +10,16 @@ public class AuctionModule {
 
         public final AuctionRepository auctionRepository;
         public final ItemRepository itemRepository;
+        public final ItemImageRepository itemImageRepository;
 
         public AuctionRepositories(
             AuctionRepository auctionRepository,
-            ItemRepository itemRepository
+            ItemRepository itemRepository,
+            ItemImageRepository itemImageRepository
         ) {
             this.auctionRepository = auctionRepository;
             this.itemRepository = itemRepository;
+            this.itemImageRepository = itemImageRepository;
         }
     }
 
@@ -25,16 +28,18 @@ public class AuctionModule {
         MessageRouter router,
         NotificationService notificationService
     ) {
-        ItemRepository itemRepository = new ItemRepository(dataSource);
-        AuctionRepository auctionRepository = new AuctionRepository(dataSource);
+        ItemRepository itemRepository = new ItemRepository(connection);
+        ItemImageRepository itemImageRepository = new ItemImageRepository(connection);
+        AuctionRepository auctionRepository = new AuctionRepository(connection);
         AuctionService auctionService = new AuctionService(
             auctionRepository,
             itemRepository,
-            dataSource
+            itemImageRepository,
+            connection
         );
         AuctionHandler auctionHandler = new AuctionHandler(auctionService, notificationService);
         auctionHandler.register(router);
         System.out.println("AuctionModule: Feature initialized successfully.");
-        return new AuctionRepositories(auctionRepository, itemRepository);
+        return new AuctionRepositories(auctionRepository, itemRepository, itemImageRepository);
     }
 }

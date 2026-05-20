@@ -23,6 +23,7 @@ import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.server.auction.AuctionRepository;
+import com.nhom1.auction.server.auction.ItemImageRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 
@@ -31,15 +32,17 @@ public class BidService {
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
     private final ItemRepository itemRepository;
+    private final ItemImageRepository itemImageRepository;
     private final UserRepository userRepository;
     private final DataSource dataSource;
 
     public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
-                      ItemRepository itemRepository, UserRepository userRepository,
-                      DataSource dataSource) {
+                      ItemRepository itemRepository, ItemImageRepository itemImageRepository, UserRepository userRepository,
+                      Connection connection) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
+        this.itemImageRepository = itemImageRepository;
         this.userRepository = userRepository;
         this.dataSource = dataSource;
     }
@@ -102,24 +105,25 @@ public class BidService {
     		.map(this::toBidSummaryDto)
     		.toList();
 
-    	AuctionDetailDto dto = new AuctionDetailDto(
-    		auction.getId().toString(),
-    		item.getId().toString(),
-    		item.getName(),
-    		item.getDescription(),
-    		item.getCategory(),
-    		item.getCondition(),
-    		auction.getSellerId().toString(),
-    		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
-    		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
-    		auction.getMinBidIncrement(),
-    		auction.getStatus(),
-    		auction.getStartTime(),
-    		auction.getEndTime(),
-    		bidHistory
-    	);
-    	dto.setSellerName(sellerName);
-    	return dto;
+	AuctionDetailDto dto = new AuctionDetailDto(
+		auction.getId().toString(),
+		item.getId().toString(),
+		item.getName(),
+		item.getDescription(),
+		item.getCategory(),
+		item.getCondition(),
+		auction.getSellerId().toString(),
+		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
+		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
+		auction.getMinBidIncrement(),
+		auction.getStatus(),
+		auction.getStartTime(),
+		auction.getEndTime(),
+		bidHistory
+	);
+	dto.setSellerName(sellerName);
+    dto.setImageUrls(itemImageRepository.findImageUrlsByItemId(item.getId()));
+	return dto;
     }
 
     public ListAuctionsResponse listAllAuctions() {

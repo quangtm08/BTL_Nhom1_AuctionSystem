@@ -1,23 +1,19 @@
 package com.nhom1.auction.client.user.controller;
 
 import java.io.File;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
+import com.nhom1.auction.client.user.service.CreateAuctionClientService;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
-import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.RequestMessage;
-import com.nhom1.auction.common.utils.AppContext;
+import com.nhom1.auction.common.exception.AuctionException;
+import com.nhom1.auction.common.exception.ValidationException;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -32,6 +28,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 public class CreateAuctionController {
+    private final List<File> selectedImageFiles = new ArrayList<>();
+    private final CreateAuctionClientService createAuctionService = new CreateAuctionClientService();
 
     @FXML
     private ComboBox<ItemCategory> categoryComboBox;
@@ -108,9 +106,12 @@ public class CreateAuctionController {
         List<File> selectedFiles = fileChooser.showOpenMultipleDialog(window);
 
         if (selectedFiles == null || selectedFiles.isEmpty()) {
+            selectedImageFiles.clear();
             uploadCountLabel.setText("No photo selected");
             return;
         }
+        selectedImageFiles.clear();
+        selectedImageFiles.addAll(selectedFiles);
 
         String selectedNames = selectedFiles.stream()
                 .limit(2)
@@ -125,83 +126,56 @@ public class CreateAuctionController {
 
     @FXML
     private void handlePublishListing() {
-        AuthResponse user = AppContext.getCurrentUser();
-        if (user == null || user.getUserID() == null || user.getUserID().isBlank()) {
-            uploadCountLabel.setText("Please sign in again.");
-            return;
-        }
-        if (titleField.getText() == null || titleField.getText().isBlank()) {
-            uploadCountLabel.setText("Title is required.");
-            return;
-        }
-        if (categoryComboBox.getValue() == null || conditionComboBox.getValue() == null) {
-            uploadCountLabel.setText("Category and condition are required.");
-            return;
-        }
-
-        BigDecimal startingBid;
-        try {
-            startingBid = new BigDecimal(startingBidField.getText().trim());
-        } catch (Exception ex) {
-            uploadCountLabel.setText("Starting bid must be a valid number.");
+        String validationError = createAuctionService.validateInput(
+                titleField.getText(),
+                startingBidField.getText(),
+                categoryComboBox.getValue(),
+                conditionComboBox.getValue(),
+                resolveDurationDays()
+        );
+        if (validationError != null) {
+            uploadCountLabel.setText(validationError);
             return;
         }
 
-        int durationDays = resolveDurationDays();
-        if (durationDays <= 0) {
-            uploadCountLabel.setText("Duration must be greater than 0.");
-            return;
-        }
-
-        LocalDateTime startTime = LocalDateTime.now();
-        LocalDateTime endTime = startTime.plusDays(durationDays);
-
-        CreateAuctionRequest dto = new CreateAuctionRequest();
-        dto.setSellerId(user.getUserID());
-        dto.setName(titleField.getText().trim());
-        dto.setDescription(descriptionArea.getText());
-        dto.setCategory(categoryComboBox.getValue());
-        dto.setCondition(conditionComboBox.getValue());
-        dto.setStartingPrice(startingBid);
-        dto.setStartTime(startTime);
-        dto.setEndTime(endTime);
-
-        // Minimal category-specific defaults to satisfy backend validation
-        switch (dto.getCategory()) {
-            case ART -> {
-                dto.setArtist("Unknown");
-                dto.setEra("Unknown");
-            }
-            case ELECTRONICS -> {
-                dto.setBrand("Unknown");
-                dto.setWarrantyMonths(0);
-            }
-            case VEHICLE -> {
-                dto.setBrand("Unknown");
-                dto.setProductionYear(2000);
-                dto.setFuelType(null);
-            }
-        }
-
-        RequestMessage<CreateAuctionRequest> request = new RequestMessage<>(MessageType.CREATE_AUCTION, dto);
-        uploadCountLabel.setText("Publishing...");
-        ServerConnection.getInstance()
-                .sendRequest(request, CreateAuctionResponse.class)
+        uploadCountLabel.setText("Uploading images...");
+        createAuctionService.createAuction(
+                        titleField.getText(),
+                        descriptionArea.getText(),
+                        startingBidField.getText(),
+                        categoryComboBox.getValue(),
+                        conditionComboBox.getValue(),
+                        resolveDurationDays(),
+                        List.copyOf(selectedImageFiles)
+                )
                 .thenAccept(response -> Platform.runLater(() -> {
-                    if (response != null && response.isSuccess()) {
+                    if (response != null) {
                         uploadCountLabel.setText("Published successfully.");
                         AppNavigator.navigateTo(AppView.MY_LISTINGS);
                     } else {
-                        String err = (response != null && response.getError() != null)
-                                ? response.getError().getMessage()
-                                : "Failed to publish listing.";
-                        uploadCountLabel.setText(err);
+                        uploadCountLabel.setText("Failed to publish listing.");
                     }
                 }))
                 .exceptionally(ex -> {
-                    Platform.runLater(() -> uploadCountLabel.setText("Connection error."));
+                    Platform.runLater(() -> uploadCountLabel.setText(resolveErrorMessage(ex)));
                     return null;
                 });
+    }
+
+    private String resolveErrorMessage(Throwable ex) {
+        Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+        if (cause instanceof AuctionException || cause instanceof ValidationException) {
+            String message = cause.getMessage();
+            return (message == null || message.isBlank()) ? "Connection error." : message;
+        }
+        String message = cause.getMessage();
+        if (message == null || message.isBlank()) {
+            return "Connection error.";
+        }
+        if (message.contains("IMGBB_API_KEY")) {
+            return "Missing IMGBB_API_KEY. Please configure env var.";
+        }
+        return message;
     }
 
     private int resolveDurationDays() {
