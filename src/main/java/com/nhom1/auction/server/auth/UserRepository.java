@@ -5,66 +5,51 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import javax.sql.DataSource;
+
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 
-/**
- * - Execute raw SQL and return result for AuthService
- * - Interacts with user table
- */
 public class UserRepository {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public UserRepository(Connection connection) {
-        this.connection = connection;
-        ensureTable();
+    public UserRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
-    private void ensureTable() {
-        String sql = """
-            CREATE TABLE IF NOT EXISTS users (
-                id VARCHAR(36) PRIMARY KEY,
-                username VARCHAR(255) UNIQUE NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                role VARCHAR(50) NOT NULL,
-                created_at TIMESTAMP NOT NULL,
-                updated_at TIMESTAMP NOT NULL
-            )
-            """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.execute();
+    // ===================== FIND ALL =====================
+    public List<User> findAll() {
+        try (Connection conn = dataSource.getConnection()) {
+            return findAll(conn);
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize users table", e);
+            throw new RuntimeException("Failed to find all users", e);
         }
     }
 
-    // Return all users
-    public List<User> findAll() {
+    public List<User> findAll(Connection conn) {
         String sql = "SELECT * FROM users";
         List<User> users = new ArrayList<>();
-        try (Statement stmt = connection.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery(sql)) {
-                while (rs.next()) {
-                    users.add(mapUser(rs));
-                }
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                users.add(mapUser(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find all users", e);
         }
         return users;
     }
 
-    // Take username or email. Return user object if found
+    // ===================== FIND BY IDENTIFIER =====================
     public Optional<User> findByIdentifier(String identifier) {
         String sql = "SELECT * FROM users WHERE username = ? OR email = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identifier);
             ps.setString(2, identifier);
 
@@ -79,63 +64,76 @@ public class UserRepository {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find user by identifier", e);
         }
         return Optional.empty();
     }
 
-    // Shared dependency point for Binh's admin/payment features.
-    // AuthModule already exports UserRepository via ServerContext, so other
-    // modules can safely reuse this lookup without re-owning user SQL.
+    // ===================== FIND BY ID =====================
     public Optional<User> findById(UUID id) {
-        String sql = "SELECT * FROM users WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setString(1, id.toString());
+        try (Connection conn = dataSource.getConnection()) {
+            return findById(id, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find user by id", e);
+        }
+    }
 
+    public Optional<User> findById(UUID id, Connection conn) {
+        String sql = "SELECT * FROM users WHERE id = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, id.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return Optional.of(mapUser(rs));
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to find user by id", e);
         }
         return Optional.empty();
     }
 
-    // Take in username. Returns boolean if user exists
+    // ===================== EXISTS BY USERNAME =====================
     public boolean existsByUsername(String username) {
         String sql = "SELECT 1 FROM users WHERE username = ? LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to check username existence", e);
         }
-        return false;
     }
 
-    // Take in email. Returns boolean if user exists
+    // ===================== EXISTS BY EMAIL =====================
     public boolean existsByEmail(String email) {
         String sql = "SELECT 1 FROM users WHERE email = ? LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to check email existence", e);
         }
-        return false;
     }
 
-    // Take in user object. Convert it to SQL fields and save user to database
+    // ===================== SAVE =====================
     public void save(User user) {
+        try (Connection conn = dataSource.getConnection()) {
+            save(user, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to save user", e);
+        }
+    }
+
+    public void save(User user, Connection conn) {
         String sql = "INSERT INTO users(id, username, email, password, role, created_at, updated_at) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, user.getId().toString());
             ps.setString(2, user.getUsername());
             ps.setString(3, user.getEmail());
@@ -145,32 +143,34 @@ public class UserRepository {
             ps.setTimestamp(7, java.sql.Timestamp.valueOf(user.getUpdatedAt()));
             ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to save user", e);
         }
     }
 
-    // Shared dependency point for Binh's admin feature.
-    public boolean deleteById(UUID id) throws SQLException {
+    // ===================== DELETE BY ID =====================
+    public boolean deleteById(UUID id) {
+        try (Connection conn = dataSource.getConnection()) {
+            return deleteById(id, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete user", e);
+        }
+    }
+
+    public boolean deleteById(UUID id, Connection conn) {
         String sql = "DELETE FROM users WHERE id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, id.toString());
             return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete user", e);
         }
     }
 
     private User mapUser(ResultSet rs) throws SQLException {
-        LocalDateTime createdAt;
-        LocalDateTime updatedAt;
-        try {
-            java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
-            java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
-            createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
-            updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
-        } catch (Exception e) {
-            System.err.println("Warning: Could not parse dates for user " + rs.getString("username")
-                    + ". Using current time.");
-            createdAt = LocalDateTime.now();
-            updatedAt = LocalDateTime.now();
+        java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
+        java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
+        if (createdTs == null || updatedTs == null) {
+            throw new IllegalStateException("User row has null created_at or updated_at: " + rs.getString("id"));
         }
 
         return new User(
@@ -179,7 +179,7 @@ public class UserRepository {
                 rs.getString("email"),
                 rs.getString("password"),
                 UserRole.valueOf(rs.getString("role")),
-                createdAt,
-                updatedAt);
+                createdTs.toLocalDateTime(),
+                updatedTs.toLocalDateTime());
     }
 }

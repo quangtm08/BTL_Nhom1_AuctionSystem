@@ -3,70 +3,78 @@ package com.nhom1.auction.server.admin;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.sql.DataSource;
 
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
 
 public class SqlAdminAuctionGateway implements AdminAuctionGateway {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public SqlAdminAuctionGateway(Connection connection) {
-        this.connection = connection;
+    public SqlAdminAuctionGateway(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     @Override
-public List<AuctionSummaryDto> findAllAuctionSummaries() {
-    String sql = """
-            SELECT a.id,
-                   i.name AS item_name,
-                   a.starting_price,
-                   a.current_highest_bid,
-                   a.start_time,
-                   a.end_time,
-                   a.status,
-                   i.seller_id
-            FROM auctions a
-            JOIN items i ON i.id = a.item_id
-            ORDER BY a.created_at DESC
-            """;
+    public List<AuctionSummaryDto> findAllAuctionSummaries() {
+        String sql = """
+                SELECT a.id,
+                       i.name AS item_name,
+                       i.category AS category,
+                       a.starting_price,
+                       a.current_highest_bid,
+                       a.start_time,
+                       a.end_time,
+                       a.status,
+                       i.seller_id
+                FROM auctions a
+                JOIN items i ON i.id = a.item_id
+                ORDER BY a.created_at DESC
+                """;
 
-    List<AuctionSummaryDto> result = new ArrayList<>();
+        List<AuctionSummaryDto> result = new ArrayList<>();
 
-    try (PreparedStatement ps = connection.prepareStatement(sql);
-         ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-        while (rs.next()) {
-            result.add(new AuctionSummaryDto(
-                    rs.getString("id"),
-                    rs.getString("item_name"),
-                    rs.getString("category"), // Added category
-                    rs.getBigDecimal("starting_price"),
-                    rs.getBigDecimal("current_highest_bid"),
-                    rs.getTimestamp("start_time").toLocalDateTime(),
-                    rs.getTimestamp("end_time").toLocalDateTime(),
-                    AuctionStatus.valueOf(rs.getString("status")),
-                    rs.getString("seller_id")
-            ));
+            while (rs.next()) {
+                result.add(new AuctionSummaryDto(
+                        rs.getString("id"),
+                        rs.getString("item_name"),
+                        rs.getString("category"),
+                        rs.getBigDecimal("starting_price"),
+                        rs.getBigDecimal("current_highest_bid"),
+                        rs.getTimestamp("start_time").toLocalDateTime(),
+                        rs.getTimestamp("end_time").toLocalDateTime(),
+                        AuctionStatus.valueOf(rs.getString("status")),
+                        rs.getString("seller_id")));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to list auction summaries", e);
         }
 
-    } catch (Exception e) {
-        e.printStackTrace();
+        return result;
     }
-
-    return result;
-}
 
     @Override
     public boolean cancelAuctionById(String auctionId) {
-        String sql = "UPDATE auctions SET status='CANCELED', updated_at=datetime('now') WHERE id=? AND status IN ('OPEN','RUNNING')";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        String sql = """
+                UPDATE auctions
+                SET status = 'CANCELED', updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND status IN ('OPEN', 'RUNNING')
+                """;
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auctionId);
             return ps.executeUpdate() > 0;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to cancel auction by id", e);
         }
     }
 }

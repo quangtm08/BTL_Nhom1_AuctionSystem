@@ -1,17 +1,15 @@
 package com.nhom1.auction.server.automation;
 
 import com.nhom1.auction.server.infrastructure.MessageRouter;
-import java.sql.Connection;
+import com.nhom1.auction.server.infrastructure.NotificationService;
+import javax.sql.DataSource;
 
 public class AutoBidModule {
 
-    /**
-     * Cross-team dependency:
-     * - caller (ServerContext owner) passes concrete BidGateway adapter from bidding module.
-     */
-    public static AutoBidService init(Connection connection, MessageRouter router, BidGateway bidGateway) {
-        AutoBidRepository repository = new AutoBidRepository(connection);
-        AutoBidService service = new AutoBidService(repository, bidGateway);
+    public static AutoBidService init(DataSource dataSource, MessageRouter router,
+                                      BidGateway bidGateway, NotificationService notificationService) {
+        AutoBidRepository repository = new AutoBidRepository(dataSource);
+        AutoBidService service = new AutoBidService(repository, bidGateway, notificationService);
         AutoBidHandler handler = new AutoBidHandler(service);
         handler.register(router);
         System.out.println("AutoBidModule: Feature initialized successfully.");

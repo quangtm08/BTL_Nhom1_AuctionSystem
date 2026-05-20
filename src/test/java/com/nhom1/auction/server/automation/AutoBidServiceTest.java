@@ -4,6 +4,8 @@ import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.entity.BidTransaction;
 
+import com.nhom1.auction.server.infrastructure.NotificationService;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -24,12 +26,15 @@ public class AutoBidServiceTest {
     @Mock
     private BidGateway bidGateway;
 
+    @Mock
+    private NotificationService notificationService;
+
     private AutoBidService autoBidService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        autoBidService = new AutoBidService(autoBidRepository, bidGateway);
+        autoBidService = new AutoBidService(autoBidRepository, bidGateway, notificationService);
     }
 
     @Test

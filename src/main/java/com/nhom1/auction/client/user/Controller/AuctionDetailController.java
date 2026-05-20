@@ -257,7 +257,8 @@ public class AuctionDetailController {
 	private void handlePlaceBidSuccess(PlaceBidResponse resp) {
 		if (resp == null)
 			return;
-		AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
+		if (txtBidInput != null)
+			txtBidInput.setText("");
 	}
 
 	private String formatMoney(BigDecimal amount) {
