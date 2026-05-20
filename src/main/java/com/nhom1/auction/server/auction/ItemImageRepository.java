@@ -61,6 +61,9 @@ public class ItemImageRepository {
         try (Connection conn = dataSource.getConnection()) {
             return findImageUrlsByItemId(itemId, conn);
         } catch (SQLException e) {
+            if (isMissingItemImagesTable(e)) {
+                return List.of();
+            }
             throw new RuntimeException("Failed to fetch item images", e);
         }
     }
@@ -82,8 +85,21 @@ public class ItemImageRepository {
             }
             return urls;
         } catch (SQLException e) {
+            if (isMissingItemImagesTable(e)) {
+                return List.of();
+            }
             throw new RuntimeException("Failed to fetch item images", e);
         }
+    }
+
+    private boolean isMissingItemImagesTable(SQLException e) {
+        String message = e.getMessage();
+        String sqlState = e.getSQLState();
+        return (message != null
+                && (message.toLowerCase().contains("no such table")
+                || message.toLowerCase().contains("item_images")
+                || message.toLowerCase().contains("does not exist")))
+                || "42P01".equals(sqlState);
     }
 
     private String buildObjectKey(UUID itemId, int sortOrder, String imageUrl) {
