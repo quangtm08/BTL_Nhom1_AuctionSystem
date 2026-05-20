@@ -5,6 +5,7 @@ import com.nhom1.auction.common.dto.payment.PendingPaymentsResponse;
 import com.nhom1.auction.common.dto.payment.ProcessPaymentResponse;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.exception.AppException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.PaymentException;
@@ -29,18 +30,17 @@ public class PaymentService {
         this.dataSource = dataSource;
     }
 
-    public PendingPaymentsResponse listPendingPayments(String bidderId) throws ValidationException {
+    public PendingPaymentsResponse listPendingPayments(String bidderId) {
         UUID parsedBidderId = parseUuid(bidderId, "Bidder ID");
         return new PendingPaymentsResponse(paymentRepository.findPendingPaymentsByBidder(parsedBidderId));
     }
 
-    public PaymentHistoryResponse listPaymentHistory(String userId) throws ValidationException {
+    public PaymentHistoryResponse listPaymentHistory(String userId) {
         UUID parsedUserId = parseUuid(userId, "User ID");
         return new PaymentHistoryResponse(paymentRepository.findPaymentHistoryForUser(parsedUserId));
     }
 
-    public ProcessPaymentResponse processPayment(String auctionId, String bidderId)
-            throws ValidationException, NotFoundException, InvalidAuctionStateException, UnauthorizedActionException, PaymentException {
+    public ProcessPaymentResponse processPayment(String auctionId, String bidderId) {
         UUID parsedAuctionId = parseUuid(auctionId, "Auction ID");
         UUID parsedBidderId = parseUuid(bidderId, "Bidder ID");
 
@@ -60,19 +60,21 @@ public class PaymentService {
                 auctionRepository.updateStatus(parsedAuctionId, AuctionStatus.PAID, connection);
                 connection.commit();
                 return new ProcessPaymentResponse(parsedAuctionId.toString(), amount, "COMPLETED", now);
+            } catch (AppException e) {
+                connection.rollback();
+                throw e;
             } catch (Exception e) {
                 connection.rollback();
-                throw new PaymentException("Payment could not be completed.");
+                throw new RuntimeException("Payment transaction failed", e);
             } finally {
                 connection.setAutoCommit(oldAutoCommit);
             }
         } catch (SQLException e) {
-            throw new PaymentException("Payment could not be completed.");
+            throw new RuntimeException("Failed to acquire connection for payment", e);
         }
     }
 
-    private void validatePaymentEligibility(Auction auction, UUID bidderId, Connection connection)
-            throws InvalidAuctionStateException, UnauthorizedActionException, ValidationException, PaymentException {
+    private void validatePaymentEligibility(Auction auction, UUID bidderId, Connection connection) {
         if (auction.getHighestBidderId() == null || auction.getCurrentHighestBid() == null) {
             throw new ValidationException("Auction has no payable winning bid.");
         }
@@ -93,7 +95,7 @@ public class PaymentService {
         }
     }
 
-    private UUID parseUuid(String rawId, String fieldName) throws ValidationException {
+    private UUID parseUuid(String rawId, String fieldName) {
         if (rawId == null || rawId.isBlank()) {
             throw new ValidationException(fieldName + " is required.");
         }

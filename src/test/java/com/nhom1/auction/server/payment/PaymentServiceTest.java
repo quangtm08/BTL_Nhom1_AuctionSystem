@@ -50,10 +50,14 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void processPayment_WinningBidderOnFinishedAuction_CompletesPayment() throws Exception {
+    void processPayment_WinningBidderOnFinishedAuction_CompletesPayment() {
         Auction auction = finishedAuction();
         when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
-        when(connection.getAutoCommit()).thenReturn(true);
+        try {
+            when(connection.getAutoCommit()).thenReturn(true);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
 
         ProcessPaymentResponse response = paymentService.processPayment(
                 auction.getId().toString(),
@@ -62,12 +66,16 @@ public class PaymentServiceTest {
         assertEquals("COMPLETED", response.getStatus());
         assertEquals(auction.getId().toString(), response.getAuctionId());
         verify(paymentRepository).saveCompletedPayment(any(), any(), any(), any(), any(), eq(connection));
-        verify(auctionRepository).updateStatus(auction.getId(), AuctionStatus.PAID, connection);
-        verify(connection).commit();
+        try {
+            verify(auctionRepository).updateStatus(auction.getId(), AuctionStatus.PAID, connection);
+            verify(connection).commit();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
-    void processPayment_NonWinner_ThrowsUnauthorized() throws SQLException {
+    void processPayment_NonWinner_ThrowsUnauthorized() {
         Auction auction = finishedAuction();
         when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
@@ -76,7 +84,7 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void processPayment_AuctionNotFinished_ThrowsInvalidState() throws SQLException {
+    void processPayment_AuctionNotFinished_ThrowsInvalidState() {
         Auction auction = new Auction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -96,7 +104,7 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void processPayment_AuctionWithoutWinner_ThrowsValidation() throws SQLException {
+    void processPayment_AuctionWithoutWinner_ThrowsValidation() {
         Auction auction = new Auction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -123,13 +131,13 @@ public class PaymentServiceTest {
         doThrow(new RuntimeException("db fail")).when(paymentRepository)
                 .saveCompletedPayment(any(), any(), any(), any(), any(), eq(connection));
 
-        assertThrows(PaymentException.class,
+        assertThrows(RuntimeException.class,
                 () -> paymentService.processPayment(auction.getId().toString(), auction.getHighestBidderId().toString()));
         verify(connection).rollback();
     }
 
     @Test
-    void listPendingPayments_DelegatesToRepository() throws Exception {
+    void listPendingPayments_DelegatesToRepository() {
         UUID bidderId = UUID.randomUUID();
         when(paymentRepository.findPendingPaymentsByBidder(bidderId)).thenReturn(List.of());
 
@@ -139,7 +147,7 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void processPayment_AlreadyPaid_ThrowsInvalidState() throws SQLException {
+    void processPayment_AlreadyPaid_ThrowsInvalidState() {
         Auction auction = new Auction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
