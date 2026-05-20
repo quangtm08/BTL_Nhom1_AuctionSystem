@@ -68,12 +68,7 @@ public class AuctionServiceTest {
             eq(connection)
         );
         verify(auctionRepository).save(any(Auction.class), eq(connection));
-        verify(auctionRepository).updateHighestBid(
-            any(UUID.class),
-            eq(dto.getStartingPrice()),
-            isNull(),
-            eq(connection)
-        );
+        verify(auctionRepository, never()).updateHighestBid(any(), any(), any(), any());
         verify(connection).setAutoCommit(false);
         verify(connection).commit();
         verify(connection).setAutoCommit(true);

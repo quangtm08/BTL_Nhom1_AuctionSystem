@@ -52,11 +52,7 @@ public class AuctionRepository {
             ps.setString(5, auction.getStatus().name());
             ps.setBigDecimal(6, auction.getStartingPrice());
 
-            if (auction.getCurrentHighestBid() != null) {
-                ps.setBigDecimal(7, auction.getCurrentHighestBid());
-            } else {
-                ps.setBigDecimal(7, BigDecimal.ZERO);
-            }
+            ps.setBigDecimal(7, auction.getStartingPrice());
 
             if (auction.getHighestBidderId() != null) {
                 ps.setString(8, auction.getHighestBidderId().toString());

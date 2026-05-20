@@ -52,13 +52,6 @@ public class AuctionService {
                     dto.getEndTime()
                 );
                 auctionRepository.save(auction, connection);
-                // Keep the opening price in auction state for listing/display and first-bid validation.
-                auctionRepository.updateHighestBid(
-                    auction.getId(),
-                    dto.getStartingPrice(),
-                    null,
-                    connection
-                );
 
                 connection.commit();
                 return auction;
