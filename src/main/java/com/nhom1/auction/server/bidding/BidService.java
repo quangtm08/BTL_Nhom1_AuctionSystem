@@ -16,6 +16,7 @@ import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
 import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.BidType;
+import com.nhom1.auction.common.exception.AppException;
 import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.NotFoundException;
@@ -42,9 +43,7 @@ public class BidService {
         this.connection = connection;
     }
 
-    public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType)
-            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, NotFoundException,
-            IllegalStateException {
+    public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType) {
         synchronized (connection) {
             try {
                 boolean oldAutoCommit = connection.getAutoCommit();
@@ -61,7 +60,7 @@ public class BidService {
                     connection.commit();
                     return bidTransaction;
 
-                } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | NotFoundException e) {
+                } catch (AppException e) {
                     connection.rollback();
                     throw e;
                 } catch (Exception e) {
@@ -70,7 +69,7 @@ public class BidService {
                 } finally {
                     connection.setAutoCommit(oldAutoCommit);
                 }
-            } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | NotFoundException | IllegalStateException e) {
+            } catch (AppException | IllegalStateException e) {
                 throw e;
             } catch (Exception e) {
                 throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
@@ -78,8 +77,7 @@ public class BidService {
         }
     }
 
-    public AuctionDetailDto getAuctionDetail(UUID auctionId)
-        throws IllegalStateException, NotFoundException {
+    public AuctionDetailDto getAuctionDetail(UUID auctionId) {
     	Auction auction = auctionRepository.findById(auctionId)
     		.orElseThrow(() -> new NotFoundException("Auction not found"));
 

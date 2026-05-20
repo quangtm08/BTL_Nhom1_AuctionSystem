@@ -1,8 +1,10 @@
 package com.nhom1.auction.common.exception;
 
-public class ValidationException extends Exception {
+import com.nhom1.auction.common.protocol.ErrorCode;
+
+public class ValidationException extends AppException {
 
     public ValidationException(String message) {
-        super(message);
+        super(ErrorCode.VALIDATION_ERROR, message);
     }
 }

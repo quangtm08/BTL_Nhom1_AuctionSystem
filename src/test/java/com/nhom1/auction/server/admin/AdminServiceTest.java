@@ -6,11 +6,9 @@ import static org.mockito.Mockito.*;
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
-import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
-import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
@@ -61,8 +59,7 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testGetAllUsers_AdminCaller_ReturnsUserList()
-        throws ValidationException, AuthenticationException, UnauthorizedActionException {
+    public void testGetAllUsers_AdminCaller_ReturnsUserList() {
         User admin = new User(
             "admin",
             "admin@example.com",
@@ -102,7 +99,7 @@ public class AdminServiceTest {
 
     @Test
     public void testDeleteUser_AdminDeletesNormalUser_DeletesSuccessfully()
-        throws ValidationException, AuthenticationException, UnauthorizedActionException, NotFoundException, SQLException {
+        throws SQLException {
         User admin = new User(
             "admin",
             "admin@example.com",
@@ -136,7 +133,7 @@ public class AdminServiceTest {
 
     @Test
     public void testDeleteUser_BidDeleteFails_RollsBackAndRestoresAutoCommit()
-        throws ValidationException, AuthenticationException, SQLException {
+        throws SQLException {
         User admin = new User(
             "admin",
             "admin@example.com",
@@ -174,8 +171,7 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testDeleteUser_AdminDeletesSelf_ThrowsUnauthorizedActionException()
-        throws ValidationException, AuthenticationException {
+    public void testDeleteUser_AdminDeletesSelf_ThrowsUnauthorizedActionException() {
         User admin = new User(
             "admin",
             "admin@example.com",
@@ -193,8 +189,7 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testDeleteUser_AdminDeletesAnotherAdmin_ThrowsUnauthorizedActionException()
-        throws ValidationException, AuthenticationException {
+    public void testDeleteUser_AdminDeletesAnotherAdmin_ThrowsUnauthorizedActionException() {
         User admin = new User(
             "admin",
             "admin@example.com",
@@ -222,8 +217,7 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testDeleteUser_TargetNotFound_ThrowsNotFoundException()
-        throws ValidationException, AuthenticationException {
+    public void testDeleteUser_TargetNotFound_ThrowsNotFoundException() {
         User admin = new User(
             "admin",
             "admin@example.com",
@@ -245,8 +239,7 @@ public class AdminServiceTest {
     }
 
     @Test
-    public void testCancelAuction_AdminCancels_ReturnsCanceled()
-        throws ValidationException, AuthenticationException, UnauthorizedActionException, InvalidAuctionStateException {
+    public void testCancelAuction_AdminCancels_ReturnsCanceled() {
         User admin = new User(
             "admin",
             "admin@example.com",
