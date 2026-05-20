@@ -234,41 +234,18 @@ public class AuctionService {
             case ART -> ItemFactory.createArt(
                 dto.getName(),
                 dto.getDescription(),
-                dto.getCondition(),
-                dto.getArtist(),
-                dto.getEra()
+                dto.getCondition()
             );
-            case ELECTRONICS -> {
-                Integer warrantyMonths = dto.getWarrantyMonths();
-                if (warrantyMonths == null) {
-                    throw new ValidationException(
-                        "warrantyMonths must not be null for ELECTRONICS"
-                    );
-                }
-                yield ItemFactory.createElectronics(
-                    dto.getName(),
-                    dto.getDescription(),
-                    dto.getCondition(),
-                    dto.getBrand(),
-                    warrantyMonths
-                );
-            }
-            case VEHICLE -> {
-                Integer productionYear = dto.getProductionYear();
-                if (productionYear == null) {
-                    throw new ValidationException(
-                        "productionYear must not be null for VEHICLE"
-                    );
-                }
-                yield ItemFactory.createVehicle(
-                    dto.getName(),
-                    dto.getDescription(),
-                    dto.getCondition(),
-                    dto.getBrand(),
-                    productionYear,
-                    dto.getFuelType()
-                );
-            }
+            case ELECTRONICS -> ItemFactory.createElectronics(
+                dto.getName(),
+                dto.getDescription(),
+                dto.getCondition()
+            );
+            case VEHICLE -> ItemFactory.createVehicle(
+                dto.getName(),
+                dto.getDescription(),
+                dto.getCondition()
+            );
         };
     }
 }

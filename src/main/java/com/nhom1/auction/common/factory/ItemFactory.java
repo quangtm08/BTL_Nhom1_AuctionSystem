@@ -6,25 +6,24 @@ import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.entity.Vehicle;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
-import com.nhom1.auction.common.enums.VehicleFuelType;
 
 public class ItemFactory {
 
     public static Item createElectronics(String name, String description, 
-        ItemCondition condition, String brand, int warrantyMonths) {
+        ItemCondition condition) {
         return new Electronics(name, description,
-            ItemCategory.ELECTRONICS, condition, brand, warrantyMonths);
+            ItemCategory.ELECTRONICS, condition);
     }
 
     public static Item createArt(String name, String description, 
-        ItemCondition condition, String artist, String era) {
+        ItemCondition condition) {
         return new Art(name, description, 
-            ItemCategory.ART, condition, artist, era);
+            ItemCategory.ART, condition);
     }
 
 
-    public static Item createVehicle(String name, String description, ItemCondition condition, String make, int productionYear, VehicleFuelType fuelType) {
+    public static Item createVehicle(String name, String description, ItemCondition condition) {
         return new Vehicle( name, description, 
-            ItemCategory.VEHICLE, condition, make, productionYear, fuelType);
+            ItemCategory.VEHICLE, condition);
     }
 }
