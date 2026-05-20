@@ -106,21 +106,6 @@ public class CreateAuctionClientService extends BaseClientService {
         dto.setEndTime(endTime);
         dto.setImageUrls(imageUrls);
 
-        switch (dto.getCategory()) {
-            case ART -> {
-                dto.setArtist("Unknown");
-                dto.setEra("Unknown");
-            }
-            case ELECTRONICS -> {
-                dto.setBrand("Unknown");
-                dto.setWarrantyMonths(0);
-            }
-            case VEHICLE -> {
-                dto.setBrand("Unknown");
-                dto.setProductionYear(2000);
-                dto.setFuelType(null);
-            }
-        }
         return dto;
     }
 }

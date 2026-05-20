@@ -1,6 +1,9 @@
 package com.nhom1.auction.server.auction;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
@@ -29,6 +32,9 @@ public class AuctionServiceTest {
     private AuctionRepository auctionRepository;
 
     @Mock
+    private DataSource dataSource;
+
+    @Mock
     private ItemRepository itemRepository;
 
     @Mock
@@ -38,11 +44,12 @@ public class AuctionServiceTest {
     private Connection connection;
 
     private AuctionService auctionService;
-
+    
     @BeforeEach
     public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
-        auctionService = new AuctionService(auctionRepository, itemRepository, itemImageRepository, connection);
+        auctionService = new AuctionService(auctionRepository, itemRepository, itemImageRepository, dataSource);
+        when(dataSource.getConnection()).thenReturn(connection);
     }
 
     @Test
