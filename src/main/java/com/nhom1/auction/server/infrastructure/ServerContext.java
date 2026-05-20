@@ -15,6 +15,7 @@ import com.nhom1.auction.server.bidding.BidModule;
 import com.nhom1.auction.server.bidding.BidModule.BidComponents;
 import com.nhom1.auction.server.bidding.BidRepository;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
+import com.nhom1.auction.server.payment.PaymentModule;
 import com.nhom1.auction.server.infrastructure.database.DatabaseInitializer;
 import javax.sql.DataSource;
 
@@ -88,6 +89,13 @@ public class ServerContext {
             auctionRepos.itemRepository,
             bidRepository,
             this.dataSource
+        );
+
+        // Payment — depends on Auction infrastructure
+        PaymentModule.init(
+            this.dataSource,
+            this.router,
+            auctionRepos.auctionRepository
         );
 
         System.out.println("========================================");

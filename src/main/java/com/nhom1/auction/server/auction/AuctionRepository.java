@@ -183,14 +183,21 @@ public class AuctionRepository {
 
     // ===================== UPDATE STATUS =====================
     public void updateStatus(UUID auctionId, AuctionStatus status) {
+        try (Connection conn = dataSource.getConnection()) {
+            updateStatus(auctionId, status, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update status", e);
+        }
+    }
+
+    public void updateStatus(UUID auctionId, AuctionStatus status, Connection conn) {
         String sql = """
                     UPDATE auctions
                     SET status = ?, updated_at = ?
                     WHERE id = ?
                 """;
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, status.name());
             ps.setTimestamp(2, java.sql.Timestamp.valueOf(LocalDateTime.now()));
             ps.setString(3, auctionId.toString());
