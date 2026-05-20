@@ -11,7 +11,6 @@ import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.entity.Vehicle;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
-import com.nhom1.auction.common.enums.VehicleFuelType;
 
 public class ItemFactoryTest {
 
@@ -21,7 +20,7 @@ public class ItemFactoryTest {
         // Act
         Item electronics = ItemFactory.createElectronics(
             "Gaming Laptop", "High performance laptop",
-            ItemCondition.NEW, "Asus", 24
+            ItemCondition.NEW
         );
 
         // Assert
@@ -38,7 +37,7 @@ public class ItemFactoryTest {
         // Act
         Item art = ItemFactory.createArt(
             "Starry Night Replica", "Beautiful painting",
-            ItemCondition.NEW, "Vincent van Gogh", "Post-Impressionism"
+            ItemCondition.NEW
         );
 
         // Assert
@@ -54,7 +53,7 @@ public class ItemFactoryTest {
         // Act
         Item vehicle = ItemFactory.createVehicle(
              "Honda Civic", "Used sedan",
-            ItemCondition.USED, "Honda", 2018, VehicleFuelType.PETROL
+            ItemCondition.USED
 
         );
 

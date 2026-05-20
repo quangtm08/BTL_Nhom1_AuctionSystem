@@ -6,7 +6,6 @@ import java.util.List;
 
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
-import com.nhom1.auction.common.enums.VehicleFuelType;
 public class CreateAuctionRequest {
     
     // Item information
@@ -22,23 +21,11 @@ public class CreateAuctionRequest {
     
     // Seller information
     private String sellerId;
-    
-    // Category-specific fields: Art
-    private String artist;
-    private String era;
-    
-    // Category-specific fields: Electronics
-    private String brand;
-    private Integer warrantyMonths;
-    
-    // Category-specific fields: Vehicle
-    private Integer productionYear;
-    private VehicleFuelType fuelType;
-    private List<String> imageUrls;
+       private List<String> imageUrls;
 
     public CreateAuctionRequest() {}
 
-    public CreateAuctionRequest(String name, String description, ItemCategory category, ItemCondition condition, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime, String sellerId, String artist, String era, String brand, Integer warrantyMonths, Integer productionYear, VehicleFuelType fuelType) {
+    public CreateAuctionRequest(String name, String description, ItemCategory category, ItemCondition condition, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime, String sellerId) {
         this.name = name;
         this.description = description;
         this.category = category;
@@ -47,12 +34,6 @@ public class CreateAuctionRequest {
         this.startTime = startTime;
         this.endTime = endTime;
         this.sellerId = sellerId;
-        this.artist = artist;
-        this.era = era;
-        this.brand = brand;
-        this.warrantyMonths = warrantyMonths;
-        this.productionYear = productionYear;
-        this.fuelType = fuelType;
     }
 
     
@@ -124,58 +105,7 @@ public class CreateAuctionRequest {
         this.sellerId = sellerId;
     }
 
-    // Getters and Setters for Art-specific fields
-    public String getArtist() {
-        return artist;
-    }
-
-    public void setArtist(String artist) {
-        this.artist = artist;
-    }
-
-    public String getEra() {
-        return era;
-    }
-
-    public void setEra(String era) {
-        this.era = era;
-    }
-
-    // Getters and Setters for Electronics-specific fields
-    public String getBrand() {
-        return brand;
-    }
-
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public Integer getWarrantyMonths() {
-        return warrantyMonths;
-    }
-
-    public void setWarrantyMonths(Integer warrantyMonths) {
-        this.warrantyMonths = warrantyMonths;
-    }
-
-    // Getters and Setters for Vehicle-specific fields
-    public Integer getProductionYear() {
-        return productionYear;
-    }
-
-    public void setProductionYear(Integer productionYear) {
-        this.productionYear = productionYear;
-    }
-
-    public VehicleFuelType getFuelType() {
-        return fuelType;
-    }
-
-    public void setFuelType(VehicleFuelType fuelType) {
-        this.fuelType = fuelType;
-    }
-
-    public List<String> getImageUrls() {
+        public List<String> getImageUrls() {
         return imageUrls;
     }
 

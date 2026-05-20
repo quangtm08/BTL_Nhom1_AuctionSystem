@@ -1,8 +1,10 @@
 package com.nhom1.auction.common.exception;
 
-public class UnauthorizedActionException extends Exception {
+import com.nhom1.auction.common.protocol.ErrorCode;
+
+public class UnauthorizedActionException extends AppException {
 
     public UnauthorizedActionException(String message) {
-        super(message);
+        super(ErrorCode.UNAUTHORIZED, message);
     }
 }

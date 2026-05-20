@@ -86,8 +86,8 @@ Trình tự:
 2. Parse sellerId sang UUID.
 3. Tạo `Item` bằng `createItem(dto)`:
    - `ART` -> `ItemFactory.createArt(...)`
-   - `ELECTRONICS` -> bắt buộc `warrantyMonths`, rồi `createElectronics(...)`
-   - `VEHICLE` -> bắt buộc `productionYear`, rồi `createVehicle(...)`
+   - `ELECTRONICS` -> `ItemFactory.createElectronics(...)`
+   - `VEHICLE` -> `ItemFactory.createVehicle(...)`
 4. Lưu item qua `itemRepository.save(item, parsedSellerId)`.
 5. Tạo object `Auction(itemId, sellerId, startTime, endTime)`.
 6. Lưu auction qua `auctionRepository.save(auction)`.
@@ -185,11 +185,7 @@ Repository JDBC cho bảng `items`, có hỗ trợ polymorphic entity.
 
 - `save(Item item, UUID sellerId)` insert vào bảng `items`.
 - Các cột chung: id, seller_id, name, description, category, condition, created_at, updated_at.
-- Các cột đặc thù:
-  - `ELECTRONICS`: `brand`, `warranty_months`
-  - `ART`: `artist`, `era`
-  - `VEHICLE`: `brand`, `production_year`, `fuel_type`
-- Các cột không thuộc subtype hiện tại sẽ set `NULL`.
+- Không lưu thêm cột đặc thù theo subtype vì đề bài chỉ yêu cầu thông tin sản phẩm chung.
 
 ## 5.2 Find item và dựng lại subtype
 

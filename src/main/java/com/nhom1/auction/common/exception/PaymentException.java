@@ -1,8 +1,10 @@
 package com.nhom1.auction.common.exception;
 
-public class PaymentException extends Exception {
+import com.nhom1.auction.common.protocol.ErrorCode;
+
+public class PaymentException extends AppException {
 
     public PaymentException(String message) {
-        super(message);
+        super(ErrorCode.PAYMENT_FAILED, message);
     }
 }

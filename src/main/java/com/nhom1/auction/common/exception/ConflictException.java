@@ -1,8 +1,10 @@
 package com.nhom1.auction.common.exception;
 
-public class ConflictException extends Exception {
+import com.nhom1.auction.common.protocol.ErrorCode;
+
+public class ConflictException extends AppException {
 
     public ConflictException(String message) {
-        super(message);
+        super(ErrorCode.CONFLICT, message);
     }
 }

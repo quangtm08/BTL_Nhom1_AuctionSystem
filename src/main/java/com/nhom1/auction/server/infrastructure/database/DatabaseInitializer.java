@@ -36,12 +36,6 @@ public final class DatabaseInitializer {
             description TEXT,
             category VARCHAR(50) NOT NULL,
             condition VARCHAR(50) NOT NULL,
-            brand VARCHAR(100),
-            warranty_months INTEGER,
-            artist VARCHAR(255),
-            era VARCHAR(100),
-            production_year INTEGER,
-            fuel_type VARCHAR(50),
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
             FOREIGN KEY (seller_id) REFERENCES users(id)

@@ -134,7 +134,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testStartAuction_FromOpen_Succeeds() throws InvalidAuctionStateException {
+    public void testStartAuction_FromOpen_Succeeds() {
         Auction auction = new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
@@ -149,14 +149,14 @@ public class AuctionTest {
     }
 
     @Test
-    public void testStartAuction_FromRunning_Throws() throws InvalidAuctionStateException {
+    public void testStartAuction_FromRunning_Throws() {
         Auction auction = createRunningAuction();
 
         assertThrows(InvalidAuctionStateException.class, auction::startAuction);
     }
 
     @Test
-    public void testStartAuction_FromFinished_Throws() throws InvalidAuctionStateException {
+    public void testStartAuction_FromFinished_Throws() {
         Auction auction = createRunningAuction();
         auction.endAuction();
 
@@ -164,7 +164,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testStartAuction_FromCanceled_Throws() throws InvalidAuctionStateException, UnauthorizedActionException {
+    public void testStartAuction_FromCanceled_Throws() {
         Auction auction = new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
@@ -179,7 +179,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testEndAuction_FromRunning_Succeeds() throws InvalidAuctionStateException {
+    public void testEndAuction_FromRunning_Succeeds() {
         Auction auction = createRunningAuction();
 
         auction.endAuction();
@@ -188,7 +188,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testEndAuction_FromOpen_Throws() throws InvalidAuctionStateException {
+    public void testEndAuction_FromOpen_Throws() {
         Auction auction = new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
@@ -201,7 +201,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testEndAuction_FromFinished_Throws() throws InvalidAuctionStateException {
+    public void testEndAuction_FromFinished_Throws() {
         Auction auction = createRunningAuction();
         auction.endAuction();
 
@@ -209,7 +209,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testMarkAsPaid_FromFinished_Succeeds() throws InvalidAuctionStateException {
+    public void testMarkAsPaid_FromFinished_Succeeds() {
         Auction auction = createRunningAuction();
         auction.endAuction();
 
@@ -219,7 +219,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testMarkAsPaid_FromRunning_Throws() throws InvalidAuctionStateException {
+    public void testMarkAsPaid_FromRunning_Throws() {
         Auction auction = createRunningAuction();
 
         assertThrows(InvalidAuctionStateException.class, auction::markAsPaid);
@@ -242,7 +242,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testCancelAuction_SellerCancelsRunning_Throws() throws InvalidAuctionStateException, UnauthorizedActionException {
+    public void testCancelAuction_SellerCancelsRunning_Throws() {
         Auction auction = createRunningAuction();
         UUID sellerId = auction.getSellerId();
 
@@ -250,7 +250,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testCancelAuction_NonOwnerCancels_Throws() throws InvalidAuctionStateException, UnauthorizedActionException {
+    public void testCancelAuction_NonOwnerCancels_Throws() {
         Auction auction = new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
@@ -280,7 +280,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testCancelAuction_AdminCancelsRunning_Succeeds() throws InvalidAuctionStateException, UnauthorizedActionException {
+    public void testCancelAuction_AdminCancelsRunning_Succeeds() {
         Auction auction = createRunningAuction();
         UUID adminId = UUID.randomUUID();
 
@@ -321,7 +321,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testGetBidHistory_ReturnsCopy() throws Exception {
+    public void testGetBidHistory_ReturnsCopy() {
         Auction auction = createRunningAuction();
         LocalDateTime bidTime = auction.getStartTime().plusMinutes(10);
 
@@ -336,7 +336,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testPlaceBid_Success() throws Exception {
+    public void testPlaceBid_Success() {
         Auction auction = createRunningAuction();
         UUID bidderId = UUID.randomUUID();
         LocalDateTime bidTime = auction.getStartTime().plusMinutes(10);
@@ -379,7 +379,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testPlaceBid_RejectWhenAmountDoesNotExceedCurrentHighestBid() throws Exception {
+    public void testPlaceBid_RejectWhenAmountDoesNotExceedCurrentHighestBid() {
         Auction auction = createRunningAuction();
         LocalDateTime bidTime = auction.getStartTime().plusMinutes(10);
 
@@ -398,7 +398,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testPlaceBid_RejectWhenLessThanMinIncrement() throws Exception {
+    public void testPlaceBid_RejectWhenLessThanMinIncrement() {
         Auction auction = createRunningAuction();
         LocalDateTime bidTime = auction.getStartTime().plusMinutes(10);
 
@@ -417,7 +417,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testPlaceBid_AcceptedWhenEqualOrGreaterThanMinIncrement() throws Exception {
+    public void testPlaceBid_AcceptedWhenEqualOrGreaterThanMinIncrement() {
         Auction auction = createRunningAuction();
         LocalDateTime bidTime = auction.getStartTime().plusMinutes(10);
 
@@ -435,7 +435,7 @@ public class AuctionTest {
     }
 
     @Test
-    public void testPlaceBid_RejectWhenSellerBidsOnOwnAuction() throws Exception {
+    public void testPlaceBid_RejectWhenSellerBidsOnOwnAuction() {
         Auction auction = createRunningAuction();
 
         assertThrows(
@@ -450,7 +450,7 @@ public class AuctionTest {
         );
     }
 
-    private Auction createRunningAuction() throws InvalidAuctionStateException {
+    private Auction createRunningAuction() {
         LocalDateTime startTime = LocalDateTime.now().minusHours(1);
         Auction auction = new Auction(
             UUID.randomUUID(),

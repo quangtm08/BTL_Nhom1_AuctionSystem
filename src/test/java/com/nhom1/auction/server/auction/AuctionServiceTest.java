@@ -263,8 +263,6 @@ public class AuctionServiceTest {
         dto.setStartingPrice(new BigDecimal("100.00"));
         dto.setStartTime(LocalDateTime.now());
         dto.setEndTime(LocalDateTime.now().plusHours(1));
-        dto.setArtist("Test Artist");
-        dto.setEra("Modern");
         return dto;
     }
 }

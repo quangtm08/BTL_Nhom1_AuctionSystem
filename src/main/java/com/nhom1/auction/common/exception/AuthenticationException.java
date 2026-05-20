@@ -1,8 +1,10 @@
 package com.nhom1.auction.common.exception;
 
-public class AuthenticationException extends AuctionException {
+import com.nhom1.auction.common.protocol.ErrorCode;
+
+public class AuthenticationException extends AppException {
 
     public AuthenticationException(String message) {
-        super(message);
+        super(ErrorCode.AUTHENTICATION_FAILED, message);
     }
 }

@@ -1,6 +1,7 @@
 package com.nhom1.auction.client.user.service;
 
 import com.nhom1.auction.common.exception.NotFoundException;
+import com.nhom1.auction.common.exception.ServerException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.protocol.ErrorCode;
 import com.nhom1.auction.common.protocol.ErrorResponse;
@@ -59,6 +60,18 @@ public class BaseClientServiceTest {
 
         assertTrue(ex instanceof ValidationException);
         assertEquals("Bad input", ex.getMessage());
+    }
+
+    @Test
+    public void testMapServerError_UnknownCode_ReturnsServerException() throws Exception {
+        TestClientService service = new TestClientService();
+        ErrorResponse error = new ErrorResponse("NEW_SERVER_CODE", "New server error");
+
+        Exception ex = service.publicMapServerError(error);
+
+        assertTrue(ex instanceof ServerException);
+        assertEquals("NEW_SERVER_CODE", ((ServerException) ex).getCode());
+        assertEquals("New server error", ex.getMessage());
     }
 
     @Test

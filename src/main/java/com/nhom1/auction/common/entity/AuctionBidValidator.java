@@ -21,7 +21,7 @@ final class AuctionBidValidator {
         BigDecimal amount,
         BidType bidType,
         LocalDateTime bidTime
-    ) throws InvalidBidException, AuctionClosedException, UnauthorizedActionException {
+    ) {
         if (bidderId == null) {
             throw new InvalidBidException("bidderId must not be null");
         }
