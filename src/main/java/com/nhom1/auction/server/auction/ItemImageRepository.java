@@ -7,15 +7,24 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import javax.sql.DataSource;
 
 public class ItemImageRepository {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public ItemImageRepository(Connection connection) {
-        this.connection = connection;
+    public ItemImageRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public void saveImageUrls(UUID itemId, List<String> imageUrls) {
+        try (Connection conn = dataSource.getConnection()) {
+            saveImageUrls(itemId, imageUrls, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to save item images", e);
+        }
+    }
+
+    public void saveImageUrls(UUID itemId, List<String> imageUrls, Connection connection) {
         if (itemId == null || imageUrls == null || imageUrls.isEmpty()) {
             return;
         }
@@ -49,6 +58,14 @@ public class ItemImageRepository {
     }
 
     public List<String> findImageUrlsByItemId(UUID itemId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return findImageUrlsByItemId(itemId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to fetch item images", e);
+        }
+    }
+
+    public List<String> findImageUrlsByItemId(UUID itemId, Connection connection) {
         String sql = """
             SELECT public_url
             FROM item_images

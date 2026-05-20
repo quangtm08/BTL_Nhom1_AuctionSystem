@@ -28,14 +28,14 @@ public class AuctionModule {
         MessageRouter router,
         NotificationService notificationService
     ) {
-        ItemRepository itemRepository = new ItemRepository(connection);
-        ItemImageRepository itemImageRepository = new ItemImageRepository(connection);
-        AuctionRepository auctionRepository = new AuctionRepository(connection);
+        ItemRepository itemRepository = new ItemRepository(dataSource);
+        ItemImageRepository itemImageRepository = new ItemImageRepository(dataSource);
+        AuctionRepository auctionRepository = new AuctionRepository(dataSource);
         AuctionService auctionService = new AuctionService(
             auctionRepository,
             itemRepository,
             itemImageRepository,
-            connection
+            dataSource
         );
         AuctionHandler auctionHandler = new AuctionHandler(auctionService, notificationService);
         auctionHandler.register(router);

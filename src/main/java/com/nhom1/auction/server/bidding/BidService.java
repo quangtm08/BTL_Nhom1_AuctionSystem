@@ -38,7 +38,7 @@ public class BidService {
 
     public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
                       ItemRepository itemRepository, ItemImageRepository itemImageRepository, UserRepository userRepository,
-                      Connection connection) {
+                      DataSource dataSource) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;

@@ -29,8 +29,8 @@ public class BidModule {
 			NotificationService notificationService,
 			UserRepository userRepository
 	) {
-		BidRepository repository = new BidRepository(connection);
-		BidService service = new BidService(repository, auctionRepository, itemRepository, itemImageRepository, userRepository, connection);
+		BidRepository repository = new BidRepository(dataSource);
+		BidService service = new BidService(repository, auctionRepository, itemRepository, itemImageRepository, userRepository, dataSource);
 		BidHandler handler = new BidHandler(service, notificationService);
 		handler.register(router);
 		System.out.println("BidModule: Feature initialized successfully.");
