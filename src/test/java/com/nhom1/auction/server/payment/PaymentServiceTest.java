@@ -9,6 +9,7 @@ import com.nhom1.auction.common.exception.PaymentException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -27,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,14 +37,16 @@ public class PaymentServiceTest {
 
     @Mock private PaymentRepository paymentRepository;
     @Mock private AuctionRepository auctionRepository;
+    @Mock private DataSource dataSource;
     @Mock private Connection connection;
 
     private PaymentService paymentService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
-        paymentService = new PaymentService(paymentRepository, auctionRepository, connection);
+        when(dataSource.getConnection()).thenReturn(connection);
+        paymentService = new PaymentService(paymentRepository, auctionRepository, dataSource);
     }
 
     @Test
@@ -57,13 +61,13 @@ public class PaymentServiceTest {
 
         assertEquals("COMPLETED", response.getStatus());
         assertEquals(auction.getId().toString(), response.getAuctionId());
-        verify(paymentRepository).saveCompletedPayment(any(), any(), any(), any(), any());
-        verify(auctionRepository).updateStatus(auction.getId(), AuctionStatus.PAID);
+        verify(paymentRepository).saveCompletedPayment(any(), any(), any(), any(), any(), eq(connection));
+        verify(auctionRepository).updateStatus(auction.getId(), AuctionStatus.PAID, connection);
         verify(connection).commit();
     }
 
     @Test
-    void processPayment_NonWinner_ThrowsUnauthorized() {
+    void processPayment_NonWinner_ThrowsUnauthorized() throws SQLException {
         Auction auction = finishedAuction();
         when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
@@ -72,7 +76,7 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void processPayment_AuctionNotFinished_ThrowsInvalidState() {
+    void processPayment_AuctionNotFinished_ThrowsInvalidState() throws SQLException {
         Auction auction = new Auction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -92,7 +96,7 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void processPayment_AuctionWithoutWinner_ThrowsValidation() {
+    void processPayment_AuctionWithoutWinner_ThrowsValidation() throws SQLException {
         Auction auction = new Auction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
@@ -117,7 +121,7 @@ public class PaymentServiceTest {
         when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
         when(connection.getAutoCommit()).thenReturn(true);
         doThrow(new RuntimeException("db fail")).when(paymentRepository)
-                .saveCompletedPayment(any(), any(), any(), any(), any());
+                .saveCompletedPayment(any(), any(), any(), any(), any(), eq(connection));
 
         assertThrows(PaymentException.class,
                 () -> paymentService.processPayment(auction.getId().toString(), auction.getHighestBidderId().toString()));
@@ -135,7 +139,7 @@ public class PaymentServiceTest {
     }
 
     @Test
-    void processPayment_AlreadyPaid_ThrowsInvalidState() {
+    void processPayment_AlreadyPaid_ThrowsInvalidState() throws SQLException {
         Auction auction = new Auction(
                 UUID.randomUUID(),
                 UUID.randomUUID(),

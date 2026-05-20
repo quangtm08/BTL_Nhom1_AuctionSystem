@@ -2,6 +2,7 @@ package com.nhom1.auction.server.payment;
 
 import com.nhom1.auction.common.dto.payment.PaymentHistoryEntryDto;
 import com.nhom1.auction.common.dto.payment.PendingPaymentDto;
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,10 +16,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class PaymentRepository {
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public PaymentRepository(Connection connection) {
-        this.connection = connection;
+    public PaymentRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
         ensureTable();
     }
 
@@ -41,7 +42,8 @@ public class PaymentRepository {
                 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payer_id ON payment_transactions(payer_id);
                 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payee_id ON payment_transactions(payee_id);
                 """;
-        try (Statement stmt = connection.createStatement()) {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException("Failed to initialize payment_transactions table", e);
@@ -49,11 +51,19 @@ public class PaymentRepository {
     }
 
     public void saveCompletedPayment(UUID auctionId, UUID payerId, UUID payeeId, BigDecimal amount, LocalDateTime now) {
+        try (Connection conn = dataSource.getConnection()) {
+            saveCompletedPayment(auctionId, payerId, payeeId, amount, now, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to save payment transaction", e);
+        }
+    }
+
+    public void saveCompletedPayment(UUID auctionId, UUID payerId, UUID payeeId, BigDecimal amount, LocalDateTime now, Connection conn) {
         String sql = """
                 INSERT INTO payment_transactions(id, auction_id, payer_id, payee_id, amount, status, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, 'COMPLETED', ?, ?)
                 """;
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, UUID.randomUUID().toString());
             ps.setString(2, auctionId.toString());
             ps.setString(3, payerId.toString());
@@ -68,8 +78,16 @@ public class PaymentRepository {
     }
 
     public boolean existsCompletedPaymentForAuction(UUID auctionId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return existsCompletedPaymentForAuction(auctionId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check payment transaction", e);
+        }
+    }
+
+    public boolean existsCompletedPaymentForAuction(UUID auctionId, Connection conn) {
         String sql = "SELECT 1 FROM payment_transactions WHERE auction_id = ? AND status = 'COMPLETED' LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auctionId.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
@@ -100,7 +118,8 @@ public class PaymentRepository {
                 ORDER BY a.end_time DESC
                 """;
         List<PendingPaymentDto> payments = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, bidderId.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -136,7 +155,8 @@ public class PaymentRepository {
                 ORDER BY pt.created_at DESC
                 """;
         List<PaymentHistoryEntryDto> entries = new ArrayList<>();
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, userId.toString());
             ps.setString(2, userId.toString());
             ps.setString(3, userId.toString());

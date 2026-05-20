@@ -11,6 +11,7 @@ import com.nhom1.auction.common.exception.PaymentException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
+import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -20,12 +21,12 @@ import java.util.UUID;
 public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final AuctionRepository auctionRepository;
-    private final Connection connection;
+    private final DataSource dataSource;
 
-    public PaymentService(PaymentRepository paymentRepository, AuctionRepository auctionRepository, Connection connection) {
+    public PaymentService(PaymentRepository paymentRepository, AuctionRepository auctionRepository, DataSource dataSource) {
         this.paymentRepository = paymentRepository;
         this.auctionRepository = auctionRepository;
-        this.connection = connection;
+        this.dataSource = dataSource;
     }
 
     public PendingPaymentsResponse listPendingPayments(String bidderId) throws ValidationException {
@@ -45,18 +46,20 @@ public class PaymentService {
 
         Auction auction = auctionRepository.findById(parsedAuctionId)
                 .orElseThrow(() -> new NotFoundException("Auction not found."));
-        validatePaymentEligibility(auction, parsedBidderId);
 
-        LocalDateTime now = LocalDateTime.now();
-        BigDecimal amount = auction.getCurrentHighestBid();
+        try (Connection connection = dataSource.getConnection()) {
+            validatePaymentEligibility(auction, parsedBidderId, connection);
 
-        try {
+            LocalDateTime now = LocalDateTime.now();
+            BigDecimal amount = auction.getCurrentHighestBid();
+
             boolean oldAutoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
             try {
-                paymentRepository.saveCompletedPayment(parsedAuctionId, parsedBidderId, auction.getSellerId(), amount, now);
-                auctionRepository.updateStatus(parsedAuctionId, AuctionStatus.PAID);
+                paymentRepository.saveCompletedPayment(parsedAuctionId, parsedBidderId, auction.getSellerId(), amount, now, connection);
+                auctionRepository.updateStatus(parsedAuctionId, AuctionStatus.PAID, connection);
                 connection.commit();
+                return new ProcessPaymentResponse(parsedAuctionId.toString(), amount, "COMPLETED", now);
             } catch (Exception e) {
                 connection.rollback();
                 throw new PaymentException("Payment could not be completed.");
@@ -66,11 +69,9 @@ public class PaymentService {
         } catch (SQLException e) {
             throw new PaymentException("Payment could not be completed.");
         }
-
-        return new ProcessPaymentResponse(parsedAuctionId.toString(), amount, "COMPLETED", now);
     }
 
-    private void validatePaymentEligibility(Auction auction, UUID bidderId)
+    private void validatePaymentEligibility(Auction auction, UUID bidderId, Connection connection)
             throws InvalidAuctionStateException, UnauthorizedActionException, ValidationException, PaymentException {
         if (auction.getHighestBidderId() == null || auction.getCurrentHighestBid() == null) {
             throw new ValidationException("Auction has no payable winning bid.");
@@ -87,7 +88,7 @@ public class PaymentService {
         if (auction.getStatus() != AuctionStatus.FINISHED) {
             throw new InvalidAuctionStateException("Only FINISHED auctions can be paid.");
         }
-        if (paymentRepository.existsCompletedPaymentForAuction(auction.getId())) {
+        if (paymentRepository.existsCompletedPaymentForAuction(auction.getId(), connection)) {
             throw new PaymentException("Payment has already been completed for this auction.");
         }
     }

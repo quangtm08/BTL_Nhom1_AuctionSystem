@@ -93,7 +93,7 @@ public class ServerContext {
 
         // Payment — depends on Auction infrastructure
         PaymentModule.init(
-            this.connection,
+            this.dataSource,
             this.router,
             auctionRepos.auctionRepository
         );
