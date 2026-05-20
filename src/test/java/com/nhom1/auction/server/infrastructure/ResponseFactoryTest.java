@@ -71,6 +71,25 @@ public class ResponseFactoryTest {
     }
 
     @Test
+    public void testFromException_IllegalArgumentException_MapsToValidationError() {
+        Exception ex = new IllegalArgumentException("amount must be positive");
+        ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, response.getError().getCode());
+        assertEquals("amount must be positive", response.getError().getMessage());
+    }
+
+    @Test
+    public void testFromException_NestedIllegalArgumentException_MapsToValidationError() {
+        Exception root = new IllegalArgumentException("auctionId is invalid UUID");
+        Exception wrapper = new RuntimeException("Wrapper", root);
+        ResponseMessage<Object> response = ResponseFactory.fromException("id", wrapper);
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, response.getError().getCode());
+        assertEquals("auctionId is invalid UUID", response.getError().getMessage());
+    }
+
+    @Test
     public void testFromException_SQLException_MapsToServerError() {
         Exception ex = new SQLException("Connection lost");
         ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
