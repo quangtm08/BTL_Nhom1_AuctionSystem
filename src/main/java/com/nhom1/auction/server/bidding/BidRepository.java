@@ -4,12 +4,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import javax.sql.DataSource;
 
 import com.nhom1.auction.common.dto.bidding.BidWithAuctionDto;
 import com.nhom1.auction.common.entity.BidTransaction;
@@ -18,44 +19,28 @@ import com.nhom1.auction.common.enums.BidType;
 
 public class BidRepository {
 
-	private final Connection connection;
+	private final DataSource dataSource;
 
-	public BidRepository(Connection connection) {
-		this.connection = connection;
-		ensureTable();
+	public BidRepository(DataSource dataSource) {
+		this.dataSource = dataSource;
 	}
 
-	private void ensureTable() {
-		String sql = """
-			CREATE TABLE IF NOT EXISTS bids (
-				id VARCHAR(36) PRIMARY KEY,
-				auction_id VARCHAR(36) NOT NULL,
-				bidder_id VARCHAR(36) NOT NULL,
-				amount NUMERIC(19, 2) NOT NULL,
-				bid_type VARCHAR(50) NOT NULL,
-				created_at TIMESTAMP NOT NULL,
-				FOREIGN KEY (auction_id) REFERENCES auctions(id),
-				FOREIGN KEY (bidder_id) REFERENCES users(id)
-			);
-			CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids(auction_id);
-			CREATE INDEX IF NOT EXISTS idx_bids_bidder_id ON bids(bidder_id);
-			""";
-		try (Statement stmt = connection.createStatement()) {
-			stmt.execute(sql);
+	// ===================== SAVE =====================
+	public void save(BidTransaction bidTransaction) {
+		try (Connection conn = dataSource.getConnection()) {
+			save(bidTransaction, conn);
 		} catch (SQLException e) {
-			throw new RuntimeException("Failed to initialize bids table", e);
-		} catch (RuntimeException e) {
-			throw new RuntimeException("Invalid data while initializing bids table", e);
+			throw new RuntimeException("Failed to save bid", e);
 		}
 	}
 
-	public void save(BidTransaction bidTransaction) {
+	public void save(BidTransaction bidTransaction, Connection conn) {
 		String sql = """
 			INSERT INTO bids(id, auction_id, bidder_id, amount, bid_type, created_at)
 			VALUES (?, ?, ?, ?, ?, ?)
 			""";
 
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
+		try (PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, bidTransaction.getId().toString());
 			ps.setString(2, bidTransaction.getAuctionId().toString());
 			ps.setString(3, bidTransaction.getBidderId().toString());
@@ -65,8 +50,6 @@ public class BidRepository {
 			ps.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to save bid", e);
-		} catch (RuntimeException e) {
-			throw new RuntimeException("Invalid bid data while saving bid", e);
 		}
 	}
 
@@ -80,7 +63,8 @@ public class BidRepository {
 
 		List<BidTransaction> bids = new ArrayList<>();
 
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
+		try (Connection conn = dataSource.getConnection();
+		     PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, auctionId.toString());
 
 			try (ResultSet rs = ps.executeQuery()) {
@@ -90,8 +74,6 @@ public class BidRepository {
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to find bids by auction id", e);
-		} catch (RuntimeException e) {
-			throw new RuntimeException("Failed to map bids by auction id", e);
 		}
 		return bids;
 	}
@@ -120,7 +102,8 @@ public class BidRepository {
 
 		List<BidWithAuctionDto> result = new ArrayList<>();
 
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
+		try (Connection conn = dataSource.getConnection();
+		     PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, bidderId.toString());
 			ps.setString(2, bidderId.toString());
 
@@ -144,8 +127,6 @@ public class BidRepository {
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to find bids by bidder id", e);
-		} catch (RuntimeException e) {
-			throw new RuntimeException("Failed to map bids by bidder id", e);
 		}
 
 		return result;
@@ -157,7 +138,8 @@ public class BidRepository {
 			FROM bids
 			WHERE auction_id = ?
 			""";
-		try (PreparedStatement ps = connection.prepareStatement(sql)) {
+		try (Connection conn = dataSource.getConnection();
+		     PreparedStatement ps = conn.prepareStatement(sql)) {
 			ps.setString(1, auctionId.toString());
 
     		try (ResultSet rs = ps.executeQuery()) {
@@ -170,34 +152,46 @@ public class BidRepository {
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException("Failed to find last bid time", e);
-		} catch (RuntimeException e) {
-			throw new RuntimeException("Failed to map last bid time", e);
 		}
 
 		return Optional.empty();
 	}
 
+	// ===================== DELETE BY BIDDER =====================
     public int deleteByBidderId(UUID bidderId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return deleteByBidderId(bidderId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete bids by bidder id", e);
+        }
+    }
+
+    public int deleteByBidderId(UUID bidderId, Connection conn) {
         String sql = "DELETE FROM bids WHERE bidder_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, bidderId.toString());
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete bids by bidder id", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid bidder id while deleting bids", e);
         }
     }
 
+    // ===================== DELETE BY AUCTION =====================
     public int deleteByAuctionId(UUID auctionId) {
+        try (Connection conn = dataSource.getConnection()) {
+            return deleteByAuctionId(auctionId, conn);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete bids by auction id", e);
+        }
+    }
+
+    public int deleteByAuctionId(UUID auctionId, Connection conn) {
         String sql = "DELETE FROM bids WHERE auction_id = ?";
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auctionId.toString());
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete bids by auction id", e);
-        } catch (RuntimeException e) {
-            throw new RuntimeException("Invalid auction id while deleting bids", e);
         }
     }
 

@@ -14,21 +14,22 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.List;
 import java.util.UUID;
+import javax.sql.DataSource;
 
 public class AuctionService {
 
     private final AuctionRepository auctionRepository;
     private final ItemRepository itemRepository;
-    private final Connection connection;
+    private final DataSource dataSource;
 
     public AuctionService(
         AuctionRepository auctionRepository,
         ItemRepository itemRepository,
-        Connection connection
+        DataSource dataSource
     ) {
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
-        this.connection = connection;
+        this.dataSource = dataSource;
     }
 
     public Auction createAuction(String sellerId, CreateAuctionRequest dto) {
@@ -37,47 +38,43 @@ public class AuctionService {
         UUID parsedSellerId = UUID.fromString(sellerId);
         Item item = createItem(dto);
 
-        synchronized (connection) {
+        try (Connection connection = dataSource.getConnection()) {
+            boolean oldAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
             try {
-                boolean oldAutoCommit = connection.getAutoCommit();
-                connection.setAutoCommit(false);
-                try {
-                    itemRepository.save(item, parsedSellerId);
+                itemRepository.save(item, parsedSellerId, connection);
 
-                    Auction auction = new Auction(
-                        item.getId(),
-                        parsedSellerId,
-                        dto.getStartingPrice(),
-                        dto.getStartTime(),
-                        dto.getEndTime()
-                    );
-                    auctionRepository.save(auction);
-                    // Keep the opening price in auction state for listing/display and first-bid validation.
-                    auctionRepository.updateHighestBid(
-                        auction.getId(),
-                        dto.getStartingPrice(),
-                        null
-                    );
+                Auction auction = new Auction(
+                    item.getId(),
+                    parsedSellerId,
+                    dto.getStartingPrice(),
+                    dto.getStartTime(),
+                    dto.getEndTime()
+                );
+                auctionRepository.save(auction, connection);
+                // Keep the opening price in auction state for listing/display and first-bid validation.
+                auctionRepository.updateHighestBid(
+                    auction.getId(),
+                    dto.getStartingPrice(),
+                    null,
+                    connection
+                );
 
-                    connection.commit();
-                    return auction;
-                } catch (AppException ex) {
-                    connection.rollback();
-                    throw ex;
-                } catch (Exception ex) {
-                    connection.rollback();
-                    throw ex;
-                } finally {
-                    connection.setAutoCommit(oldAutoCommit);
-                }
+                connection.commit();
+                return auction;
             } catch (AppException ex) {
+                connection.rollback();
                 throw ex;
             } catch (Exception ex) {
-                throw new RuntimeException(
-                    "Create auction transaction failed",
-                    ex
-                );
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(oldAutoCommit);
             }
+        } catch (AppException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException("Create auction transaction failed", ex);
         }
     }
 
@@ -135,42 +132,42 @@ public class AuctionService {
             );
         }
 
-        synchronized (connection) {
+        try (Connection connection = dataSource.getConnection()) {
+            boolean oldAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
             try {
-                boolean oldAutoCommit = connection.getAutoCommit();
-                connection.setAutoCommit(false);
-                try {
-                    int deletedAuctions = auctionRepository.deleteById(
-                        parsedAuctionId
+                int deletedAuctions = auctionRepository.deleteById(
+                    parsedAuctionId,
+                    connection
+                );
+                int deletedItems = itemRepository.deleteById(
+                    auction.getItemId(),
+                    connection
+                );
+                if (deletedAuctions == 0) {
+                    throw new IllegalStateException(
+                        "Auction was not deleted."
                     );
-                    int deletedItems = itemRepository.deleteById(
-                        auction.getItemId()
-                    );
-                    if (deletedAuctions == 0) {
-                        throw new IllegalStateException(
-                            "Auction was not deleted."
-                        );
-                    }
-                    if (deletedItems == 0) {
-                        throw new IllegalStateException(
-                            "Item was not deleted."
-                        );
-                    }
-                    connection.commit();
-                } catch (AppException ex) {
-                    connection.rollback();
-                    throw ex;
-                } catch (Exception ex) {
-                    connection.rollback();
-                    throw ex;
-                } finally {
-                    connection.setAutoCommit(oldAutoCommit);
                 }
+                if (deletedItems == 0) {
+                    throw new IllegalStateException(
+                        "Item was not deleted."
+                    );
+                }
+                connection.commit();
             } catch (AppException ex) {
+                connection.rollback();
                 throw ex;
             } catch (Exception ex) {
-                throw new RuntimeException("Delete transaction failed", ex);
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(oldAutoCommit);
             }
+        } catch (AppException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException("Delete transaction failed", ex);
         }
     }
 

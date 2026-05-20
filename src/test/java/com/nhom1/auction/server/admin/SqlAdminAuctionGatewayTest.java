@@ -9,11 +9,16 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import javax.sql.DataSource;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class SqlAdminAuctionGatewayTest {
+
+    @Mock
+    private DataSource dataSource;
 
     @Mock
     private Connection connection;
@@ -24,9 +29,10 @@ public class SqlAdminAuctionGatewayTest {
     private SqlAdminAuctionGateway gateway;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
-        gateway = new SqlAdminAuctionGateway(connection);
+        when(dataSource.getConnection()).thenReturn(connection);
+        gateway = new SqlAdminAuctionGateway(dataSource);
     }
 
     @Test

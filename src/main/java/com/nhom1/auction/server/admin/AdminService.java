@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import javax.sql.DataSource;
 
 public class AdminService {
 
@@ -29,7 +30,7 @@ public class AdminService {
     private final ItemRepository itemRepository;
     private final BidRepository bidRepository;
     private final AdminAuctionGateway adminAuctionGateway;
-    private final Connection connection;
+    private final DataSource dataSource;
 
     public AdminService(
         UserRepository userRepository,
@@ -37,14 +38,14 @@ public class AdminService {
         ItemRepository itemRepository,
         BidRepository bidRepository,
         AdminAuctionGateway adminAuctionGateway,
-        Connection connection
+        DataSource dataSource
     ) {
         this.userRepository = userRepository;
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
         this.bidRepository = bidRepository;
         this.adminAuctionGateway = adminAuctionGateway;
-        this.connection = connection;
+        this.dataSource = dataSource;
     }
 
     public AdminUserListResponse getAllUsers(String callerId) {
@@ -78,59 +79,60 @@ public class AdminService {
             );
         }
 
-        synchronized (connection) {
+        try (Connection connection = dataSource.getConnection()) {
+            boolean oldAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
             try {
-                boolean oldAutoCommit = connection.getAutoCommit();
-                connection.setAutoCommit(false);
-                try {
-                    auctionRepository.clearHighestBidderByUserId(
-                        target.getId()
-                    );
-                    bidRepository.deleteByBidderId(target.getId());
-
-                    List<Auction> sellerAuctions =
-                        auctionRepository.findBySellerId(target.getId());
-                    for (Auction auction : sellerAuctions) {
-                        bidRepository.deleteByAuctionId(auction.getId());
-                        int deletedAuctions = auctionRepository.deleteById(
-                            auction.getId()
-                        );
-                        int deletedItems = itemRepository.deleteById(
-                            auction.getItemId()
-                        );
-                        if (deletedAuctions == 0 || deletedItems == 0) {
-                            throw new IllegalStateException(
-                                "Failed to delete auction or item for user."
-                            );
-                        }
-                    }
-
-                    boolean deleted = userRepository.deleteById(target.getId());
-                    if (!deleted) {
-                        throw new IllegalStateException(
-                            "Failed to delete target user."
-                        );
-                    }
-                    connection.commit();
-                } catch (AppException e) {
-                    connection.rollback();
-                    throw e;
-                } catch (Exception e) {
-                    connection.rollback();
-                    throw e;
-                } finally {
-                    connection.setAutoCommit(oldAutoCommit);
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(
-                    "User deletion failed due to database error",
-                    e
+                auctionRepository.clearHighestBidderByUserId(
+                    target.getId(),
+                    connection
                 );
+                bidRepository.deleteByBidderId(target.getId(), connection);
+
+                List<Auction> sellerAuctions =
+                    auctionRepository.findBySellerId(target.getId(), connection);
+                for (Auction auction : sellerAuctions) {
+                    bidRepository.deleteByAuctionId(auction.getId(), connection);
+                    int deletedAuctions = auctionRepository.deleteById(
+                        auction.getId(),
+                        connection
+                    );
+                    int deletedItems = itemRepository.deleteById(
+                        auction.getItemId(),
+                        connection
+                    );
+                    if (deletedAuctions == 0 || deletedItems == 0) {
+                        throw new IllegalStateException(
+                            "Failed to delete auction or item for user."
+                        );
+                    }
+                }
+
+                boolean deleted = userRepository.deleteById(target.getId(), connection);
+                if (!deleted) {
+                    throw new IllegalStateException(
+                        "Failed to delete target user."
+                    );
+                }
+                connection.commit();
             } catch (AppException e) {
+                connection.rollback();
                 throw e;
             } catch (Exception e) {
-                throw new RuntimeException("User deletion failed", e);
+                connection.rollback();
+                throw e;
+            } finally {
+                connection.setAutoCommit(oldAutoCommit);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                "User deletion failed due to database error",
+                e
+            );
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("User deletion failed", e);
         }
 
         return "DELETED";
