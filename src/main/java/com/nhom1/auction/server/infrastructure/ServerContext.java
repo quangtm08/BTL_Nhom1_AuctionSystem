@@ -1,7 +1,6 @@
 package com.nhom1.auction.server.infrastructure;
 
 import com.nhom1.auction.server.admin.AdminModule;
-import com.nhom1.auction.server.admin.SqlAdminAuctionGateway;
 import com.nhom1.auction.server.auction.AuctionGatewayImpl;
 import com.nhom1.auction.server.auction.AuctionModule;
 import com.nhom1.auction.server.auth.AuthModule;
@@ -16,42 +15,40 @@ import com.nhom1.auction.server.bidding.BidModule;
 import com.nhom1.auction.server.bidding.BidModule.BidComponents;
 import com.nhom1.auction.server.bidding.BidRepository;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
-import java.sql.Connection;
+import com.nhom1.auction.server.infrastructure.database.DatabaseInitializer;
+import javax.sql.DataSource;
 
 public class ServerContext {
 
     private final MessageRouter router;
-    private final Connection connection;
+    private final DataSource dataSource;
     private final ClientRegistry clientRegistry;
     private final NotificationService notificationService;
 
     public ServerContext() throws Exception {
         // 1. Core Infrastructure
         this.router = new MessageRouter();
-        this.connection = DBConnection.getConnection();
-
-        if (this.connection == null) {
-            throw new Exception("CRITICAL: Database connection failed.");
-        }
+        this.dataSource = DBConnection.getDataSource();
+        DatabaseInitializer.init(this.dataSource);
 
         this.clientRegistry = new ClientRegistry();
         this.notificationService = new NotificationService(clientRegistry);
 
         // 2. Core Modules (Auth, Auction, Bidding)
         UserRepository userRepository = AuthModule.init(
-            this.connection,
+            this.dataSource,
             this.router
         );
 
         AuctionModule.AuctionRepositories auctionRepos = AuctionModule.init(
-            this.connection,
+            this.dataSource,
             this.router,
             this.notificationService
         );
 
-        BidRepository bidRepository = new BidRepository(this.connection);
+        BidRepository bidRepository = new BidRepository(this.dataSource);
         BidComponents bidComponents = BidModule.init(
-            this.connection,
+            this.dataSource,
             this.router,
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
@@ -69,7 +66,7 @@ public class ServerContext {
         );
 
         AutoBidService autoBidService = AutoBidModule.init(
-            this.connection,
+            this.dataSource,
             this.router,
             bidGateway,
             this.notificationService
@@ -90,8 +87,7 @@ public class ServerContext {
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
             bidRepository,
-            new SqlAdminAuctionGateway(this.connection),
-            this.connection
+            this.dataSource
         );
 
         System.out.println("========================================");

@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -43,20 +44,24 @@ public class AdminServiceTest {
     private AdminAuctionGateway adminAuctionGateway;
 
     @Mock
+    private DataSource dataSource;
+
+    @Mock
     private Connection connection;
 
     private AdminService adminService;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
+        when(dataSource.getConnection()).thenReturn(connection);
         adminService = new AdminService(
             userRepository,
             auctionRepository,
             itemRepository,
             bidRepository,
             adminAuctionGateway,
-            connection
+            dataSource
         );
     }
 
@@ -124,7 +129,7 @@ public class AdminServiceTest {
             Optional.of(target)
         );
         when(connection.getAutoCommit()).thenReturn(true);
-        when(userRepository.deleteById(target.getId())).thenReturn(true);
+        when(userRepository.deleteById(target.getId(), connection)).thenReturn(true);
 
         String result = adminService.deleteUser(targetId, callerId);
 
@@ -160,7 +165,7 @@ public class AdminServiceTest {
         when(connection.getAutoCommit()).thenReturn(true);
         doThrow(new RuntimeException("delete bids failed"))
             .when(bidRepository)
-            .deleteByBidderId(target.getId());
+            .deleteByBidderId(target.getId(), connection);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () ->
             adminService.deleteUser(targetId, callerId)
@@ -327,7 +332,7 @@ public class AdminServiceTest {
             Optional.of(target)
         );
         when(connection.getAutoCommit()).thenReturn(true);
-        when(userRepository.deleteById(target.getId())).thenReturn(false);
+        when(userRepository.deleteById(target.getId(), connection)).thenReturn(false);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () ->
             adminService.deleteUser(
