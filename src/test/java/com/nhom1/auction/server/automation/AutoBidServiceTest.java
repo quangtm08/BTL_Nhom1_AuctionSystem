@@ -3,6 +3,7 @@ package com.nhom1.auction.server.automation;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.entity.BidTransaction;
+import com.nhom1.auction.common.exception.ValidationException;
 
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
@@ -59,7 +60,7 @@ public class AutoBidServiceTest {
         dto.setMaxAmount(0.0);
         dto.setIncrement(10.0);
 
-        assertThrows(IllegalArgumentException.class, () -> autoBidService.saveConfig(dto));
+        assertThrows(ValidationException.class, () -> autoBidService.saveConfig(dto));
     }
 
     @Test
@@ -70,7 +71,7 @@ public class AutoBidServiceTest {
         dto.setMaxAmount(200.0);
         dto.setIncrement(0.0);
 
-        assertThrows(IllegalArgumentException.class, () -> autoBidService.saveConfig(dto));
+        assertThrows(ValidationException.class, () -> autoBidService.saveConfig(dto));
     }
 
     @Test
@@ -81,7 +82,7 @@ public class AutoBidServiceTest {
         dto.setMaxAmount(5.0);
         dto.setIncrement(10.0);
 
-        assertThrows(IllegalArgumentException.class, () -> autoBidService.saveConfig(dto));
+        assertThrows(ValidationException.class, () -> autoBidService.saveConfig(dto));
     }
 
     @Test
