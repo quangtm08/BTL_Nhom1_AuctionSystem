@@ -87,7 +87,7 @@ public class Auction extends BaseEntity {
         this.bidHistory = new ArrayList<>();
     }
 
-    public void startAuction() throws InvalidAuctionStateException {
+    public void startAuction() {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
             if (status == AuctionStatus.OPEN) {
@@ -101,7 +101,7 @@ public class Auction extends BaseEntity {
         }
     }
 
-    public void endAuction() throws InvalidAuctionStateException {
+    public void endAuction() {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
             if (status == AuctionStatus.RUNNING) {
@@ -116,7 +116,7 @@ public class Auction extends BaseEntity {
     }
 
     // TODO: Add payment validation before allowing this transition.
-    public void markAsPaid() throws InvalidAuctionStateException {
+    public void markAsPaid() {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
             if (status == AuctionStatus.FINISHED) {
@@ -130,8 +130,7 @@ public class Auction extends BaseEntity {
         }
     }
 
-    public BidTransaction placeBid(UUID bidderId, BigDecimal amount, BidType bidType, LocalDateTime bidTime)
-            throws InvalidBidException, AuctionClosedException, UnauthorizedActionException {
+    public BidTransaction placeBid(UUID bidderId, BigDecimal amount, BidType bidType, LocalDateTime bidTime) {
 
         auctionLock.lock(); // Lock to ensure thread safety when placing a bid
         try {
@@ -152,8 +151,7 @@ public class Auction extends BaseEntity {
 
     // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or
     // RUNNING auctions.
-    public void cancelAuction(UUID callerId, UserRole userRole)
-            throws InvalidAuctionStateException, UnauthorizedActionException {
+    public void cancelAuction(UUID callerId, UserRole userRole) {
 
         auctionLock.lock(); // Lock to ensure thread safety when canceling the auction
         try {

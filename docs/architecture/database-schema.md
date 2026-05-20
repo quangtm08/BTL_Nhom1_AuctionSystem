@@ -16,18 +16,6 @@ description text
 category text [not null, note: "ELECTRONICS | ART | VEHICLE"]
 condition text [not null, note: "NEW | LIKE_NEW | USED | DAMAGED"]
 
-// Electronics only
-brand text
-warranty_months integer
-
-// Art only
-artist text
-era text
-
-// Vehicle only
-production_year integer
-fuel_type text [note: "GASOLINE | DIESEL | ELECTRIC | HYBRID"]
-
 created_at text [not null]
 updated_at text [not null]
 }

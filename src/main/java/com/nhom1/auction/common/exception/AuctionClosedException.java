@@ -1,10 +1,10 @@
 package com.nhom1.auction.common.exception;
 
-public class AuctionClosedException extends Exception {
+import com.nhom1.auction.common.protocol.ErrorCode;
+
+public class AuctionClosedException extends AppException {
 
     public AuctionClosedException(String message) {
-        super(message);
+        super(ErrorCode.AUCTION_CLOSED, message);
     }
-
 }
-

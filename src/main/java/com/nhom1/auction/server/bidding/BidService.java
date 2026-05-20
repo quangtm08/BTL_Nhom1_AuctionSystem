@@ -17,6 +17,7 @@ import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
 import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.BidType;
+import com.nhom1.auction.common.exception.AppException;
 import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.ConflictException;
 import com.nhom1.auction.common.exception.InvalidBidException;
@@ -62,14 +63,13 @@ public class BidService {
 
                 if (updated == 0) {
                     throw new ConflictException(
-                            "Bid lost race — concurrent bid placed with equal or higher amount");
+                            "Bid lost race: concurrent bid placed with equal or higher amount");
                 }
 
                 connection.commit();
                 return bidTransaction;
 
-            } catch (InvalidBidException | AuctionClosedException
-                     | UnauthorizedActionException | NotFoundException | ConflictException e) {
+            } catch (AppException e) {
                 connection.rollback();
                 throw e;
             } catch (Exception e) {
@@ -78,16 +78,14 @@ public class BidService {
             } finally {
                 connection.setAutoCommit(oldAutoCommit);
             }
-        } catch (InvalidBidException | AuctionClosedException
-                 | UnauthorizedActionException | NotFoundException | ConflictException | IllegalStateException e) {
+        } catch (AppException | IllegalStateException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
         }
     }
 
-    public AuctionDetailDto getAuctionDetail(UUID auctionId)
-        throws IllegalStateException, NotFoundException {
+    public AuctionDetailDto getAuctionDetail(UUID auctionId) {
     	Auction auction = auctionRepository.findById(auctionId)
     		.orElseThrow(() -> new NotFoundException("Auction not found"));
 

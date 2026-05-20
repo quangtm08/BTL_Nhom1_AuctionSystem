@@ -6,6 +6,7 @@ import com.nhom1.auction.common.dto.admin.UserSummaryDto;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
+import com.nhom1.auction.common.exception.AppException;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
@@ -47,8 +48,7 @@ public class AdminService {
         this.dataSource = dataSource;
     }
 
-    public AdminUserListResponse getAllUsers(String callerId)
-        throws ValidationException, AuthenticationException, UnauthorizedActionException {
+    public AdminUserListResponse getAllUsers(String callerId) {
         requireAdmin(callerId);
         List<UserSummaryDto> users = userRepository
             .findAll()
@@ -58,8 +58,7 @@ public class AdminService {
         return new AdminUserListResponse(users);
     }
 
-    public String deleteUser(String targetUserId, String callerId)
-        throws ValidationException, AuthenticationException, UnauthorizedActionException, NotFoundException {
+    public String deleteUser(String targetUserId, String callerId) {
         if (targetUserId == null || targetUserId.isBlank()) {
             throw new ValidationException("Target user ID is required.");
         }
@@ -116,6 +115,9 @@ public class AdminService {
                     );
                 }
                 connection.commit();
+            } catch (AppException e) {
+                connection.rollback();
+                throw e;
             } catch (Exception e) {
                 connection.rollback();
                 throw e;
@@ -127,6 +129,8 @@ public class AdminService {
                 "User deletion failed due to database error",
                 e
             );
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("User deletion failed", e);
         }
@@ -134,8 +138,7 @@ public class AdminService {
         return "DELETED";
     }
 
-    public String cancelAuction(String auctionId, String callerId)
-        throws ValidationException, AuthenticationException, UnauthorizedActionException, InvalidAuctionStateException {
+    public String cancelAuction(String auctionId, String callerId) {
         requireAdmin(callerId);
         if (auctionId == null || auctionId.isBlank()) {
             throw new ValidationException("Auction ID is required.");
@@ -150,16 +153,14 @@ public class AdminService {
         return "CANCELED";
     }
 
-    public AdminAuctionListResponse getAllAuctions(String callerId)
-        throws ValidationException, AuthenticationException, UnauthorizedActionException {
+    public AdminAuctionListResponse getAllAuctions(String callerId) {
         requireAdmin(callerId);
         return new AdminAuctionListResponse(
             adminAuctionGateway.findAllAuctionSummaries()
         );
     }
 
-    private User requireAdmin(String callerId)
-        throws ValidationException, AuthenticationException, UnauthorizedActionException {
+    private User requireAdmin(String callerId) {
         if (callerId == null || callerId.isBlank()) {
             throw new ValidationException("Caller ID is required.");
         }
@@ -177,8 +178,7 @@ public class AdminService {
         return caller;
     }
 
-    private UUID parseUserId(String rawId, String fieldName)
-        throws ValidationException {
+    private UUID parseUserId(String rawId, String fieldName) {
         try {
             return UUID.fromString(rawId);
         } catch (IllegalArgumentException e) {

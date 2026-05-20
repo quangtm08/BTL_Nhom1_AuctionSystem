@@ -1,8 +1,10 @@
 package com.nhom1.auction.common.exception;
 
-public class InvalidAuctionStateException extends Exception {
+import com.nhom1.auction.common.protocol.ErrorCode;
+
+public class InvalidAuctionStateException extends AppException {
 
     public InvalidAuctionStateException(String message) {
-        super(message);
+        super(ErrorCode.INVALID_AUCTION_STATE, message);
     }
 }
