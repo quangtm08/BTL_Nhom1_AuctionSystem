@@ -1,6 +1,7 @@
 package com.nhom1.auction.server.infrastructure;
 
 import com.nhom1.auction.common.exception.AuthenticationException;
+import com.nhom1.auction.common.exception.AppException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.protocol.ErrorCode;
@@ -40,23 +41,25 @@ public class ResponseFactoryTest {
     @Test
     public void testFromException_ValidationException_MapsToValidationError() {
         String requestId = "req-789";
-        Exception ex = new ValidationException("Invalid price");
+        ValidationException ex = new ValidationException("Invalid price");
         ResponseMessage<Object> response = ResponseFactory.fromException(requestId, ex);
 
         assertFalse(response.isSuccess());
         assertEquals(ErrorCode.VALIDATION_ERROR, response.getError().getCode());
         assertEquals("Invalid price", response.getError().getMessage());
+        assertEquals(ErrorCode.VALIDATION_ERROR, ex.getCode());
     }
 
     @Test
     public void testFromException_AuthenticationException_MapsToAuthenticationFailed() {
         String requestId = "req-000";
-        Exception ex = new AuthenticationException("Wrong password");
+        AuthenticationException ex = new AuthenticationException("Wrong password");
         ResponseMessage<Object> response = ResponseFactory.fromException(requestId, ex);
 
         assertFalse(response.isSuccess());
         assertEquals(ErrorCode.AUTHENTICATION_FAILED, response.getError().getCode());
         assertEquals("Wrong password", response.getError().getMessage());
+        assertEquals(ErrorCode.AUTHENTICATION_FAILED, ex.getCode());
     }
 
     @Test
@@ -68,13 +71,32 @@ public class ResponseFactoryTest {
     }
 
     @Test
+    public void testFromException_IllegalArgumentException_MapsToValidationError() {
+        Exception ex = new IllegalArgumentException("amount must be positive");
+        ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, response.getError().getCode());
+        assertEquals("amount must be positive", response.getError().getMessage());
+    }
+
+    @Test
+    public void testFromException_NestedIllegalArgumentException_MapsToValidationError() {
+        Exception root = new IllegalArgumentException("auctionId is invalid UUID");
+        Exception wrapper = new RuntimeException("Wrapper", root);
+        ResponseMessage<Object> response = ResponseFactory.fromException("id", wrapper);
+
+        assertEquals(ErrorCode.VALIDATION_ERROR, response.getError().getCode());
+        assertEquals("auctionId is invalid UUID", response.getError().getMessage());
+    }
+
+    @Test
     public void testFromException_SQLException_MapsToServerError() {
         Exception ex = new SQLException("Connection lost");
         ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
 
         assertEquals(ErrorCode.SERVER_ERROR, response.getError().getCode());
-        // For SERVER_ERROR, we check if details contains the exception class name
-        assertEquals("SQLException", response.getError().getDetails());
+        assertEquals("Unexpected server error", response.getError().getMessage());
+        assertNull(response.getError().getDetails());
     }
 
     @Test
@@ -83,15 +105,15 @@ public class ResponseFactoryTest {
         ResponseMessage<Object> response = ResponseFactory.fromException("id", ex);
 
         assertEquals(ErrorCode.SERVER_ERROR, response.getError().getCode());
-        assertEquals("Something went wrong", response.getError().getMessage());
+        assertEquals("Unexpected server error", response.getError().getMessage());
     }
 
     @Test
-    public void testUnwrap_NestedException_ReturnsRootCause() {
+    public void testFindAppException_NestedException_ReturnsAppException() {
         Exception root = new ValidationException("Root error");
         Exception wrapper = new RuntimeException("Wrapper", root);
 
-        Throwable result = ResponseFactory.unwrap(wrapper);
+        AppException result = ResponseFactory.findAppException(wrapper);
 
         assertEquals(root, result);
     }

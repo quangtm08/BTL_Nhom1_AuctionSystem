@@ -19,12 +19,6 @@ CREATE TABLE IF NOT EXISTS items (
     description TEXT,
     category VARCHAR(50) NOT NULL,
     condition VARCHAR(50) NOT NULL,
-    brand VARCHAR(100),
-    warranty_months INTEGER,
-    artist VARCHAR(255),
-    era VARCHAR(100),
-    production_year INTEGER,
-    fuel_type VARCHAR(50),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     FOREIGN KEY (seller_id) REFERENCES users(id)
@@ -79,3 +73,22 @@ CREATE TABLE IF NOT EXISTS auto_bid_configs (
     FOREIGN KEY (auction_id) REFERENCES auctions(id),
     FOREIGN KEY (bidder_id) REFERENCES users(id)
 );
+
+-- 6. Table: payment_transactions
+CREATE TABLE IF NOT EXISTS payment_transactions (
+    id VARCHAR(36) PRIMARY KEY,
+    auction_id VARCHAR(36) NOT NULL,
+    payer_id VARCHAR(36) NOT NULL,
+    payee_id VARCHAR(36) NOT NULL,
+    amount DECIMAL(19, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (auction_id) REFERENCES auctions(id),
+    FOREIGN KEY (payer_id) REFERENCES users(id),
+    FOREIGN KEY (payee_id) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_auction_id ON payment_transactions(auction_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_payer_id ON payment_transactions(payer_id);
+CREATE INDEX IF NOT EXISTS idx_payment_transactions_payee_id ON payment_transactions(payee_id);

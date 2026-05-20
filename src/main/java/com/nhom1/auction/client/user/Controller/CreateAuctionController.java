@@ -166,23 +166,6 @@ public class CreateAuctionController {
         dto.setStartTime(startTime);
         dto.setEndTime(endTime);
 
-        // Minimal category-specific defaults to satisfy backend validation
-        switch (dto.getCategory()) {
-            case ART -> {
-                dto.setArtist("Unknown");
-                dto.setEra("Unknown");
-            }
-            case ELECTRONICS -> {
-                dto.setBrand("Unknown");
-                dto.setWarrantyMonths(0);
-            }
-            case VEHICLE -> {
-                dto.setBrand("Unknown");
-                dto.setProductionYear(2000);
-                dto.setFuelType(null);
-            }
-        }
-
         RequestMessage<CreateAuctionRequest> request = new RequestMessage<>(MessageType.CREATE_AUCTION, dto);
         uploadCountLabel.setText("Publishing...");
         ServerConnection.getInstance()

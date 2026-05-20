@@ -33,7 +33,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testLogin_CorrectCredentials_ReturnsUser() throws AuthenticationException {
+    public void testLogin_CorrectCredentials_ReturnsUser() {
         String identifier = "testuser";
         String password = "password";
         User user = new User("testuser", "test@example.com", "password", UserRole.USER);
@@ -76,7 +76,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void testRegister_NewUser_SavesAndReturnsUser() throws UserAlreadyExistsException {
+    public void testRegister_NewUser_SavesAndReturnsUser() {
         String username = "newuser";
         String email = "new@example.com";
         String password = "password";

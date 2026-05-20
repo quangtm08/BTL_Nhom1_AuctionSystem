@@ -3,6 +3,7 @@ package com.nhom1.auction.server.automation;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.entity.BidTransaction;
+import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
 import java.math.BigDecimal;
@@ -40,13 +41,13 @@ public class AutoBidService {
         BigDecimal increment = BigDecimal.valueOf(dto.getIncrement());
 
         if (maxAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("maxAmount must be > 0");
+            throw new ValidationException("maxAmount must be > 0");
         }
         if (increment.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("increment must be > 0");
+            throw new ValidationException("increment must be > 0");
         }
         if (maxAmount.compareTo(increment) < 0) {
-            throw new IllegalArgumentException("maxAmount must be >= increment");
+            throw new ValidationException("maxAmount must be >= increment");
         }
 
         autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, increment));
@@ -115,7 +116,7 @@ public class AutoBidService {
         try {
             return UUID.fromString(value);
         } catch (Exception e) {
-            throw new IllegalArgumentException(fieldName + " is invalid UUID");
+            throw new ValidationException(fieldName + " is invalid UUID");
         }
     }
 }

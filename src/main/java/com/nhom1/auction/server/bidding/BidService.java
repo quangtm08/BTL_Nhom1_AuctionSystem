@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import javax.sql.DataSource;
 
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
@@ -16,7 +17,9 @@ import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
 import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.BidType;
+import com.nhom1.auction.common.exception.AppException;
 import com.nhom1.auction.common.exception.AuctionClosedException;
+import com.nhom1.auction.common.exception.ConflictException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
@@ -30,56 +33,59 @@ public class BidService {
     private final AuctionRepository auctionRepository;
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
-    private final Connection connection;
+    private final DataSource dataSource;
 
     public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
                       ItemRepository itemRepository, UserRepository userRepository,
-                      Connection connection) {
+                      DataSource dataSource) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
-        this.connection = connection;
+        this.dataSource = dataSource;
     }
 
     public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType)
             throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, NotFoundException,
-            IllegalStateException {
-        synchronized (connection) {
+            ConflictException, IllegalStateException {
+        try (Connection connection = dataSource.getConnection()) {
+            boolean oldAutoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
             try {
-                boolean oldAutoCommit = connection.getAutoCommit();
-                connection.setAutoCommit(false);
-                try {
-                    Auction auction = auctionRepository.findById(auctionId)
-                            .orElseThrow(() -> new NotFoundException("Auction not found"));
+                Auction auction = auctionRepository.findById(auctionId, connection)
+                        .orElseThrow(() -> new NotFoundException("Auction not found"));
 
-                    BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
+                BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
 
-                    bidRepository.save(bidTransaction);
-                    auctionRepository.updateHighestBid(auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
+                bidRepository.save(bidTransaction, connection);
+                int updated = auctionRepository.updateHighestBid(
+                        auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId(), connection);
 
-                    connection.commit();
-                    return bidTransaction;
-
-                } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | NotFoundException e) {
-                    connection.rollback();
-                    throw e;
-                } catch (Exception e) {
-                    connection.rollback();
-                    throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
-                } finally {
-                    connection.setAutoCommit(oldAutoCommit);
+                if (updated == 0) {
+                    throw new ConflictException(
+                            "Bid lost race: concurrent bid placed with equal or higher amount");
                 }
-            } catch (InvalidBidException | AuctionClosedException | UnauthorizedActionException | NotFoundException | IllegalStateException e) {
+
+                connection.commit();
+                return bidTransaction;
+
+            } catch (AppException e) {
+                connection.rollback();
                 throw e;
             } catch (Exception e) {
+                connection.rollback();
                 throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
+            } finally {
+                connection.setAutoCommit(oldAutoCommit);
             }
+        } catch (AppException | IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
         }
     }
 
-    public AuctionDetailDto getAuctionDetail(UUID auctionId)
-        throws IllegalStateException, NotFoundException {
+    public AuctionDetailDto getAuctionDetail(UUID auctionId) {
     	Auction auction = auctionRepository.findById(auctionId)
     		.orElseThrow(() -> new NotFoundException("Auction not found"));
 

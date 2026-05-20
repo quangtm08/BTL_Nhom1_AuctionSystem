@@ -29,14 +29,14 @@ public class AuthService {
     }
 
     //Take in identifier (email or username) and password. Return User object if success, throw exception if failed
-    public User login(String identifier, String password) throws AuthenticationException {
+    public User login(String identifier, String password) {
         return userRepository.findByIdentifier(identifier)
             .filter(user -> user.getPassword().equals(password))
             .orElseThrow(() -> new AuthenticationException("Wrong email/username or password"));
     }
 
     //Take in username, email and password. Return User object if success, throw exception if failed
-    public User register(String username, String email, String password) throws UserAlreadyExistsException {
+    public User register(String username, String email, String password) {
         if (userRepository.existsByEmail(email)){
             throw new UserAlreadyExistsException("Email already exists");
         }

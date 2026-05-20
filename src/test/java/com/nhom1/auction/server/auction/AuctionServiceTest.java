@@ -17,6 +17,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -31,17 +32,21 @@ public class AuctionServiceTest {
     private ItemRepository itemRepository;
 
     @Mock
+    private DataSource dataSource;
+
+    @Mock
     private Connection connection;
 
     private AuctionService auctionService;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
+        when(dataSource.getConnection()).thenReturn(connection);
         auctionService = new AuctionService(
             auctionRepository,
             itemRepository,
-            connection
+            dataSource
         );
     }
 
@@ -59,13 +64,15 @@ public class AuctionServiceTest {
         assertEquals(UUID.fromString(sellerId), result.getSellerId());
         verify(itemRepository).save(
             any(Item.class),
-            eq(UUID.fromString(sellerId))
+            eq(UUID.fromString(sellerId)),
+            eq(connection)
         );
-        verify(auctionRepository).save(any(Auction.class));
+        verify(auctionRepository).save(any(Auction.class), eq(connection));
         verify(auctionRepository).updateHighestBid(
             any(UUID.class),
             eq(dto.getStartingPrice()),
-            isNull()
+            isNull(),
+            eq(connection)
         );
         verify(connection).setAutoCommit(false);
         verify(connection).commit();
@@ -80,7 +87,7 @@ public class AuctionServiceTest {
         when(connection.getAutoCommit()).thenReturn(true);
         doThrow(new RuntimeException("save auction failed"))
             .when(auctionRepository)
-            .save(any(Auction.class));
+            .save(any(Auction.class), eq(connection));
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () ->
             auctionService.createAuction(sellerId, dto)
@@ -89,13 +96,15 @@ public class AuctionServiceTest {
         assertEquals("Create auction transaction failed", thrown.getMessage());
         verify(itemRepository).save(
             any(Item.class),
-            eq(UUID.fromString(sellerId))
+            eq(UUID.fromString(sellerId)),
+            eq(connection)
         );
-        verify(auctionRepository).save(any(Auction.class));
+        verify(auctionRepository).save(any(Auction.class), eq(connection));
         verify(auctionRepository, never()).updateHighestBid(
             any(UUID.class),
             any(BigDecimal.class),
-            any()
+            any(),
+            eq(connection)
         );
         verify(connection).rollback();
         verify(connection).setAutoCommit(true);
@@ -178,8 +187,8 @@ public class AuctionServiceTest {
             Optional.of(auction)
         );
         when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.deleteById(parsedAuctionId)).thenReturn(1);
-        when(itemRepository.deleteById(any(UUID.class))).thenReturn(1);
+        when(auctionRepository.deleteById(parsedAuctionId, connection)).thenReturn(1);
+        when(itemRepository.deleteById(any(UUID.class), eq(connection))).thenReturn(1);
 
         assertDoesNotThrow(() ->
             auctionService.deleteAuction(sellerId, auctionId)
@@ -188,8 +197,8 @@ public class AuctionServiceTest {
         verify(connection).setAutoCommit(false);
         verify(connection).commit();
         verify(connection).setAutoCommit(true);
-        verify(auctionRepository).deleteById(parsedAuctionId);
-        verify(itemRepository).deleteById(any(UUID.class));
+        verify(auctionRepository).deleteById(parsedAuctionId, connection);
+        verify(itemRepository).deleteById(any(UUID.class), eq(connection));
     }
 
     @Test
@@ -206,8 +215,8 @@ public class AuctionServiceTest {
             Optional.of(auction)
         );
         when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.deleteById(parsedAuctionId)).thenReturn(1);
-        when(itemRepository.deleteById(any(UUID.class))).thenReturn(0);
+        when(auctionRepository.deleteById(parsedAuctionId, connection)).thenReturn(1);
+        when(itemRepository.deleteById(any(UUID.class), eq(connection))).thenReturn(0);
 
         RuntimeException thrown = assertThrows(RuntimeException.class, () ->
             auctionService.deleteAuction(sellerId, auctionId)
@@ -259,8 +268,6 @@ public class AuctionServiceTest {
         dto.setStartingPrice(new BigDecimal("100.00"));
         dto.setStartTime(LocalDateTime.now());
         dto.setEndTime(LocalDateTime.now().plusHours(1));
-        dto.setArtist("Test Artist");
-        dto.setEra("Modern");
         return dto;
     }
 }

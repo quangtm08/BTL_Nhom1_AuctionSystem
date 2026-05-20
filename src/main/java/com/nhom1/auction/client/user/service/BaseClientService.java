@@ -2,13 +2,13 @@ package com.nhom1.auction.client.user.service;
 
 import com.nhom1.auction.client.user.connection.ServerConnection;
 import com.nhom1.auction.common.exception.AuctionClosedException;
-import com.nhom1.auction.common.exception.AuctionException;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.ConflictException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.PaymentException;
+import com.nhom1.auction.common.exception.ServerException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.protocol.ErrorCode;
@@ -46,7 +46,8 @@ public abstract class BaseClientService {
                     throw new CompletionException(typedException);
                 }
                 throw new CompletionException(
-                    new AuctionException(
+                    new ServerException(
+                        ErrorCode.SERVER_ERROR,
                         "Server unreachable: " + cause.getMessage()
                     )
                 );
@@ -103,7 +104,7 @@ public abstract class BaseClientService {
             );
             case ErrorCode.PAYMENT_FAILED -> new PaymentException(message);
             case ErrorCode.CONFLICT -> new ConflictException(message);
-            default -> new AuctionException(message);
+            default -> new ServerException(code, message);
         };
     }
 }
