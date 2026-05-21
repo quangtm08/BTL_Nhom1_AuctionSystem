@@ -51,6 +51,8 @@ public class AuctionDetailController {
 
 	@FXML
 	private Label lblBidError;
+	@FXML
+	private Label lblAutoBidStatus;
 
 	@FXML
 	private Button btnBid;
@@ -151,6 +153,7 @@ public class AuctionDetailController {
 				if (bid != null && activeAutoBidCurrentBidLabel != null) {
 					activeAutoBidCurrentBidLabel.setText(formatMoney(bid));
 				}
+				clearAutoBidStatus();
 			});
 
 			// Re-fetch full detail to refresh bid history
@@ -248,6 +251,22 @@ public class AuctionDetailController {
 		}
 	}
 
+	private void showAutoBidStatus(String message) {
+		if (lblAutoBidStatus != null) {
+			lblAutoBidStatus.setText(message);
+			lblAutoBidStatus.setVisible(true);
+			lblAutoBidStatus.setManaged(true);
+		}
+	}
+
+	private void clearAutoBidStatus() {
+		if (lblAutoBidStatus != null) {
+			lblAutoBidStatus.setVisible(false);
+			lblAutoBidStatus.setManaged(false);
+			lblAutoBidStatus.setText("");
+		}
+	}
+
 	private void onPlaceBid() {
 		String auctionId = AppContext.getSelectedAuctionId();
 		if (auctionId == null)
@@ -288,6 +307,7 @@ public class AuctionDetailController {
 			showBidError("Could not read increment value from auction.");
 			return;
 		}
+		clearAutoBidStatus();
 
 		autoBidClientService.getConfig(auctionId)
 			.thenAccept(cfg -> Platform.runLater(() -> showAutoBidDialog(auctionId, increment, cfg)))
@@ -314,7 +334,8 @@ public class AuctionDetailController {
 
 	private void handleDeleteAutoBid(AutoBidConfigResponse resp) {
 		if (resp == null) return;
-		showBidError("Auto-bid status: " + resp.getStatus());
+		clearBidError();
+		showAutoBidStatus("Auto-bid stopped.");
 	}
 
 	private void showAutoBidDialog(String auctionId, BigDecimal increment, AutoBidConfigDetailResponse cfg) {
@@ -364,7 +385,8 @@ public class AuctionDetailController {
 		result.ifPresent(maxAmount -> autoBidClientService.saveConfig(auctionId, maxAmount, increment)
 			.thenAccept(resp -> Platform.runLater(() -> {
 				if (resp != null) {
-					showBidError("Auto-bid status: " + resp.getStatus());
+					clearBidError();
+					showAutoBidStatus("Auto-bid is active up to " + formatMoney(maxAmount) + ".");
 				}
 			}))
 			.exceptionally(ex -> {
