@@ -57,6 +57,7 @@ public class AuctionService {
                     auction.getId(),
                     dto.getStartingPrice(),
                     null,
+                    auction.getVersion(),
                     connection
                 );
 
