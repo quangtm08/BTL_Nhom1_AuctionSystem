@@ -1,5 +1,12 @@
 package com.nhom1.auction.server.auction;
 
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.util.List;
+import java.util.UUID;
+
+import javax.sql.DataSource;
+
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
@@ -12,11 +19,6 @@ import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.factory.ItemFactory;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.util.List;
-import java.util.UUID;
-import javax.sql.DataSource;
 
 public class AuctionService {
 
@@ -46,13 +48,13 @@ public class AuctionService {
                 itemImageRepository.saveImageUrls(item.getId(), dto.getImageUrls(), connection);
 
                 Auction auction = new Auction(
-                        item.getId(),
-                        parsedSellerId,
-                        dto.getStartingPrice(),
-                        dto.getStartTime(),
-                        dto.getEndTime()
+                    item.getId(),
+                    parsedSellerId,
+                    dto.getStartingPrice(),
+                    dto.getStartTime(),
+                    dto.getEndTime(),
+                    dto.getDurationDays()
                 );
-                auction.startAuction();
                 auctionRepository.save(auction, connection);
                 auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null, connection);
                 connection.commit();
@@ -220,13 +222,8 @@ public class AuctionService {
                 "startingPrice must be greater than 0"
             );
         }
-        if (dto.getStartTime() == null || dto.getEndTime() == null) {
-            throw new ValidationException(
-                "startTime and endTime must not be null"
-            );
-        }
-        if (!dto.getEndTime().isAfter(dto.getStartTime())) {
-            throw new ValidationException("endTime must be after startTime");
+        if (dto.getDurationDays() == null || dto.getDurationDays() <= 0) {
+            throw new ValidationException("durationDays must be provided and greater than 0");
         }
 
         if (
