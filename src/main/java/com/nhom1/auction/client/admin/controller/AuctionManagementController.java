@@ -1,14 +1,16 @@
 package com.nhom1.auction.client.admin.controller;
 
-import com.nhom1.auction.client.admin.service.AdminClientService;
-import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
-import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.protocol.MessageType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+import com.nhom1.auction.client.admin.service.AdminClientService;
+import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
+import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.protocol.MessageType;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
@@ -103,8 +105,13 @@ public class AuctionManagementController {
         boolean canCancel = auction.getStatus() == AuctionStatus.OPEN || auction.getStatus() == AuctionStatus.RUNNING;
         cancelBtn.setDisable(!canCancel || auction.getId().equals(cancelingAuctionId));
         cancelBtn.setOnAction(e -> cancelAuction(auction.getId(), cancelBtn));
+        // Approve button for OPEN auctions
+        Button approveBtn = new Button("Approve");
+        approveBtn.getStyleClass().add("btn-approve");
+        approveBtn.setDisable(!(auction.getStatus() == AuctionStatus.OPEN));
+        approveBtn.setOnAction(e -> approveAuction(auction.getId(), approveBtn));
 
-        HBox actions = new HBox(cancelBtn);
+        HBox actions = new HBox(8, approveBtn, cancelBtn);
         actions.setAlignment(Pos.CENTER);
         auctionGrid.add(actions, 7, row);
     }
@@ -125,6 +132,21 @@ public class AuctionManagementController {
                         cancelingAuctionId = null;
                         cancelBtn.setDisable(false);
                         lblAuctionSummary.setText("Cancel failed: " + cause.getMessage());
+                    });
+                    return null;
+                });
+    }
+
+    private void approveAuction(String auctionId, Button approveBtn) {
+        approveBtn.setDisable(true);
+        lblAuctionSummary.setText("Approving auction...");
+        adminClientService.approveAuction(auctionId)
+                .thenAccept(ok -> Platform.runLater(() -> reloadAuctions()))
+                .exceptionally(ex -> {
+                    Throwable cause = AdminClientService.extractFailure(ex);
+                    Platform.runLater(() -> {
+                        approveBtn.setDisable(false);
+                        lblAuctionSummary.setText("Approve failed: " + cause.getMessage());
                     });
                     return null;
                 });
