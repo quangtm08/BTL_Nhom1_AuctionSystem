@@ -92,9 +92,8 @@ public class CreateAuctionClientService extends BaseClientService {
         AuthResponse user = AppContext.getCurrentUser();
         BigDecimal parsedStartingBid = new BigDecimal(startingBid.trim());
 
-        LocalDateTime startTime = LocalDateTime.now();
-        LocalDateTime endTime = startTime.plusDays(durationDays);
-
+        LocalDateTime startTime = null;
+        LocalDateTime endTime = null;
         CreateAuctionRequest dto = new CreateAuctionRequest();
         dto.setSellerId(user.getUserID());
         dto.setName(title.trim());
@@ -104,6 +103,7 @@ public class CreateAuctionClientService extends BaseClientService {
         dto.setStartingPrice(parsedStartingBid);
         dto.setStartTime(startTime);
         dto.setEndTime(endTime);
+        dto.setDurationDays(durationDays);
         dto.setImageUrls(imageUrls);
 
         return dto;
