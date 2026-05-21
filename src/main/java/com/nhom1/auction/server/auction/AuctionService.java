@@ -174,7 +174,9 @@ public class AuctionService {
         Auction auction = auctionRepository.findById(auctionUuid).orElseThrow(() -> new NotFoundException("Auction not found"));
         if (!sellerUuid.equals(auction.getSellerId())) throw new UnauthorizedActionException("You are not allowed to edit this auction");
         if (auction.getStatus() != AuctionStatus.RUNNING) throw new ValidationException("Only running auctions can be edited");
+        if (auction.getHighestBidderId() != null) throw new ValidationException("Auction already has bids and cannot be edited");
         if (dto.getEndTime() == null || !dto.getEndTime().isAfter(auction.getStartTime())) throw new ValidationException("endTime must be after startTime");
+        if (dto.getStartingPrice() == null || dto.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0) throw new ValidationException("startingPrice must be greater than 0");
         if (dto.getName() == null || dto.getName().isBlank()) throw new ValidationException("name must not be blank");
         if (dto.getCategory() == null || dto.getCondition() == null) throw new ValidationException("category and condition are required");
 
@@ -183,7 +185,7 @@ public class AuctionService {
             connection.setAutoCommit(false);
             try {
                 int updatedItem = itemRepository.updateBasicInfo(auction.getItemId(), dto.getName().trim(), dto.getDescription(), dto.getCategory(), dto.getCondition(), connection);
-                int updatedAuction = auctionRepository.updateEndTime(auctionUuid, dto.getEndTime(), connection);
+                int updatedAuction = auctionRepository.updateStartingPriceAndEndTime(auctionUuid, dto.getStartingPrice(), dto.getEndTime(), connection);
                 if (updatedItem == 0 || updatedAuction == 0) throw new NotFoundException("Auction or item not found");
                 connection.commit();
             } catch (Exception ex) {

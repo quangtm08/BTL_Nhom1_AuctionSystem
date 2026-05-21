@@ -276,6 +276,23 @@ public class AuctionRepository {
         }
     }
 
+    public int updateStartingPriceAndEndTime(UUID auctionId, BigDecimal startingPrice, LocalDateTime newEndTime, Connection conn) {
+        String sql = """
+                    UPDATE auctions
+                    SET starting_price = ?, end_time = ?, updated_at = ?
+                    WHERE id = ?
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, startingPrice);
+            ps.setTimestamp(2, java.sql.Timestamp.valueOf(newEndTime));
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(4, auctionId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update auction pricing/time", e);
+        }
+    }
+
     // ===================== DELETE BY ID =====================
     public int deleteById(UUID auctionId) {
         try (Connection conn = dataSource.getConnection()) {

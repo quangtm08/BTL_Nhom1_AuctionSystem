@@ -65,7 +65,7 @@
             <HBox spacing="16.0">
                 <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                     <Label text="Starting bid" styleClass="field-label"/>
-                    <TextField fx:id="startingBidField" styleClass="field-input" editable="false"/>
+                    <TextField fx:id="startingBidField" styleClass="field-input"/>
                     <Label text="Cannot change once bidding starts" styleClass="note-text"/>
                 </VBox>
                 <VBox spacing="8.0" HBox.hgrow="ALWAYS">

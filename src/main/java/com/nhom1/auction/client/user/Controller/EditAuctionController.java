@@ -62,7 +62,7 @@ public class EditAuctionController {
         if (days <= 0 && loadedEndTime == null) { statusLabel.setText("Duration must be greater than 0."); return; }
         LocalDateTime targetEndTime = days > 0 ? LocalDateTime.now().plusDays(days) : loadedEndTime;
         statusLabel.setText("Saving...");
-        editAuctionClientService.updateAuction(auctionId, titleField.getText(), descriptionArea.getText(), categoryComboBox.getValue(), conditionComboBox.getValue(), targetEndTime)
+        editAuctionClientService.updateAuction(auctionId, titleField.getText(), descriptionArea.getText(), startingBidField.getText(), categoryComboBox.getValue(), conditionComboBox.getValue(), targetEndTime)
                 .thenAccept(response -> Platform.runLater(() -> { statusLabel.setText("Updated successfully."); AppNavigator.navigateTo(AppView.MY_LISTINGS); }))
                 .exceptionally(ex -> { Platform.runLater(() -> statusLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage())); return null; });
     }
