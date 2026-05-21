@@ -279,14 +279,15 @@ public class AuctionRepository {
     public int updateStartingPriceAndEndTime(UUID auctionId, BigDecimal startingPrice, LocalDateTime newEndTime, Connection conn) {
         String sql = """
                     UPDATE auctions
-                    SET starting_price = ?, end_time = ?, updated_at = ?
+                    SET starting_price = ?, current_highest_bid = ?, end_time = ?, updated_at = ?
                     WHERE id = ?
                 """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBigDecimal(1, startingPrice);
-            ps.setTimestamp(2, java.sql.Timestamp.valueOf(newEndTime));
-            ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
-            ps.setString(4, auctionId.toString());
+            ps.setBigDecimal(2, startingPrice);
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(newEndTime));
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(5, auctionId.toString());
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update auction pricing/time", e);
