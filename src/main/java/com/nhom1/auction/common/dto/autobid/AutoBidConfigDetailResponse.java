@@ -1,18 +1,21 @@
 package com.nhom1.auction.common.dto.autobid;
 
-public class AutoBidConfigRequest {
+public class AutoBidConfigDetailResponse {
     private String auctionId;
     private String bidderId;
     private String maxAmount;
     private String increment;
+    private boolean configured;
 
-    public AutoBidConfigRequest() {}
+    public AutoBidConfigDetailResponse() {
+    }
 
-    public AutoBidConfigRequest(String auctionId, String bidderId, String maxAmount, String increment) {
+    public AutoBidConfigDetailResponse(String auctionId, String bidderId, String maxAmount, String increment, boolean configured) {
         this.auctionId = auctionId;
         this.bidderId = bidderId;
         this.maxAmount = maxAmount;
         this.increment = increment;
+        this.configured = configured;
     }
 
     public String getAuctionId() {
@@ -45,5 +48,13 @@ public class AutoBidConfigRequest {
 
     public void setIncrement(String increment) {
         this.increment = increment;
+    }
+
+    public boolean isConfigured() {
+        return configured;
+    }
+
+    public void setConfigured(boolean configured) {
+        this.configured = configured;
     }
 }

@@ -103,6 +103,11 @@
     -fx-font-size: 11;
 }
 
+.auto-bid-status-label {
+    -fx-text-fill: #7ec8a0;
+    -fx-font-size: 11;
+}
+
 /* BUTTON */
 .btn-green {
     -fx-background-color: #2e5d4f;

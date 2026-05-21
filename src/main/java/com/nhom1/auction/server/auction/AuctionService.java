@@ -52,7 +52,15 @@ public class AuctionService {
                 );
                 auction.startAuction();
                 auctionRepository.save(auction, connection);
-                auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null, connection);
+                // Keep the opening price in auction state for listing/display and first-bid validation.
+                auctionRepository.updateHighestBid(
+                    auction.getId(),
+                    dto.getStartingPrice(),
+                    null,
+                    auction.getVersion(),
+                    connection
+                );
+
                 connection.commit();
                 return auction;
             } catch (AppException ex) {

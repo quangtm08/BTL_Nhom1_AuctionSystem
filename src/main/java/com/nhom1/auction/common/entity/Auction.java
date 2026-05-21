@@ -25,6 +25,9 @@ public class Auction extends BaseEntity {
     private LocalDateTime endTime;
     private final BigDecimal startingPrice;
     private final List<BidTransaction> bidHistory;
+    // Persistence-only concurrency token used by optimistic locking in the repository.
+    // Business logic does not mutate this field directly; the database increments it.
+    private final long version;
 
     // volatile để đảm bảo giá trị được cập nhật và đồng bộ hóa, thread-safe !
     private volatile UUID highestBidderId;
@@ -67,6 +70,7 @@ public class Auction extends BaseEntity {
         this.currentHighestBid = null;
         this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
+        this.version = 0L;
     }
 
     /**
@@ -75,6 +79,25 @@ public class Auction extends BaseEntity {
     public Auction(UUID id, UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime,
             UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
             LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(
+            id,
+            itemId,
+            sellerId,
+            startingPrice,
+            startTime,
+            endTime,
+            highestBidderId,
+            currentHighestBid,
+            status,
+            createdAt,
+            updatedAt,
+            0L
+        );
+    }
+
+    public Auction(UUID id, UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime,
+            UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
+            LocalDateTime createdAt, LocalDateTime updatedAt, long version) {
         super(id, createdAt, updatedAt);
         this.itemId = itemId;
         this.sellerId = sellerId;
@@ -85,6 +108,7 @@ public class Auction extends BaseEntity {
         this.currentHighestBid = currentHighestBid;
         this.status = status;
         this.bidHistory = new ArrayList<>();
+        this.version = version;
     }
 
     public void startAuction() {
@@ -230,5 +254,9 @@ public class Auction extends BaseEntity {
 
     public AuctionStatus getStatus() {
         return status;
+    }
+
+    public long getVersion() {
+        return version;
     }
 }

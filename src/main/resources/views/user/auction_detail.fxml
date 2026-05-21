@@ -66,11 +66,13 @@
                          Hiện khi validate thất bại, ẩn ngay khi TextField được focus. -->
                     <Label fx:id="lblBidError" text="" styleClass="bid-error-label"
                            visible="false" managed="false"/>
+                    <Label fx:id="lblAutoBidStatus" text="" styleClass="auto-bid-status-label"
+                           visible="false" managed="false"/>
 
                     <HBox spacing="10">
                         <Button text="Place Bid" styleClass="btn-primary" fx:id="btnBid" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                        <Button text="Auto-bid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                        <Button text="Cancel" styleClass="btn-danger" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button text="Auto-bid" fx:id="btnAutoBid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button text="Stop Auto-bid" fx:id="btnCancelAutoBid" styleClass="btn-danger" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                     </HBox>
 
                 </VBox>

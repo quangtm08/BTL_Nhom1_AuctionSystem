@@ -5,6 +5,7 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,7 +13,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.client.user.service.AutoBidClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigDetailResponse;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.BidSummaryDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
@@ -22,11 +26,17 @@ import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -38,14 +48,18 @@ public class AuctionDetailController {
 	private static final double IMAGE_BOX_HEIGHT = 320;
 
 	private final BiddingClientService biddingService = new BiddingClientService();
+	private final AutoBidClientService autoBidClientService = new AutoBidClientService();
 	private final ObjectMapper mapper = new ObjectMapper();
 	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM");
+	private Label activeAutoBidCurrentBidLabel;
 
 @FXML
 	private TextField txtBidInput;
 
 	@FXML
 	private Label lblBidError;
+	@FXML
+	private Label lblAutoBidStatus;
 
 	@FXML
 	private Button btnBid;
@@ -58,6 +72,10 @@ public class AuctionDetailController {
 
 	@FXML
 	private Button btnBack;
+	@FXML
+	private Button btnAutoBid;
+	@FXML
+	private Button btnCancelAutoBid;
 
 	@FXML
 	private Button btnViewBidHistory;
@@ -124,6 +142,12 @@ public class AuctionDetailController {
 				});
 
 		btnBack.setOnAction(e -> AppNavigator.navigateTo(AppView.AUCTION_BROWSE));
+		if (btnAutoBid != null) {
+			btnAutoBid.setOnAction(e -> onConfigureAutoBid());
+		}
+		if (btnCancelAutoBid != null) {
+			btnCancelAutoBid.setOnAction(e -> onCancelAutoBid());
+		}
 
 		if (btnViewBidHistory != null) {
 			btnViewBidHistory.setOnAction(e -> AppNavigator.navigateTo(AppView.BID_HISTORY_CHART));
@@ -157,6 +181,10 @@ public class AuctionDetailController {
 				if (bid != null && lblCurrentBid != null) {
 					lblCurrentBid.setText(formatMoney(bid));
 				}
+				if (bid != null && activeAutoBidCurrentBidLabel != null) {
+					activeAutoBidCurrentBidLabel.setText(formatMoney(bid));
+				}
+				clearAutoBidStatus();
 			});
 
 			// Re-fetch full detail to refresh bid history
@@ -373,6 +401,22 @@ public class AuctionDetailController {
 		}
 	}
 
+	private void showAutoBidStatus(String message) {
+		if (lblAutoBidStatus != null) {
+			lblAutoBidStatus.setText(message);
+			lblAutoBidStatus.setVisible(true);
+			lblAutoBidStatus.setManaged(true);
+		}
+	}
+
+	private void clearAutoBidStatus() {
+		if (lblAutoBidStatus != null) {
+			lblAutoBidStatus.setVisible(false);
+			lblAutoBidStatus.setManaged(false);
+			lblAutoBidStatus.setText("");
+		}
+	}
+
 	private void onPlaceBid() {
 		String auctionId = AppContext.getSelectedAuctionId();
 		if (auctionId == null)
@@ -403,6 +447,137 @@ public class AuctionDetailController {
 				});
 	}
 
+	private void onConfigureAutoBid() {
+		String auctionId = AppContext.getSelectedAuctionId();
+		if (auctionId == null || auctionId.isBlank()) {
+			return;
+		}
+		BigDecimal increment = parseDisplayedMoney(lblMinIncrement != null ? lblMinIncrement.getText() : null);
+		if (increment == null || increment.compareTo(BigDecimal.ZERO) <= 0) {
+			showBidError("Could not read increment value from auction.");
+			return;
+		}
+		clearAutoBidStatus();
+
+		autoBidClientService.getConfig(auctionId)
+			.thenAccept(cfg -> Platform.runLater(() -> showAutoBidDialog(auctionId, increment, cfg)))
+			.exceptionally(ex -> {
+				String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+					: (ex != null ? ex.getMessage() : "Failed to load auto-bid config");
+				Platform.runLater(() -> showBidError(msg));
+				return null;
+			});
+	}
+
+	private void onCancelAutoBid() {
+		String auctionId = AppContext.getSelectedAuctionId();
+		if (auctionId == null || auctionId.isBlank()) return;
+		autoBidClientService.deleteConfig(auctionId)
+			.thenAccept(resp -> Platform.runLater(() -> handleDeleteAutoBid(resp)))
+			.exceptionally(ex -> {
+				String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+					: (ex != null ? ex.getMessage() : "Failed to cancel auto-bid");
+				Platform.runLater(() -> showBidError(msg));
+				return null;
+			});
+	}
+
+	private void handleDeleteAutoBid(AutoBidConfigResponse resp) {
+		if (resp == null) return;
+		clearBidError();
+		showAutoBidStatus("Auto-bid stopped.");
+	}
+
+	private void showAutoBidDialog(String auctionId, BigDecimal increment, AutoBidConfigDetailResponse cfg) {
+		Dialog<BigDecimal> dialog = new Dialog<>();
+		dialog.setTitle("Configure Auto-bid");
+		dialog.setHeaderText("Set your bid limit for this auction");
+
+		dialog.getDialogPane().getStylesheets().addAll(
+			getClass().getResource("/css/client/common_ui.css").toExternalForm(),
+			getClass().getResource("/css/client/auction_detail.css").toExternalForm()
+		);
+
+		// Sử dụng ButtonType.CLOSE ẩn để Dialog hoạt động bình thường
+		dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+		Button defaultCloseBtn = (Button) dialog.getDialogPane().lookupButton(ButtonType.CLOSE);
+		if (defaultCloseBtn != null) {
+			defaultCloseBtn.setVisible(false);
+			defaultCloseBtn.setManaged(false);
+		}
+
+		GridPane grid = new GridPane();
+		grid.setHgap(15);
+		grid.setVgap(15);
+		grid.setPadding(new Insets(15, 15, 15, 15));
+
+		Label currentBidLabel = new Label(lblCurrentBid != null ? lblCurrentBid.getText() : "$0");
+		activeAutoBidCurrentBidLabel = currentBidLabel;
+		Label incrementLabel = new Label("$" + increment.toPlainString());
+		TextField maxField = new TextField();
+		maxField.setPromptText("ENTER YOUR BID LIMIT");
+		maxField.setTextFormatter(new TextFormatter<String>(change ->
+			change.getControlNewText().matches("\\d*(\\.\\d{0,2})?") ? change : null
+		));
+
+		if (cfg != null && cfg.isConfigured() && cfg.getMaxAmount() != null) {
+			maxField.setText(cfg.getMaxAmount());
+		}
+
+		grid.addRow(0, new Label("Current highest bid:"), currentBidLabel);
+		grid.addRow(1, new Label("Increment:"), incrementLabel);
+		grid.addRow(2, new Label("Max amount:"), maxField);
+
+		// Custom Button Bar sử dụng HBox để căn giữa tuyệt đối 100%
+		HBox customButtonBar = new HBox(15);
+		customButtonBar.setAlignment(Pos.CENTER);
+		customButtonBar.getStyleClass().add("custom-button-bar");
+
+		Button saveButton = new Button("Save");
+		saveButton.getStyleClass().add("btn-primary");
+		saveButton.setPrefWidth(100);
+
+		Button closeButton = new Button("Close");
+		closeButton.getStyleClass().add("btn-danger");
+		closeButton.setPrefWidth(100);
+
+		customButtonBar.getChildren().addAll(saveButton, closeButton);
+
+		VBox dialogContent = new VBox(10);
+		dialogContent.getChildren().addAll(grid, customButtonBar);
+		dialog.getDialogPane().setContent(dialogContent);
+
+		saveButton.setOnAction(e -> {
+			try {
+				dialog.setResult(new BigDecimal(maxField.getText().trim()));
+				dialog.close();
+			} catch (Exception ex) {
+				// Bỏ qua nếu giá trị nhập không hợp lệ
+			}
+		});
+
+		closeButton.setOnAction(e -> {
+			dialog.setResult(null);
+			dialog.close();
+		});
+
+		Optional<BigDecimal> result = dialog.showAndWait();
+		activeAutoBidCurrentBidLabel = null;
+		result.ifPresent(maxAmount -> autoBidClientService.saveConfig(auctionId, maxAmount, increment)
+			.thenAccept(resp -> Platform.runLater(() -> {
+				if (resp != null) {
+					clearBidError();
+					showAutoBidStatus("Auto-bid is active up to " + formatMoney(maxAmount) + ".");
+				}
+			}))
+			.exceptionally(ex -> {
+				String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+					: (ex != null ? ex.getMessage() : "Failed to save auto-bid config");
+				Platform.runLater(() -> showBidError(msg));
+				return null;
+			}));
+	}
+
 	private void handlePlaceBidSuccess(PlaceBidResponse resp) {
 		if (resp == null)
 			return;
@@ -413,5 +588,15 @@ public class AuctionDetailController {
 	private String formatMoney(BigDecimal amount) {
 		if (amount == null) return "$0";
 		return "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
+	}
+
+	private BigDecimal parseDisplayedMoney(String display) {
+		if (display == null || display.isBlank()) return null;
+		String normalized = display.replace("$", "").replace(",", "").trim();
+		try {
+			return new BigDecimal(normalized);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 }
