@@ -92,3 +92,20 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_auction_id ON payment_transactions(auction_id);
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payer_id ON payment_transactions(payer_id);
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payee_id ON payment_transactions(payee_id);
+
+-- 6. Table: item_images (image URLs for auction items)
+CREATE TABLE IF NOT EXISTS item_images (
+    id VARCHAR(36) PRIMARY KEY,
+    item_id VARCHAR(36) NOT NULL,
+    object_key VARCHAR(512) NOT NULL UNIQUE,
+    public_url TEXT NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id);
+CREATE INDEX IF NOT EXISTS idx_item_images_is_primary ON item_images(is_primary);
+CREATE INDEX IF NOT EXISTS idx_item_images_item_sort ON item_images(item_id, sort_order);

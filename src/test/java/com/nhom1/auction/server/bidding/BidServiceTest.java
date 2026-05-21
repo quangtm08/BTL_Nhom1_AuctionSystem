@@ -1,6 +1,5 @@
 package com.nhom1.auction.server.bidding;
 
-import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
 import com.nhom1.auction.common.entity.Item;
@@ -25,12 +24,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 import javax.sql.DataSource;
 
 import com.nhom1.auction.common.exception.ConflictException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+
+import com.nhom1.auction.server.auction.ItemImageRepository;
+import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 
 public class BidServiceTest {
 
@@ -54,11 +57,20 @@ public class BidServiceTest {
 
     private BidService bidService;
 
+    @Mock
+    private ItemImageRepository itemImageRepository;
+
     @BeforeEach
     public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
         when(dataSource.getConnection()).thenReturn(connection);
-        bidService = new BidService(bidRepository, auctionRepository, itemRepository, userRepository, dataSource);
+        bidService = new BidService(
+            bidRepository,
+            auctionRepository, 
+            itemRepository,
+            itemImageRepository,
+            userRepository,
+            dataSource);
     }
 
     @Test
@@ -166,6 +178,7 @@ public class BidServiceTest {
         when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(bidRepository.findByAuctionId(auctionId)).thenReturn(List.of());
+        when(itemImageRepository.findImageUrlsByItemId(itemId)).thenReturn(List.of());
 
         AuctionDetailDto result = bidService.getAuctionDetail(auctionId);
 

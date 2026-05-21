@@ -25,13 +25,13 @@ public class ItemRepository {
     }
 
     // ===================== SAVE =====================
-    public void save(Item item, UUID sellerId) {
-        try (Connection conn = dataSource.getConnection()) {
-            save(item, sellerId, conn);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to save item", e);
-        }
-    }
+    // public void save(Item item, UUID sellerId) {
+    //     try (Connection conn = dataSource.getConnection()) {
+    //         save(item, sellerId, conn);
+    //     } catch (SQLException e) {
+    //         throw new RuntimeException("Failed to save item", e);
+    //     }
+    // }
 
     public void save(Item item, UUID sellerId, Connection conn) {
         String sql = """

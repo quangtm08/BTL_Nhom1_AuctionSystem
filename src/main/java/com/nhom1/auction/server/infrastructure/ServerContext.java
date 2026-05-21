@@ -53,6 +53,7 @@ public class ServerContext {
             this.router,
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
+            auctionRepos.itemImageRepository,
             this.notificationService,
             userRepository
         );

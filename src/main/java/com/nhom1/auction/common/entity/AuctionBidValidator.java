@@ -43,9 +43,6 @@ final class AuctionBidValidator {
         if (auction.getStatus() != AuctionStatus.RUNNING) {
             throw new AuctionClosedException("auction is not accepting bids");
         }
-        if (bidTime.isBefore(auction.getStartTime())) {
-            throw new InvalidBidException("bidTime must be on or after startTime");
-        }
         if (bidTime.isAfter(auction.getEndTime())) {
             throw new AuctionClosedException("auction has already ended");
         }
