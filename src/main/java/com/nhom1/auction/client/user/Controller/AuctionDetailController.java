@@ -176,10 +176,30 @@ public class AuctionDetailController {
 			lblDescription.setText(dto.getItemDescription() != null ? dto.getItemDescription() : "");
 		if (lblSellerName != null)
 			lblSellerName.setText(dto.getSellerName() != null ? dto.getSellerName() : "Unknown");
-		if (lblCurrentBid != null && dto.getCurrentHighestBid() != null)
-			lblCurrentBid.setText(formatMoney(dto.getCurrentHighestBid()));
+		if (lblCurrentBid != null) {
+			BigDecimal currentBid = dto.getCurrentHighestBid();
+			if (currentBid == null || currentBid.compareTo(BigDecimal.ZERO) <= 0) {
+				currentBid = dto.getStartingPrice();
+			}
+			lblCurrentBid.setText(formatMoney(currentBid));
+		}
 		if (lblMinIncrement != null && dto.getMinBidIncrement() != null)
 			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
+		boolean isOwnAuction = AppContext.getCurrentUser() != null
+			&& AppContext.getCurrentUser().getUserID() != null
+			&& dto.getSellerID() != null
+			&& AppContext.getCurrentUser().getUserID().equals(dto.getSellerID());
+		if (btnBid != null) {
+			btnBid.setDisable(isOwnAuction);
+		}
+		if (txtBidInput != null) {
+			txtBidInput.setDisable(isOwnAuction);
+		}
+		if (isOwnAuction) {
+			showBidError("You cannot bid on your own auction.");
+		} else {
+			clearBidError();
+		}
 		if (bidHistoryList != null && dto.getBidHistory() != null)
 			renderBidHistory(dto.getBidHistory());
 		if (itemImageView != null) {
