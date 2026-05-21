@@ -101,6 +101,7 @@ public class AuctionBrowseController {
             return auctionsResp.getAuctions().stream()
                     .filter(a -> a.getId() != null && !myBidAuctionIds.contains(a.getId()))
                     .filter(a -> currentUserId == null || a.getSellerId() == null || !currentUserId.equals(a.getSellerId()))
+                    .filter(a -> a.getStatus() == AuctionStatus.OPEN || a.getStatus() == AuctionStatus.RUNNING)
                     .toList();
         }).thenAccept(filtered -> Platform.runLater(() -> handleFilteredAuctions(filtered))).exceptionally(ex -> { Platform.runLater(() -> showError("Load auctions failed", ex.getCause().getMessage())); return null; });
     }
