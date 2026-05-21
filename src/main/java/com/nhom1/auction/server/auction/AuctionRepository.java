@@ -40,7 +40,7 @@ public class AuctionRepository {
                         current_highest_bid, highest_bidder_id, duration_days,
                         created_at, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -364,8 +364,13 @@ public class AuctionRepository {
         AuctionStatus status = AuctionStatus.valueOf(rs.getString("status"));
 
         Integer durationDays = null;
-        int dur = rs.getInt("duration_days");
-        if (!rs.wasNull()) durationDays = dur;
+        try {
+            int dur = rs.getInt("duration_days");
+            if (!rs.wasNull()) durationDays = dur;
+        } catch (SQLException ignored) {
+            // Backward compatibility: older DB schema may not have duration_days.
+            durationDays = null;
+        }
 
         java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
         java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
