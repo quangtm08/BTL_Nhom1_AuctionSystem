@@ -2,6 +2,7 @@ package com.nhom1.auction.server.auction;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -77,33 +78,32 @@ public class AuctionService {
 
     public List<AuctionSummaryDto> getMyListings(String sellerId) {
         UUID parsedSellerId = parseSellerId(sellerId);
-
-        return auctionRepository
-            .findBySellerId(parsedSellerId)
-            .stream()
-            .map(auction -> {
-                Item item = itemRepository
-                    .findById(auction.getItemId())
-                    .orElseThrow(() ->
-                        new IllegalStateException(
-                            "Item not found for auction id: " + auction.getId()
-                        )
-                    );
-
+        List<AuctionSummaryDto> listings = new ArrayList<>();
+        for (Auction auction : auctionRepository.findBySellerId(parsedSellerId)) {
+            try {
+                Item item = itemRepository.findById(auction.getItemId()).orElse(null);
+                if (item == null) {
+                    // Data may be inconsistent in production; skip corrupted row instead of failing all listings.
+                    continue;
+                }
                 BigDecimal startingPrice = auction.getStartingPrice();
-                return new AuctionSummaryDto(
+                String itemCategory = item.getCategory() != null ? item.getCategory().name() : "UNKNOWN";
+                listings.add(new AuctionSummaryDto(
                     auction.getId().toString(),
                     item.getName(),
-                    item.getCategory().name(),
+                    itemCategory,
                     startingPrice,
                     auction.getCurrentHighestBid(),
                     auction.getStartTime(),
                     auction.getEndTime(),
                     auction.getStatus(),
                     auction.getSellerId().toString()
-                );
-            })
-            .toList();
+                ));
+            } catch (Exception ignored) {
+                // Skip malformed listing row and continue returning other valid records.
+            }
+        }
+        return listings;
     }
 
     public void deleteAuction(String sellerId, String auctionId) {
