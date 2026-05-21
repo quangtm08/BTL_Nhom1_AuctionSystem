@@ -26,6 +26,7 @@ import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Button;
@@ -486,13 +487,23 @@ public class AuctionDetailController {
 		dialog.setTitle("Configure Auto-bid");
 		dialog.setHeaderText("Set your bid limit for this auction");
 
-		ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-		ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
-		dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, closeButtonType);
+		dialog.getDialogPane().getStylesheets().addAll(
+			getClass().getResource("/css/client/common_ui.css").toExternalForm(),
+			getClass().getResource("/css/client/auction_detail.css").toExternalForm()
+		);
+
+		// Sử dụng ButtonType.CLOSE ẩn để Dialog hoạt động bình thường
+		dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+		Button defaultCloseBtn = (Button) dialog.getDialogPane().lookupButton(ButtonType.CLOSE);
+		if (defaultCloseBtn != null) {
+			defaultCloseBtn.setVisible(false);
+			defaultCloseBtn.setManaged(false);
+		}
 
 		GridPane grid = new GridPane();
-		grid.setHgap(10);
-		grid.setVgap(10);
+		grid.setHgap(15);
+		grid.setVgap(15);
+		grid.setPadding(new Insets(15, 15, 15, 15));
 
 		Label currentBidLabel = new Label(lblCurrentBid != null ? lblCurrentBid.getText() : "$0");
 		activeAutoBidCurrentBidLabel = currentBidLabel;
@@ -510,17 +521,38 @@ public class AuctionDetailController {
 		grid.addRow(0, new Label("Current highest bid:"), currentBidLabel);
 		grid.addRow(1, new Label("Increment:"), incrementLabel);
 		grid.addRow(2, new Label("Max amount:"), maxField);
-		dialog.getDialogPane().setContent(grid);
 
-		dialog.setResultConverter(button -> {
-			if (button == saveButtonType) {
-				try {
-					return new BigDecimal(maxField.getText().trim());
-				} catch (Exception e) {
-					return null;
-				}
+		// Custom Button Bar sử dụng HBox để căn giữa tuyệt đối 100%
+		HBox customButtonBar = new HBox(15);
+		customButtonBar.setAlignment(Pos.CENTER);
+		customButtonBar.getStyleClass().add("custom-button-bar");
+
+		Button saveButton = new Button("Save");
+		saveButton.getStyleClass().add("btn-primary");
+		saveButton.setPrefWidth(100);
+
+		Button closeButton = new Button("Close");
+		closeButton.getStyleClass().add("btn-danger");
+		closeButton.setPrefWidth(100);
+
+		customButtonBar.getChildren().addAll(saveButton, closeButton);
+
+		VBox dialogContent = new VBox(10);
+		dialogContent.getChildren().addAll(grid, customButtonBar);
+		dialog.getDialogPane().setContent(dialogContent);
+
+		saveButton.setOnAction(e -> {
+			try {
+				dialog.setResult(new BigDecimal(maxField.getText().trim()));
+				dialog.close();
+			} catch (Exception ex) {
+				// Bỏ qua nếu giá trị nhập không hợp lệ
 			}
-			return null;
+		});
+
+		closeButton.setOnAction(e -> {
+			dialog.setResult(null);
+			dialog.close();
 		});
 
 		Optional<BigDecimal> result = dialog.showAndWait();
