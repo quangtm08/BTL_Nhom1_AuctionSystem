@@ -93,7 +93,7 @@ CREATE INDEX IF NOT EXISTS idx_payment_transactions_auction_id ON payment_transa
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payer_id ON payment_transactions(payer_id);
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payee_id ON payment_transactions(payee_id);
 
--- 6. Table: item_images (image URLs for auction items)
+-- 7. Table: item_images (image URLs for auction items)
 CREATE TABLE IF NOT EXISTS item_images (
     id VARCHAR(36) PRIMARY KEY,
     item_id VARCHAR(36) NOT NULL,

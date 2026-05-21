@@ -11,7 +11,7 @@ import javax.sql.DataSource;
  * once at server startup. Tables are created in FK-dependency order so strict-FK
  * backends (PostgreSQL) do not reject forward references.
  *
- * Order: users -> items -> auctions -> bids -> auto_bid_configs.
+ * Order: users -> items -> auctions -> bids -> auto_bid_configs -> payment_transactions -> item_images.
  */
 public final class DatabaseInitializer {
 
@@ -50,8 +50,8 @@ public final class DatabaseInitializer {
             start_time TIMESTAMP NOT NULL,
             end_time TIMESTAMP NOT NULL,
             status VARCHAR(50) NOT NULL,
-            starting_price NUMERIC(19, 2) NOT NULL,
-            current_highest_bid NUMERIC(19, 2) DEFAULT 0,
+            starting_price DECIMAL(19, 2) NOT NULL,
+            current_highest_bid DECIMAL(19, 2) DEFAULT 0,
             highest_bidder_id VARCHAR(36),
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
@@ -67,7 +67,7 @@ public final class DatabaseInitializer {
             id VARCHAR(36) PRIMARY KEY,
             auction_id VARCHAR(36) NOT NULL,
             bidder_id VARCHAR(36) NOT NULL,
-            amount NUMERIC(19, 2) NOT NULL,
+            amount DECIMAL(19, 2) NOT NULL,
             bid_type VARCHAR(50) NOT NULL,
             created_at TIMESTAMP NOT NULL,
             FOREIGN KEY (auction_id) REFERENCES auctions(id),
@@ -90,7 +90,25 @@ public final class DatabaseInitializer {
         )
         """,
         """
-            CREATE TABLE IF NOT EXISTS item_images (
+        CREATE TABLE IF NOT EXISTS payment_transactions (
+            id VARCHAR(36) PRIMARY KEY,
+            auction_id VARCHAR(36) NOT NULL,
+            payer_id VARCHAR(36) NOT NULL,
+            payee_id VARCHAR(36) NOT NULL,
+            amount DECIMAL(19, 2) NOT NULL,
+            status VARCHAR(50) NOT NULL,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL,
+            FOREIGN KEY (auction_id) REFERENCES auctions(id),
+            FOREIGN KEY (payer_id) REFERENCES users(id),
+            FOREIGN KEY (payee_id) REFERENCES users(id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_payment_transactions_auction_id ON payment_transactions(auction_id)",
+        "CREATE INDEX IF NOT EXISTS idx_payment_transactions_payer_id ON payment_transactions(payer_id)",
+        "CREATE INDEX IF NOT EXISTS idx_payment_transactions_payee_id ON payment_transactions(payee_id)",
+        """
+        CREATE TABLE IF NOT EXISTS item_images (
             id VARCHAR(36) PRIMARY KEY,
             item_id VARCHAR(36) NOT NULL,
             object_key VARCHAR(512) NOT NULL UNIQUE,
@@ -100,13 +118,11 @@ public final class DatabaseInitializer {
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
             FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
-                );
-
-            CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id);
-            CREATE INDEX IF NOT EXISTS idx_item_images_is_primary ON item_images(is_primary);
-            CREATE INDEX IF NOT EXISTS idx_item_images_item_sort ON item_images(item_id, sort_order);
-
-        """
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id)",
+        "CREATE INDEX IF NOT EXISTS idx_item_images_is_primary ON item_images(is_primary)",
+        "CREATE INDEX IF NOT EXISTS idx_item_images_item_sort ON item_images(item_id, sort_order)"
     };
 
     public static void init(DataSource dataSource) {
