@@ -1,9 +1,12 @@
 package com.nhom1.auction.common.dto.auction;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UpdateAuctionRequest {
     private String auctionId;
     private String sellerId;
@@ -11,6 +14,7 @@ public class UpdateAuctionRequest {
     private String description;
     private ItemCategory category;
     private ItemCondition condition;
+    private BigDecimal startingPrice;
     private LocalDateTime endTime;
 
     public String getAuctionId() { return auctionId; }
@@ -25,6 +29,8 @@ public class UpdateAuctionRequest {
     public void setCategory(ItemCategory category) { this.category = category; }
     public ItemCondition getCondition() { return condition; }
     public void setCondition(ItemCondition condition) { this.condition = condition; }
+    public BigDecimal getStartingPrice() { return startingPrice; }
+    public void setStartingPrice(BigDecimal startingPrice) { this.startingPrice = startingPrice; }
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 }

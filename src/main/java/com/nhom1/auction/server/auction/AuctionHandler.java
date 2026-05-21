@@ -59,7 +59,7 @@ public class AuctionHandler {
                 UpdateAuctionRequest dto = JsonUtil.fromJson(payloadJson, UpdateAuctionRequest.class);
                 return handleUpdateAuction(requestId, dto);
             } catch (Exception e) {
-                return ResponseFactory.invalidFormat(requestId, "Invalid UpdateAuction JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid UpdateAuction JSON: " + e.getMessage());
             }
         });
     }
