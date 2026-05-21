@@ -38,7 +38,8 @@ public class ServerContext {
         // 2. Core Modules (Auth, Auction, Bidding)
         UserRepository userRepository = AuthModule.init(
             this.dataSource,
-            this.router
+            this.router,
+            this.notificationService
         );
 
         AuctionModule.AuctionRepositories auctionRepos = AuctionModule.init(
@@ -53,6 +54,7 @@ public class ServerContext {
             this.router,
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
+            auctionRepos.itemImageRepository,
             this.notificationService,
             userRepository
         );
@@ -89,6 +91,7 @@ public class ServerContext {
             auctionRepos.auctionRepository,
             auctionRepos.itemRepository,
             bidRepository,
+            this.notificationService,
             this.dataSource
         );
 

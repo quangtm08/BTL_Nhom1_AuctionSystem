@@ -13,6 +13,7 @@ import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.bidding.BidRepository;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -42,6 +43,9 @@ public class AdminServiceTest {
     private AdminAuctionGateway adminAuctionGateway;
 
     @Mock
+    private NotificationService notificationService;
+
+    @Mock
     private DataSource dataSource;
 
     @Mock
@@ -59,6 +63,7 @@ public class AdminServiceTest {
             itemRepository,
             bidRepository,
             adminAuctionGateway,
+            notificationService,
             dataSource
         );
     }
