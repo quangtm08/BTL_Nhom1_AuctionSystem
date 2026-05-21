@@ -54,7 +54,7 @@ public class MyListingsController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/user/components/listing_card.fxml"));
             Parent card = loader.load();
             ListingCardComponentController c = loader.getController();
-            c.bind(dto, formatStatus(dto.getStatus()), formatMoney(resolveDisplayCurrentBid(dto)), formatTimeLeft(dto.getEndTime()), isEnded(dto.getStatus()), () -> handleEditListing(dto), () -> handleDeleteListing(dto));
+            c.bind(dto, formatStatus(dto.getStatus()), formatMoney(resolveDisplayCurrentBid(dto)), formatTimeLeft(dto.getEndTime()), shouldDisableActions(dto), () -> handleEditListing(dto), () -> handleDeleteListing(dto));
             if (dto.getId() != null) priceLabels.put(dto.getId(), c.getPriceLabel());
             return card;
         } catch (IOException e) { throw new RuntimeException("Failed to load listing card component", e); }
@@ -76,6 +76,11 @@ public class MyListingsController {
     private void renderMessage(String message) { listingsGrid.getChildren().clear(); Label label = new Label(message); label.getStyleClass().add("card-sub-text"); listingsGrid.add(label, 0, 0); }
     private void handleDeleteListing(AuctionSummaryDto dto) { Alert confirm = new Alert(AlertType.CONFIRMATION); confirm.setTitle("Confirm delete"); confirm.setHeaderText("Delete this auction?"); confirm.setContentText("This action cannot be undone."); confirm.getDialogPane().getStylesheets().add(getClass().getResource("/css/client/my_listings.css").toExternalForm()); ButtonType yes = new ButtonType("Yes"); ButtonType no = new ButtonType("No", ButtonData.CANCEL_CLOSE); confirm.getButtonTypes().setAll(yes, no); ((Button) confirm.getDialogPane().lookupButton(yes)).getStyleClass().add("button-yes"); ((Button) confirm.getDialogPane().lookupButton(no)).getStyleClass().add("button-no"); confirm.showAndWait().ifPresent(selected -> { if (selected != yes) return; AuthResponse user = AppContext.getCurrentUser(); if (user == null || user.getUserID() == null || user.getUserID().isBlank()) { renderMessage("No user session. Please sign in again."); return; } RequestMessage<Map<String, String>> request = new RequestMessage<>(MessageType.DELETE_AUCTION, Map.of("sellerId", user.getUserID(), "auctionId", dto.getId())); ServerConnection.getInstance().sendRequest(request, String.class).thenAccept(response -> Platform.runLater(() -> { if (response != null && response.isSuccess()) loadMyListings(); else renderMessage((response != null && response.getError() != null) ? response.getError().getMessage() : "Delete failed."); })).exceptionally(ex -> { Platform.runLater(() -> renderMessage("Connection error while deleting.")); return null; }); }); }
     private boolean isEnded(AuctionStatus status) { return status == AuctionStatus.FINISHED || status == AuctionStatus.CANCELED || status == AuctionStatus.PAID; }
+    private boolean hasAnyBid(AuctionSummaryDto dto) {
+        if (dto == null || dto.getCurrentHighestBid() == null || dto.getStartingPrice() == null) return false;
+        return dto.getCurrentHighestBid().compareTo(dto.getStartingPrice()) > 0;
+    }
+    private boolean shouldDisableActions(AuctionSummaryDto dto) { return isEnded(dto.getStatus()) || hasAnyBid(dto); }
     private String formatStatus(AuctionStatus status) { if (status == null) return "Unknown"; return isEnded(status) ? "Ended" : "Running"; }
     private String formatMoney(BigDecimal amount) { return amount == null ? "$0" : "$" + amount.stripTrailingZeros().toPlainString(); }
     private BigDecimal resolveDisplayCurrentBid(AuctionSummaryDto dto) {
