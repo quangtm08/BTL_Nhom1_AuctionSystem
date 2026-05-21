@@ -93,15 +93,25 @@ public class BidService {
     		.orElseThrow(() -> new NotFoundException("Auction not found"));
 
     	Item item = itemRepository.findById(auction.getItemId())
-    		.orElseThrow(() -> new IllegalStateException("Item not found for auction"));
+    		.orElseThrow(() -> new NotFoundException("Item not found for auction"));
 
-    	String sellerName = userRepository.findById(auction.getSellerId())
-    		.map(u -> u.getUsername())
-    		.orElse("Unknown");
+        String sellerName;
+        try {
+            sellerName = userRepository.findById(auction.getSellerId())
+                    .map(u -> u.getUsername())
+                    .orElse("Unknown");
+        } catch (RuntimeException ex) {
+            sellerName = "Unknown";
+        }
 
-    	List<BidSummaryDto> bidHistory = bidRepository.findByAuctionId(auctionId).stream()
-    		.map(this::toBidSummaryDto)
-    		.toList();
+        List<BidSummaryDto> bidHistory;
+        try {
+            bidHistory = bidRepository.findByAuctionId(auctionId).stream()
+                    .map(this::toBidSummaryDto)
+                    .toList();
+        } catch (RuntimeException ex) {
+            bidHistory = List.of();
+        }
 
 	AuctionDetailDto dto = new AuctionDetailDto(
 		auction.getId().toString(),
@@ -111,6 +121,7 @@ public class BidService {
 		item.getCategory(),
 		item.getCondition(),
 		auction.getSellerId().toString(),
+		auction.getStartingPrice(),
 		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
 		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
 		auction.getMinBidIncrement(),
@@ -120,7 +131,11 @@ public class BidService {
 		bidHistory
 	);
 	dto.setSellerName(sellerName);
-    dto.setImageUrls(itemImageRepository.findImageUrlsByItemId(item.getId()));
+        try {
+            dto.setImageUrls(itemImageRepository.findImageUrlsByItemId(item.getId()));
+        } catch (RuntimeException ignored) {
+            dto.setImageUrls(List.of());
+        }
 	return dto;
     }
 

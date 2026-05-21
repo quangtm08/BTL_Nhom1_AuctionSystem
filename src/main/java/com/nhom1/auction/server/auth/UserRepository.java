@@ -169,9 +169,9 @@ public class UserRepository {
     private User mapUser(ResultSet rs) throws SQLException {
         java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
         java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
-        if (createdTs == null || updatedTs == null) {
-            throw new IllegalStateException("User row has null created_at or updated_at: " + rs.getString("id"));
-        }
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.LocalDateTime createdAt = createdTs != null ? createdTs.toLocalDateTime() : now;
+        java.time.LocalDateTime updatedAt = updatedTs != null ? updatedTs.toLocalDateTime() : now;
 
         return new User(
                 UUID.fromString(rs.getString("id")),
@@ -179,7 +179,7 @@ public class UserRepository {
                 rs.getString("email"),
                 rs.getString("password"),
                 UserRole.valueOf(rs.getString("role")),
-                createdTs.toLocalDateTime(),
-                updatedTs.toLocalDateTime());
+                createdAt,
+                updatedAt);
     }
 }

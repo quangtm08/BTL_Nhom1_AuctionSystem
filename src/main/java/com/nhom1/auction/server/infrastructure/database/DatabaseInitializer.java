@@ -3,6 +3,7 @@ package com.nhom1.auction.server.infrastructure.database;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+
 import javax.sql.DataSource;
 
 /**
@@ -87,6 +88,24 @@ public final class DatabaseInitializer {
             FOREIGN KEY (auction_id) REFERENCES auctions(id),
             FOREIGN KEY (bidder_id) REFERENCES users(id)
         )
+        """,
+        """
+            CREATE TABLE IF NOT EXISTS item_images (
+            id VARCHAR(36) PRIMARY KEY,
+            item_id VARCHAR(36) NOT NULL,
+            object_key VARCHAR(512) NOT NULL UNIQUE,
+            public_url TEXT NOT NULL,
+            is_primary BOOLEAN NOT NULL DEFAULT FALSE,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+                );
+
+            CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id);
+            CREATE INDEX IF NOT EXISTS idx_item_images_is_primary ON item_images(is_primary);
+            CREATE INDEX IF NOT EXISTS idx_item_images_item_sort ON item_images(item_id, sort_order);
+
         """
     };
 

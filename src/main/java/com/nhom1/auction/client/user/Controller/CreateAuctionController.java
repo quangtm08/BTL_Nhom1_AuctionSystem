@@ -1,8 +1,6 @@
 package com.nhom1.auction.client.user.controller;
 
 import java.io.File;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,9 +8,7 @@ import java.util.stream.Collectors;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.connection.ServerConnection;
 import com.nhom1.auction.client.user.service.CreateAuctionClientService;
-import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
@@ -21,7 +17,6 @@ import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 
 import com.nhom1.auction.common.exception.AppException;
-import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
@@ -146,37 +141,23 @@ public class CreateAuctionController {
             return;
         }
 
-        BigDecimal startingBid;
-        try {
-            startingBid = new BigDecimal(startingBidField.getText().trim());
-        } catch (Exception ex) {
-            uploadCountLabel.setText("Starting bid must be a valid number.");
-            return;
-        }
-
         int durationDays = resolveDurationDays();
         if (durationDays <= 0) {
             uploadCountLabel.setText("Duration must be greater than 0.");
             return;
         }
 
-        LocalDateTime startTime = LocalDateTime.now();
-        LocalDateTime endTime = startTime.plusDays(durationDays);
-
-        CreateAuctionRequest dto = new CreateAuctionRequest();
-        dto.setSellerId(AppContext.getCurrentUser().getUserID());
-        dto.setName(titleField.getText().trim());
-        dto.setDescription(descriptionArea.getText());
-        dto.setCategory(categoryComboBox.getValue());
-        dto.setCondition(conditionComboBox.getValue());
-        dto.setStartingPrice(startingBid);
-        dto.setStartTime(startTime);
-        dto.setEndTime(endTime);
-
-        RequestMessage<CreateAuctionRequest> request = new RequestMessage<>(MessageType.CREATE_AUCTION, dto);
-        uploadCountLabel.setText("Publishing...");
-        ServerConnection.getInstance()
-                .sendRequest(request, CreateAuctionResponse.class)
+        uploadCountLabel.setText("Uploading images and publishing...");
+        createAuctionService
+                .createAuction(
+                        titleField.getText(),
+                        descriptionArea.getText(),
+                        startingBidField.getText(),
+                        categoryComboBox.getValue(),
+                        conditionComboBox.getValue(),
+                        durationDays,
+                        selectedImageFiles
+                )
                 .thenAccept(response -> Platform.runLater(() -> {
                     if (response != null) {
                         uploadCountLabel.setText("Published successfully.");

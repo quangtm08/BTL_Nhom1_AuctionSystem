@@ -16,6 +16,7 @@ import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.bidding.BidRepository;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class AdminService {
     private final ItemRepository itemRepository;
     private final BidRepository bidRepository;
     private final AdminAuctionGateway adminAuctionGateway;
+    private final NotificationService notificationService;
     private final DataSource dataSource;
 
     public AdminService(
@@ -38,6 +40,7 @@ public class AdminService {
         ItemRepository itemRepository,
         BidRepository bidRepository,
         AdminAuctionGateway adminAuctionGateway,
+        NotificationService notificationService,
         DataSource dataSource
     ) {
         this.userRepository = userRepository;
@@ -45,6 +48,7 @@ public class AdminService {
         this.itemRepository = itemRepository;
         this.bidRepository = bidRepository;
         this.adminAuctionGateway = adminAuctionGateway;
+        this.notificationService = notificationService;
         this.dataSource = dataSource;
     }
 
@@ -115,6 +119,7 @@ public class AdminService {
                     );
                 }
                 connection.commit();
+                notificationService.broadcastUserDeleted(targetUserId);
             } catch (AppException e) {
                 connection.rollback();
                 throw e;

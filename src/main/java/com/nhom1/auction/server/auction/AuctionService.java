@@ -50,6 +50,7 @@ public class AuctionService {
                         dto.getStartTime(),
                         dto.getEndTime()
                 );
+                auction.startAuction();
                 auctionRepository.save(auction, connection);
                 auctionRepository.updateHighestBid(auction.getId(), dto.getStartingPrice(), null, connection);
                 connection.commit();

@@ -36,6 +36,7 @@ import javafx.scene.layout.VBox;
 public class AuctionDetailController {
 	private static final double IMAGE_BOX_WIDTH = 420;
 	private static final double IMAGE_BOX_HEIGHT = 320;
+	private static final int MAX_VISIBLE_BID_ROWS = 8;
 
 	private final BiddingClientService biddingService = new BiddingClientService();
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -176,10 +177,30 @@ public class AuctionDetailController {
 			lblDescription.setText(dto.getItemDescription() != null ? dto.getItemDescription() : "");
 		if (lblSellerName != null)
 			lblSellerName.setText(dto.getSellerName() != null ? dto.getSellerName() : "Unknown");
-		if (lblCurrentBid != null && dto.getCurrentHighestBid() != null)
-			lblCurrentBid.setText(formatMoney(dto.getCurrentHighestBid()));
+		if (lblCurrentBid != null) {
+			BigDecimal currentBid = dto.getCurrentHighestBid();
+			if (currentBid == null || currentBid.compareTo(BigDecimal.ZERO) <= 0) {
+				currentBid = dto.getStartingPrice();
+			}
+			lblCurrentBid.setText(formatMoney(currentBid));
+		}
 		if (lblMinIncrement != null && dto.getMinBidIncrement() != null)
 			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
+		boolean isOwnAuction = AppContext.getCurrentUser() != null
+			&& AppContext.getCurrentUser().getUserID() != null
+			&& dto.getSellerID() != null
+			&& AppContext.getCurrentUser().getUserID().equals(dto.getSellerID());
+		if (btnBid != null) {
+			btnBid.setDisable(isOwnAuction);
+		}
+		if (txtBidInput != null) {
+			txtBidInput.setDisable(isOwnAuction);
+		}
+		if (isOwnAuction) {
+			showBidError("You cannot bid on your own auction.");
+		} else {
+			clearBidError();
+		}
 		if (bidHistoryList != null && dto.getBidHistory() != null)
 			renderBidHistory(dto.getBidHistory());
 		if (itemImageView != null) {
@@ -280,15 +301,20 @@ public class AuctionDetailController {
 
 	private void renderBidHistory(List<BidSummaryDto> history) {
 		bidHistoryList.getChildren().clear();
-		for (int i = 0; i < history.size(); i++) {
+		if (history == null || history.isEmpty()) {
+			return;
+		}
+		int startIndex = Math.max(0, history.size() - MAX_VISIBLE_BID_ROWS);
+		int rank = 1;
+		for (int i = history.size() - 1; i >= startIndex; i--) {
 			BidSummaryDto bid = history.get(i);
 
 			HBox row = new HBox(10);
 			row.getStyleClass().add("bid-row");
 			row.setAlignment(Pos.CENTER_LEFT);
 
-			Label rank = new Label("#" + (i + 1));
-			rank.getStyleClass().add("bid-rank");
+			Label rankLabel = new Label("#" + rank++);
+			rankLabel.getStyleClass().add("bid-rank");
 
 			Label bidderName = new Label(bid.getBidderName() != null ? bid.getBidderName() : "—");
 			bidderName.getStyleClass().add("bid-rank");
@@ -305,7 +331,7 @@ public class AuctionDetailController {
 			Label time = new Label(bid.getCreatedAt() != null ? bid.getCreatedAt().format(BID_TIME_FMT) : "");
 			time.getStyleClass().add("bid-time");
 
-			row.getChildren().addAll(rank, bidderName, amount, type, time);
+			row.getChildren().addAll(rankLabel, bidderName, amount, type, time);
 			bidHistoryList.getChildren().add(row);
 		}
 	}
