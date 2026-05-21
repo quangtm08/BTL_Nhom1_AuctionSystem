@@ -98,7 +98,23 @@ Sau khi xử lý hoàn tất, kết quả được gửi trả lại cho ngườ
         - **Giải mã với Bản thiết kế**: Dùng `pending.responseClass` (bản thiết kế đã lưu lúc gửi) để hướng dẫn Jackson cách deserialize JSON thành đúng Object DTO (ví dụ: `AuthResponse`).
         - **Hoàn tất Lời hứa**: Gọi `future.complete(response)`, lúc này dữ liệu chính thức được đổ vào `CompletableFuture`.
 
-### C. Hoàn tất và Cập nhật UI
+### C. Nhận Push Notification thời gian thực
+
+Nếu JSON từ server không có `requestId` nhưng có `type`, `ServerConnection` xem đó là push notification. Luồng xử lý là:
+
+```text
+ServerConnection listener thread
+-> ClientPushService
+-> Typed notification DTO
+-> Controller callback
+-> Platform.runLater(...)
+```
+
+`ClientPushService` là nơi parse payload push thành DTO như `BidUpdateEvent`, `NewAuctionEvent`, hoặc `AuctionDeletedEvent`. Controller không parse raw JSON và không gọi trực tiếp `ServerConnection.registerPushHandler(...)` cho push UI nữa.
+
+Mỗi event trong `ClientPushService` giữ một handler đang hoạt động. Khi `AppNavigator` chuyển màn hình, các handler cũ được xóa trước khi controller mới được load. Thiết kế này phù hợp với mô hình hiện tại: một controller chính của màn hình nhận push rồi cập nhật các component con.
+
+### D. Hoàn tất và Cập nhật UI
 
 - **Thành phần**: `BaseClientService` & `Controller`
 - **Hành động**: Giải nén kết quả và cập nhật màn hình.

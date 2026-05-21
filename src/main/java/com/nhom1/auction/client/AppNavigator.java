@@ -1,9 +1,9 @@
 package com.nhom1.auction.client;
 
-import com.nhom1.auction.client.BaseShellController;
-
+import com.nhom1.auction.client.service.ClientPushService;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
+
 public class AppNavigator {
 
     private static BaseShellController mainController;
@@ -24,6 +24,7 @@ public class AppNavigator {
             if (view == currentView) return;
 
             currentView = view;
+            ClientPushService.clearHandlersIfInitialized();
 
             FXMLLoader loader = new FXMLLoader(
                 AppNavigator.class.getResource(view.getFxml())
@@ -37,4 +38,5 @@ public class AppNavigator {
             e.printStackTrace();
         }
     }
+
 }

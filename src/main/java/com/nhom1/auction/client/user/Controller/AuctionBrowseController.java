@@ -1,8 +1,8 @@
 package com.nhom1.auction.client.user.controller;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -14,16 +14,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.user.controller.components.AuctionCardComponentController;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
+import com.nhom1.auction.common.dto.notification.AuctionDeletedEvent;
+import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.animation.PauseTransition;
@@ -38,7 +37,7 @@ import javafx.util.Duration;
 
 public class AuctionBrowseController {
     private final BiddingClientService biddingService = new BiddingClientService();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ClientPushService pushService = ClientPushService.getInstance();
     private final Map<String, Label> priceLabels = new HashMap<>();
     private List<AuctionSummaryDto> currentAuctions = new ArrayList<>();
 
@@ -53,9 +52,9 @@ public class AuctionBrowseController {
                 welcomeLabel.setText("Hunt for the next deal, " + AppContext.getCurrentUser().getUsername() + "!");
             }
             loadAuctions();
-            ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_NEW_AUCTION, json -> Platform.runLater(this::loadAuctions));
-            ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_BID_UPDATE, json -> Platform.runLater(() -> handleBidUpdatePush(json)));
-            ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_AUCTION_DELETED, json -> Platform.runLater(() -> handleAuctionDeletedPush(json)));
+            pushService.onNewAuction(event -> Platform.runLater(this::loadAuctions));
+            pushService.onBidUpdate(event -> Platform.runLater(() -> handleBidUpdatePush(event)));
+            pushService.onAuctionDeleted(event -> Platform.runLater(() -> handleAuctionDeletedPush(event)));
         }
     }
 
@@ -81,16 +80,10 @@ public class AuctionBrowseController {
         }
     }
 
-    private void handleBidUpdatePush(String json) { /* unchanged */
-        try {
-            JsonNode root = mapper.readTree(json);
-            JsonNode node = root.has("payload") && !root.get("payload").isNull() ? root.get("payload") : root;
-            String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
-            if (auctionId == null) return;
-            BigDecimal newBid = node.has("newHighestBid") ? new BigDecimal(node.get("newHighestBid").asText()) : null;
-            if (newBid == null) return;
-            Platform.runLater(() -> { Label label = priceLabels.get(auctionId); if (label != null) label.setText(formatMoney(newBid)); });
-        } catch (Exception e) { System.err.println("Error parsing bid update push: " + e.getMessage()); }
+    private void handleBidUpdatePush(BidUpdateEvent event) {
+        if (event == null || event.getAuctionId() == null || event.getNewHighestBid() == null) return;
+        Label label = priceLabels.get(event.getAuctionId());
+        if (label != null) label.setText(formatMoney(event.getNewHighestBid()));
     }
 
     private void loadAuctions() { /* unchanged behavior */
@@ -112,14 +105,10 @@ public class AuctionBrowseController {
         AppContext.setSelectedAuctionId(auctions.get(0).getId());
     }
 
-    private void handleAuctionDeletedPush(String json) {
-        try {
-            JsonNode root = mapper.readTree(json);
-            JsonNode node = root.has("payload") && !root.get("payload").isNull() ? root.get("payload") : root;
-            String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
-            if (auctionId == null) return;
-            Platform.runLater(() -> { currentAuctions.removeIf(a -> auctionId.equals(a.getId())); renderAuctionCards(currentAuctions); });
-        } catch (Exception e) { System.err.println("Error parsing auction deleted push: " + e.getMessage()); }
+    private void handleAuctionDeletedPush(AuctionDeletedEvent event) {
+        if (event == null || event.getAuctionId() == null) return;
+        currentAuctions.removeIf(a -> event.getAuctionId().equals(a.getId()));
+        renderAuctionCards(currentAuctions);
     }
 
     private void showError(String title, String message) { System.err.println(title + ": " + message); }

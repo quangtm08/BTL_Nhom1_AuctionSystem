@@ -1,10 +1,9 @@
 package com.nhom1.auction.client.admin.controller;
 
+import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.admin.service.AdminClientService;
 import com.nhom1.auction.common.dto.admin.UserSummaryDto;
 import com.nhom1.auction.common.enums.UserRole;
-import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.protocol.MessageType;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -20,6 +19,7 @@ public class UserManagementController {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy");
 
     private final AdminClientService adminClientService = new AdminClientService();
+    private final ClientPushService pushService = ClientPushService.getInstance();
     private boolean loading;
     private String deletingUserId;
 
@@ -30,16 +30,9 @@ public class UserManagementController {
     public void initialize() {
         reloadUsers();
 
-        // Register push handlers so admin view updates in realtime
-        ServerConnection.getInstance().registerPushHandler(
-                MessageType.PUSH_USER_DELETED,
-                json -> Platform.runLater(this::reloadUsers)
-        );
-
-        ServerConnection.getInstance().registerPushHandler(
-                MessageType.PUSH_USER_CREATED,
-                json -> Platform.runLater(this::reloadUsers)
-        );
+        // Register push handlers so admin view updates in realtime.
+        pushService.onUserDeleted(event -> Platform.runLater(this::reloadUsers));
+        pushService.onUserCreated(event -> Platform.runLater(this::reloadUsers));
     }
 
     private void reloadUsers() {
@@ -135,4 +128,5 @@ public class UserManagementController {
     }
 
     private String nvl(String value) { return value == null || value.isBlank() ? "-" : value; }
+
 }

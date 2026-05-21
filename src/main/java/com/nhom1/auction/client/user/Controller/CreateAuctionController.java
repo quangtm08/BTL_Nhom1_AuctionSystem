@@ -13,8 +13,6 @@ import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.exception.ValidationException;
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.RequestMessage;
 
 import com.nhom1.auction.common.exception.AppException;
 

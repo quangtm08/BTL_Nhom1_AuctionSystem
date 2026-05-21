@@ -7,17 +7,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.BidSummaryDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
+import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.enums.BidType;
-import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.application.Platform;
@@ -39,7 +37,7 @@ public class AuctionDetailController {
 	private static final int MAX_VISIBLE_BID_ROWS = 8;
 
 	private final BiddingClientService biddingService = new BiddingClientService();
-	private final ObjectMapper mapper = new ObjectMapper();
+	private final ClientPushService pushService = ClientPushService.getInstance();
 	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM");
 
 @FXML
@@ -123,47 +121,29 @@ public class AuctionDetailController {
 
 		btnBack.setOnAction(e -> AppNavigator.navigateTo(AppView.AUCTION_BROWSE));
 
-		ServerConnection.getInstance().registerPushHandler(
-			MessageType.PUSH_BID_UPDATE,
-			json -> handleBidUpdatePush(json)
-		);
+		pushService.onBidUpdate(this::handleBidUpdatePush);
 	}
 
-	private void handleBidUpdatePush(String json) {
-		try {
-			JsonNode root = mapper.readTree(json);
-			JsonNode node = root.has("payload") && !root.get("payload").isNull()
-				? root.get("payload") : root;
-			String auctionId = node.has("auctionId") ? node.get("auctionId").asText() : null;
-
-			String currentAuctionId = AppContext.getSelectedAuctionId();
-			if (auctionId == null || !auctionId.equals(currentAuctionId)) {
-				return;
-			}
-
-			BigDecimal newBid = null;
-			if (node.has("newHighestBid")) {
-				newBid = new BigDecimal(node.get("newHighestBid").asText());
-			}
-
-			final BigDecimal bid = newBid;
-			Platform.runLater(() -> {
-				if (bid != null && lblCurrentBid != null) {
-					lblCurrentBid.setText(formatMoney(bid));
-				}
-			});
-
-			// Re-fetch full detail to refresh bid history
-			biddingService.getAuctionDetail(currentAuctionId)
-				.thenAccept(dto -> Platform.runLater(() -> {
-					if (dto != null && dto.getBidHistory() != null) {
-						renderBidHistory(dto.getBidHistory());
-					}
-				}));
-
-		} catch (Exception e) {
-			System.err.println("Error parsing bid update push: " + e.getMessage());
+	private void handleBidUpdatePush(BidUpdateEvent event) {
+		String currentAuctionId = AppContext.getSelectedAuctionId();
+		if (event == null || event.getAuctionId() == null || !event.getAuctionId().equals(currentAuctionId)) {
+			return;
 		}
+
+		BigDecimal bid = event.getNewHighestBid();
+		Platform.runLater(() -> {
+			if (bid != null && lblCurrentBid != null) {
+				lblCurrentBid.setText(formatMoney(bid));
+			}
+		});
+
+		// Re-fetch full detail to refresh bid history
+		biddingService.getAuctionDetail(currentAuctionId)
+			.thenAccept(dto -> Platform.runLater(() -> {
+				if (dto != null && dto.getBidHistory() != null) {
+					renderBidHistory(dto.getBidHistory());
+				}
+			}));
 	}
 
 	private void applyDetail(AuctionDetailDto dto) {

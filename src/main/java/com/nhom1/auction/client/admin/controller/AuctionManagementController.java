@@ -1,10 +1,9 @@
 package com.nhom1.auction.client.admin.controller;
 
+import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.admin.service.AdminClientService;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.protocol.MessageType;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,6 +18,7 @@ import javafx.scene.layout.HBox;
 
 public class AuctionManagementController {
     private final AdminClientService adminClientService = new AdminClientService();
+    private final ClientPushService pushService = ClientPushService.getInstance();
 
     @FXML private Label lblAuctionSummary;
     @FXML private GridPane auctionGrid;
@@ -30,26 +30,11 @@ public class AuctionManagementController {
     public void initialize() {
         reloadAuctions();
 
-        // Register push handlers so admin view updates in realtime
-        ServerConnection.getInstance().registerPushHandler(
-            MessageType.PUSH_NEW_AUCTION,
-            json -> Platform.runLater(this::reloadAuctions)
-        );
-
-        ServerConnection.getInstance().registerPushHandler(
-            MessageType.PUSH_BID_UPDATE,
-            json -> Platform.runLater(this::reloadAuctions)
-        );
-
-        ServerConnection.getInstance().registerPushHandler(
-            MessageType.PUSH_AUCTION_DELETED,
-            json -> Platform.runLater(this::reloadAuctions)
-        );
-
-        ServerConnection.getInstance().registerPushHandler(
-            MessageType.PUSH_AUCTION_ENDED,
-            json -> Platform.runLater(this::reloadAuctions)
-        );
+        // Register push handlers so admin view updates in realtime.
+        pushService.onNewAuction(event -> Platform.runLater(this::reloadAuctions));
+        pushService.onBidUpdate(event -> Platform.runLater(this::reloadAuctions));
+        pushService.onAuctionDeleted(event -> Platform.runLater(this::reloadAuctions));
+        pushService.onAuctionEnded(event -> Platform.runLater(this::reloadAuctions));
     }
 
     private void reloadAuctions() {
@@ -171,4 +156,5 @@ public class AuctionManagementController {
         }
         return "table-text-sub";
     }
+
 }

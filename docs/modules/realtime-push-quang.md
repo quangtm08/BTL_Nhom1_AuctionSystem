@@ -30,40 +30,64 @@ notificationService.broadcastBidUpdate(auctionId, amount, userId);
 
 ## 2. Phía Client: Cơ chế nhận thông báo (Listen)
 
-Lớp `ServerConnection` đã được nâng cấp để hoạt động như một trạm lắng nghe tín hiệu chạy ngầm. Khi nhận được một thông điệp từ server không chứa `requestId`, hệ thống tự động phân loại đó là tin nhắn Push và phân phối tới các giao diện (Controller) đã đăng ký.
+Lớp `ServerConnection` vẫn là nơi nhận dữ liệu thô từ socket. Khi nhận được một thông điệp từ server không chứa `requestId`, hệ thống tự động phân loại đó là tin nhắn Push.
+
+Điểm mới: Controller không đăng ký trực tiếp với `ServerConnection` và không tự parse JSON nữa. Luồng hiện tại là:
+
+```text
+ServerConnection -> ClientPushService -> Typed Event DTO -> active screen Controller
+```
+
+Các DTO push đang dùng:
+
+| MessageType | DTO |
+| --- | --- |
+| `PUSH_BID_UPDATE` | `BidUpdateEvent` |
+| `PUSH_NEW_AUCTION` | `NewAuctionEvent` |
+| `PUSH_AUCTION_ENDED` | `AuctionEndedEvent` |
+| `PUSH_AUCTION_DELETED` | `AuctionDeletedEvent` |
+| `PUSH_USER_DELETED` | `UserDeletedEvent` |
+| `PUSH_USER_CREATED` | `UserCreatedEvent` |
 
 ### Hướng dẫn tích hợp cho Client Controller
 
-Để một màn hình tự động cập nhật khi có sự kiện real-time, Controller quản lý màn hình đó cần đăng ký lắng nghe sự kiện.
+Để một màn hình tự động cập nhật khi có sự kiện real-time, Controller quản lý màn hình đó cần đăng ký lắng nghe sự kiện thông qua `ClientPushService`.
 
-1.  Sử dụng phương thức `ServerConnection.getInstance().registerPushHandler()`.
-2.  Truyền vào loại sự kiện cần lắng nghe (`MessageType`) và đoạn mã xử lý dữ liệu JSON trả về.
-3.  **Bắt buộc** gọi `Platform.runLater()` bao bọc toàn bộ code cập nhật giao diện (Label, Text, Table...). Do luồng nhận dữ liệu mạng chạy ngầm (background thread), việc thay đổi UI trực tiếp từ luồng này sẽ gây lỗi ứng dụng (JavaFX Thread Exception).
+1.  Lấy singleton `ClientPushService.getInstance()`.
+2.  Gọi method subscribe tương ứng, ví dụ `onBidUpdate(...)`.
+3.  Mỗi loại sự kiện chỉ có một handler đang hoạt động. Khi màn hình mới đăng ký handler cho cùng event, handler cũ được thay thế.
+4.  Khi chuyển màn hình, `AppNavigator` xóa các handler push đang hoạt động trước khi controller mới được load.
+5.  **Bắt buộc** gọi `Platform.runLater()` khi cập nhật giao diện (Label, Text, Table...). Callback push vẫn chạy từ background thread.
 
 **Ví dụ tích hợp mẫu trong Controller:**
 ```java
+import com.nhom1.auction.client.service.ClientPushService;
+import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import javafx.application.Platform;
-import javafx.fxml.Initializable;
-import java.net.URL;
-import java.util.ResourceBundle;
-import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.protocol.MessageType;
 
-public class AuctionDetailController implements Initializable {
+public class AuctionDetailController {
+    private final ClientPushService pushService = ClientPushService.getInstance();
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        // Đăng ký nhận thông báo khi có lượt đặt giá mới
-        ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_BID_UPDATE, json -> {
-            
-            // Bắt buộc đẩy logic cập nhật UI vào luồng chính
-            Platform.runLater(() -> {
-                System.out.println("Nhận dữ liệu real-time: " + json);
-                // 1. Phân tích chuỗi JSON thành DTO sự kiện tương ứng
-                // 2. Cập nhật trạng thái đối tượng Auction trong bộ nhớ
-                // 3. Thay đổi các Label hiển thị trên màn hình
-            });
+    public void initialize() {
+        pushService.onBidUpdate(event -> {
+            Platform.runLater(() -> updateBidUi(event));
         });
+    }
+
+    private void updateBidUi(BidUpdateEvent event) {
+        // event.getAuctionId()
+        // event.getNewHighestBid()
+        // Update labels/cards here.
     }
 }
 ```
+
+### Vì sao chỉ có một handler cho mỗi event?
+
+Ứng dụng hiện dùng mô hình một controller chính cho mỗi màn hình. Controller chính nhận push event rồi cập nhật các component con nếu cần, ví dụ cập nhật label bên trong auction card hoặc listing card. Vì vậy ta giữ thiết kế đơn giản: handler mới nhất là handler của màn hình hiện tại.
+
+Khi điều hướng sang màn hình khác, `AppNavigator` gọi `ClientPushService.clearHandlersIfInitialized()` để tránh controller cũ tiếp tục nhận push event.
+
+### Lưu ý khi thêm màn hình mới
+
+Nếu một màn hình có nhiều controller con, chỉ controller cha nên đăng ký push event. Controller cha sau đó truyền dữ liệu xuống component con hoặc cập nhật UI con qua method public phù hợp. Nếu sau này cần nhiều phần UI độc lập cùng nghe một event, có thể nâng cấp `ClientPushService` sang mô hình multi-subscriber.
