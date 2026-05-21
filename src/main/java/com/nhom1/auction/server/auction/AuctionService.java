@@ -79,29 +79,33 @@ public class AuctionService {
     public List<AuctionSummaryDto> getMyListings(String sellerId) {
         UUID parsedSellerId = parseSellerId(sellerId);
         List<AuctionSummaryDto> listings = new ArrayList<>();
-        for (Auction auction : auctionRepository.findBySellerId(parsedSellerId)) {
-            try {
-                Item item = itemRepository.findById(auction.getItemId()).orElse(null);
-                if (item == null) {
-                    // Data may be inconsistent in production; skip corrupted row instead of failing all listings.
-                    continue;
+        try {
+            for (Auction auction : auctionRepository.findBySellerId(parsedSellerId)) {
+                try {
+                    Item item = itemRepository.findById(auction.getItemId()).orElse(null);
+                    if (item == null) {
+                        // Data may be inconsistent in production; skip corrupted row instead of failing all listings.
+                        continue;
+                    }
+                    BigDecimal startingPrice = auction.getStartingPrice();
+                    String itemCategory = item.getCategory() != null ? item.getCategory().name() : "UNKNOWN";
+                    listings.add(new AuctionSummaryDto(
+                        auction.getId().toString(),
+                        item.getName(),
+                        itemCategory,
+                        startingPrice,
+                        auction.getCurrentHighestBid(),
+                        auction.getStartTime(),
+                        auction.getEndTime(),
+                        auction.getStatus(),
+                        auction.getSellerId().toString()
+                    ));
+                } catch (Exception ignored) {
+                    // Skip malformed listing row and continue returning other valid records.
                 }
-                BigDecimal startingPrice = auction.getStartingPrice();
-                String itemCategory = item.getCategory() != null ? item.getCategory().name() : "UNKNOWN";
-                listings.add(new AuctionSummaryDto(
-                    auction.getId().toString(),
-                    item.getName(),
-                    itemCategory,
-                    startingPrice,
-                    auction.getCurrentHighestBid(),
-                    auction.getStartTime(),
-                    auction.getEndTime(),
-                    auction.getStatus(),
-                    auction.getSellerId().toString()
-                ));
-            } catch (Exception ignored) {
-                // Skip malformed listing row and continue returning other valid records.
             }
+        } catch (Exception ignored) {
+            // Last-resort fallback for production: avoid bubbling runtime DB errors to client.
         }
         return listings;
     }
