@@ -18,12 +18,12 @@ public class ClientPushService {
     private static ClientPushService instance;
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private Consumer<BidUpdateEvent> bidUpdateHandler;
-    private Consumer<NewAuctionEvent> newAuctionHandler;
-    private Consumer<AuctionDeletedEvent> auctionDeletedHandler;
-    private Consumer<AuctionEndedEvent> auctionEndedHandler;
-    private Consumer<UserDeletedEvent> userDeletedHandler;
-    private Consumer<UserCreatedEvent> userCreatedHandler;
+    private volatile Consumer<BidUpdateEvent> bidUpdateHandler;
+    private volatile Consumer<NewAuctionEvent> newAuctionHandler;
+    private volatile Consumer<AuctionDeletedEvent> auctionDeletedHandler;
+    private volatile Consumer<AuctionEndedEvent> auctionEndedHandler;
+    private volatile Consumer<UserDeletedEvent> userDeletedHandler;
+    private volatile Consumer<UserCreatedEvent> userCreatedHandler;
 
     private ClientPushService() {
         mapper.registerModule(new JavaTimeModule());
