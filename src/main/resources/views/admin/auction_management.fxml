@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/25"            fx:controller="com.nhom1.auction.client.admin.controller.AuctionManagementController"
+<BorderPane xmlns="http://javafx.com/javafx/21"            fx:controller="com.nhom1.auction.client.admin.controller.AuctionManagementController"
             xmlns:fx="http://javafx.com/fxml"
             stylesheets="@/css/admin/auction_management.css"
             styleClass="root">
