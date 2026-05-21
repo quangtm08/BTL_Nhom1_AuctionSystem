@@ -93,7 +93,7 @@ public final class DatabaseInitializer {
         )
         """,
         "CREATE INDEX IF NOT EXISTS idx_auto_bid_configs_auction_id ON auto_bid_configs(auction_id)",
-        "CREATE INDEX IF NOT EXISTS idx_auto_bid_configs_bidder_id ON auto_bid_configs(bidder_id)"
+        "CREATE INDEX IF NOT EXISTS idx_auto_bid_configs_bidder_id ON auto_bid_configs(bidder_id)",
         """
             CREATE TABLE IF NOT EXISTS item_images (
             id VARCHAR(36) PRIMARY KEY,

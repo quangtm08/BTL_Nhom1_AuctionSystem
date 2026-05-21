@@ -1,27 +1,33 @@
 package com.nhom1.auction.server.automation;
 
-import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
-import com.nhom1.auction.common.dto.autobid.AutoBidConfigDetailResponse;
-import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
-import com.nhom1.auction.common.entity.Auction;
-import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.common.entity.BidTransaction;
-import com.nhom1.auction.common.exception.ValidationException;
-
-import com.nhom1.auction.server.infrastructure.NotificationService;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mock;
+import static org.mockito.Mockito.atMost;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigDetailResponse;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
+import com.nhom1.auction.common.entity.Auction;
+import com.nhom1.auction.common.entity.BidTransaction;
+import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.exception.ValidationException;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 
 public class AutoBidServiceTest {
 
