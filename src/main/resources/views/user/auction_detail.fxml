@@ -94,9 +94,14 @@
             </VBox>
 
             <!-- BIDDINGS -->
-            <VBox styleClass="card" GridPane.columnIndex="1">
-                <Label text="Biddings" styleClass="section-title"/>
-                <ScrollPane fitToWidth="true" prefHeight="400"
+            <VBox styleClass="card" spacing="12" GridPane.columnIndex="1">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label text="Biddings" styleClass="section-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="btnViewBidHistory" text="View chart →"
+                            styleClass="btn-view-chart" focusTraversable="false"/>
+                </HBox>
+                <ScrollPane fitToWidth="true" prefHeight="400" vbarPolicy="ALWAYS" hbarPolicy="NEVER"
                             styleClass="bid-history-scroll" VBox.vgrow="ALWAYS">
                     <VBox fx:id="bidHistoryList" spacing="8"/>
                 </ScrollPane>

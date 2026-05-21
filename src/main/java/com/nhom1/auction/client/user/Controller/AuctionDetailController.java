@@ -36,7 +36,6 @@ import javafx.scene.layout.VBox;
 public class AuctionDetailController {
 	private static final double IMAGE_BOX_WIDTH = 420;
 	private static final double IMAGE_BOX_HEIGHT = 320;
-	private static final int MAX_VISIBLE_BID_ROWS = 8;
 
 	private final BiddingClientService biddingService = new BiddingClientService();
 	private final ObjectMapper mapper = new ObjectMapper();
@@ -59,6 +58,9 @@ public class AuctionDetailController {
 
 	@FXML
 	private Button btnBack;
+
+	@FXML
+	private Button btnViewBidHistory;
 
 	@FXML
 	private VBox bidHistoryList;
@@ -122,6 +124,10 @@ public class AuctionDetailController {
 				});
 
 		btnBack.setOnAction(e -> AppNavigator.navigateTo(AppView.AUCTION_BROWSE));
+
+		if (btnViewBidHistory != null) {
+			btnViewBidHistory.setOnAction(e -> AppNavigator.navigateTo(AppView.BID_HISTORY_CHART));
+		}
 
 		ServerConnection.getInstance().registerPushHandler(
 			MessageType.PUSH_BID_UPDATE,
@@ -304,9 +310,9 @@ public class AuctionDetailController {
 		if (history == null || history.isEmpty()) {
 			return;
 		}
-		int startIndex = Math.max(0, history.size() - MAX_VISIBLE_BID_ROWS);
+		// Render full history newest-first. ScrollPane handles overflow.
 		int rank = 1;
-		for (int i = history.size() - 1; i >= startIndex; i--) {
+		for (int i = history.size() - 1; i >= 0; i--) {
 			BidSummaryDto bid = history.get(i);
 
 			HBox row = new HBox(10);
