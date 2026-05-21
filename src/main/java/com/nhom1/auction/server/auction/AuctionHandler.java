@@ -5,6 +5,7 @@ import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.dto.auction.MyListingsResponse;
+import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
@@ -53,6 +54,14 @@ public class AuctionHandler {
                 return ResponseFactory.invalidFormat(requestId, "Invalid DeleteAuction JSON");
             }
         });
+        router.register(MessageType.UPDATE_AUCTION, (requestId, payloadJson) -> {
+            try {
+                UpdateAuctionRequest dto = JsonUtil.fromJson(payloadJson, UpdateAuctionRequest.class);
+                return handleUpdateAuction(requestId, dto);
+            } catch (Exception e) {
+                return ResponseFactory.invalidFormat(requestId, "Invalid UpdateAuction JSON");
+            }
+        });
     }
 
     private ResponseMessage<CreateAuctionResponse> handleCreateAuction(String requestId, CreateAuctionRequest dto) {
@@ -96,6 +105,15 @@ public class AuctionHandler {
             auctionService.deleteAuction(sellerId, auctionId);
             notificationService.broadcastAuctionDeleted(auctionId);
             return ResponseFactory.success(requestId, "Deleted");
+        } catch (Exception e) {
+            return ResponseFactory.fromException(requestId, e);
+        }
+    }
+
+    private ResponseMessage<String> handleUpdateAuction(String requestId, UpdateAuctionRequest dto) {
+        try {
+            auctionService.updateAuction(dto);
+            return ResponseFactory.success(requestId, "Updated");
         } catch (Exception e) {
             return ResponseFactory.fromException(requestId, e);
         }
