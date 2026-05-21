@@ -5,7 +5,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ public class AuctionRepository {
         String sql = """
                     INSERT INTO auctions(
                         id, item_id, start_time, end_time, status, starting_price,
-                        current_highest_bid, highest_bidder_id,
+                        current_highest_bid, highest_bidder_id, duration_days,
                         created_at, updated_at
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -47,8 +46,16 @@ public class AuctionRepository {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auction.getId().toString());
             ps.setString(2, auction.getItemId().toString());
-            ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
-            ps.setTimestamp(4, java.sql.Timestamp.valueOf(auction.getEndTime()));
+            if (auction.getStartTime() != null) {
+                ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
+            } else {
+                ps.setNull(3, java.sql.Types.TIMESTAMP);
+            }
+            if (auction.getEndTime() != null) {
+                ps.setTimestamp(4, java.sql.Timestamp.valueOf(auction.getEndTime()));
+            } else {
+                ps.setNull(4, java.sql.Types.TIMESTAMP);
+            }
             ps.setString(5, auction.getStatus().name());
             ps.setBigDecimal(6, auction.getStartingPrice());
 
@@ -64,9 +71,15 @@ public class AuctionRepository {
                 ps.setNull(8, Types.VARCHAR);
             }
 
+            if (auction.getDurationDays() != null) {
+                ps.setInt(9, auction.getDurationDays());
+            } else {
+                ps.setNull(9, Types.INTEGER);
+            }
+
             java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
-            ps.setTimestamp(9, now);
             ps.setTimestamp(10, now);
+            ps.setTimestamp(11, now);
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -350,6 +363,10 @@ public class AuctionRepository {
 
         AuctionStatus status = AuctionStatus.valueOf(rs.getString("status"));
 
+        Integer durationDays = null;
+        int dur = rs.getInt("duration_days");
+        if (!rs.wasNull()) durationDays = dur;
+
         java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
         java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
         LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
@@ -366,6 +383,26 @@ public class AuctionRepository {
                 currentHighestBid,
                 status,
                 createdAt,
-                updatedAt);
+                updatedAt,
+                durationDays);
+    }
+
+    // Update start, end and status atomically (used by admin approve flow)
+    public boolean updateStartEndAndStatus(UUID auctionId, LocalDateTime startTime, LocalDateTime endTime, AuctionStatus status, Connection conn) {
+        String sql = """
+                    UPDATE auctions
+                    SET start_time = ?, end_time = ?, status = ?, updated_at = ?
+                    WHERE id = ? AND status = 'OPEN'
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setTimestamp(1, startTime != null ? java.sql.Timestamp.valueOf(startTime) : null);
+            ps.setTimestamp(2, endTime != null ? java.sql.Timestamp.valueOf(endTime) : null);
+            ps.setString(3, status.name());
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(5, auctionId.toString());
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update auction start/end/status", e);
+        }
     }
 }
