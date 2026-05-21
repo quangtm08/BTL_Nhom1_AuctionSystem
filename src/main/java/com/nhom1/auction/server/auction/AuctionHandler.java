@@ -31,7 +31,7 @@ public class AuctionHandler {
                 CreateAuctionRequest dto = JsonUtil.fromJson(payloadJson, CreateAuctionRequest.class);
                 return handleCreateAuction(requestId, dto);
             } catch (Exception e) {
-                return ResponseFactory.invalidFormat(requestId, "Invalid CreateAuction JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid CreateAuction JSON: " + e.getMessage());
             }
         });
 

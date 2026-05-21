@@ -2,11 +2,11 @@ package com.nhom1.auction.client.user.service;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.enums.ItemCategory;
@@ -61,10 +61,10 @@ public class CreateAuctionClientService extends BaseClientService {
     ) {
         return uploadImages(imageFiles)
                 .thenCompose(imageUrls -> {
-                    CreateAuctionRequest payload = buildCreateAuctionRequest(
+                    Map<String, Object> payload = buildCreateAuctionPayload(
                             title, description, startingBid, category, condition, durationDays, imageUrls
                     );
-                    RequestMessage<CreateAuctionRequest> request = new RequestMessage<>(MessageType.CREATE_AUCTION, payload);
+                    RequestMessage<Map<String, Object>> request = new RequestMessage<>(MessageType.CREATE_AUCTION, payload);
                     return send(request, CreateAuctionResponse.class);
                 });
     }
@@ -80,7 +80,7 @@ public class CreateAuctionClientService extends BaseClientService {
                 .thenApply(ignored -> uploadTasks.stream().map(CompletableFuture::join).toList());
     }
 
-    private CreateAuctionRequest buildCreateAuctionRequest(
+    private Map<String, Object> buildCreateAuctionPayload(
             String title,
             String description,
             String startingBid,
@@ -92,20 +92,19 @@ public class CreateAuctionClientService extends BaseClientService {
         AuthResponse user = AppContext.getCurrentUser();
         BigDecimal parsedStartingBid = new BigDecimal(startingBid.trim());
 
-        LocalDateTime startTime = null;
-        LocalDateTime endTime = null;
-        CreateAuctionRequest dto = new CreateAuctionRequest();
-        dto.setSellerId(user.getUserID());
-        dto.setName(title.trim());
-        dto.setDescription(description);
-        dto.setCategory(category);
-        dto.setCondition(condition);
-        dto.setStartingPrice(parsedStartingBid);
-        dto.setStartTime(startTime);
-        dto.setEndTime(endTime);
-        dto.setDurationDays(durationDays);
-        dto.setImageUrls(imageUrls);
-
-        return dto;
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("sellerId", user.getUserID());
+        payload.put("name", title.trim());
+        payload.put("description", description);
+        payload.put("category", category);
+        payload.put("condition", condition);
+        payload.put("startingPrice", parsedStartingBid);
+        payload.put("durationDays", durationDays);
+        // Backward compatibility with older Railway server schema:
+        // only send imageUrls when it actually has data.
+        if (imageUrls != null && !imageUrls.isEmpty()) {
+            payload.put("imageUrls", imageUrls);
+        }
+        return payload;
     }
 }
