@@ -121,6 +121,7 @@ public class BidService {
 		item.getCategory(),
 		item.getCondition(),
 		auction.getSellerId().toString(),
+		auction.getStartingPrice(),
 		auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
 		auction.getHighestBidderId() == null ? null : auction.getHighestBidderId().toString(),
 		auction.getMinBidIncrement(),
