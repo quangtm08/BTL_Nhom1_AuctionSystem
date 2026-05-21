@@ -1,16 +1,14 @@
 package com.nhom1.auction.client.user.controller;
 
 import java.math.BigDecimal;
-import java.text.NumberFormat;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.service.ClientPushService;
+import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
+import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.BidSummaryDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
@@ -38,7 +36,6 @@ public class AuctionDetailController {
 
 	private final BiddingClientService biddingService = new BiddingClientService();
 	private final ClientPushService pushService = ClientPushService.getInstance();
-	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM");
 
 @FXML
 	private TextField txtBidInput;
@@ -61,7 +58,7 @@ public class AuctionDetailController {
 	@FXML
 	private VBox bidHistoryList;
 
-	@FXML // Reusing the same label for title and item name for simplicity
+	@FXML
 	private Label lblTitle; 
 
 	@FXML
@@ -89,9 +86,6 @@ public class AuctionDetailController {
 		}
 		setLoadingState(true);
 
-		// Khi user click vào TextField (focus gained) → xóa lỗi ngay lập tức.
-		// Dùng focusedProperty listener thay vì setOnMouseClicked để bắt cả trường hợp
-		// user Tab vào field chứ không chỉ click chuột.
 		if (txtBidInput != null) {
 			txtBidInput.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
 				if (isFocused) clearBidError();
@@ -105,7 +99,6 @@ public class AuctionDetailController {
 		}
 
 		biddingService.getAuctionDetail(sel)
-				.thenCompose(dto -> waitForPrimaryImageLoaded(dto).thenApply(ignored -> dto))
 				.thenAccept(dto -> Platform.runLater(() -> {
 					applyDetail(dto);
 					setLoadingState(false);
@@ -113,7 +106,8 @@ public class AuctionDetailController {
 				.exceptionally(ex -> {
 					Platform.runLater(() -> {
 						setLoadingState(false);
-						String message = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+						Throwable cause = BaseClientService.extractFailure(ex);
+						String message = cause.getMessage();
 						System.err.println("Failed to load auction detail: " + message);
 					});
 					return null;
@@ -133,11 +127,10 @@ public class AuctionDetailController {
 		BigDecimal bid = event.getNewHighestBid();
 		Platform.runLater(() -> {
 			if (bid != null && lblCurrentBid != null) {
-				lblCurrentBid.setText(formatMoney(bid));
+				lblCurrentBid.setText(DisplayFormatters.money(bid));
 			}
 		});
 
-		// Re-fetch full detail to refresh bid history
 		biddingService.getAuctionDetail(currentAuctionId)
 			.thenAccept(dto -> Platform.runLater(() -> {
 				if (dto != null && dto.getBidHistory() != null) {
@@ -162,10 +155,10 @@ public class AuctionDetailController {
 			if (currentBid == null || currentBid.compareTo(BigDecimal.ZERO) <= 0) {
 				currentBid = dto.getStartingPrice();
 			}
-			lblCurrentBid.setText(formatMoney(currentBid));
+			lblCurrentBid.setText(DisplayFormatters.money(currentBid));
 		}
 		if (lblMinIncrement != null && dto.getMinBidIncrement() != null)
-			lblMinIncrement.setText(formatMoney(dto.getMinBidIncrement()));
+			lblMinIncrement.setText(DisplayFormatters.money(dto.getMinBidIncrement()));
 		boolean isOwnAuction = AppContext.getCurrentUser() != null
 			&& AppContext.getCurrentUser().getUserID() != null
 			&& dto.getSellerID() != null
@@ -192,30 +185,6 @@ public class AuctionDetailController {
 				itemImageView.setViewport(null);
 			}
 		}
-	}
-
-	private CompletableFuture<Void> waitForPrimaryImageLoaded(AuctionDetailDto dto) {
-		if (dto == null || dto.getImageUrls() == null || dto.getImageUrls().isEmpty()) {
-			return CompletableFuture.completedFuture(null);
-		}
-		String imageUrl = dto.getImageUrls().get(0);
-		if (imageUrl == null || imageUrl.isBlank()) {
-			return CompletableFuture.completedFuture(null);
-		}
-
-		CompletableFuture<Void> loaded = new CompletableFuture<>();
-		Image image = new Image(imageUrl, IMAGE_BOX_WIDTH, IMAGE_BOX_HEIGHT, true, true, true);
-		image.progressProperty().addListener((obs, oldValue, newValue) -> {
-			if (newValue.doubleValue() >= 1.0 && !loaded.isDone()) {
-				loaded.complete(null);
-			}
-		});
-		image.errorProperty().addListener((obs, wasError, isError) -> {
-			if (Boolean.TRUE.equals(isError) && !loaded.isDone()) {
-				loaded.complete(null);
-			}
-		});
-		return loaded;
 	}
 
 	private void setLoadingState(boolean loading) {
@@ -247,12 +216,20 @@ public class AuctionDetailController {
 
 		image.errorProperty().addListener((obs, wasError, isError) -> {
 			if (Boolean.TRUE.equals(isError)) {
-				Platform.runLater(() -> {
-					itemImageView.setImage(null);
-					itemImageView.setViewport(null);
-				});
+				Platform.runLater(this::clearPrimaryImage);
 			}
 		});
+
+		if (image.isError()) {
+			clearPrimaryImage();
+		} else if (image.getProgress() >= 1.0) {
+			applyCoverViewport(image);
+		}
+	}
+
+	private void clearPrimaryImage() {
+		itemImageView.setImage(null);
+		itemImageView.setViewport(null);
 	}
 
 	private void applyCoverViewport(Image image) {
@@ -300,7 +277,7 @@ public class AuctionDetailController {
 			bidderName.getStyleClass().add("bid-rank");
 			HBox.setHgrow(bidderName, Priority.SOMETIMES);
 
-			Label amount = new Label(formatMoney(bid.getAmount()));
+			Label amount = new Label(DisplayFormatters.money(bid.getAmount()));
 			amount.getStyleClass().add("bid-amount");
 			HBox.setHgrow(amount, Priority.ALWAYS);
 
@@ -308,7 +285,7 @@ public class AuctionDetailController {
 			type.getStyleClass().addAll("bid-type",
 				bid.getBidType() == BidType.AUTO ? "bid-type-auto" : "bid-type-manual");
 
-			Label time = new Label(bid.getCreatedAt() != null ? bid.getCreatedAt().format(BID_TIME_FMT) : "");
+			Label time = new Label(DisplayFormatters.bidTime(bid.getCreatedAt()));
 			time.getStyleClass().add("bid-time");
 
 			row.getChildren().addAll(rankLabel, bidderName, amount, type, time);
@@ -316,10 +293,6 @@ public class AuctionDetailController {
 		}
 	}
 
-	/**
-	 * Hiển thị thông báo lỗi ngay dưới TextField và đổi viền thành đỏ.
-	 * managed=true để label chiếm không gian trong layout khi hiện.
-	 */
 	private void showBidError(String message) {
 		if (lblBidError != null) {
 			lblBidError.setText(message);
@@ -332,11 +305,6 @@ public class AuctionDetailController {
 		}
 	}
 
-	/**
-	 * Ẩn thông báo lỗi và khôi phục viền TextField về bình thường.
-	 * managed=false để label không chiếm không gian trong layout khi ẩn.
-	 * Được gọi khi TextField được focus (user bắt đầu nhập lại).
-	 */
 	private void clearBidError() {
 		if (lblBidError != null) {
 			lblBidError.setVisible(false);
@@ -369,9 +337,8 @@ public class AuctionDetailController {
 		biddingService.placeBid(auctionId, amount)
 				.thenAccept(resp -> Platform.runLater(() -> handlePlaceBidSuccess(resp)))
 				.exceptionally(ex -> {
-					// Hiển thị lỗi từ server (vd: bid thấp hơn minimum, auction đã kết thúc) lên UI.
-					String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
-						: (ex != null ? ex.getMessage() : "Bid failed");
+					Throwable cause = BaseClientService.extractFailure(ex);
+					String msg = cause.getMessage() != null ? cause.getMessage() : "Bid failed";
 					Platform.runLater(() -> showBidError(msg));
 					return null;
 				});
@@ -384,8 +351,4 @@ public class AuctionDetailController {
 			txtBidInput.setText("");
 	}
 
-	private String formatMoney(BigDecimal amount) {
-		if (amount == null) return "$0";
-		return "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
-	}
 }

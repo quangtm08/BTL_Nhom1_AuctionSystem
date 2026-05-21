@@ -1,8 +1,13 @@
 package com.nhom1.auction.client.user.service;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
+import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.GetAuctionDetailRequest;
@@ -23,6 +28,40 @@ public class BiddingClientService extends BaseClientService {
 	public CompletableFuture<ListAuctionsResponse> listAuctions() {
 		RequestMessage<Void> request = new RequestMessage<>(MessageType.LIST_AUCTIONS, null);
 		return send(request, ListAuctionsResponse.class);
+	}
+
+	public CompletableFuture<List<AuctionSummaryDto>> listBrowseAuctions() {
+		return listAuctions()
+			.thenCombine(
+				getMyBids().exceptionally(ex -> new MyBidsResponse(Collections.emptyList())),
+				this::filterBrowseAuctions
+			);
+	}
+
+	private List<AuctionSummaryDto> filterBrowseAuctions(
+		ListAuctionsResponse auctionsResponse,
+		MyBidsResponse myBidsResponse
+	) {
+		if (auctionsResponse == null || auctionsResponse.getAuctions() == null) {
+			return List.of();
+		}
+
+		String currentUserId = AppContext.getCurrentUser() != null
+			? AppContext.getCurrentUser().getUserID()
+			: null;
+		Set<String> myBidAuctionIds = myBidsResponse == null || myBidsResponse.getBids() == null
+			? Set.of()
+			: myBidsResponse.getBids().stream()
+				.map(bid -> bid.getAuctionId())
+				.filter(id -> id != null && !id.isBlank())
+				.collect(Collectors.toSet());
+
+		return auctionsResponse.getAuctions().stream()
+			.filter(auction -> auction.getId() != null && !myBidAuctionIds.contains(auction.getId()))
+			.filter(auction -> currentUserId == null
+				|| auction.getSellerId() == null
+				|| !currentUserId.equals(auction.getSellerId()))
+			.toList();
 	}
 
 	/**

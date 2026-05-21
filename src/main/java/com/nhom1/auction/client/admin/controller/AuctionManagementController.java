@@ -2,11 +2,9 @@ package com.nhom1.auction.client.admin.controller;
 
 import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.admin.service.AdminClientService;
+import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -23,14 +21,12 @@ public class AuctionManagementController {
     @FXML private Label lblAuctionSummary;
     @FXML private GridPane auctionGrid;
 
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private String cancelingAuctionId;
 
     @FXML
     public void initialize() {
         reloadAuctions();
 
-        // Register push handlers so admin view updates in realtime.
         pushService.onNewAuction(event -> Platform.runLater(this::reloadAuctions));
         pushService.onBidUpdate(event -> Platform.runLater(this::reloadAuctions));
         pushService.onAuctionDeleted(event -> Platform.runLater(this::reloadAuctions));
@@ -75,19 +71,21 @@ public class AuctionManagementController {
         addLabel(0, row, nvl(auction.getItemName()), "table-text-main");
         addLabel(1, row, nvl(auction.getItemCategory()), "table-text-sub");
         addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");
-        addLabel(3, row, formatPrice(auction.getStartingPrice()), "table-text-sub");
-        addLabel(4, row, formatPrice(auction.getCurrentHighestBid()), "price-highlight");
-        addLabel(5, row, formatDateTime(auction.getEndTime()), "table-text-sub");
+        addLabel(3, row, DisplayFormatters.moneyOrDash(auction.getStartingPrice()), "table-text-sub");
+        addLabel(4, row, DisplayFormatters.moneyOrDash(auction.getCurrentHighestBid()), "price-highlight");
+        addLabel(5, row, DisplayFormatters.dateTime(auction.getEndTime()), "table-text-sub");
 
         Label status = new Label(auction.getStatus() != null ? auction.getStatus().name() : "-");
-        status.getStyleClass().add(statusStyle(auction.getStatus()));
+        status.getStyleClass().add(DisplayFormatters.adminAuctionStatusStyle(auction.getStatus()));
         auctionGrid.add(status, 6, row);
 
         Button cancelBtn = new Button("Cancel");
         cancelBtn.getStyleClass().add("btn-cancel");
+        String auctionId = auction.getId();
+        boolean missingAuctionId = auctionId == null || auctionId.isBlank();
         boolean canCancel = auction.getStatus() == AuctionStatus.OPEN || auction.getStatus() == AuctionStatus.RUNNING;
-        cancelBtn.setDisable(!canCancel || auction.getId().equals(cancelingAuctionId));
-        cancelBtn.setOnAction(e -> cancelAuction(auction.getId(), cancelBtn));
+        cancelBtn.setDisable(!canCancel || missingAuctionId || auctionId.equals(cancelingAuctionId));
+        cancelBtn.setOnAction(e -> cancelAuction(auctionId, cancelBtn));
 
         HBox actions = new HBox(cancelBtn);
         actions.setAlignment(Pos.CENTER);
@@ -134,27 +132,6 @@ public class AuctionManagementController {
 
     private String shortId(String id) {
         return (id == null || id.length() < 8) ? nvl(id) : id.substring(0, 8) + "...";
-    }
-
-    private String formatPrice(BigDecimal price) {
-        return price == null ? "-" : price.toPlainString();
-    }
-
-    private String formatDateTime(LocalDateTime time) {
-        return time == null ? "-" : time.format(formatter);
-    }
-
-    private String statusStyle(AuctionStatus status) {
-        if (status == AuctionStatus.RUNNING) {
-            return "status-running";
-        }
-        if (status == AuctionStatus.PAID) {
-            return "status-pill-active";
-        }
-        if (status == AuctionStatus.CANCELED) {
-            return "status-pill-banned";
-        }
-        return "table-text-sub";
     }
 
 }

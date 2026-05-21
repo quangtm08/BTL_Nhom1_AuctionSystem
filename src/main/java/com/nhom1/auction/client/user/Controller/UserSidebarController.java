@@ -38,7 +38,7 @@ public class UserSidebarController {
         btnBids.setOnAction(e -> navigateWithLoading(AppView.MY_BIDS));
         btnListings.setOnAction(e -> navigateWithLoading(AppView.MY_LISTINGS));
         btnPayment.setOnAction(e -> navigateWithLoading(AppView.PAYMENT));
-        btnLogout.setOnAction(e -> navigateWithLoading(AppView.SIGN_IN));
+        btnLogout.setOnAction(e -> logout());
 
         updateActiveButton();
     }
@@ -57,11 +57,14 @@ public class UserSidebarController {
     }
 
     private void navigateWithLoading(AppView targetView) {
-        // Không reload nếu đang ở màn hiện tại
         if (AppNavigator.getCurrentView() == targetView) return;
 
-        // Bỏ qua màn LOADING và delay, chuyển thẳng đến view đích
         AppNavigator.navigateTo(targetView);
+    }
+
+    private void logout() {
+        AppContext.clearSession();
+        AppNavigator.navigateTo(AppView.SIGN_IN);
     }
 
     private void updateActiveButton() {

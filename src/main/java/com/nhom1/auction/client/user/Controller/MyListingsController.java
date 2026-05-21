@@ -2,8 +2,6 @@ package com.nhom1.auction.client.user.controller;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,10 +12,10 @@ import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.user.controller.components.ListingCardComponentController;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.MyListingsClientService;
+import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.MyListingsResponse;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
-import com.nhom1.auction.common.enums.AuctionStatus;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -55,7 +53,7 @@ public class MyListingsController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/user/components/listing_card.fxml"));
             Parent card = loader.load();
             ListingCardComponentController c = loader.getController();
-            c.bind(dto, formatStatus(dto.getStatus()), formatMoney(resolveDisplayCurrentBid(dto)), formatTimeLeft(dto.getEndTime()), isEnded(dto.getStatus()), this::handleEditListing, () -> handleDeleteListing(dto));
+            c.bind(dto, DisplayFormatters.auctionStatusLabel(dto.getStatus()), DisplayFormatters.money(resolveDisplayCurrentBid(dto)), DisplayFormatters.timeLeft(dto.getEndTime()), DisplayFormatters.isEnded(dto.getStatus()), this::handleEditListing, () -> handleDeleteListing(dto));
             if (dto.getId() != null) priceLabels.put(dto.getId(), c.getPriceLabel());
             return card;
         } catch (IOException e) { throw new RuntimeException("Failed to load listing card component", e); }
@@ -87,18 +85,14 @@ public class MyListingsController {
     }
 
     private void handleBidUpdatePush(BidUpdateEvent event)
-    { if (event == null || event.getAuctionId() == null || event.getNewHighestBid() == null) return; Label label = priceLabels.get(event.getAuctionId()); if (label != null) label.setText(formatMoney(event.getNewHighestBid())); }
+    { if (event == null || event.getAuctionId() == null || event.getNewHighestBid() == null) return; Label label = priceLabels.get(event.getAuctionId()); if (label != null) label.setText(DisplayFormatters.money(event.getNewHighestBid())); }
     private void renderMessage(String message) { listingsGrid.getChildren().clear(); Label label = new Label(message); label.getStyleClass().add("card-sub-text"); listingsGrid.add(label, 0, 0); }
     private void handleDeleteListing(AuctionSummaryDto dto) { Alert confirm = new Alert(AlertType.CONFIRMATION); confirm.setTitle("Confirm delete"); confirm.setHeaderText("Delete this auction?"); confirm.setContentText("This action cannot be undone."); confirm.getDialogPane().getStylesheets().add(getClass().getResource("/css/client/my_listings.css").toExternalForm()); ButtonType yes = new ButtonType("Yes"); ButtonType no = new ButtonType("No", ButtonData.CANCEL_CLOSE); confirm.getButtonTypes().setAll(yes, no); ((Button) confirm.getDialogPane().lookupButton(yes)).getStyleClass().add("button-yes"); ((Button) confirm.getDialogPane().lookupButton(no)).getStyleClass().add("button-no"); confirm.showAndWait().ifPresent(selected -> { if (selected != yes) return; listingsService.deleteListing(dto.getId()).thenAccept(response -> Platform.runLater(this::loadMyListings)).exceptionally(ex -> { Platform.runLater(() -> renderMessage(resolveErrorMessage(ex, "Connection error while deleting."))); return null; }); }); }
     private String resolveErrorMessage(Throwable throwable, String fallback) { Throwable cause = BaseClientService.extractFailure(throwable); return cause.getMessage() != null && !cause.getMessage().isBlank() ? cause.getMessage() : fallback; }
-    private boolean isEnded(AuctionStatus status) { return status == AuctionStatus.FINISHED || status == AuctionStatus.CANCELED || status == AuctionStatus.PAID; }
-    private String formatStatus(AuctionStatus status) { if (status == null) return "Unknown"; return isEnded(status) ? "Ended" : "Running"; }
-    private String formatMoney(BigDecimal amount) { return amount == null ? "$0" : "$" + amount.stripTrailingZeros().toPlainString(); }
     private BigDecimal resolveDisplayCurrentBid(AuctionSummaryDto dto) {
         if (dto == null) return BigDecimal.ZERO;
         BigDecimal current = dto.getCurrentHighestBid();
         if (current != null && current.compareTo(BigDecimal.ZERO) > 0) return current;
         return dto.getStartingPrice() != null ? dto.getStartingPrice() : BigDecimal.ZERO;
     }
-    private String formatTimeLeft(LocalDateTime endTime) { if (endTime == null) return "-"; Duration duration = Duration.between(LocalDateTime.now(), endTime); if (duration.isNegative() || duration.isZero()) return "Ended"; long days = duration.toDays(); if (days > 0) return days + " days left"; long hours = duration.toHours(); if (hours > 0) return hours + " hours left"; return Math.max(1, duration.toMinutes()) + " min left"; }
 }
