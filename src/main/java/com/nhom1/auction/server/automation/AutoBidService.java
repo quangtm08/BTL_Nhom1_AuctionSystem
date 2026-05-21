@@ -1,7 +1,14 @@
 package com.nhom1.auction.server.automation;
 
-import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
+import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigDetailResponse;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
@@ -10,15 +17,8 @@ import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
-import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class AutoBidService {
-    private static final int MAX_TRIGGER_DEPTH = 20;
+    private static final int MAX_TRIGGER_DEPTH = 10;
 
     private final AutoBidRepository autoBidRepository;
     private final AuctionGateway auctionGateway;
@@ -123,12 +123,19 @@ public class AutoBidService {
             if (eligibleConfigs.isEmpty()) break;
 
             AutoBidConfig selected = eligibleConfigs.stream()
-                .max(Comparator.comparing(cfg -> nextAmount(cfg, snapshotBid)))
+                .max(Comparator.comparing(AutoBidConfig::getMaxAmount))
                 .orElse(null);
             if (selected == null) break;
 
-            BigDecimal nextAmt = nextAmount(selected, currentHighestBid);
-            if (nextAmt.compareTo(selected.getMaxAmount()) > 0) break;
+            BigDecimal nextBestMax = eligibleConfigs.stream()
+                .filter(cfg -> !cfg.getBidderId().equals(selected.getBidderId()))
+                .map(AutoBidConfig::getMaxAmount)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+
+            BigDecimal requiredBid = currentHighestBid.max(nextBestMax).add(selected.getIncrement());
+            BigDecimal nextAmt = requiredBid.min(selected.getMaxAmount());
+            if (nextAmt.compareTo(currentHighestBid) <= 0) break;
 
             try {
                 BidTransaction bid = bidGateway.placeAutoBid(selected.getBidderId(), auctionId, nextAmt);

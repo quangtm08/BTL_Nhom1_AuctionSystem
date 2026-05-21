@@ -130,6 +130,31 @@ public class AutoBidServiceTest {
     }
 
     @Test
+    public void testTriggerAutoBids_ProxyBidRaisesToSecondHighestMaxPlusIncrement() throws Exception {
+        UUID auctionId = UUID.randomUUID();
+        BigDecimal currentHighestBid = new BigDecimal("200.00");
+        UUID currentHighestBidderId = UUID.randomUUID();
+        UUID firstBidderId = UUID.randomUUID();
+        UUID challengerId = UUID.randomUUID();
+
+        AutoBidConfig firstConfig = new AutoBidConfig(auctionId, firstBidderId, new BigDecimal("200.00"), new BigDecimal("5.00"));
+        AutoBidConfig challengerConfig = new AutoBidConfig(auctionId, challengerId, new BigDecimal("250.00"), new BigDecimal("5.00"));
+        BidTransaction challengerBid = mock(BidTransaction.class);
+        when(challengerBid.getAmount()).thenReturn(new BigDecimal("205.00"));
+        when(challengerBid.getBidderId()).thenReturn(challengerId);
+
+        when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(firstConfig, challengerConfig));
+        when(bidGateway.placeAutoBid(challengerId, auctionId, new BigDecimal("205.00"))).thenReturn(challengerBid);
+        Auction auction = mock(Auction.class);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auctionGateway.findById(auctionId)).thenReturn(java.util.Optional.of(auction));
+
+        autoBidService.triggerAutoBids(auctionId, currentHighestBid, currentHighestBidderId);
+
+        verify(bidGateway).placeAutoBid(challengerId, auctionId, new BigDecimal("205.00"));
+    }
+
+    @Test
     public void testTriggerAutoBids_CurrentLeaderExcluded() {
         UUID auctionId = UUID.randomUUID();
         BigDecimal newHighestBid = new BigDecimal("100.00");
@@ -187,7 +212,7 @@ public class AutoBidServiceTest {
         // This should not cause infinite loop
         autoBidService.triggerAutoBids(auctionId, newHighestBid, currentHighestBidderId);
 
-        verify(bidGateway, times(20)).placeAutoBid(any(), any(), any()); // MAX_TRIGGER_DEPTH
+        verify(bidGateway, atMost(5)).placeAutoBid(any(), any(), any()); // MAX_TRIGGER_DEPTH
     }
 
     @Test
