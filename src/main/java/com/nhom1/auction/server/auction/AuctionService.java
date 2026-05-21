@@ -222,8 +222,15 @@ public class AuctionService {
                 "startingPrice must be greater than 0"
             );
         }
-        if (dto.getDurationDays() == null || dto.getDurationDays() <= 0) {
-            throw new ValidationException("durationDays must be provided and greater than 0");
+        if (dto.getDurationDays() != null && dto.getDurationDays() <= 0) {
+            throw new ValidationException("durationDays must be greater than 0");
+        }
+        if (
+            dto.getStartTime() != null &&
+            dto.getEndTime() != null &&
+            !dto.getEndTime().isAfter(dto.getStartTime())
+        ) {
+            throw new ValidationException("endTime must be after startTime");
         }
 
         if (

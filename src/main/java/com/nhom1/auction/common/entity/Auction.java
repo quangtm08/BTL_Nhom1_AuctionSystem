@@ -112,6 +112,28 @@ public class Auction extends BaseEntity {
         this.durationDays = durationDays;
     }
 
+    /**
+     * Backward-compatible constructor for tests/callers that do not pass durationDays.
+     */
+    public Auction(UUID id, UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime,
+            UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
+            LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this(
+            id,
+            itemId,
+            sellerId,
+            startingPrice,
+            startTime,
+            endTime,
+            highestBidderId,
+            currentHighestBid,
+            status,
+            createdAt,
+            updatedAt,
+            null
+        );
+    }
+
     public void startAuction() {
         auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
         try {
