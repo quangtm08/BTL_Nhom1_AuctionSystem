@@ -51,6 +51,14 @@ public class AdminHandler {
                 return ResponseFactory.invalidFormat(requestId, "Invalid cancel auction JSON");
             }
         });
+
+        router.register(MessageType.ADMIN_APPROVE_AUCTION, (requestId, payloadJson) -> {
+            try {
+                return handleApproveAuction(requestId, JsonUtil.fromJson(payloadJson, com.nhom1.auction.common.dto.admin.AdminApproveAuctionRequest.class));
+            } catch (Exception e) {
+                return ResponseFactory.invalidFormat(requestId, "Invalid approve auction JSON");
+            }
+        });
     }
 
     private ResponseMessage<String> handleDeleteUser(String requestId, AdminDeleteUserRequest dto) {
@@ -92,6 +100,15 @@ public class AdminHandler {
                 return ResponseFactory.invalidFormat(requestId, "Missing admin list auctions payload.");
             }
             return ResponseFactory.success(requestId, adminService.getAllAuctions(dto.getCallerId()));
+        } catch (Exception e) {
+            return ResponseFactory.fromException(requestId, e);
+        }
+    }
+
+    private ResponseMessage<String> handleApproveAuction(String requestId, com.nhom1.auction.common.dto.admin.AdminApproveAuctionRequest dto) {
+        try {
+            if (dto == null) return ResponseFactory.invalidFormat(requestId, "Missing approve auction payload.");
+            return ResponseFactory.success(requestId, adminService.approveAuction(dto.getAuctionId(), dto.getCallerId()));
         } catch (Exception e) {
             return ResponseFactory.fromException(requestId, e);
         }
