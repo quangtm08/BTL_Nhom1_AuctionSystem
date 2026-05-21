@@ -1,8 +1,12 @@
 package com.nhom1.auction.server.automation;
 
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigDetailResponse;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
+import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
+import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 
@@ -17,6 +21,7 @@ public class AutoBidService {
     private static final int MAX_TRIGGER_DEPTH = 20;
 
     private final AutoBidRepository autoBidRepository;
+    private final AuctionGateway auctionGateway;
     private final BidGateway bidGateway;
     private final NotificationService notificationService;
 
@@ -27,9 +32,10 @@ public class AutoBidService {
         return t;
     });
 
-    public AutoBidService(AutoBidRepository autoBidRepository, BidGateway bidGateway,
+    public AutoBidService(AutoBidRepository autoBidRepository, AuctionGateway auctionGateway, BidGateway bidGateway,
                           NotificationService notificationService) {
         this.autoBidRepository = autoBidRepository;
+        this.auctionGateway = auctionGateway;
         this.bidGateway = bidGateway;
         this.notificationService = notificationService;
     }
@@ -37,14 +43,16 @@ public class AutoBidService {
     public AutoBidConfigResponse saveConfig(AutoBidConfigRequest dto) {
         UUID auctionId = parseUuid(dto.getAuctionId(), "auctionId");
         UUID bidderId = parseUuid(dto.getBidderId(), "bidderId");
-        BigDecimal maxAmount = BigDecimal.valueOf(dto.getMaxAmount());
-        BigDecimal increment = BigDecimal.valueOf(dto.getIncrement());
+        BigDecimal maxAmount = parseMoney(dto.getMaxAmount(), "maxAmount");
+        BigDecimal incrementFromClient = parseMoney(dto.getIncrement(), "increment");
+        Auction auction = requireRunningAuction(auctionId);
+        BigDecimal increment = auction.getMinBidIncrement();
 
         if (maxAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ValidationException("maxAmount must be > 0");
         }
-        if (increment.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ValidationException("increment must be > 0");
+        if (incrementFromClient.compareTo(increment) != 0) {
+            throw new ValidationException("increment does not match auction rule");
         }
         if (maxAmount.compareTo(increment) < 0) {
             throw new ValidationException("maxAmount must be >= increment");
@@ -52,6 +60,33 @@ public class AutoBidService {
 
         autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, increment));
         return new AutoBidConfigResponse("CONFIG_SAVED");
+    }
+
+    public AutoBidConfigDetailResponse getConfig(String auctionIdRaw, String bidderIdRaw) {
+        UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
+        UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
+        return autoBidRepository.findByAuctionAndBidder(auctionId, bidderId)
+            .map(cfg -> new AutoBidConfigDetailResponse(
+                cfg.getAuctionId().toString(),
+                cfg.getBidderId().toString(),
+                cfg.getMaxAmount().toPlainString(),
+                cfg.getIncrement().toPlainString(),
+                true
+            ))
+            .orElse(new AutoBidConfigDetailResponse(
+                auctionId.toString(),
+                bidderId.toString(),
+                null,
+                null,
+                false
+            ));
+    }
+
+    public AutoBidConfigResponse deleteConfig(String auctionIdRaw, String bidderIdRaw) {
+        UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
+        UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
+        int deleted = autoBidRepository.deleteByAuctionAndBidder(auctionId, bidderId);
+        return new AutoBidConfigResponse(deleted > 0 ? "CONFIG_DELETED" : "CONFIG_NOT_FOUND");
     }
 
     // Called from BidHandler — submits task and returns immediately
@@ -65,6 +100,12 @@ public class AutoBidService {
     }
 
     private void runAutoBids(UUID auctionId, BigDecimal currentHighestBid, UUID currentHighestBidderId) {
+        Auction auction = auctionGateway.findById(auctionId).orElse(null);
+        if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) {
+            autoBidRepository.deleteByAuctionId(auctionId);
+            return;
+        }
+
         BigDecimal finalBid = currentHighestBid;
         UUID finalBidderId = currentHighestBidderId;
         boolean anyBidPlaced = false;
@@ -118,5 +159,22 @@ public class AutoBidService {
         } catch (Exception e) {
             throw new ValidationException(fieldName + " is invalid UUID");
         }
+    }
+
+    private BigDecimal parseMoney(String value, String fieldName) {
+        try {
+            return new BigDecimal(value);
+        } catch (Exception e) {
+            throw new ValidationException(fieldName + " is invalid decimal");
+        }
+    }
+
+    private Auction requireRunningAuction(UUID auctionId) {
+        Auction auction = auctionGateway.findById(auctionId)
+            .orElseThrow(() -> new NotFoundException("Auction not found"));
+        if (auction.getStatus() != AuctionStatus.RUNNING) {
+            throw new ValidationException("Auction is not running");
+        }
+        return auction;
     }
 }
