@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -66,5 +67,54 @@ public class AutoBidRepository {
             throw new RuntimeException("Failed to read auto bid configs", e);
         }
         return result;
+    }
+
+    public Optional<AutoBidConfig> findByAuctionAndBidder(UUID auctionId, UUID bidderId) {
+        String sql = """
+            SELECT auction_id, bidder_id, max_amount, increment_amount
+            FROM auto_bid_configs
+            WHERE auction_id = ? AND bidder_id = ?
+            """;
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, auctionId.toString());
+            ps.setString(2, bidderId.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return Optional.of(new AutoBidConfig(
+                        UUID.fromString(rs.getString("auction_id")),
+                        UUID.fromString(rs.getString("bidder_id")),
+                        rs.getBigDecimal("max_amount"),
+                        rs.getBigDecimal("increment_amount")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to read auto bid config", e);
+        }
+        return Optional.empty();
+    }
+
+    public int deleteByAuctionAndBidder(UUID auctionId, UUID bidderId) {
+        String sql = "DELETE FROM auto_bid_configs WHERE auction_id = ? AND bidder_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, auctionId.toString());
+            ps.setString(2, bidderId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to delete auto bid config", e);
+        }
+    }
+
+    public int deleteByAuctionId(UUID auctionId) {
+        String sql = "DELETE FROM auto_bid_configs WHERE auction_id = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, auctionId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to cleanup auto bid configs by auction", e);
+        }
     }
 }

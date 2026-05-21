@@ -74,6 +74,7 @@ public class AuctionServiceTest {
             any(UUID.class),
             eq(dto.getStartingPrice()),
             isNull(),
+            eq(0L),
             eq(connection)
         );
         verify(connection).setAutoCommit(false);
@@ -106,6 +107,7 @@ public class AuctionServiceTest {
             any(UUID.class),
             any(BigDecimal.class),
             any(),
+            anyLong(),
             eq(connection)
         );
         verify(connection).rollback();

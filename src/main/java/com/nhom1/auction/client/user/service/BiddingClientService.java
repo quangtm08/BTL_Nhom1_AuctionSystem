@@ -15,6 +15,7 @@ import com.nhom1.auction.common.dto.bidding.ListAuctionsResponse;
 import com.nhom1.auction.common.dto.bidding.MyBidsResponse;
 import com.nhom1.auction.common.dto.bidding.PlaceBidRequest;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.utils.AppContext;
@@ -61,6 +62,8 @@ public class BiddingClientService extends BaseClientService {
 			.filter(auction -> currentUserId == null
 				|| auction.getSellerId() == null
 				|| !currentUserId.equals(auction.getSellerId()))
+			.filter(auction -> auction.getStatus() == AuctionStatus.OPEN
+				|| auction.getStatus() == AuctionStatus.RUNNING)
 			.toList();
 	}
 

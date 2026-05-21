@@ -1,15 +1,5 @@
 package com.nhom1.auction.server.payment;
 
-import com.nhom1.auction.common.dto.payment.PendingPaymentsResponse;
-import com.nhom1.auction.common.dto.payment.ProcessPaymentResponse;
-import com.nhom1.auction.common.entity.Auction;
-import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.common.exception.InvalidAuctionStateException;
-import com.nhom1.auction.common.exception.PaymentException;
-import com.nhom1.auction.common.exception.UnauthorizedActionException;
-import com.nhom1.auction.common.exception.ValidationException;
-import com.nhom1.auction.server.auction.AuctionRepository;
-import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,21 +7,30 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+
+import javax.sql.DataSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import org.mockito.Mock;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+
+import com.nhom1.auction.common.dto.payment.PendingPaymentsResponse;
+import com.nhom1.auction.common.dto.payment.ProcessPaymentResponse;
+import com.nhom1.auction.common.entity.Auction;
+import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
+import com.nhom1.auction.common.exception.UnauthorizedActionException;
+import com.nhom1.auction.common.exception.ValidationException;
+import com.nhom1.auction.server.auction.AuctionRepository;
 
 public class PaymentServiceTest {
 

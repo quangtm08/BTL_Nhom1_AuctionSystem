@@ -94,8 +94,8 @@ public class ServerConnection {
     }
 
     private void connect() {
-        String cloudHost = "yamanote.proxy.rlwy.net";
-        int cloudPort = 41177;
+        String cloudHost = "ballast.proxy.rlwy.net";
+        int cloudPort = 36694;
         String localHost = "localhost";
         int localPort = 12345;
         int timeoutMillis = 6000;
