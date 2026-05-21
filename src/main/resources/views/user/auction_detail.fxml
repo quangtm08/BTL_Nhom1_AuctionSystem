@@ -61,8 +61,8 @@
 
                     <HBox spacing="10">
                         <Button text="Place Bid" styleClass="btn-primary" fx:id="btnBid" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                        <Button text="Auto-bid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                        <Button text="Cancel" styleClass="btn-danger" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button text="Auto-bid" fx:id="btnAutoBid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <Button text="Cancel" fx:id="btnCancelAutoBid" styleClass="btn-danger" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                     </HBox>
 
                 </VBox>

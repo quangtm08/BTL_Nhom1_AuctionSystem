@@ -5,13 +5,17 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.client.user.service.AutoBidClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigDetailResponse;
+import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.BidSummaryDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
@@ -23,8 +27,13 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -32,8 +41,10 @@ import javafx.scene.layout.VBox;
 public class AuctionDetailController {
 
 	private final BiddingClientService biddingService = new BiddingClientService();
+	private final AutoBidClientService autoBidClientService = new AutoBidClientService();
 	private final ObjectMapper mapper = new ObjectMapper();
 	private static final DateTimeFormatter BID_TIME_FMT = DateTimeFormatter.ofPattern("HH:mm dd/MM");
+	private Label activeAutoBidCurrentBidLabel;
 
 @FXML
 	private TextField txtBidInput;
@@ -52,6 +63,10 @@ public class AuctionDetailController {
 
 	@FXML
 	private Button btnBack;
+	@FXML
+	private Button btnAutoBid;
+	@FXML
+	private Button btnCancelAutoBid;
 
 	@FXML
 	private VBox bidHistoryList;
@@ -98,6 +113,12 @@ public class AuctionDetailController {
 				});
 
 		btnBack.setOnAction(e -> AppNavigator.navigateTo(AppView.AUCTION_BROWSE));
+		if (btnAutoBid != null) {
+			btnAutoBid.setOnAction(e -> onConfigureAutoBid());
+		}
+		if (btnCancelAutoBid != null) {
+			btnCancelAutoBid.setOnAction(e -> onCancelAutoBid());
+		}
 
 		ServerConnection.getInstance().registerPushHandler(
 			MessageType.PUSH_BID_UPDATE,
@@ -126,6 +147,9 @@ public class AuctionDetailController {
 			Platform.runLater(() -> {
 				if (bid != null && lblCurrentBid != null) {
 					lblCurrentBid.setText(formatMoney(bid));
+				}
+				if (bid != null && activeAutoBidCurrentBidLabel != null) {
+					activeAutoBidCurrentBidLabel.setText(formatMoney(bid));
 				}
 			});
 
@@ -254,6 +278,103 @@ public class AuctionDetailController {
 				});
 	}
 
+	private void onConfigureAutoBid() {
+		String auctionId = AppContext.getSelectedAuctionId();
+		if (auctionId == null || auctionId.isBlank()) {
+			return;
+		}
+		BigDecimal increment = parseDisplayedMoney(lblMinIncrement != null ? lblMinIncrement.getText() : null);
+		if (increment == null || increment.compareTo(BigDecimal.ZERO) <= 0) {
+			showBidError("Could not read increment value from auction.");
+			return;
+		}
+
+		autoBidClientService.getConfig(auctionId)
+			.thenAccept(cfg -> Platform.runLater(() -> showAutoBidDialog(auctionId, increment, cfg)))
+			.exceptionally(ex -> {
+				String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+					: (ex != null ? ex.getMessage() : "Failed to load auto-bid config");
+				Platform.runLater(() -> showBidError(msg));
+				return null;
+			});
+	}
+
+	private void onCancelAutoBid() {
+		String auctionId = AppContext.getSelectedAuctionId();
+		if (auctionId == null || auctionId.isBlank()) return;
+		autoBidClientService.deleteConfig(auctionId)
+			.thenAccept(resp -> Platform.runLater(() -> handleDeleteAutoBid(resp)))
+			.exceptionally(ex -> {
+				String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+					: (ex != null ? ex.getMessage() : "Failed to cancel auto-bid");
+				Platform.runLater(() -> showBidError(msg));
+				return null;
+			});
+	}
+
+	private void handleDeleteAutoBid(AutoBidConfigResponse resp) {
+		if (resp == null) return;
+		showBidError("Auto-bid status: " + resp.getStatus());
+	}
+
+	private void showAutoBidDialog(String auctionId, BigDecimal increment, AutoBidConfigDetailResponse cfg) {
+		Dialog<BigDecimal> dialog = new Dialog<>();
+		dialog.setTitle("Configure Auto-bid");
+		dialog.setHeaderText("Set your bid limit for this auction");
+
+		ButtonType saveButtonType = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
+		ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+		dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, closeButtonType);
+
+		GridPane grid = new GridPane();
+		grid.setHgap(10);
+		grid.setVgap(10);
+
+		Label currentBidLabel = new Label(lblCurrentBid != null ? lblCurrentBid.getText() : "$0");
+		activeAutoBidCurrentBidLabel = currentBidLabel;
+		Label incrementLabel = new Label("$" + increment.toPlainString());
+		TextField maxField = new TextField();
+		maxField.setPromptText("ENTER YOUR BID LIMIT");
+		maxField.setTextFormatter(new TextFormatter<String>(change ->
+			change.getControlNewText().matches("\\d*(\\.\\d{0,2})?") ? change : null
+		));
+
+		if (cfg != null && cfg.isConfigured() && cfg.getMaxAmount() != null) {
+			maxField.setText(cfg.getMaxAmount());
+		}
+
+		grid.addRow(0, new Label("Current highest bid:"), currentBidLabel);
+		grid.addRow(1, new Label("Increment:"), incrementLabel);
+		grid.addRow(2, new Label("Max amount:"), maxField);
+		dialog.getDialogPane().setContent(grid);
+
+		dialog.setResultConverter(button -> {
+			if (button == saveButtonType) {
+				try {
+					return new BigDecimal(maxField.getText().trim());
+				} catch (Exception e) {
+					return null;
+				}
+			}
+			return null;
+		});
+
+		Optional<BigDecimal> result = dialog.showAndWait();
+		activeAutoBidCurrentBidLabel = null;
+		result.ifPresent(maxAmount -> autoBidClientService.saveConfig(auctionId, maxAmount, increment)
+			.thenAccept(resp -> Platform.runLater(() -> {
+				if (resp != null) {
+					showBidError("Auto-bid status: " + resp.getStatus());
+				}
+			}))
+			.exceptionally(ex -> {
+				String msg = (ex != null && ex.getCause() != null) ? ex.getCause().getMessage()
+					: (ex != null ? ex.getMessage() : "Failed to save auto-bid config");
+				Platform.runLater(() -> showBidError(msg));
+				return null;
+			}));
+	}
+
 	private void handlePlaceBidSuccess(PlaceBidResponse resp) {
 		if (resp == null)
 			return;
@@ -264,5 +385,15 @@ public class AuctionDetailController {
 	private String formatMoney(BigDecimal amount) {
 		if (amount == null) return "$0";
 		return "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
+	}
+
+	private BigDecimal parseDisplayedMoney(String display) {
+		if (display == null || display.isBlank()) return null;
+		String normalized = display.replace("$", "").replace(",", "").trim();
+		try {
+			return new BigDecimal(normalized);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 }
