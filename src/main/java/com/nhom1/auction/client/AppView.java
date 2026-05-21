@@ -15,7 +15,8 @@ public enum AppView {
     ADMIN_OVERVIEW("/views/admin/admin_overview.fxml", null),
     USER_MANAGEMENT("/views/admin/user_management.fxml", null),
     AUCTION_MANAGEMENT("/views/admin/auction_management.fxml", null),
-    AUCTION_DETAIL("/views/user/auction_detail.fxml", null);
+    AUCTION_DETAIL("/views/user/auction_detail.fxml", null),
+    BID_HISTORY_CHART("/views/user/bid_history_chart.fxml", null);
 
     private final String fxml;
     private final String css;

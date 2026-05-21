@@ -146,6 +146,26 @@
     -fx-background-radius: 6;
 }
 
+/* ===== HEADER ACTION LINK (Biddings card "View chart →") ===== */
+.btn-view-chart {
+    -fx-background-color: transparent;
+    -fx-text-fill: #7ec8a0;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 8;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+}
+
+.btn-view-chart:hover {
+    -fx-background-color: rgba(126, 200, 160, 0.08);
+    -fx-text-fill: #a3d8b8;
+}
+
+.btn-view-chart:pressed {
+    -fx-background-color: rgba(126, 200, 160, 0.15);
+}
+
 /* ===== BID HISTORY ===== */
 .bid-history-scroll {
     -fx-background-color: transparent;
