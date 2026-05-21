@@ -14,7 +14,7 @@ Giao thức: client và server trao đổi theo dòng JSON; một số sự ki�
 
 ## Công nghệ
 
-- **Java 25** (`--enable-preview` trong build), **JavaFX 25**
+- **Java 21** **JavaFX 21**
 - **Maven** (`mvnw` / `mvnw.cmd`)
 - **SQLite** — `jdbc:sqlite:database/auction-system.db` (WAL, busy timeout; xem `DBConnection`)
 - **Jackson** + JSR-310 cho `LocalDateTime`
@@ -66,7 +66,7 @@ common/
 
 ## Chạy ứng dụng
 
-Yêu cầu **JDK 25**. Thứ tự: **server trước**, **client sau** (client kết nối `localhost:12345`).
+Yêu cầu **JDK 21 hoặc mới hơn**. Thứ tự: **server trước**, **client sau** (client kết nối `localhost:12345`).
 
 Dự án sử dụng Maven. Đảm bảo bạn đã cài đặt JDK 21 (hoặc mới hơn).
 
@@ -94,7 +94,7 @@ Hoặc chạy class `com.nhom1.auction.client.ClientApplication` từ IDE.
 ./mvnw -q test
 ```
 
-GitHub Actions (nhánh `main`): build và test bằng Maven wrapper (JDK 25 Temurin).
+GitHub Actions (nhánh `main`): build và test bằng Maven wrapper (JDK 21 Temurin).
 
 ## Tài liệu trong repo
 
