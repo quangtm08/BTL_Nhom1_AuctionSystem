@@ -1,5 +1,13 @@
 package com.nhom1.auction.server.admin;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import javax.sql.DataSource;
+
 import com.nhom1.auction.common.dto.admin.AdminAuctionListResponse;
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
 import com.nhom1.auction.common.dto.admin.UserSummaryDto;
@@ -17,12 +25,6 @@ import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.bidding.BidRepository;
 import com.nhom1.auction.server.infrastructure.NotificationService;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import javax.sql.DataSource;
 
 public class AdminService {
 
@@ -163,6 +165,54 @@ public class AdminService {
         return new AdminAuctionListResponse(
             adminAuctionGateway.findAllAuctionSummaries()
         );
+    }
+
+    public String approveAuction(String auctionId, String callerId) {
+        requireAdmin(callerId);
+        if (auctionId == null || auctionId.isBlank()) throw new ValidationException("Auction ID is required.");
+        UUID parsedAuctionId;
+        try { parsedAuctionId = UUID.fromString(auctionId); } catch (IllegalArgumentException ex) { throw new ValidationException("auctionId is not a valid UUID"); }
+
+        Auction auction = auctionRepository.findById(parsedAuctionId).orElseThrow(() -> new NotFoundException("Auction not found"));
+        if (auction.getStatus() != com.nhom1.auction.common.enums.AuctionStatus.OPEN) {
+            throw new InvalidAuctionStateException("Only OPEN auctions can be approved");
+        }
+
+        Integer duration = auction.getDurationDays();
+        if (duration == null || duration <= 0) duration = 7;
+        LocalDateTime start = LocalDateTime.now();
+        LocalDateTime end = start.plusDays(duration);
+
+        try (Connection connection = dataSource.getConnection()) {
+            boolean oldAuto = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            try {
+                boolean updated = auctionRepository.updateStartEndAndStatus(parsedAuctionId, start, end, com.nhom1.auction.common.enums.AuctionStatus.RUNNING, connection);
+                if (!updated) throw new IllegalStateException("Auction not found or not open");
+
+                connection.commit();
+            } catch (AppException ex) {
+                connection.rollback();
+                throw ex;
+            } catch (Exception ex) {
+                connection.rollback();
+                throw ex;
+            } finally {
+                connection.setAutoCommit(oldAuto);
+            }
+        } catch (AppException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new RuntimeException("Approve auction failed", ex);
+        }
+
+        // Broadcast new auction so clients can show it in explore
+        try {
+            String itemName = itemRepository.findById(auction.getItemId()).map(i -> i.getName()).orElse("Unknown");
+            notificationService.broadcastNewAuction(auctionId, itemName, auction.getStartingPrice());
+        } catch (Exception ignored) {}
+
+        return "APPROVED";
     }
 
     private User requireAdmin(String callerId) {
