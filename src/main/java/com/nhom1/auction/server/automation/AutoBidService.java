@@ -59,6 +59,13 @@ public class AutoBidService {
         }
 
         autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, increment));
+
+        scheduleAutoBids(
+            auctionId,
+            auction.getCurrentHighestBid() == null ? BigDecimal.ZERO : auction.getCurrentHighestBid(),
+            auction.getHighestBidderId()
+        );
+
         return new AutoBidConfigResponse("CONFIG_SAVED");
     }
 
@@ -109,13 +116,16 @@ public class AutoBidService {
         BigDecimal finalBid = currentHighestBid;
         UUID finalBidderId = currentHighestBidderId;
         boolean anyBidPlaced = false;
+        boolean hasBids = (currentHighestBidderId != null && currentHighestBid != null && currentHighestBid.compareTo(BigDecimal.ZERO) > 0);
 
         for (int depth = 0; depth < MAX_TRIGGER_DEPTH; depth++) {
             // Effectively-final snapshots required by lambda capture rules
             final BigDecimal snapshotBid = currentHighestBid;
             final UUID snapshotBidderId = currentHighestBidderId;
 
-            List<AutoBidConfig> eligibleConfigs = autoBidRepository.findByAuctionId(auctionId).stream()
+            List<AutoBidConfig> allConfigs = autoBidRepository.findByAuctionId(auctionId);
+
+            List<AutoBidConfig> eligibleConfigs = allConfigs.stream()
                 .filter(cfg -> !cfg.getBidderId().equals(snapshotBidderId))
                 .filter(cfg -> cfg.getMaxAmount().compareTo(snapshotBid) > 0)
                 .toList();
@@ -127,13 +137,19 @@ public class AutoBidService {
                 .orElse(null);
             if (selected == null) break;
 
-            BigDecimal nextBestMax = eligibleConfigs.stream()
+            BigDecimal nextBestMax = allConfigs.stream()
                 .filter(cfg -> !cfg.getBidderId().equals(selected.getBidderId()))
                 .map(AutoBidConfig::getMaxAmount)
                 .max(BigDecimal::compareTo)
                 .orElse(BigDecimal.ZERO);
 
-            BigDecimal requiredBid = currentHighestBid.max(nextBestMax).add(selected.getIncrement());
+            BigDecimal requiredBid;
+            if (!hasBids) {
+                requiredBid = auction.getStartingPrice().max(nextBestMax.add(selected.getIncrement()));
+            } else {
+                requiredBid = currentHighestBid.max(nextBestMax).add(selected.getIncrement());
+            }
+
             BigDecimal nextAmt = requiredBid.min(selected.getMaxAmount());
             if (nextAmt.compareTo(currentHighestBid) <= 0) break;
 
@@ -144,6 +160,7 @@ public class AutoBidService {
                 finalBid = currentHighestBid;
                 finalBidderId = currentHighestBidderId;
                 anyBidPlaced = true;
+                hasBids = true;
             } catch (Exception ignored) {
                 System.err.println("Auto-bid failed for auction " + auctionId + ": " + ignored.getMessage());
                 break;

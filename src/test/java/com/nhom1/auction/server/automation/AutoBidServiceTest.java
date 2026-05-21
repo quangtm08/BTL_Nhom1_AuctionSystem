@@ -259,4 +259,121 @@ public class AutoBidServiceTest {
         verify(autoBidRepository).deleteByAuctionId(auctionId);
         verifyNoInteractions(bidGateway);
     }
+
+    @Test
+    public void testSaveConfig_TriggersAutoBidsImmediately() throws Exception {
+        UUID auctionId = UUID.randomUUID();
+        UUID bidderId = UUID.randomUUID();
+        AutoBidConfigRequest dto = new AutoBidConfigRequest();
+        dto.setAuctionId(auctionId.toString());
+        dto.setBidderId(bidderId.toString());
+        dto.setMaxAmount("200.00");
+        dto.setIncrement("10.00");
+
+        Auction auction = mock(Auction.class);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auction.getMinBidIncrement()).thenReturn(new BigDecimal("10.00"));
+        when(auction.getStartingPrice()).thenReturn(new BigDecimal("100.00"));
+        when(auction.getCurrentHighestBid()).thenReturn(null);
+        when(auctionGateway.findById(auctionId)).thenReturn(Optional.of(auction));
+
+        AutoBidConfig config = new AutoBidConfig(auctionId, bidderId, new BigDecimal("200.00"), new BigDecimal("10.00"));
+        when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(config));
+
+        BidTransaction bidTx = mock(BidTransaction.class);
+        when(bidTx.getAmount()).thenReturn(new BigDecimal("100.00"));
+        when(bidTx.getBidderId()).thenReturn(bidderId);
+        when(bidGateway.placeAutoBid(bidderId, auctionId, new BigDecimal("100.00"))).thenReturn(bidTx);
+
+        AutoBidConfigResponse result = autoBidService.saveConfig(dto);
+
+        assertEquals("CONFIG_SAVED", result.getStatus());
+        verify(autoBidRepository).save(any(AutoBidConfig.class));
+
+        // Sleep briefly to allow asynchronous worker to process
+        Thread.sleep(150);
+
+        verify(bidGateway).placeAutoBid(bidderId, auctionId, new BigDecimal("100.00"));
+    }
+
+    @Test
+    public void testTriggerAutoBids_FirstBidOnEmptyAuction_StartsAtStartingPrice() throws Exception {
+        UUID auctionId = UUID.randomUUID();
+        UUID bidderId = UUID.randomUUID();
+        AutoBidConfig config = new AutoBidConfig(auctionId, bidderId, new BigDecimal("200.00"), new BigDecimal("10.00"));
+
+        Auction auction = mock(Auction.class);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auction.getStartingPrice()).thenReturn(new BigDecimal("100.00"));
+        when(auction.getCurrentHighestBid()).thenReturn(null);
+        when(auctionGateway.findById(auctionId)).thenReturn(Optional.of(auction));
+
+        when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(config));
+
+        BidTransaction bidTx = mock(BidTransaction.class);
+        when(bidTx.getAmount()).thenReturn(new BigDecimal("100.00"));
+        when(bidTx.getBidderId()).thenReturn(bidderId);
+        when(bidGateway.placeAutoBid(bidderId, auctionId, new BigDecimal("100.00"))).thenReturn(bidTx);
+
+        autoBidService.triggerAutoBids(auctionId, BigDecimal.ZERO, null);
+
+        verify(bidGateway).placeAutoBid(bidderId, auctionId, new BigDecimal("100.00"));
+    }
+
+    @Test
+    public void testTriggerAutoBids_FirstBidOnEmptyAuction_WithCompetitor_ProxyBidsToCompetitorMaxPlusIncrement() throws Exception {
+        UUID auctionId = UUID.randomUUID();
+        UUID botAId = UUID.randomUUID();
+        UUID botBId = UUID.randomUUID();
+        
+        AutoBidConfig configA = new AutoBidConfig(auctionId, botAId, new BigDecimal("200.00"), new BigDecimal("10.00"));
+        AutoBidConfig configB = new AutoBidConfig(auctionId, botBId, new BigDecimal("150.00"), new BigDecimal("10.00"));
+
+        Auction auction = mock(Auction.class);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auction.getStartingPrice()).thenReturn(new BigDecimal("100.00"));
+        when(auction.getCurrentHighestBid()).thenReturn(null);
+        when(auctionGateway.findById(auctionId)).thenReturn(Optional.of(auction));
+
+        when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(configA, configB));
+
+        BidTransaction bidTx = mock(BidTransaction.class);
+        when(bidTx.getAmount()).thenReturn(new BigDecimal("160.00"));
+        when(bidTx.getBidderId()).thenReturn(botAId);
+        when(bidGateway.placeAutoBid(botAId, auctionId, new BigDecimal("160.00"))).thenReturn(bidTx);
+
+        autoBidService.triggerAutoBids(auctionId, BigDecimal.ZERO, null);
+
+        verify(bidGateway).placeAutoBid(botAId, auctionId, new BigDecimal("160.00"));
+        verify(bidGateway, atMost(1)).placeAutoBid(any(), any(), any());
+    }
+
+    @Test
+    public void testTriggerAutoBids_BiddingWar_SettlesDirectlyWithoutLooping() throws Exception {
+        UUID auctionId = UUID.randomUUID();
+        UUID currentBidder = UUID.randomUUID();
+        UUID botAId = UUID.randomUUID();
+        UUID botBId = UUID.randomUUID();
+
+        AutoBidConfig configA = new AutoBidConfig(auctionId, botAId, new BigDecimal("300.00"), new BigDecimal("10.00"));
+        AutoBidConfig configB = new AutoBidConfig(auctionId, botBId, new BigDecimal("250.00"), new BigDecimal("10.00"));
+
+        Auction auction = mock(Auction.class);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auctionGateway.findById(auctionId)).thenReturn(Optional.of(auction));
+
+        when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(configA, configB));
+
+        BigDecimal currentBid = new BigDecimal("100.00");
+
+        BidTransaction bidTx = mock(BidTransaction.class);
+        when(bidTx.getAmount()).thenReturn(new BigDecimal("260.00"));
+        when(bidTx.getBidderId()).thenReturn(botAId);
+        when(bidGateway.placeAutoBid(botAId, auctionId, new BigDecimal("260.00"))).thenReturn(bidTx);
+
+        autoBidService.triggerAutoBids(auctionId, currentBid, currentBidder);
+
+        verify(bidGateway).placeAutoBid(botAId, auctionId, new BigDecimal("260.00"));
+        verify(bidGateway, atMost(1)).placeAutoBid(any(), any(), any());
+    }
 }

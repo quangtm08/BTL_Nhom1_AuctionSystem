@@ -117,8 +117,28 @@ public final class DatabaseInitializer {
     public static void init(DataSource dataSource) {
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement()) {
+            // Kiểm tra xem database hiện tại có phải là SQLite hay không
+            boolean isSqlite = conn.getMetaData().getDatabaseProductName().toLowerCase().contains("sqlite");
             for (String ddl : STATEMENTS) {
-                stmt.execute(ddl);
+                String sql = ddl;
+                // SQLite không hỗ trợ cú pháp "ADD COLUMN IF NOT EXISTS".
+                // Do đó, nếu là SQLite, chúng ta chuyển đổi thành "ADD COLUMN".
+                if (isSqlite && ddl.contains("ADD COLUMN IF NOT EXISTS")) {
+                    sql = ddl.replace("ADD COLUMN IF NOT EXISTS", "ADD COLUMN");
+                }
+                try {
+                    stmt.execute(sql);
+                } catch (SQLException e) {
+                    String msg = e.getMessage().toLowerCase();
+                    // Khi dùng SQLite và cột đã tồn tại từ trước, câu lệnh ALTER TABLE ADD COLUMN
+                    // sẽ ném ra ngoại lệ "duplicate column name" hoặc "already exists".
+                    // Chúng ta bỏ qua lỗi này vì cột đã được khởi tạo thành công ở lần chạy trước.
+                    if (msg.contains("duplicate column name") || msg.contains("already exists")) {
+                        // Bỏ qua lỗi vì cột đã tồn tại
+                    } else {
+                        throw e;
+                    }
+                }
             }
             System.out.println("DatabaseInitializer: schema ready.");
         } catch (SQLException e) {
