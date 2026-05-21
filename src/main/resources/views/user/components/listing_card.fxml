@@ -15,7 +15,7 @@
 
     <HBox alignment="BOTTOM_LEFT">
         <VBox spacing="2" HBox.hgrow="ALWAYS">
-            <Label text="Current bid" styleClass="card-sub-text"/>
+            <Label text="Current bid (starts at start price)" styleClass="card-sub-text"/>
             <Label fx:id="priceLabel" text="0" styleClass="card-price-text" maxWidth="Infinity"/>
             <Label text="Listing" styleClass="card-sub-text"/>
         </VBox>
