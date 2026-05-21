@@ -43,16 +43,20 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
+                java.sql.Timestamp sTs = rs.getTimestamp("start_time");
+                java.sql.Timestamp eTs = rs.getTimestamp("end_time");
+                java.time.LocalDateTime s = sTs != null ? sTs.toLocalDateTime() : null;
+                java.time.LocalDateTime e = eTs != null ? eTs.toLocalDateTime() : null;
                 result.add(new AuctionSummaryDto(
-                        rs.getString("id"),
-                        rs.getString("item_name"),
-                        rs.getString("category"),
-                        rs.getBigDecimal("starting_price"),
-                        rs.getBigDecimal("current_highest_bid"),
-                        rs.getTimestamp("start_time").toLocalDateTime(),
-                        rs.getTimestamp("end_time").toLocalDateTime(),
-                        AuctionStatus.valueOf(rs.getString("status")),
-                        rs.getString("seller_id")));
+                    rs.getString("id"),
+                    rs.getString("item_name"),
+                    rs.getString("category"),
+                    rs.getBigDecimal("starting_price"),
+                    rs.getBigDecimal("current_highest_bid"),
+                    s,
+                    e,
+                    AuctionStatus.valueOf(rs.getString("status")),
+                    rs.getString("seller_id")));
             }
 
         } catch (SQLException e) {
