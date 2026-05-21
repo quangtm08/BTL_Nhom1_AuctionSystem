@@ -42,7 +42,7 @@ public class MyListingsController {
 
     @FXML private void initialize() { loadMyListings(); ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_BID_UPDATE, this::handleBidUpdatePush); }
     @FXML private void handleCreateListing() { AppNavigator.navigateTo(AppView.CREATE_LISTING); }
-    @FXML private void handleEditListing() { AppNavigator.navigateTo(AppView.EDIT_LISTING); }
+    private void handleEditListing(AuctionSummaryDto dto) { AppContext.setSelectedAuctionId(dto.getId()); AppNavigator.navigateTo(AppView.EDIT_LISTING); }
 
     private void renderListings(List<AuctionSummaryDto> listings) {
         priceLabels.clear(); listingsGrid.getChildren().clear();
@@ -54,7 +54,7 @@ public class MyListingsController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/user/components/listing_card.fxml"));
             Parent card = loader.load();
             ListingCardComponentController c = loader.getController();
-            c.bind(dto, formatStatus(dto.getStatus()), formatMoney(resolveDisplayCurrentBid(dto)), formatTimeLeft(dto.getEndTime()), isEnded(dto.getStatus()), this::handleEditListing, () -> handleDeleteListing(dto));
+            c.bind(dto, formatStatus(dto.getStatus()), formatMoney(resolveDisplayCurrentBid(dto)), formatTimeLeft(dto.getEndTime()), isEnded(dto.getStatus()), () -> handleEditListing(dto), () -> handleDeleteListing(dto));
             if (dto.getId() != null) priceLabels.put(dto.getId(), c.getPriceLabel());
             return card;
         } catch (IOException e) { throw new RuntimeException("Failed to load listing card component", e); }
