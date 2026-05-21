@@ -218,7 +218,7 @@ public class AuctionRepository {
                     UPDATE auctions
                     SET current_highest_bid = ?, highest_bidder_id = ?, updated_at = ?
                     WHERE id = ?
-                      AND status IN ('OPEN', 'RUNNING')
+                      AND status = 'RUNNING'
                       AND (current_highest_bid IS NULL OR current_highest_bid < ?)
                 """;
 

@@ -40,7 +40,7 @@ final class AuctionBidValidator {
         if (bidderId.equals(auction.getSellerId())) {
             throw new UnauthorizedActionException("seller cannot bid on their own auction");
         }
-        if (auction.getStatus() != AuctionStatus.RUNNING && auction.getStatus() != AuctionStatus.OPEN) {
+        if (auction.getStatus() != AuctionStatus.RUNNING) {
             throw new AuctionClosedException("auction is not accepting bids");
         }
         if (bidTime.isAfter(auction.getEndTime())) {
