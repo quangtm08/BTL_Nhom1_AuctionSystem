@@ -2,6 +2,7 @@ package com.nhom1.auction.common.dto.auction;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
@@ -20,6 +21,7 @@ public class CreateAuctionRequest {
     
     // Seller information
     private String sellerId;
+       private List<String> imageUrls;
 
     public CreateAuctionRequest() {}
 
@@ -101,5 +103,13 @@ public class CreateAuctionRequest {
 
     public void setSellerId(String sellerId) {
         this.sellerId = sellerId;
+    }
+
+        public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls;
     }
 }

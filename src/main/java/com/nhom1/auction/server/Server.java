@@ -2,6 +2,7 @@ package com.nhom1.auction.server;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,9 +16,10 @@ import com.nhom1.auction.server.infrastructure.ServerContext;
  */
 public class Server {
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
         // Use the PORT environment variable if available (required for Railway deployment)
         String portEnv = System.getenv("PORT");
-        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 16743;
+        int port = (portEnv != null) ? Integer.parseInt(portEnv) : 41177;
         int clientCount = 0;
         ExecutorService pool = Executors.newFixedThreadPool(10);
 

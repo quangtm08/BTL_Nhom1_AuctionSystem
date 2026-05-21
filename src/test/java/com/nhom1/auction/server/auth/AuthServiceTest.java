@@ -4,6 +4,7 @@ import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.UserAlreadyExistsException;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,12 +21,15 @@ public class AuthServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private NotificationService notificationService;
+
     private AuthService authService;
 
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        authService = new AuthService(userRepository);
+        authService = new AuthService(userRepository, notificationService);
     }
 
     @Test

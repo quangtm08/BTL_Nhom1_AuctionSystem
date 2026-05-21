@@ -3,6 +3,8 @@ package com.nhom1.auction.client.admin.controller;
 import com.nhom1.auction.client.admin.service.AdminClientService;
 import com.nhom1.auction.common.dto.admin.UserSummaryDto;
 import com.nhom1.auction.common.enums.UserRole;
+import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.common.protocol.MessageType;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -27,6 +29,17 @@ public class UserManagementController {
     @FXML
     public void initialize() {
         reloadUsers();
+
+        // Register push handlers so admin view updates in realtime
+        ServerConnection.getInstance().registerPushHandler(
+                MessageType.PUSH_USER_DELETED,
+                json -> Platform.runLater(this::reloadUsers)
+        );
+
+        ServerConnection.getInstance().registerPushHandler(
+                MessageType.PUSH_USER_CREATED,
+                json -> Platform.runLater(this::reloadUsers)
+        );
     }
 
     private void reloadUsers() {
