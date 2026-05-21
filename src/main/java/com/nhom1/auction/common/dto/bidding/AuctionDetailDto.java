@@ -14,6 +14,7 @@ public class AuctionDetailDto {
     private ItemCategory itemCategory;
     private ItemCondition itemCondition;
     private String sellerID;
+    private BigDecimal startingPrice;
     private BigDecimal currentHighestBid; 
     private String currentHighestBidderId;
     private BigDecimal minBidIncrement;
@@ -24,7 +25,7 @@ public class AuctionDetailDto {
     private String sellerName;
     private List<String> imageUrls;
     public AuctionDetailDto() {}
-    public AuctionDetailDto(String auctionId, String itemID, String itemName, String itemDescription, ItemCategory itemCategory, ItemCondition itemCondition, String sellerID, BigDecimal currentHighestBid, String currentHighestBidderId, BigDecimal minBidIncrement, AuctionStatus status, LocalDateTime startTime, LocalDateTime endTime, List<BidSummaryDto> bidHistory) {
+    public AuctionDetailDto(String auctionId, String itemID, String itemName, String itemDescription, ItemCategory itemCategory, ItemCondition itemCondition, String sellerID, BigDecimal startingPrice, BigDecimal currentHighestBid, String currentHighestBidderId, BigDecimal minBidIncrement, AuctionStatus status, LocalDateTime startTime, LocalDateTime endTime, List<BidSummaryDto> bidHistory) {
         this.auctionId = auctionId;
         this.itemID = itemID;
         this.itemName = itemName;
@@ -32,6 +33,7 @@ public class AuctionDetailDto {
         this.itemCategory = itemCategory;
         this.itemCondition = itemCondition;
         this.sellerID = sellerID;
+        this.startingPrice = startingPrice;
         this.currentHighestBid = currentHighestBid;
         this.currentHighestBidderId = currentHighestBidderId;
         this.minBidIncrement = minBidIncrement;
@@ -64,6 +66,9 @@ public class AuctionDetailDto {
     }
     public BigDecimal getCurrentHighestBid() {
         return currentHighestBid;
+    }
+    public BigDecimal getStartingPrice() {
+        return startingPrice;
     }
     public String getCurrentHighestBidderId() {
         return currentHighestBidderId;
