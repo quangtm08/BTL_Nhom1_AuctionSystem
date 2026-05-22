@@ -39,6 +39,9 @@ public class MyListingsController {
     @FXML private void initialize() {
         loadMyListings();
         pushService.onBidUpdate(event -> Platform.runLater(() -> handleBidUpdatePush(event)));
+        pushService.onNewAuction(event -> Platform.runLater(this::loadMyListings));
+        pushService.onAuctionEnded(event -> Platform.runLater(this::loadMyListings));
+        pushService.onAuctionDeleted(event -> Platform.runLater(this::loadMyListings));
     }
     @FXML private void handleCreateListing() { AppNavigator.navigateTo(AppView.CREATE_LISTING); }
     @FXML private void handleEditListing() { AppNavigator.navigateTo(AppView.EDIT_LISTING); }

@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
 import javax.sql.DataSource;
 
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
@@ -175,8 +176,9 @@ public class BidService {
 
     public ListAuctionsResponse listAllAuctions() {
     	List<AuctionSummaryDto> auctions = auctionRepository.findAll().stream()
+    		.filter(a -> a.getStatus() == com.nhom1.auction.common.enums.AuctionStatus.RUNNING)
     		.map(this::toAuctionSummaryDto)
-    		.toList(); // Convert Auction to AuctionSummaryDto for client consumption
+    		.toList(); // Only running auctions for browse
 
     	ListAuctionsResponse response = new ListAuctionsResponse();
     	response.setAuctions(auctions);

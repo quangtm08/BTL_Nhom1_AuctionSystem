@@ -21,11 +21,11 @@
                 <HBox spacing="60">
                     <VBox spacing="5">
                         <Label text="Active bids" styleClass="stat-label"/>
-                        <Label text="0 " styleClass="stat-value-white"/>
+                        <Label fx:id="activeBidCountLabel" text="0" styleClass="stat-value-white"/>
                     </VBox>
                     <VBox spacing="5">
                         <Label text="Ending soon (24h)" styleClass="stat-label"/>
-                        <Label text="0" styleClass="stat-value-white"/>
+                        <Label fx:id="endingSoonCountLabel" text="0" styleClass="stat-value-white"/>
                     </VBox>
                 </HBox>
                 

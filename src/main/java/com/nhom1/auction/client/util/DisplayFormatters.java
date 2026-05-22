@@ -63,7 +63,12 @@ public final class DisplayFormatters {
         if (status == null) {
             return "Unknown";
         }
-        return isEnded(status) ? "Ended" : "Running";
+        return switch (status) {
+            case PENDING -> "Pending";
+            case OPEN -> "Open";
+            case RUNNING -> "Running";
+            case FINISHED, CANCELED, PAID -> "Ended";
+        };
     }
 
     public static boolean isEnded(AuctionStatus status) {

@@ -18,6 +18,7 @@ public class CreateAuctionRequest {
     private BigDecimal startingPrice;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private Integer durationDays;
     
     // Seller information
     private String sellerId;
@@ -25,7 +26,7 @@ public class CreateAuctionRequest {
 
     public CreateAuctionRequest() {}
 
-    public CreateAuctionRequest(String name, String description, ItemCategory category, ItemCondition condition, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime, String sellerId) {
+    public CreateAuctionRequest(String name, String description, ItemCategory category, ItemCondition condition, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime, Integer durationDays, String sellerId) {
         this.name = name;
         this.description = description;
         this.category = category;
@@ -33,6 +34,7 @@ public class CreateAuctionRequest {
         this.startingPrice = startingPrice;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.durationDays = durationDays;
         this.sellerId = sellerId;
     }
 
@@ -94,6 +96,14 @@ public class CreateAuctionRequest {
 
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
+    }
+
+    public Integer getDurationDays() {
+        return durationDays;
+    }
+
+    public void setDurationDays(Integer durationDays) {
+        this.durationDays = durationDays;
     }
 
     // Getters and Setters for seller

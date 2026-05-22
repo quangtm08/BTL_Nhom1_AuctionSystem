@@ -118,10 +118,10 @@ public class BidServiceTest {
         when(auctionRepository.findById(auctionId, connection)).thenAnswer(invocation -> {
             Auction freshAuction = new Auction(auctionId, UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"),
                     LocalDateTime.now().minusHours(1), LocalDateTime.now().plusHours(1), null, null,
-                    com.nhom1.auction.common.enums.AuctionStatus.RUNNING, LocalDateTime.now(), LocalDateTime.now(), 0L);
+                    com.nhom1.auction.common.enums.AuctionStatus.RUNNING, LocalDateTime.now(), LocalDateTime.now(), 0);
             return Optional.of(freshAuction);
         });
-        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(0L), eq(connection)))
+        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(0), eq(connection)))
                 .thenReturn(0);
 
         ConflictException thrown = assertThrows(ConflictException.class,
