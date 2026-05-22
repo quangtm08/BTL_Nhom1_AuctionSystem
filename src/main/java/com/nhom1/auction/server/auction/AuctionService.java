@@ -23,7 +23,12 @@ public class AuctionService {
     private final ItemImageRepository itemImageRepository;
     private final DataSource dataSource;
 
-    public AuctionService(AuctionRepository auctionRepository, ItemRepository itemRepository, ItemImageRepository itemImageRepository, DataSource dataSource) {
+    public AuctionService(
+        AuctionRepository auctionRepository,
+        ItemRepository itemRepository,
+        ItemImageRepository itemImageRepository,
+        DataSource dataSource
+    ) {
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
         this.itemImageRepository = itemImageRepository;
@@ -41,16 +46,20 @@ public class AuctionService {
             connection.setAutoCommit(false);
             try {
                 itemRepository.save(item, parsedSellerId, connection);
-                itemImageRepository.saveImageUrls(item.getId(), dto.getImageUrls(), connection);
+                itemImageRepository.saveImageUrls(
+                    item.getId(),
+                    dto.getImageUrls(),
+                    connection
+                );
 
                 Auction auction = new Auction(
-                        item.getId(),
-                        parsedSellerId,
-                        dto.getStartingPrice(),
-                        dto.getStartTime(),
-                        dto.getEndTime()
+                    item.getId(),
+                    parsedSellerId,
+                    dto.getStartingPrice(),
+                    dto.getStartTime(),
+                    dto.getEndTime()
                 );
-                auction.startAuction();
+
                 auctionRepository.save(auction, connection);
                 // Keep the opening price in auction state for listing/display and first-bid validation.
                 auctionRepository.updateHighestBid(
@@ -146,14 +155,10 @@ public class AuctionService {
                     connection
                 );
                 if (deletedAuctions == 0) {
-                    throw new IllegalStateException(
-                        "Auction was not deleted."
-                    );
+                    throw new IllegalStateException("Auction was not deleted.");
                 }
                 if (deletedItems == 0) {
-                    throw new IllegalStateException(
-                        "Item was not deleted."
-                    );
+                    throw new IllegalStateException("Item was not deleted.");
                 }
                 connection.commit();
             } catch (AppException ex) {
