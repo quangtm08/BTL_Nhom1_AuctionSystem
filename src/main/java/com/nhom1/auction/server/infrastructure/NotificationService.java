@@ -1,8 +1,11 @@
 package com.nhom1.auction.server.infrastructure;
 
 import com.nhom1.auction.common.dto.notification.AuctionEndedEvent;
+import com.nhom1.auction.common.dto.notification.AuctionDeletedEvent;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.dto.notification.NewAuctionEvent;
+import com.nhom1.auction.common.dto.notification.UserCreatedEvent;
+import com.nhom1.auction.common.dto.notification.UserDeletedEvent;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
@@ -60,27 +63,17 @@ public class NotificationService {
     }
 
     public void broadcastAuctionDeleted(String auctionId) {
-        java.util.Map<String, Object> payload = java.util.Map.of(
-            "auctionId",
-            auctionId
-        );
+        AuctionDeletedEvent payload = new AuctionDeletedEvent(auctionId);
         sendPush(MessageType.PUSH_AUCTION_DELETED, payload);
     }
 
     public void broadcastUserDeleted(String userId) {
-        java.util.Map<String, Object> payload = java.util.Map.of(
-            "userId",
-            userId
-        );
+        UserDeletedEvent payload = new UserDeletedEvent(userId);
         sendPush(MessageType.PUSH_USER_DELETED, payload);
     }
 
     public void broadcastUserCreated(String userId, String username, String email) {
-        java.util.Map<String, Object> payload = java.util.Map.of(
-            "userId", userId,
-            "username", username,
-            "email", email
-        );
+        UserCreatedEvent payload = new UserCreatedEvent(userId, username, email);
         sendPush(MessageType.PUSH_USER_CREATED, payload);
     }
 

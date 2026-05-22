@@ -71,6 +71,7 @@ public class ServerContext {
         AutoBidService autoBidService = AutoBidModule.init(
             this.dataSource,
             this.router,
+            auctionGateway,
             bidGateway,
             this.notificationService
         );

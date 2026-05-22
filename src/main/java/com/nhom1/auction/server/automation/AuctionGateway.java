@@ -4,6 +4,7 @@ import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -13,6 +14,7 @@ import java.util.UUID;
  */
 public interface AuctionGateway {
     List<Auction> findAll();
+    Optional<Auction> findById(UUID auctionId);
     void updateStatus(UUID auctionId, AuctionStatus status);
     void updateEndTime(UUID auctionId, LocalDateTime newEndTime);
 }

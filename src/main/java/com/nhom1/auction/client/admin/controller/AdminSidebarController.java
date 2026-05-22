@@ -2,11 +2,10 @@ package com.nhom1.auction.client.admin.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.common.utils.AppContext;
 
-import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.util.Duration;
 
 public class AdminSidebarController {
     
@@ -23,17 +22,20 @@ public class AdminSidebarController {
         btnDashboard.setOnAction(e -> navigateWithLoading(AppView.ADMIN_OVERVIEW));
         btnUsers.setOnAction(e -> navigateWithLoading(AppView.USER_MANAGEMENT));
         btnAuctions.setOnAction(e -> navigateWithLoading(AppView.AUCTION_MANAGEMENT));
-        btnLogout.setOnAction(e -> navigateWithLoading(AppView.SIGN_IN));
+        btnLogout.setOnAction(e -> logout());
 
 
     }
 
     private void navigateWithLoading(AppView targetView) {
-        // Không reload nếu đang ở màn hiện tại
         if (AppNavigator.getCurrentView() == targetView) return;
 
-        // Bỏ qua màn LOADING và delay, chuyển thẳng đến view đích
         AppNavigator.navigateTo(targetView);
+    }
+
+    private void logout() {
+        AppContext.clearSession();
+        AppNavigator.navigateTo(AppView.SIGN_IN);
     }
 
     private void updateActiveButton() {
