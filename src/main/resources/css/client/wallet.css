@@ -1,0 +1,223 @@
+/* Wallet CSS */
+.root-pane {
+    -fx-background-color: #050505;
+}
+
+.main-content {
+    -fx-padding: 40 60;
+    -fx-background-color: #050505;
+}
+
+.main-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.main-scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Typography */
+.header-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+    -fx-font-size: 42px;
+}
+
+.section-label {
+    -fx-text-fill: #5a5f5e;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 20 0 10 0;
+}
+
+/* Balance Dashboard Card */
+.balance-card {
+    -fx-background-color: linear-gradient(to right, #0a1f14, #123222);
+    -fx-background-radius: 16;
+    -fx-padding: 25 35;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 16;
+    -fx-spacing: 10;
+}
+
+.balance-card-title {
+    -fx-text-fill: #85a395;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.balance-card-value {
+    -fx-text-fill: #4caf50;
+    -fx-font-size: 48px;
+    -fx-font-weight: bold;
+}
+
+.balance-card-subtitle {
+    -fx-text-fill: #6a6f6e;
+    -fx-font-size: 13px;
+}
+
+/* Action Cards */
+.action-box {
+    -fx-spacing: 25;
+}
+
+.action-card {
+    -fx-background-color: #111614;
+    -fx-background-radius: 12;
+    -fx-padding: 20 25;
+    -fx-border-color: #1e2421;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-spacing: 15;
+}
+
+.card-title {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+/* Inputs & Forms */
+.form-input-field {
+    -fx-background-color: #161c19;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: white;
+    -fx-padding: 10 12;
+    -fx-font-size: 14px;
+}
+
+.form-input-field:focused {
+    -fx-border-color: #4caf50;
+    -fx-background-color: #18221d;
+}
+
+/* Quick buttons */
+.quick-btn {
+    -fx-background-color: #16251e;
+    -fx-text-fill: #8cb8a3;
+    -fx-border-color: #233e31;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 12px;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+}
+
+.quick-btn:hover {
+    -fx-background-color: #233e31;
+    -fx-text-fill: white;
+    -fx-border-color: #2b6b4c;
+}
+
+/* History logs */
+.history-row {
+    -fx-padding: 15 20;
+    -fx-background-color: #0c100e;
+    -fx-background-radius: 8;
+    -fx-border-color: #171f1b;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+}
+
+.history-row:hover {
+    -fx-background-color: #111714;
+    -fx-border-color: #1e2a24;
+}
+
+.history-name {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.history-desc {
+    -fx-text-fill: #8fa097;
+    -fx-font-size: 13px;
+    -fx-padding: 3 0 0 0;
+}
+
+.history-ref {
+    -fx-text-fill: #5a6460;
+    -fx-font-size: 11px;
+}
+
+.history-date {
+    -fx-text-fill: #6a6f6e;
+    -fx-font-size: 13px;
+}
+
+.history-price {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+
+.price-positive {
+    -fx-text-fill: #4caf50;
+}
+
+.price-negative {
+    -fx-text-fill: #ff5c5c;
+}
+
+.price-neutral {
+    -fx-text-fill: #b8c5be;
+}
+
+/* Badges for transaction types */
+.badge-deposit {
+    -fx-background-color: #16301e;
+    -fx-text-fill: #4caf50;
+    -fx-padding: 3 10;
+    -fx-background-radius: 5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-withdraw {
+    -fx-background-color: #3b1c1c;
+    -fx-text-fill: #ff5c5c;
+    -fx-padding: 3 10;
+    -fx-background-radius: 5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-payment {
+    -fx-background-color: #162438;
+    -fx-text-fill: #5fa5ff;
+    -fx-padding: 3 10;
+    -fx-background-radius: 5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-receipt {
+    -fx-background-color: #2b1f3c;
+    -fx-text-fill: #b485ff;
+    -fx-padding: 3 10;
+    -fx-background-radius: 5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.badge-refund {
+    -fx-background-color: #2b331f;
+    -fx-text-fill: #a2d149;
+    -fx-padding: 3 10;
+    -fx-background-radius: 5;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.content-divider {
+    -fx-border-color: #1c221f;
+    -fx-border-width: 1 0 0 0;
+}

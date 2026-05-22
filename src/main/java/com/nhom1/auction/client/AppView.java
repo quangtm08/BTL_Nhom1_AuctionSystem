@@ -11,6 +11,7 @@ public enum AppView {
     EDIT_LISTING("/views/user/edit_auction.fxml", null),
     MY_BIDS("/views/user/my_bids.fxml", null),
     PAYMENT("/views/user/payment.fxml", null),
+    WALLET("/views/user/wallet.fxml", null),
 
     ADMIN_OVERVIEW("/views/admin/admin_overview.fxml", null),
     USER_MANAGEMENT("/views/admin/user_management.fxml", null),
