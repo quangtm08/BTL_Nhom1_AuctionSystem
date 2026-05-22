@@ -11,9 +11,12 @@ import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.dto.notification.NewAuctionEvent;
 import com.nhom1.auction.common.dto.notification.UserCreatedEvent;
 import com.nhom1.auction.common.dto.notification.UserDeletedEvent;
+import com.nhom1.auction.common.dto.notification.WalletUpdateEvent;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import java.util.function.Consumer;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientPushService {
     private static ClientPushService instance;
@@ -26,6 +29,7 @@ public class ClientPushService {
     private volatile Consumer<AuctionTimeExtendedEvent> auctionTimeExtendedHandler;
     private volatile Consumer<UserDeletedEvent> userDeletedHandler;
     private volatile Consumer<UserCreatedEvent> userCreatedHandler;
+    private final List<Consumer<WalletUpdateEvent>> walletUpdateHandlers = new CopyOnWriteArrayList<>();
 
     private ClientPushService() {
         mapper.registerModule(new JavaTimeModule());
@@ -44,6 +48,8 @@ public class ClientPushService {
                 json -> dispatch(json, UserDeletedEvent.class, userDeletedHandler));
         connection.registerPushHandler(MessageType.PUSH_USER_CREATED,
                 json -> dispatch(json, UserCreatedEvent.class, userCreatedHandler));
+        connection.registerPushHandler(MessageType.PUSH_WALLET_UPDATE,
+                json -> dispatchList(json, WalletUpdateEvent.class, walletUpdateHandlers));
     }
 
     public static synchronized ClientPushService getInstance() {
@@ -87,6 +93,10 @@ public class ClientPushService {
         this.userCreatedHandler = handler;
     }
 
+    public void addWalletUpdateListener(Consumer<WalletUpdateEvent> handler) {
+        this.walletUpdateHandlers.add(handler);
+    }
+
     private void clearHandlers() {
         bidUpdateHandler = null;
         newAuctionHandler = null;
@@ -95,6 +105,7 @@ public class ClientPushService {
         auctionTimeExtendedHandler = null;
         userDeletedHandler = null;
         userCreatedHandler = null;
+        walletUpdateHandlers.clear();
     }
 
     private <T> void dispatch(String json, Class<T> payloadClass, Consumer<T> handler) {
@@ -109,6 +120,24 @@ public class ClientPushService {
             handler.accept(event);
         } catch (Exception e) {
             System.err.println("Error parsing push " + payloadClass.getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private <T> void dispatchList(String json, Class<T> payloadClass, List<Consumer<T>> handlers) {
+        try {
+            T event = readPayload(json, payloadClass);
+            if (event == null) {
+                return;
+            }
+            for (Consumer<T> handler : handlers) {
+                try {
+                    handler.accept(event);
+                } catch (Exception e) {
+                    System.err.println("Error executing push handler: " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error parsing push list " + payloadClass.getSimpleName() + ": " + e.getMessage());
         }
     }
 

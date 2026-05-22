@@ -12,6 +12,7 @@ import com.nhom1.auction.common.exception.PaymentException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
+import com.nhom1.auction.server.wallet.WalletService;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -22,11 +23,13 @@ import java.util.UUID;
 public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final AuctionRepository auctionRepository;
+    private final WalletService walletService;
     private final DataSource dataSource;
 
-    public PaymentService(PaymentRepository paymentRepository, AuctionRepository auctionRepository, DataSource dataSource) {
+    public PaymentService(PaymentRepository paymentRepository, AuctionRepository auctionRepository, WalletService walletService, DataSource dataSource) {
         this.paymentRepository = paymentRepository;
         this.auctionRepository = auctionRepository;
+        this.walletService = walletService;
         this.dataSource = dataSource;
     }
 
@@ -57,8 +60,18 @@ public class PaymentService {
             connection.setAutoCommit(false);
             try {
                 paymentRepository.saveCompletedPayment(parsedAuctionId, parsedBidderId, auction.getSellerId(), amount, now, connection);
+                walletService.transfer(parsedBidderId, auction.getSellerId(), amount, parsedAuctionId.toString(), "Payment for auction " + auction.getId(), connection);
                 auctionRepository.updateStatus(parsedAuctionId, AuctionStatus.PAID, connection);
                 connection.commit();
+
+                // Trigger real-time wallet push updates post-commit
+                try {
+                    walletService.pushWalletUpdate(parsedBidderId);
+                    walletService.pushWalletUpdate(auction.getSellerId());
+                } catch (Exception e) {
+                    System.err.println("[PaymentService] Error sending real-time wallet push updates: " + e.getMessage());
+                }
+
                 return new ProcessPaymentResponse(parsedAuctionId.toString(), amount, "COMPLETED", now);
             } catch (AppException e) {
                 connection.rollback();
