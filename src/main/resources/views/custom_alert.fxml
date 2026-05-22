@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 <VBox styleClass="alert-box"
-    xmlns="http://javafx.com/javafx/25"
+    xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml"
       alignment="CENTER"
       spacing="20"

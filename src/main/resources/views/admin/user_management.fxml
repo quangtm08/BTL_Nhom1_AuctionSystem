@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane xmlns="http://javafx.com/javafx/25"            fx:controller="com.nhom1.auction.client.admin.controller.UserManagementController"
+<BorderPane xmlns="http://javafx.com/javafx/21"            fx:controller="com.nhom1.auction.client.admin.controller.UserManagementController"
             xmlns:fx="http://javafx.com/fxml"
             stylesheets="@/css/admin/user_management.css"
             styleClass="root">

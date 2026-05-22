@@ -38,10 +38,10 @@ public class AuctionRepository {
         String sql = """
                     INSERT INTO auctions(
                         id, item_id, start_time, end_time, status, starting_price,
-                        current_highest_bid, highest_bidder_id,
+                        current_highest_bid, highest_bidder_id, version,
                         created_at, updated_at
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -63,10 +63,11 @@ public class AuctionRepository {
             } else {
                 ps.setNull(8, Types.VARCHAR);
             }
+            ps.setLong(9, auction.getVersion());
 
             java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
-            ps.setTimestamp(9, now);
             ps.setTimestamp(10, now);
+            ps.setTimestamp(11, now);
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -193,7 +194,7 @@ public class AuctionRepository {
     public void updateStatus(UUID auctionId, AuctionStatus status, Connection conn) {
         String sql = """
                     UPDATE auctions
-                    SET status = ?, updated_at = ?
+                    SET status = ?, version = version + 1, updated_at = ?
                     WHERE id = ?
                 """;
 
@@ -209,16 +210,31 @@ public class AuctionRepository {
 
     // ===================== UPDATE BID =====================
     /**
-     * Atomic optimistic update. The predicate ensures we only overwrite a strictly-lower
-     * current highest bid, preventing the lost-update race when two bidders compete
-     * concurrently. Returns rows updated: 0 means caller lost the race.
+     * Atomic optimistic update for the auction row.
+     *
+     * How version-based locking works here:
+     * 1. BidService reads the auction row and remembers its current version.
+     * 2. The service validates and creates the bid based on that snapshot.
+     * 3. This UPDATE only succeeds if the row still has the same version.
+     * 4. On success, we increment version by 1 so later concurrent writers must
+     *    observe the new state before updating again.
+     *
+     * This prevents "lost update" races where two concurrent bids both validate
+     * against the same old snapshot and then try to overwrite each other.
+     *
+     * Returns:
+     * - 1 row updated: caller won the race and its bid became the new highest bid.
+     * - 0 rows updated: caller lost the race because another write changed the row
+     *   first, or because the row is no longer RUNNING, or because the current
+     *   highest bid is already equal/higher.
      */
-    public int updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId, Connection conn) {
+    public int updateHighestBid(UUID auctionId, BigDecimal amount, UUID bidderId, long expectedVersion, Connection conn) {
         String sql = """
                     UPDATE auctions
-                    SET current_highest_bid = ?, highest_bidder_id = ?, updated_at = ?
+                    SET current_highest_bid = ?, highest_bidder_id = ?, version = version + 1, updated_at = ?
                     WHERE id = ?
                       AND status = 'RUNNING'
+                      AND version = ?
                       AND (current_highest_bid IS NULL OR current_highest_bid < ?)
                 """;
 
@@ -233,7 +249,8 @@ public class AuctionRepository {
 
             ps.setTimestamp(3, java.sql.Timestamp.valueOf(LocalDateTime.now()));
             ps.setString(4, auctionId.toString());
-            ps.setBigDecimal(5, amount);
+            ps.setLong(5, expectedVersion);
+            ps.setBigDecimal(6, amount);
 
             return ps.executeUpdate();
         } catch (SQLException e) {
@@ -245,7 +262,7 @@ public class AuctionRepository {
     public void updateEndTime(UUID auctionId, LocalDateTime newEndTime) {
         String sql = """
                     UPDATE auctions
-                    SET end_time = ?, updated_at = ?
+                    SET end_time = ?, version = version + 1, updated_at = ?
                     WHERE id = ?
                 """;
 
@@ -320,6 +337,9 @@ public class AuctionRepository {
         java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
         LocalDateTime createdAt = (createdTs != null) ? createdTs.toLocalDateTime() : LocalDateTime.now();
         LocalDateTime updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
+        // version is the optimistic-lock token for this auction row.
+        // Any successful state-changing UPDATE increments it by 1.
+        long version = rs.getLong("version");
 
         return new Auction(
                 id,
@@ -332,6 +352,7 @@ public class AuctionRepository {
                 currentHighestBid,
                 status,
                 createdAt,
-                updatedAt);
+                updatedAt,
+                version);
     }
 }

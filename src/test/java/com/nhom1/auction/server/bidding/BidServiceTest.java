@@ -82,7 +82,7 @@ public class BidServiceTest {
         UUID auctionId = auction.getId();
         when(connection.getAutoCommit()).thenReturn(true);
         when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
-        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(connection)))
+        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(auction.getVersion()), eq(connection)))
                 .thenReturn(1);
 
         BidTransaction result = bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL);
@@ -91,7 +91,7 @@ public class BidServiceTest {
         assertEquals(amount, result.getAmount());
         assertEquals(bidderId, result.getBidderId());
         verify(bidRepository).save(any(BidTransaction.class), eq(connection));
-        verify(auctionRepository).updateHighestBid(auctionId, amount, bidderId, connection);
+        verify(auctionRepository).updateHighestBid(auctionId, amount, bidderId, auction.getVersion(), connection);
         verify(connection).setAutoCommit(false);
         verify(connection).commit();
         verify(connection).setAutoCommit(true);
@@ -101,22 +101,24 @@ public class BidServiceTest {
     public void testPlaceBid_LostRace_RollsBackAndThrowsConflictException() throws Exception {
         UUID bidderId = UUID.randomUUID();
         BigDecimal amount = new BigDecimal("150.00");
-        Auction auction = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"),
-                LocalDateTime.now().minusHours(1), LocalDateTime.now().plusHours(1));
-        auction.startAuction();
-        UUID auctionId = auction.getId();
+        UUID auctionId = UUID.randomUUID();
         when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
-        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(connection)))
+        when(auctionRepository.findById(auctionId, connection)).thenAnswer(invocation -> {
+            Auction freshAuction = new Auction(auctionId, UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"),
+                    LocalDateTime.now().minusHours(1), LocalDateTime.now().plusHours(1), null, null,
+                    com.nhom1.auction.common.enums.AuctionStatus.RUNNING, LocalDateTime.now(), LocalDateTime.now(), 0L);
+            return Optional.of(freshAuction);
+        });
+        when(auctionRepository.updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(0L), eq(connection)))
                 .thenReturn(0);
 
         ConflictException thrown = assertThrows(ConflictException.class,
                 () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
 
         assertTrue(thrown.getMessage().contains("Bid lost race"));
-        verify(bidRepository).save(any(BidTransaction.class), eq(connection));
-        verify(connection).rollback();
-        verify(connection).setAutoCommit(true);
+        verify(bidRepository, times(2)).save(any(BidTransaction.class), eq(connection));
+        verify(connection, times(2)).rollback();
+        verify(connection, times(2)).setAutoCommit(true);
         verify(connection, never()).commit();
     }
 
@@ -145,7 +147,7 @@ public class BidServiceTest {
         when(connection.getAutoCommit()).thenReturn(false);
         when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
         doThrow(new RuntimeException("update failed")).when(auctionRepository)
-                .updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(connection));
+                .updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), eq(auction.getVersion()), eq(connection));
 
         RuntimeException thrown = assertThrows(RuntimeException.class,
                 () -> bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL));
