@@ -1,13 +1,5 @@
 package com.nhom1.auction.client.user.service;
 
-import java.io.File;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.enums.ItemCategory;
@@ -15,8 +7,16 @@ import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.utils.AppContext;
+import java.io.File;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public class CreateAuctionClientService extends BaseClientService {
+
     private final ImageUploadService imageUploadService;
 
     public CreateAuctionClientService() {
@@ -24,15 +24,19 @@ public class CreateAuctionClientService extends BaseClientService {
     }
 
     public String validateInput(
-            String title,
-            String startingBid,
-            ItemCategory category,
-            ItemCondition condition,
-            int durationDays,
-            LocalDate openingDate
+        String title,
+        String startingBid,
+        ItemCategory category,
+        ItemCondition condition,
+        int durationDays,
+        LocalDateTime startTime
     ) {
         AuthResponse user = AppContext.getCurrentUser();
-        if (user == null || user.getUserID() == null || user.getUserID().isBlank()) {
+        if (
+            user == null ||
+            user.getUserID() == null ||
+            user.getUserID().isBlank()
+        ) {
             return "Please sign in again.";
         }
         if (title == null || title.isBlank()) {
@@ -49,55 +53,70 @@ public class CreateAuctionClientService extends BaseClientService {
         if (durationDays <= 0) {
             return "Duration must be greater than 0.";
         }
-        if (openingDate == null) {
-            return "Opening date is required.";
-        }
-        if (!openingDate.isAfter(LocalDate.now())) {
-            return "Opening date must be after today.";
+        if (
+            startTime == null ||
+            startTime.isBefore(LocalDateTime.now().minusMinutes(1))
+        ) {
+            return "Start time cannot be in the past.";
         }
         return null;
     }
 
     public CompletableFuture<CreateAuctionResponse> createAuction(
-            String title,
-            String description,
-            String startingBid,
-            ItemCategory category,
-            ItemCondition condition,
-            int durationDays,
-            LocalDate openingDate,
-            List<File> imageFiles
+        String title,
+        String description,
+        String startingBid,
+        ItemCategory category,
+        ItemCondition condition,
+        int durationDays,
+        LocalDateTime startTime,
+        List<File> imageFiles
     ) {
-        return uploadImages(imageFiles)
-                .thenCompose(imageUrls -> {
-                    Map<String, Object> payload = buildCreateAuctionPayload(
-                            title, description, startingBid, category, condition, durationDays, openingDate, imageUrls
-                    );
-                    RequestMessage<Map<String, Object>> request = new RequestMessage<>(MessageType.CREATE_AUCTION, payload);
-                    return send(request, CreateAuctionResponse.class);
-                });
+        return uploadImages(imageFiles).thenCompose(imageUrls -> {
+            Map<String, Object> payload = buildCreateAuctionPayload(
+                title,
+                description,
+                startingBid,
+                category,
+                condition,
+                durationDays,
+                startTime,
+                imageUrls
+            );
+            RequestMessage<Map<String, Object>> request = new RequestMessage<>(
+                MessageType.CREATE_AUCTION,
+                payload
+            );
+            return send(request, CreateAuctionResponse.class);
+        });
     }
 
-    private CompletableFuture<List<String>> uploadImages(List<File> imageFiles) {
+    private CompletableFuture<List<String>> uploadImages(
+        List<File> imageFiles
+    ) {
         if (imageFiles == null || imageFiles.isEmpty()) {
             return CompletableFuture.completedFuture(List.of());
         }
-        List<CompletableFuture<String>> uploadTasks = imageFiles.stream()
-                .map(imageUploadService::upload)
-                .toList();
-        return CompletableFuture.allOf(uploadTasks.toArray(new CompletableFuture[0]))
-                .thenApply(ignored -> uploadTasks.stream().map(CompletableFuture::join).toList());
+        List<CompletableFuture<String>> uploadTasks = imageFiles
+            .stream()
+            .map(imageUploadService::upload)
+            .toList();
+        return CompletableFuture.allOf(
+            uploadTasks.toArray(new CompletableFuture[0])
+        ).thenApply(ignored ->
+            uploadTasks.stream().map(CompletableFuture::join).toList()
+        );
     }
 
     private Map<String, Object> buildCreateAuctionPayload(
-            String title,
-            String description,
-            String startingBid,
-            ItemCategory category,
-            ItemCondition condition,
-            int durationDays,
-            LocalDate openingDate,
-            List<String> imageUrls
+        String title,
+        String description,
+        String startingBid,
+        ItemCategory category,
+        ItemCondition condition,
+        int durationDays,
+        LocalDateTime startTime,
+        List<String> imageUrls
     ) {
         AuthResponse user = AppContext.getCurrentUser();
         BigDecimal parsedStartingBid = new BigDecimal(startingBid.trim());
@@ -109,7 +128,7 @@ public class CreateAuctionClientService extends BaseClientService {
         payload.put("category", category);
         payload.put("condition", condition);
         payload.put("startingPrice", parsedStartingBid);
-        payload.put("startTime", openingDate.atStartOfDay());
+        payload.put("startTime", startTime);
         payload.put("durationDays", durationDays);
         // Backward compatibility with older Railway server schema:
         // only send imageUrls when it actually has data.
