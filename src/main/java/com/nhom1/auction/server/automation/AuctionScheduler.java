@@ -88,6 +88,7 @@ public class AuctionScheduler {
             // Anti-sniping: if last bid lands in the configured final window, extend auction.
             LocalDateTime newEndTime = auction.getEndTime().plus(antiSnipingExtension);
             auctionGateway.updateEndTime(auctionId, newEndTime);
+            notificationService.broadcastAuctionTimeExtended(auctionId, newEndTime);
             return;
         }
 
