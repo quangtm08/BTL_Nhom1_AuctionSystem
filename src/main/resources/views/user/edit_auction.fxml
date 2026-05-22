@@ -91,7 +91,7 @@
                 <Region HBox.hgrow="ALWAYS"/>
                 <HBox spacing="12.0">
                     <Button text="Cancel" styleClass="btn-secondary" onAction="#handleBackToListings"/>
-                    <Button text="Save changes" styleClass="btn-primary" onAction="#handleSaveChanges"/>
+                    <Button fx:id="saveChangesButton" text="Save changes" styleClass="btn-primary" onAction="#handleSaveChanges"/>
                 </HBox>
             </HBox>
                 </VBox>

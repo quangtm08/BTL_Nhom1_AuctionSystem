@@ -419,6 +419,27 @@ public class AuctionRepository {
         }
     }
 
+    public int updateOpenAuctionForEdit(UUID auctionId, BigDecimal startingPrice, LocalDateTime newEndTime, Connection conn) {
+        String sql = """
+                    UPDATE auctions
+                    SET starting_price = ?, current_highest_bid = ?, end_time = ?, version = version + 1, updated_at = ?
+                    WHERE id = ?
+                      AND status = 'OPEN'
+                      AND highest_bidder_id IS NULL
+                      AND (current_highest_bid IS NULL OR current_highest_bid = starting_price)
+                """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, startingPrice);
+            ps.setBigDecimal(2, startingPrice);
+            ps.setTimestamp(3, java.sql.Timestamp.valueOf(newEndTime));
+            ps.setTimestamp(4, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(5, auctionId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update open auction for edit", e);
+        }
+    }
+
     // ===================== DELETE BY ID =====================
     public int deleteById(UUID auctionId) {
         try (Connection conn = dataSource.getConnection()) {

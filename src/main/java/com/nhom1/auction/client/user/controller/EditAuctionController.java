@@ -40,6 +40,7 @@ public class EditAuctionController {
     @FXML private Label metaLabel;
     @FXML private Label statusSubLabel;
     @FXML private TextField startingBidField;
+    @FXML private Button saveChangesButton;
     private LocalDateTime loadedStartTime;
     private LocalDateTime loadedEndTime;
 
@@ -70,9 +71,20 @@ public class EditAuctionController {
                 : LocalDateTime.now();
         LocalDateTime targetEndTime = days > 0 ? baseTime.plusDays(days) : loadedEndTime;
         statusLabel.setText("Saving...");
+        if (saveChangesButton != null) saveChangesButton.setDisable(true);
         editAuctionClientService.updateAuction(auctionId, titleField.getText(), descriptionArea.getText(), startingBidField.getText(), categoryComboBox.getValue(), conditionComboBox.getValue(), targetEndTime)
-                .thenAccept(response -> Platform.runLater(() -> { statusLabel.setText("Updated successfully."); AppNavigator.navigateTo(AppView.MY_LISTINGS); }))
-                .exceptionally(ex -> { Platform.runLater(() -> statusLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage())); return null; });
+                .thenAccept(response -> Platform.runLater(() -> {
+                    if (saveChangesButton != null) saveChangesButton.setDisable(false);
+                    statusLabel.setText("Updated successfully.");
+                    AppNavigator.navigateTo(AppView.MY_LISTINGS);
+                }))
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> {
+                        if (saveChangesButton != null) saveChangesButton.setDisable(false);
+                        statusLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+                    });
+                    return null;
+                });
     }
     private void loadAuctionForEdit() {
         String auctionId = AppContext.getSelectedAuctionId();
