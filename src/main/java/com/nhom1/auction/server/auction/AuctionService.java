@@ -202,6 +202,7 @@ public class AuctionService {
     }
 
     public void updateAuction(UpdateAuctionRequest dto) {
+        if (dto == null) throw new ValidationException("UpdateAuctionRequest must not be null");
         UUID sellerUuid = parseSellerId(dto.getSellerId());
         if (dto.getAuctionId() == null || dto.getAuctionId().isBlank()) throw new ValidationException("auctionId must not be blank");
         UUID auctionUuid;
@@ -210,7 +211,9 @@ public class AuctionService {
         if (!sellerUuid.equals(auction.getSellerId())) throw new UnauthorizedActionException("You are not allowed to edit this auction");
         if (auction.getStatus() != AuctionStatus.OPEN) throw new ValidationException("Only open auctions can be edited");
         if (auction.getHighestBidderId() != null) throw new ValidationException("Auction already has bids and cannot be edited");
-        if (dto.getEndTime() == null || !dto.getEndTime().isAfter(auction.getStartTime())) throw new ValidationException("endTime must be after startTime");
+        if (dto.getEndTime() == null) throw new ValidationException("endTime is required");
+        if (auction.getStartTime() != null && !dto.getEndTime().isAfter(auction.getStartTime())) throw new ValidationException("endTime must be after startTime");
+        if (!dto.getEndTime().isAfter(LocalDateTime.now())) throw new ValidationException("endTime must be in the future");
         if (dto.getStartingPrice() == null || dto.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0) throw new ValidationException("startingPrice must be greater than 0");
         if (dto.getName() == null || dto.getName().isBlank()) throw new ValidationException("name must not be blank");
         if (dto.getCategory() == null || dto.getCondition() == null) throw new ValidationException("category and condition are required");

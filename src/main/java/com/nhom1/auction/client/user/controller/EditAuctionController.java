@@ -37,6 +37,7 @@ public class EditAuctionController {
     @FXML private TextArea descriptionArea;
     @FXML private Label statusLabel;
     @FXML private TextField startingBidField;
+    private LocalDateTime loadedStartTime;
     private LocalDateTime loadedEndTime;
 
     @FXML private void initialize() {
@@ -61,7 +62,10 @@ public class EditAuctionController {
         if (auctionId == null || auctionId.isBlank()) { statusLabel.setText("Missing auction ID."); return; }
         int days = resolveDurationDays();
         if (days <= 0 && loadedEndTime == null) { statusLabel.setText("Duration must be greater than 0."); return; }
-        LocalDateTime targetEndTime = days > 0 ? LocalDateTime.now().plusDays(days) : loadedEndTime;
+        LocalDateTime baseTime = loadedStartTime != null && loadedStartTime.isAfter(LocalDateTime.now())
+                ? loadedStartTime
+                : LocalDateTime.now();
+        LocalDateTime targetEndTime = days > 0 ? baseTime.plusDays(days) : loadedEndTime;
         statusLabel.setText("Saving...");
         editAuctionClientService.updateAuction(auctionId, titleField.getText(), descriptionArea.getText(), startingBidField.getText(), categoryComboBox.getValue(), conditionComboBox.getValue(), targetEndTime)
                 .thenAccept(response -> Platform.runLater(() -> { statusLabel.setText("Updated successfully."); AppNavigator.navigateTo(AppView.MY_LISTINGS); }))
@@ -78,6 +82,7 @@ public class EditAuctionController {
                 startingBidField.setText(dto.getStartingPrice() != null ? dto.getStartingPrice().stripTrailingZeros().toPlainString() : "");
                 if (dto.getItemCategory() != null) categoryComboBox.setValue(dto.getItemCategory());
                 if (dto.getItemCondition() != null) conditionComboBox.setValue(dto.getItemCondition());
+                loadedStartTime = dto.getStartTime();
                 loadedEndTime = dto.getEndTime();
                 applyDurationFromEndTime(loadedEndTime);
                 statusLabel.setText("Ready");
