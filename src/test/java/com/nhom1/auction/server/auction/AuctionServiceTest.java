@@ -30,8 +30,10 @@ import org.mockito.MockitoAnnotations;
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.Item;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
@@ -192,6 +194,7 @@ public class AuctionServiceTest {
         Auction auction = mock(Auction.class);
         when(auction.getSellerId()).thenReturn(parsedSellerId);
         when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
         when(auctionRepository.findById(parsedAuctionId)).thenReturn(
             Optional.of(auction)
         );
@@ -220,6 +223,7 @@ public class AuctionServiceTest {
         Auction auction = mock(Auction.class);
         when(auction.getSellerId()).thenReturn(parsedSellerId);
         when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
         when(auctionRepository.findById(parsedAuctionId)).thenReturn(
             Optional.of(auction)
         );
@@ -264,6 +268,24 @@ public class AuctionServiceTest {
         );
 
         assertThrows(NotFoundException.class, () ->
+            auctionService.deleteAuction(sellerId, auctionId)
+        );
+    }
+
+    @Test
+    public void testDeleteAuction_NonOpenAuction_ThrowsInvalidState() {
+        String sellerId = UUID.randomUUID().toString();
+        String auctionId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.fromString(auctionId);
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(
+            Optional.of(auction)
+        );
+
+        assertThrows(InvalidAuctionStateException.class, () ->
             auctionService.deleteAuction(sellerId, auctionId)
         );
     }

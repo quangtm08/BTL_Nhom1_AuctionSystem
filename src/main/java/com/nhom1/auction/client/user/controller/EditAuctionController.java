@@ -1,5 +1,6 @@
 package com.nhom1.auction.client.user.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.format.DateTimeFormatter;
@@ -7,8 +8,12 @@ import java.util.Arrays;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
-import com.nhom1.auction.client.user.service.EditAuctionClientService;
+import com.nhom1.auction.client.user.service.MyListingsClientService;
+import com.nhom1.auction.client.util.DisplayFormatters;
+import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.utils.AppContext;
@@ -17,15 +22,22 @@ import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
 public class EditAuctionController {
-    private final EditAuctionClientService editAuctionClientService = new EditAuctionClientService();
-    private final BiddingClientService biddingClientService = new BiddingClientService();
+    private final BiddingClientService biddingService = new BiddingClientService();
+    private final MyListingsClientService listingsService = new MyListingsClientService();
+
+    private String auctionId;
+
     @FXML private ComboBox<ItemCategory> categoryComboBox;
     @FXML private ComboBox<ItemCondition> conditionComboBox;
     @FXML private Button duration1Btn;
@@ -41,15 +53,23 @@ public class EditAuctionController {
     @FXML private Label statusSubLabel;
     @FXML private TextField startingBidField;
     @FXML private Button saveChangesButton;
+    @FXML private Button deleteButton;
     private LocalDateTime loadedStartTime;
     private LocalDateTime loadedEndTime;
 
     @FXML private void initialize() {
         categoryComboBox.getItems().setAll(ItemCategory.values());
         conditionComboBox.getItems().setAll(ItemCondition.values());
-        categoryComboBox.setValue(null);
-        conditionComboBox.setValue(null);
         customDurationField.textProperty().addListener((obs, oldValue, newValue) -> { if (newValue != null && !newValue.isBlank()) clearActiveDurationButtons(); });
+
+        auctionId = AppContext.getSelectedAuctionId();
+        if (auctionId == null || auctionId.isBlank()) {
+            showStatus("No listing selected.");
+            setEditable(false);
+            return;
+        }
+
+        setEditable(false);
         loadAuctionForEdit();
     }
     @FXML private void handleDurationPreset(ActionEvent event) {
@@ -62,48 +82,69 @@ public class EditAuctionController {
     private void clearActiveDurationButtons() { Arrays.asList(duration1Btn, duration3Btn, duration7Btn, duration14Btn, duration30Btn).forEach(button -> button.getStyleClass().remove("duration-chip-active")); }
     @FXML private void handleBackToListings() { AppNavigator.navigateTo(AppView.MY_LISTINGS); }
     @FXML private void handleSaveChanges() {
-        String auctionId = AppContext.getSelectedAuctionId();
-        if (auctionId == null || auctionId.isBlank()) { statusLabel.setText("Missing auction ID."); return; }
         int days = resolveDurationDays();
-        if (days <= 0 && loadedEndTime == null) { statusLabel.setText("Duration must be greater than 0."); return; }
+        if (days <= 0 && loadedEndTime == null) {
+            showStatus("Duration must be greater than 0.");
+            return;
+        }
         LocalDateTime baseTime = loadedStartTime != null && loadedStartTime.isAfter(LocalDateTime.now())
                 ? loadedStartTime
                 : LocalDateTime.now();
         LocalDateTime targetEndTime = days > 0 ? baseTime.plusDays(days) : loadedEndTime;
-        statusLabel.setText("Saving...");
-        if (saveChangesButton != null) saveChangesButton.setDisable(true);
-        editAuctionClientService.updateAuction(auctionId, titleField.getText(), descriptionArea.getText(), startingBidField.getText(), categoryComboBox.getValue(), conditionComboBox.getValue(), targetEndTime)
-                .thenAccept(response -> Platform.runLater(() -> {
-                    if (saveChangesButton != null) saveChangesButton.setDisable(false);
-                    statusLabel.setText("Updated successfully.");
-                    AppNavigator.navigateTo(AppView.MY_LISTINGS);
-                }))
+        showStatus("Saving changes...");
+        setButtonsDisabled(true);
+        listingsService.updateListing(
+                auctionId,
+                titleField.getText(),
+                descriptionArea.getText(),
+                startingBidField.getText(),
+                categoryComboBox.getValue(),
+                conditionComboBox.getValue(),
+                targetEndTime
+        ).thenAccept(response -> Platform.runLater(() -> AppNavigator.navigateTo(AppView.MY_LISTINGS)))
                 .exceptionally(ex -> {
                     Platform.runLater(() -> {
-                        if (saveChangesButton != null) saveChangesButton.setDisable(false);
-                        statusLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+                        showStatus(resolveErrorMessage(ex, "Unable to save listing."));
+                        setButtonsDisabled(false);
                     });
                     return null;
                 });
     }
+
+    @FXML private void handleDeleteListing() {
+        Alert confirm = new Alert(AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm delete");
+        confirm.setHeaderText("Delete this auction?");
+        confirm.setContentText("This action cannot be undone.");
+        ButtonType yes = new ButtonType("Yes");
+        ButtonType no = new ButtonType("No", ButtonData.CANCEL_CLOSE);
+        confirm.getButtonTypes().setAll(yes, no);
+        confirm.showAndWait().ifPresent(selected -> {
+            if (selected != yes) return;
+            showStatus("Deleting listing...");
+            setButtonsDisabled(true);
+            listingsService.deleteListing(auctionId)
+                    .thenAccept(response -> Platform.runLater(() -> AppNavigator.navigateTo(AppView.MY_LISTINGS)))
+                    .exceptionally(ex -> {
+                        Platform.runLater(() -> {
+                            showStatus(resolveErrorMessage(ex, "Unable to delete listing."));
+                            setButtonsDisabled(false);
+                        });
+                        return null;
+                    });
+        });
+    }
+
     private void loadAuctionForEdit() {
-        String auctionId = AppContext.getSelectedAuctionId();
-        if (auctionId == null || auctionId.isBlank()) { statusLabel.setText("Missing auction ID."); return; }
-        biddingClientService.getAuctionDetail(auctionId)
-            .thenAccept(dto -> Platform.runLater(() -> {
-                if (dto == null) { statusLabel.setText("Cannot load auction detail."); return; }
-                titleField.setText(dto.getItemName());
-                descriptionArea.setText(dto.getItemDescription());
-                startingBidField.setText(dto.getStartingPrice() != null ? dto.getStartingPrice().stripTrailingZeros().toPlainString() : "");
-                if (dto.getItemCategory() != null) categoryComboBox.setValue(dto.getItemCategory());
-                if (dto.getItemCondition() != null) conditionComboBox.setValue(dto.getItemCondition());
-                loadedStartTime = dto.getStartTime();
-                loadedEndTime = dto.getEndTime();
-                applyDurationFromEndTime(loadedStartTime, loadedEndTime);
-                bindMeta(dto.getStartTime(), dto.getEndTime());
-                statusLabel.setText("Ready");
-            }))
-            .exceptionally(ex -> { Platform.runLater(() -> statusLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage())); return null; });
+        biddingService.getAuctionDetail(auctionId)
+            .thenAccept(dto -> Platform.runLater(() -> applyDetail(dto)))
+            .exceptionally(ex -> {
+                Platform.runLater(() -> {
+                    showStatus(resolveErrorMessage(ex, "Unable to load listing."));
+                    setEditable(false);
+                });
+                return null;
+            });
     }
     private int resolveDurationDays() {
         if (customDurationField.getText() != null && !customDurationField.getText().isBlank()) { try { return Integer.parseInt(customDurationField.getText().trim()); } catch (NumberFormatException ex) { return -1; } }
@@ -112,12 +153,15 @@ public class EditAuctionController {
         if (duration7Btn.getStyleClass().contains("duration-chip-active")) return 7;
         if (duration14Btn.getStyleClass().contains("duration-chip-active")) return 14;
         if (duration30Btn.getStyleClass().contains("duration-chip-active")) return 30;
-        return -1;
+        return 7;
     }
 
     private void applyDurationFromEndTime(LocalDateTime startTime, LocalDateTime endTime) {
         clearActiveDurationButtons();
-        if (endTime == null) return;
+        if (endTime == null) {
+            duration7Btn.getStyleClass().add("duration-chip-active");
+            return;
+        }
         LocalDateTime baseTime = startTime != null && startTime.isAfter(LocalDateTime.now())
                 ? startTime
                 : LocalDateTime.now();
@@ -128,6 +172,59 @@ public class EditAuctionController {
         else if (daysLeft == 14) duration14Btn.getStyleClass().add("duration-chip-active");
         else if (daysLeft == 30) duration30Btn.getStyleClass().add("duration-chip-active");
         else customDurationField.setText(String.valueOf(daysLeft));
+    }
+
+    private void applyDetail(AuctionDetailDto dto) {
+        if (dto == null) {
+            showStatus("Unable to load listing.");
+            setEditable(false);
+            return;
+        }
+
+        titleField.setText(dto.getItemName() != null ? dto.getItemName() : "");
+        descriptionArea.setText(dto.getItemDescription() != null ? dto.getItemDescription() : "");
+        startingBidField.setText(formatPlainNumber(dto.getStartingPrice()));
+        categoryComboBox.setValue(dto.getItemCategory());
+        conditionComboBox.setValue(dto.getItemCondition());
+        loadedStartTime = dto.getStartTime();
+        loadedEndTime = dto.getEndTime();
+        applyDurationFromEndTime(loadedStartTime, loadedEndTime);
+        bindMeta(dto.getStartTime(), dto.getEndTime());
+
+        boolean open = dto.getStatus() == AuctionStatus.OPEN;
+        showStatus(open ? "Editing open listing - " + DisplayFormatters.timeLeft(dto.getEndTime()) : "Only open listings can be edited.");
+        setEditable(open);
+    }
+
+    private void setEditable(boolean editable) {
+        titleField.setDisable(!editable);
+        descriptionArea.setDisable(!editable);
+        categoryComboBox.setDisable(!editable);
+        conditionComboBox.setDisable(!editable);
+        startingBidField.setDisable(!editable);
+        customDurationField.setDisable(!editable);
+        Arrays.asList(duration1Btn, duration3Btn, duration7Btn, duration14Btn, duration30Btn)
+                .forEach(button -> button.setDisable(!editable));
+        setButtonsDisabled(!editable);
+    }
+
+    private void setButtonsDisabled(boolean disabled) {
+        if (saveChangesButton != null) saveChangesButton.setDisable(disabled);
+        if (deleteButton != null) deleteButton.setDisable(disabled);
+    }
+
+    private void showStatus(String message) {
+        statusLabel.setText(message);
+    }
+
+    private String resolveErrorMessage(Throwable throwable, String fallback) {
+        Throwable cause = BaseClientService.extractFailure(throwable);
+        String message = cause.getMessage();
+        return message == null || message.isBlank() ? fallback : message;
+    }
+
+    private String formatPlainNumber(BigDecimal amount) {
+        return amount == null ? "" : amount.stripTrailingZeros().toPlainString();
     }
 
     private void bindMeta(LocalDateTime startTime, LocalDateTime endTime) {

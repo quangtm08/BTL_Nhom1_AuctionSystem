@@ -17,6 +17,7 @@ import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.exception.AppException;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
@@ -153,6 +154,11 @@ public class AuctionService {
                 "You are not allowed to delete this auction"
             );
         }
+        if (auction.getStatus() != AuctionStatus.OPEN) {
+            throw new InvalidAuctionStateException(
+                "Only open auctions can be deleted"
+            );
+        }
 
         try (Connection connection = dataSource.getConnection()) {
             boolean oldAutoCommit = connection.getAutoCommit();
@@ -201,13 +207,7 @@ public class AuctionService {
         try { auctionUuid = UUID.fromString(dto.getAuctionId()); } catch (IllegalArgumentException ex) { throw new ValidationException("auctionId is not a valid UUID"); }
         Auction auction = auctionRepository.findById(auctionUuid).orElseThrow(() -> new NotFoundException("Auction not found"));
         if (!sellerUuid.equals(auction.getSellerId())) throw new UnauthorizedActionException("You are not allowed to edit this auction");
-        if (auction.getStatus() == AuctionStatus.RUNNING
-                && auction.getStartTime() != null
-                && auction.getStartTime().isAfter(LocalDateTime.now())) {
-            auctionRepository.updateStatus(auctionUuid, AuctionStatus.OPEN);
-            auction = auctionRepository.findById(auctionUuid).orElseThrow(() -> new NotFoundException("Auction not found"));
-        }
-        if (auction.getStatus() != AuctionStatus.OPEN) throw new ValidationException("Only open auctions can be edited");
+        if (auction.getStatus() != AuctionStatus.OPEN) throw new InvalidAuctionStateException("Only open auctions can be edited");
         if (auction.getHighestBidderId() != null) throw new ValidationException("Auction already has bids and cannot be edited");
         if (dto.getEndTime() == null) throw new ValidationException("endTime is required");
         if (auction.getStartTime() != null && !dto.getEndTime().isAfter(auction.getStartTime())) throw new ValidationException("endTime must be after startTime");
