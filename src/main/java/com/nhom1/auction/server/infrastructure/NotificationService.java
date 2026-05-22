@@ -1,6 +1,7 @@
 package com.nhom1.auction.server.infrastructure;
 
 import com.nhom1.auction.common.dto.notification.AuctionEndedEvent;
+import com.nhom1.auction.common.dto.notification.AuctionTimeExtendedEvent;
 import com.nhom1.auction.common.dto.notification.AuctionDeletedEvent;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.dto.notification.NewAuctionEvent;
@@ -47,6 +48,18 @@ public class NotificationService {
             finalPrice
         );
         sendPush(MessageType.PUSH_AUCTION_ENDED, event);
+    }
+
+    public void broadcastAuctionTimeExtended(
+        UUID auctionId,
+        LocalDateTime newEndTime
+    ) {
+        AuctionTimeExtendedEvent event = new AuctionTimeExtendedEvent(
+            auctionId.toString(),
+            newEndTime,
+            LocalDateTime.now()
+        );
+        sendPush(MessageType.PUSH_AUCTION_TIME_EXTENDED, event);
     }
 
     public void broadcastNewAuction(

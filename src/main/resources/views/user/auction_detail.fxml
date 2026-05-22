@@ -47,6 +47,17 @@
                 <!-- BID BOX -->
                 <VBox spacing="15" styleClass="bid-box">
 
+                    <Label fx:id="lblExtensionToast"
+                           text="⏱ Anti-sniping: +30s extension"
+                           styleClass="extension-toast"
+                           visible="false" managed="false"/>
+
+                    <HBox alignment="CENTER_LEFT" styleClass="countdown-row">
+                        <Label text="Time remaining" styleClass="countdown-label"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="lblCountdown" text="--:--" styleClass="countdown-value"/>
+                    </HBox>
+
                     <HBox>
                         <Label text="Current highest bid"/>
                         <Region HBox.hgrow="ALWAYS"/>

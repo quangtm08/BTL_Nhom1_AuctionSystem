@@ -27,6 +27,7 @@ public enum MessageType {
     //Push notifications
     PUSH_BID_UPDATE,
     PUSH_AUCTION_ENDED,
+    PUSH_AUCTION_TIME_EXTENDED,
     PUSH_NEW_AUCTION,
     PUSH_AUCTION_DELETED,
     PUSH_USER_DELETED,
