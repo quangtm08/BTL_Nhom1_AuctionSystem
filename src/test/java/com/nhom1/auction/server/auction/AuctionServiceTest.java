@@ -7,10 +7,13 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
+import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.Item;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
@@ -187,6 +190,7 @@ public class AuctionServiceTest {
         Auction auction = mock(Auction.class);
         when(auction.getSellerId()).thenReturn(parsedSellerId);
         when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
         when(auctionRepository.findById(parsedAuctionId)).thenReturn(
             Optional.of(auction)
         );
@@ -215,6 +219,7 @@ public class AuctionServiceTest {
         Auction auction = mock(Auction.class);
         when(auction.getSellerId()).thenReturn(parsedSellerId);
         when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
         when(auctionRepository.findById(parsedAuctionId)).thenReturn(
             Optional.of(auction)
         );
@@ -263,6 +268,115 @@ public class AuctionServiceTest {
         );
     }
 
+    @Test
+    public void testDeleteAuction_RunningAuction_ThrowsInvalidState() {
+        String sellerId = UUID.randomUUID().toString();
+        String auctionId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.fromString(auctionId);
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(
+            Optional.of(auction)
+        );
+
+        assertThrows(InvalidAuctionStateException.class, () ->
+            auctionService.deleteAuction(sellerId, auctionId)
+        );
+    }
+
+    @Test
+    public void testUpdateAuction_OpenAuction_UpdatesItemAndAuction()
+        throws SQLException {
+        String sellerId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+            sellerId,
+            parsedAuctionId.toString()
+        );
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getItemId()).thenReturn(itemId);
+        when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(itemRepository.updateDetails(
+            eq(itemId),
+            eq(dto.getName()),
+            eq(dto.getDescription()),
+            eq(dto.getCategory()),
+            eq(dto.getCondition()),
+            eq(connection)
+        )).thenReturn(1);
+        when(auctionRepository.updateOpenAuctionDetails(
+            eq(parsedAuctionId),
+            eq(dto.getStartingPrice()),
+            eq(dto.getStartTime()),
+            eq(dto.getEndTime()),
+            eq(connection)
+        )).thenReturn(1);
+
+        assertDoesNotThrow(() -> auctionService.updateAuction(dto));
+
+        verify(connection).setAutoCommit(false);
+        verify(connection).commit();
+        verify(connection).setAutoCommit(true);
+    }
+
+    @Test
+    public void testUpdateAuction_RunningAuction_ThrowsInvalidState() {
+        String sellerId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.randomUUID();
+        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+            sellerId,
+            parsedAuctionId.toString()
+        );
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+
+        assertThrows(InvalidAuctionStateException.class, () ->
+            auctionService.updateAuction(dto)
+        );
+    }
+
+    @Test
+    public void testUpdateAuction_NonOwner_ThrowsUnauthorized() {
+        String sellerId = UUID.randomUUID().toString();
+        UUID parsedAuctionId = UUID.randomUUID();
+        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+            sellerId,
+            parsedAuctionId.toString()
+        );
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(UUID.randomUUID());
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+
+        assertThrows(UnauthorizedActionException.class, () ->
+            auctionService.updateAuction(dto)
+        );
+    }
+
+    @Test
+    public void testUpdateAuction_PastStartTime_ThrowsValidation() {
+        String sellerId = UUID.randomUUID().toString();
+        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+            sellerId,
+            UUID.randomUUID().toString()
+        );
+        dto.setStartTime(LocalDateTime.now().minusDays(1));
+        dto.setEndTime(LocalDateTime.now().plusDays(1));
+
+        assertThrows(ValidationException.class, () ->
+            auctionService.updateAuction(dto)
+        );
+    }
+
     private CreateAuctionRequest createValidCreateAuctionRequest() {
         CreateAuctionRequest dto = new CreateAuctionRequest();
         dto.setName("Test Item");
@@ -272,6 +386,23 @@ public class AuctionServiceTest {
         dto.setStartingPrice(new BigDecimal("100.00"));
         dto.setStartTime(LocalDateTime.now());
         dto.setEndTime(LocalDateTime.now().plusHours(1));
+        return dto;
+    }
+
+    private UpdateAuctionRequest createValidUpdateAuctionRequest(
+        String sellerId,
+        String auctionId
+    ) {
+        UpdateAuctionRequest dto = new UpdateAuctionRequest();
+        dto.setSellerId(sellerId);
+        dto.setAuctionId(auctionId);
+        dto.setName("Updated Item");
+        dto.setDescription("Updated Description");
+        dto.setCategory(ItemCategory.ART);
+        dto.setCondition(ItemCondition.USED);
+        dto.setStartingPrice(new BigDecimal("150.00"));
+        dto.setStartTime(LocalDateTime.now().plusHours(1));
+        dto.setEndTime(LocalDateTime.now().plusDays(2));
         return dto;
     }
 }

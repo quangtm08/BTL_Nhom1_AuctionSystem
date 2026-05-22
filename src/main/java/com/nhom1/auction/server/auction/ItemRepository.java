@@ -82,6 +82,33 @@ public class ItemRepository {
         return Optional.empty();
     }
 
+    public int updateDetails(
+        UUID itemId,
+        String name,
+        String description,
+        ItemCategory category,
+        ItemCondition condition,
+        Connection conn
+    ) {
+        String sql = """
+            UPDATE items
+            SET name = ?, description = ?, category = ?, condition = ?, updated_at = ?
+            WHERE id = ?
+            """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setString(2, description);
+            ps.setString(3, category.name());
+            ps.setString(4, condition.name());
+            ps.setTimestamp(5, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(6, itemId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update item details", e);
+        }
+    }
+
     private Item mapResultSetToItem(ResultSet rs) throws SQLException {
         UUID id = UUID.fromString(rs.getString("id"));
         String name = rs.getString("name");

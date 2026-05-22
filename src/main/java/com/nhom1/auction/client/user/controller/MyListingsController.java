@@ -16,6 +16,7 @@ import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.MyListingsResponse;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
+import com.nhom1.auction.common.utils.AppContext;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -41,7 +42,11 @@ public class MyListingsController {
         pushService.onBidUpdate(event -> Platform.runLater(() -> handleBidUpdatePush(event)));
     }
     @FXML private void handleCreateListing() { AppNavigator.navigateTo(AppView.CREATE_LISTING); }
-    @FXML private void handleEditListing() { AppNavigator.navigateTo(AppView.EDIT_LISTING); }
+    private void handleEditListing(AuctionSummaryDto dto) {
+        if (dto == null || dto.getId() == null || dto.getId().isBlank()) return;
+        AppContext.setSelectedAuctionId(dto.getId());
+        AppNavigator.navigateTo(AppView.EDIT_LISTING);
+    }
 
     private void renderListings(List<AuctionSummaryDto> listings) {
         priceLabels.clear(); listingsGrid.getChildren().clear();
@@ -53,7 +58,7 @@ public class MyListingsController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/user/components/listing_card.fxml"));
             Parent card = loader.load();
             ListingCardComponentController c = loader.getController();
-            c.bind(dto, DisplayFormatters.auctionStatusLabel(dto.getStatus()), DisplayFormatters.money(resolveDisplayCurrentBid(dto)), DisplayFormatters.timeLeft(dto.getEndTime()), DisplayFormatters.isEnded(dto.getStatus()), this::handleEditListing, () -> handleDeleteListing(dto));
+            c.bind(dto, DisplayFormatters.auctionStatusLabel(dto.getStatus()), DisplayFormatters.money(resolveDisplayCurrentBid(dto)), DisplayFormatters.timeLeft(dto.getEndTime()), DisplayFormatters.isEnded(dto.getStatus()), () -> handleEditListing(dto), () -> handleDeleteListing(dto));
             if (dto.getId() != null) priceLabels.put(dto.getId(), c.getPriceLabel());
             return card;
         } catch (IOException e) { throw new RuntimeException("Failed to load listing card component", e); }

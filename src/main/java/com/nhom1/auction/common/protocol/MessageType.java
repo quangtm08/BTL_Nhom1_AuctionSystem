@@ -10,6 +10,7 @@ public enum MessageType {
     LIST_MY_BIDS, //to show all the user's bids in the My Bids screen
 
     CREATE_AUCTION,
+    UPDATE_AUCTION,
     DELETE_AUCTION,
     LIST_MY_LISTINGS, //to show all the user's listings in the My Listings screen
 
