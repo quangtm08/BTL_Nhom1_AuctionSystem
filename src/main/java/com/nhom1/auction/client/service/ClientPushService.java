@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nhom1.auction.client.user.connection.ServerConnection;
 import com.nhom1.auction.common.dto.notification.AuctionDeletedEvent;
 import com.nhom1.auction.common.dto.notification.AuctionEndedEvent;
+import com.nhom1.auction.common.dto.notification.AuctionTimeExtendedEvent;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.dto.notification.NewAuctionEvent;
 import com.nhom1.auction.common.dto.notification.UserCreatedEvent;
@@ -22,6 +23,7 @@ public class ClientPushService {
     private volatile Consumer<NewAuctionEvent> newAuctionHandler;
     private volatile Consumer<AuctionDeletedEvent> auctionDeletedHandler;
     private volatile Consumer<AuctionEndedEvent> auctionEndedHandler;
+    private volatile Consumer<AuctionTimeExtendedEvent> auctionTimeExtendedHandler;
     private volatile Consumer<UserDeletedEvent> userDeletedHandler;
     private volatile Consumer<UserCreatedEvent> userCreatedHandler;
 
@@ -36,6 +38,8 @@ public class ClientPushService {
                 json -> dispatch(json, AuctionDeletedEvent.class, auctionDeletedHandler));
         connection.registerPushHandler(MessageType.PUSH_AUCTION_ENDED,
                 json -> dispatch(json, AuctionEndedEvent.class, auctionEndedHandler));
+        connection.registerPushHandler(MessageType.PUSH_AUCTION_TIME_EXTENDED,
+                json -> dispatch(json, AuctionTimeExtendedEvent.class, auctionTimeExtendedHandler));
         connection.registerPushHandler(MessageType.PUSH_USER_DELETED,
                 json -> dispatch(json, UserDeletedEvent.class, userDeletedHandler));
         connection.registerPushHandler(MessageType.PUSH_USER_CREATED,
@@ -71,6 +75,10 @@ public class ClientPushService {
         this.auctionEndedHandler = handler;
     }
 
+    public void onAuctionTimeExtended(Consumer<AuctionTimeExtendedEvent> handler) {
+        this.auctionTimeExtendedHandler = handler;
+    }
+
     public void onUserDeleted(Consumer<UserDeletedEvent> handler) {
         this.userDeletedHandler = handler;
     }
@@ -84,6 +92,7 @@ public class ClientPushService {
         newAuctionHandler = null;
         auctionDeletedHandler = null;
         auctionEndedHandler = null;
+        auctionTimeExtendedHandler = null;
         userDeletedHandler = null;
         userCreatedHandler = null;
     }
