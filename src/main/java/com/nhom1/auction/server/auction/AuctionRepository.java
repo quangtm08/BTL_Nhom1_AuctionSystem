@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ public class AuctionRepository {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
+        Savepoint savepoint = createSavepoint(conn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, auction.getId().toString());
             ps.setString(2, auction.getItemId().toString());
@@ -80,6 +82,52 @@ public class AuctionRepository {
             java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
             ps.setTimestamp(10, now);
             ps.setTimestamp(11, now);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            if (isMissingDurationDaysColumn(e)) {
+                rollbackToSavepoint(conn, savepoint);
+                saveWithoutDurationDays(auction, conn);
+                return;
+            }
+            throw new RuntimeException("Failed to save auction", e);
+        }
+    }
+
+    private void saveWithoutDurationDays(Auction auction, Connection conn) {
+        String sql = """
+                    INSERT INTO auctions(
+                        id, item_id, start_time, end_time, status, starting_price,
+                        current_highest_bid, highest_bidder_id, created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, auction.getId().toString());
+            ps.setString(2, auction.getItemId().toString());
+            if (auction.getStartTime() != null) {
+                ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
+            } else {
+                ps.setNull(3, java.sql.Types.TIMESTAMP);
+            }
+            if (auction.getEndTime() != null) {
+                ps.setTimestamp(4, java.sql.Timestamp.valueOf(auction.getEndTime()));
+            } else {
+                ps.setNull(4, java.sql.Types.TIMESTAMP);
+            }
+            ps.setString(5, auction.getStatus().name());
+            ps.setBigDecimal(6, auction.getStartingPrice());
+            ps.setBigDecimal(7, auction.getCurrentHighestBid() != null ? auction.getCurrentHighestBid() : BigDecimal.ZERO);
+            if (auction.getHighestBidderId() != null) {
+                ps.setString(8, auction.getHighestBidderId().toString());
+            } else {
+                ps.setNull(8, Types.VARCHAR);
+            }
+
+            java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
+            ps.setTimestamp(9, now);
+            ps.setTimestamp(10, now);
 
             ps.executeUpdate();
         } catch (SQLException e) {
@@ -343,6 +391,31 @@ public class AuctionRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Failed to clear highest bidder on auctions", e);
         }
+    }
+
+    private Savepoint createSavepoint(Connection conn) {
+        try {
+            return conn.getAutoCommit() ? null : conn.setSavepoint();
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+
+    private void rollbackToSavepoint(Connection conn, Savepoint savepoint) {
+        if (savepoint == null) {
+            return;
+        }
+        try {
+            conn.rollback(savepoint);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to recover auction save fallback", e);
+        }
+    }
+
+    private boolean isMissingDurationDaysColumn(SQLException e) {
+        String message = e.getMessage();
+        return "42703".equals(e.getSQLState())
+            || (message != null && message.toLowerCase().contains("duration_days"));
     }
 
     // ===================== MAPPER =====================

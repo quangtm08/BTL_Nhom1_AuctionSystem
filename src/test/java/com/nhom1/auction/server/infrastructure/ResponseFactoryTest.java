@@ -6,13 +6,32 @@ import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.protocol.ErrorCode;
 import com.nhom1.auction.common.protocol.ResponseMessage;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ResponseFactoryTest {
+    private static final Logger RESPONSE_FACTORY_LOGGER =
+            Logger.getLogger(ResponseFactory.class.getName());
+
+    private Level previousLogLevel;
+
+    @BeforeEach
+    public void muteResponseFactoryLogger() {
+        previousLogLevel = RESPONSE_FACTORY_LOGGER.getLevel();
+        RESPONSE_FACTORY_LOGGER.setLevel(Level.OFF);
+    }
+
+    @AfterEach
+    public void restoreResponseFactoryLogger() {
+        RESPONSE_FACTORY_LOGGER.setLevel(previousLogLevel);
+    }
 
     @Test
     public void testSuccess_ReturnsSuccessfulResponse() {

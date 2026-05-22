@@ -61,19 +61,16 @@ public class AuctionScheduler {
 
     void tick() {
         LocalDateTime now = LocalDateTime.now();
-        // Contract dependency:
-        // AuctionGateway.findAll() is expected to return at least OPEN/RUNNING auctions
-        // so scheduler can handle both start and finish transitions.
+        // OPEN auctions wait for explicit admin approval. Scheduler only handles
+        // finishing RUNNING auctions and anti-sniping extensions.
         List<Auction> auctions = auctionGateway.findAll();
 
         for (Auction auction : auctions) {
-            if (auction.getStatus() == AuctionStatus.OPEN && !auction.getStartTime().isAfter(now)) {
-                // startTime reached: OPEN auction moves to RUNNING.
-                auctionGateway.updateStatus(auction.getId(), AuctionStatus.RUNNING);
-                continue;
-            }
-
-            if (auction.getStatus() == AuctionStatus.RUNNING && !auction.getEndTime().isAfter(now)) {
+            if (
+                auction.getStatus() == AuctionStatus.RUNNING &&
+                auction.getEndTime() != null &&
+                !auction.getEndTime().isAfter(now)
+            ) {
                 // endTime reached: either extend (anti-sniping) or finish.
                 handleRunningAuctionTimeout(auction, now);
             }

@@ -131,6 +131,21 @@
     -fx-text-fill: white;
 }
 
+.btn-approve {
+    -fx-background-color: #163626;
+    -fx-text-fill: #52b788;
+    -fx-background-radius: 8;
+    -fx-padding: 6 15;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-approve:hover {
+    -fx-background-color: #1f4d36;
+    -fx-text-fill: white;
+}
+
 /* ===== SCROLLPANE ===== */
 .custom-scroll-pane {
     -fx-background-color: transparent;
