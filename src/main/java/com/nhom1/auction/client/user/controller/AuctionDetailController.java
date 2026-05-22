@@ -114,6 +114,7 @@ public class AuctionDetailController {
 
 	private CountdownAnimator countdownAnimator;
 	private PauseTransition extensionToastPause;
+	private boolean isOwnAuction;
 
 	@FXML
 	public void initialize() {
@@ -174,6 +175,9 @@ public class AuctionDetailController {
 		Platform.runLater(() -> {
 			if (countdownAnimator != null && event.getNewEndTime() != null) {
 				countdownAnimator.resetEndTime(event.getNewEndTime());
+			}
+			if (!isOwnAuction) {
+				setBidControlsDisabled(false);
 			}
 			showExtensionToast();
 		});
@@ -253,7 +257,7 @@ public class AuctionDetailController {
 			lblMinIncrement.setText(DisplayFormatters.money(dto.getMinBidIncrement()));
 		}
 
-		boolean isOwnAuction = AppContext.getCurrentUser() != null
+		isOwnAuction = AppContext.getCurrentUser() != null
 			&& AppContext.getCurrentUser().getUserID() != null
 			&& dto.getSellerID() != null
 			&& AppContext.getCurrentUser().getUserID().equals(dto.getSellerID());
