@@ -43,8 +43,8 @@ public class EditAuctionController {
     @FXML private void initialize() {
         categoryComboBox.getItems().setAll(ItemCategory.values());
         conditionComboBox.getItems().setAll(ItemCondition.values());
-        categoryComboBox.setValue(ItemCategory.ART);
-        conditionComboBox.setValue(ItemCondition.USED);
+        categoryComboBox.setValue(null);
+        conditionComboBox.setValue(null);
         customDurationField.textProperty().addListener((obs, oldValue, newValue) -> { if (newValue != null && !newValue.isBlank()) clearActiveDurationButtons(); });
         loadAuctionForEdit();
     }
@@ -84,7 +84,7 @@ public class EditAuctionController {
                 if (dto.getItemCondition() != null) conditionComboBox.setValue(dto.getItemCondition());
                 loadedStartTime = dto.getStartTime();
                 loadedEndTime = dto.getEndTime();
-                applyDurationFromEndTime(loadedEndTime);
+                applyDurationFromEndTime(loadedStartTime, loadedEndTime);
                 statusLabel.setText("Ready");
             }))
             .exceptionally(ex -> { Platform.runLater(() -> statusLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage())); return null; });
@@ -99,10 +99,13 @@ public class EditAuctionController {
         return -1;
     }
 
-    private void applyDurationFromEndTime(LocalDateTime endTime) {
+    private void applyDurationFromEndTime(LocalDateTime startTime, LocalDateTime endTime) {
         clearActiveDurationButtons();
         if (endTime == null) return;
-        long daysLeft = Math.max(1, ChronoUnit.DAYS.between(LocalDateTime.now(), endTime));
+        LocalDateTime baseTime = startTime != null && startTime.isAfter(LocalDateTime.now())
+                ? startTime
+                : LocalDateTime.now();
+        long daysLeft = Math.max(1, ChronoUnit.DAYS.between(baseTime, endTime));
         if (daysLeft == 1) duration1Btn.getStyleClass().add("duration-chip-active");
         else if (daysLeft == 3) duration3Btn.getStyleClass().add("duration-chip-active");
         else if (daysLeft == 7) duration7Btn.getStyleClass().add("duration-chip-active");

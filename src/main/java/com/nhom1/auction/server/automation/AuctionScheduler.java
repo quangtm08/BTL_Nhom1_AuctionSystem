@@ -67,11 +67,21 @@ public class AuctionScheduler {
 
         for (Auction auction : auctions) {
             if (
+                auction.getStatus() == AuctionStatus.RUNNING &&
+                auction.getStartTime() != null &&
+                auction.getStartTime().isAfter(now)
+            ) {
+                auctionGateway.updateStatus(auction.getId(), AuctionStatus.OPEN);
+                continue;
+            }
+
+            if (
                 auction.getStatus() == AuctionStatus.OPEN &&
                 auction.getStartTime() != null &&
                 !auction.getStartTime().isAfter(now)
             ) {
-                auctionGateway.updateStatus(auction.getId(), AuctionStatus.CANCELED);
+                // OPEN auctions are moved to RUNNING by explicit admin flow.
+                // Scheduler does not auto-transition or auto-cancel here.
                 continue;
             }
 
