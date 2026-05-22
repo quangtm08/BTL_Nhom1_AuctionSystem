@@ -81,7 +81,11 @@ public class MyListingsController {
         return dto.getCurrentHighestBid().compareTo(dto.getStartingPrice()) > 0;
     }
     private boolean shouldDisableActions(AuctionSummaryDto dto) { return isEnded(dto.getStatus()) || hasAnyBid(dto); }
-    private String formatStatus(AuctionStatus status) { if (status == null) return "Unknown"; return isEnded(status) ? "Ended" : "Running"; }
+    private String formatStatus(AuctionStatus status) {
+        if (status == null) return "Unknown";
+        if (status == AuctionStatus.OPEN) return "Open";
+        return isEnded(status) ? "Ended" : "Running";
+    }
     private String formatMoney(BigDecimal amount) { return amount == null ? "$0" : "$" + amount.stripTrailingZeros().toPlainString(); }
     private BigDecimal resolveDisplayCurrentBid(AuctionSummaryDto dto) {
         if (dto == null) return BigDecimal.ZERO;

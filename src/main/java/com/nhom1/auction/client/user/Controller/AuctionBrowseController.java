@@ -56,6 +56,7 @@ public class AuctionBrowseController {
             ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_NEW_AUCTION, json -> Platform.runLater(this::loadAuctions));
             ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_BID_UPDATE, json -> Platform.runLater(() -> handleBidUpdatePush(json)));
             ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_AUCTION_DELETED, json -> Platform.runLater(() -> handleAuctionDeletedPush(json)));
+            ServerConnection.getInstance().registerPushHandler(MessageType.PUSH_AUCTION_ENDED, json -> Platform.runLater(this::loadAuctions));
         }
     }
 
@@ -128,7 +129,8 @@ public class AuctionBrowseController {
         if (status == null) return "Unknown";
         if (status instanceof AuctionStatus auctionStatus) {
             return switch (auctionStatus) {
-                case OPEN, RUNNING -> "Running";
+                case OPEN -> "Open";
+                case RUNNING -> "Running";
                 case FINISHED, CANCELED, PAID -> "Ended";
             };
         }
