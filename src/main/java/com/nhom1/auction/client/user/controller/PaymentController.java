@@ -2,13 +2,11 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.PaymentClientService;
+import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.payment.PaymentHistoryEntryDto;
 import com.nhom1.auction.common.dto.payment.PendingPaymentDto;
 import com.nhom1.auction.common.dto.payment.PaymentHistoryResponse;
 import com.nhom1.auction.common.dto.payment.PendingPaymentsResponse;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -20,8 +18,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class PaymentController {
-    private static final DateTimeFormatter HISTORY_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy");
-
     private final PaymentClientService paymentClientService = new PaymentClientService();
     private String processingAuctionId;
 
@@ -86,11 +82,13 @@ public class PaymentController {
         );
         HBox.setHgrow(itemInfo, Priority.ALWAYS);
 
-        Label price = label(formatAmount(payment.getAmount()), "price-tag");
+        Label price = label(DisplayFormatters.money(payment.getAmount()), "price-tag");
         Button payNow = new Button("Pay now");
         payNow.getStyleClass().add("btn-primary");
-        payNow.setDisable(payment.getAuctionId().equals(processingAuctionId));
-        payNow.setOnAction(event -> processPayment(payment.getAuctionId(), payNow));
+        String auctionId = payment.getAuctionId();
+        boolean missingAuctionId = auctionId == null || auctionId.isBlank();
+        payNow.setDisable(missingAuctionId || auctionId.equals(processingAuctionId));
+        payNow.setOnAction(event -> processPayment(auctionId, payNow));
 
         HBox row = new HBox(12, itemInfo, price, payNow);
         row.setAlignment(Pos.CENTER_LEFT);
@@ -103,7 +101,7 @@ public class PaymentController {
     private HBox createHistoryRow(PaymentHistoryEntryDto entry) {
         VBox left = new VBox(
                 label(entry.getItemName(), "history-name"),
-                label(formatDate(entry.getPaidAt()), "history-date")
+                label(DisplayFormatters.shortDate(entry.getPaidAt()), "history-date")
         );
         HBox.setHgrow(left, Priority.ALWAYS);
 
@@ -112,7 +110,7 @@ public class PaymentController {
 
         VBox right = new VBox(
                 badge,
-                label(formatAmount(entry.getAmount()), "history-price")
+                label(DisplayFormatters.money(entry.getAmount()), "history-price")
         );
         right.setAlignment(Pos.CENTER_RIGHT);
         right.setSpacing(5);
@@ -155,14 +153,6 @@ public class PaymentController {
         Label label = new Label(text);
         label.getStyleClass().add(styleClass);
         return label;
-    }
-
-    private String formatAmount(BigDecimal amount) {
-        return amount == null ? "$0" : "$" + amount.toPlainString();
-    }
-
-    private String formatDate(LocalDateTime dateTime) {
-        return dateTime == null ? "-" : dateTime.format(HISTORY_FORMATTER);
     }
 
     private record PaymentSnapshot(

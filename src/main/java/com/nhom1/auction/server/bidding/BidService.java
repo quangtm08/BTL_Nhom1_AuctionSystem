@@ -29,6 +29,10 @@ import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 
 public class BidService {
+    // We retry a small number of times when optimistic locking detects that
+    // another bidder updated the same auction row first. This keeps the flow
+    // responsive without silently spinning forever on hot auctions.
+    private static final int MAX_CONFLICT_RETRIES = 2;
 
     private final BidRepository bidRepository;
     private final AuctionRepository auctionRepository;
@@ -51,41 +55,56 @@ public class BidService {
     public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType)
             throws InvalidBidException, AuctionClosedException, UnauthorizedActionException, NotFoundException,
             ConflictException, IllegalStateException {
-        try (Connection connection = dataSource.getConnection()) {
-            boolean oldAutoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(false);
-            try {
-                Auction auction = auctionRepository.findById(auctionId, connection)
-                        .orElseThrow(() -> new NotFoundException("Auction not found"));
+        for (int attempt = 1; attempt <= MAX_CONFLICT_RETRIES; attempt++) {
+            try (Connection connection = dataSource.getConnection()) {
+                boolean oldAutoCommit = connection.getAutoCommit();
+                connection.setAutoCommit(false);
+                try {
+                    Auction auction = auctionRepository.findById(auctionId, connection)
+                            .orElseThrow(() -> new NotFoundException("Auction not found"));
+                    // Snapshot the row version we validated against. If another
+                    // transaction changes this auction before our UPDATE runs,
+                    // updateHighestBid(...) will affect 0 rows and we will retry.
+                    long expectedVersion = auction.getVersion();
 
-                BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
+                    BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
 
-                bidRepository.save(bidTransaction, connection);
-                int updated = auctionRepository.updateHighestBid(
-                        auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId(), connection);
+                    bidRepository.save(bidTransaction, connection);
+                    int updated = auctionRepository.updateHighestBid(
+                            auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId(), expectedVersion, connection);
 
-                if (updated == 0) {
-                    throw new ConflictException(
-                            "Bid lost race: concurrent bid placed with equal or higher amount");
+                    if (updated == 0) {
+                        // Someone else won the race. At this point our bid record
+                        // has not been committed because we are still inside the
+                        // transaction, so rolling back is safe.
+                        throw new ConflictException(
+                                "Bid lost race: concurrent bid placed with equal or higher amount");
+                    }
+
+                    connection.commit();
+                    return bidTransaction;
+
+                } catch (ConflictException e) {
+                    connection.rollback();
+                    if (attempt == MAX_CONFLICT_RETRIES) {
+                        throw e;
+                    }
+                } catch (AppException e) {
+                    connection.rollback();
+                    throw e;
+                } catch (Exception e) {
+                    connection.rollback();
+                    throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
+                } finally {
+                    connection.setAutoCommit(oldAutoCommit);
                 }
-
-                connection.commit();
-                return bidTransaction;
-
-            } catch (AppException e) {
-                connection.rollback();
+            } catch (AppException | IllegalStateException e) {
                 throw e;
             } catch (Exception e) {
-                connection.rollback();
                 throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
-            } finally {
-                connection.setAutoCommit(oldAutoCommit);
             }
-        } catch (AppException | IllegalStateException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Bid placement failed: " + e.getMessage(), e);
         }
+        throw new ConflictException("Bid lost race after retrying");
     }
 
     public AuctionDetailDto getAuctionDetail(UUID auctionId) {

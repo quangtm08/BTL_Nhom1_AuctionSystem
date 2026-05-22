@@ -2,9 +2,9 @@ name: Java CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
@@ -16,25 +16,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
 
-    - name: Set up JDK 25
-      uses: actions/setup-java@v4
-      with:
-        java-version: '25'
-        distribution: 'temurin'
-        cache: 'maven'
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: "maven"
 
-    - name: Grant execute permission for Maven wrapper
-      run: chmod +x mvnw
+      - name: Grant execute permission for Maven wrapper
+        run: chmod +x mvnw
 
-    - name: Build and Test with Maven
-      run: ./mvnw -B test --file pom.xml
+      - name: Build and Test with Maven
+        run: ./mvnw -B test --file pom.xml
 
-    - name: Publish Test Report
-      uses: mikepenz/action-junit-report@v4
-      if: success() || failure()
-      with:
-        report_paths: '**/target/surefire-reports/TEST-*.xml'
-        check_name: JUnit Test Report
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        if: success() || failure()
+        with:
+          report_paths: "**/target/surefire-reports/TEST-*.xml"
+          check_name: JUnit Test Report

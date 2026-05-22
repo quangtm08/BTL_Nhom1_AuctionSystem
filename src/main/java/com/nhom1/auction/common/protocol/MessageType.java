@@ -14,6 +14,8 @@ public enum MessageType {
     LIST_MY_LISTINGS, //to show all the user's listings in the My Listings screen
 
     AUTO_BID_CONFIG,
+    GET_AUTO_BID_CONFIG,
+    DELETE_AUTO_BID_CONFIG,
     ADMIN_LIST_USERS,
     ADMIN_DELETE_USER,
     ADMIN_LIST_AUCTIONS,

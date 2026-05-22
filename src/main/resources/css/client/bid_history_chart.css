@@ -1,0 +1,194 @@
+/* ===== ROOT ===== */
+.root-pane {
+    -fx-background-color: #07110d;
+}
+
+.chart-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.chart-scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.main-content {
+    -fx-background-color: transparent;
+}
+
+/* ===== HEADER ===== */
+.page-title {
+    -fx-text-fill: white;
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+    -fx-font-size: 28px;
+}
+
+.page-subtitle {
+    -fx-text-fill: #a0a0a0;
+    -fx-font-size: 14px;
+}
+
+/* ===== CHART CARD ===== */
+.chart-card {
+    -fx-background-color: #0c1c16;
+    -fx-background-radius: 15;
+    -fx-padding: 24;
+}
+
+.chart-title {
+    -fx-text-fill: #7ec8a0;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.chart-sub {
+    -fx-text-fill: #a0a0a0;
+    -fx-font-size: 12px;
+}
+
+/* ===== STAT BLOCKS ===== */
+.stats-row .stat-block {
+    -fx-padding: 4 18 4 18;
+    -fx-border-color: transparent transparent transparent #1a3327;
+    -fx-border-width: 0 0 0 1;
+}
+
+.stat-label {
+    -fx-text-fill: #777;
+    -fx-font-size: 11px;
+}
+
+.stat-value {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 22px;
+}
+
+/* ===== LEGEND ===== */
+.legend-row {
+    -fx-padding: 4 0 8 0;
+}
+
+.legend-text {
+    -fx-text-fill: #a0a0a0;
+    -fx-font-size: 11px;
+}
+
+.legend-dot {
+    -fx-min-width: 10;
+    -fx-min-height: 10;
+    -fx-max-width: 10;
+    -fx-max-height: 10;
+}
+
+.legend-manual {
+    -fx-background-color: #7ec8a0;
+    -fx-background-radius: 5;
+}
+
+.legend-auto {
+    -fx-background-color: #4a8060;
+    -fx-background-radius: 0;
+}
+
+.legend-line-baseline {
+    -fx-min-width: 18;
+    -fx-min-height: 2;
+    -fx-max-height: 2;
+    -fx-background-color: #555;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+    -fx-text-fill: #555;
+    -fx-font-style: italic;
+    -fx-font-size: 14px;
+}
+
+/* ===== CHART ===== */
+.bid-chart {
+    -fx-background-color: transparent;
+    -fx-padding: 8;
+}
+
+.bid-chart .chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.bid-chart .chart-vertical-grid-lines {
+    -fx-stroke: transparent;
+}
+
+.bid-chart .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(255, 255, 255, 0.06);
+}
+
+.bid-chart .axis {
+    -fx-tick-label-fill: #777;
+    -fx-font-size: 11px;
+    -fx-border-color: transparent;
+}
+
+.bid-chart .axis-tick-mark,
+.bid-chart .axis-minor-tick-mark {
+    -fx-stroke: transparent;
+}
+
+/* X axis muted */
+.bid-chart .axis.axis-x .axis-tick-label {
+    -fx-fill: #777;
+}
+
+.bid-chart .axis.axis-x .axis-label {
+    -fx-text-fill: #a0a0a0;
+    -fx-font-size: 11px;
+}
+
+/* Y axis price labels — prominent white */
+.bid-chart .axis.axis-y .axis-tick-label {
+    -fx-fill: white;
+    -fx-font-size: 12px;
+}
+
+.bid-chart .axis.axis-y .axis-label {
+    -fx-text-fill: #a0a0a0;
+    -fx-font-size: 11px;
+}
+
+/* Main series line — green accent */
+.bid-chart .default-color0.chart-series-line {
+    -fx-stroke: #7ec8a0;
+    -fx-stroke-width: 2px;
+}
+
+/* Default marker styling — overridden per-bid via .bid-manual / .bid-auto */
+.bid-chart .default-color0.chart-line-symbol {
+    -fx-background-color: #7ec8a0, #0c1c16;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 6;
+    -fx-padding: 5;
+}
+
+.bid-chart .chart-line-symbol.bid-manual {
+    -fx-background-color: #7ec8a0, #0c1c16;
+    -fx-background-radius: 6;
+}
+
+.bid-chart .chart-line-symbol.bid-auto {
+    -fx-background-color: #4a8060, #0c1c16;
+    -fx-background-radius: 0;
+}
+
+/* Baseline series — dashed gray line, no symbols */
+.bid-chart .default-color1.chart-series-line {
+    -fx-stroke: #555;
+    -fx-stroke-dash-array: 4 4;
+    -fx-stroke-width: 1.2px;
+}
+
+.bid-chart .default-color1.chart-line-symbol {
+    -fx-background-color: transparent, transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}

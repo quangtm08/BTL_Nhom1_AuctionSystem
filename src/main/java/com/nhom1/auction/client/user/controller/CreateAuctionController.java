@@ -8,13 +8,12 @@ import java.util.stream.Collectors;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.CreateAuctionClientService;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.exception.ValidationException;
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.RequestMessage;
 
 import com.nhom1.auction.common.exception.AppException;
 
@@ -173,7 +172,7 @@ public class CreateAuctionController {
     }
 
     private String resolveErrorMessage(Throwable ex) {
-        Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+        Throwable cause = BaseClientService.extractFailure(ex);
         if (cause instanceof AppException || cause instanceof ValidationException) {
             String message = cause.getMessage();
             return (message == null || message.isBlank()) ? "Connection error." : message;

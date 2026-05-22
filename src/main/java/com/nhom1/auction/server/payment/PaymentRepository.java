@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,34 +19,6 @@ public class PaymentRepository {
 
     public PaymentRepository(DataSource dataSource) {
         this.dataSource = dataSource;
-        ensureTable();
-    }
-
-    private void ensureTable() {
-        String sql = """
-                CREATE TABLE IF NOT EXISTS payment_transactions (
-                    id VARCHAR(36) PRIMARY KEY,
-                    auction_id VARCHAR(36) NOT NULL,
-                    payer_id VARCHAR(36) NOT NULL,
-                    payee_id VARCHAR(36) NOT NULL,
-                    amount NUMERIC(19, 2) NOT NULL,
-                    status VARCHAR(50) NOT NULL,
-                    created_at TIMESTAMP NOT NULL,
-                    updated_at TIMESTAMP NOT NULL,
-                    FOREIGN KEY (auction_id) REFERENCES auctions(id),
-                    FOREIGN KEY (payer_id) REFERENCES users(id),
-                    FOREIGN KEY (payee_id) REFERENCES users(id)
-                );
-                CREATE INDEX IF NOT EXISTS idx_payment_transactions_auction_id ON payment_transactions(auction_id);
-                CREATE INDEX IF NOT EXISTS idx_payment_transactions_payer_id ON payment_transactions(payer_id);
-                CREATE INDEX IF NOT EXISTS idx_payment_transactions_payee_id ON payment_transactions(payee_id);
-                """;
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement()) {
-            stmt.execute(sql);
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to initialize payment_transactions table", e);
-        }
     }
 
     public void saveCompletedPayment(UUID auctionId, UUID payerId, UUID payeeId, BigDecimal amount, LocalDateTime now) {

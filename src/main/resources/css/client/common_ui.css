@@ -5,7 +5,6 @@
     -fx-accent: #2b6b4c;
     -fx-focus-color: #2b6b4c;
 }
-
 /* Base Button Style */
 .button {
     -fx-cursor: hand;
@@ -81,4 +80,80 @@
     -fx-text-fill: white;
     -fx-border-color: #2b6b4c;
     -fx-border-width: 0 0 0 3px; /* Accent bar on the left */
+}
+
+/* ===== DIALOG PANE STANDARD ===== */
+.dialog-pane {
+    -fx-background-color: #0c120f;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 1.5px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 1px; /* Đẩy nội dung con vào trong viền để không bị chồng lấn */
+}
+
+.dialog-pane:header .header-panel {
+    -fx-background-color: #101a15;
+    -fx-padding: 15px;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 0 0 1px 0;
+    -fx-background-radius: 11px 11px 0 0; /* Bo tròn góc trên để khít với dialog-pane */
+    -fx-border-radius: 11px 11px 0 0;
+}
+
+.dialog-pane:header .header-panel .label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Georgia";
+    -fx-font-style: italic;
+}
+
+.dialog-pane .content {
+    -fx-padding: 20px;
+    -fx-text-fill: #b8c5be;
+}
+
+.dialog-pane .label {
+    -fx-text-fill: #b8c5be;
+    -fx-font-size: 14px;
+}
+
+.dialog-pane .text-field {
+    -fx-background-color: #121a16;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 1px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-text-fill: white;
+    -fx-padding: 8px;
+    -fx-font-size: 14px;
+}
+
+.dialog-pane .text-field:focused {
+    -fx-border-color: #4caf50;
+}
+
+.dialog-pane > .button-bar {
+    -fx-min-height: 0px;
+    -fx-pref-height: 0px;
+    -fx-max-height: 0px;
+    -fx-padding: 0px;
+    -fx-border-width: 0px;
+    -fx-background-color: transparent;
+}
+
+.dialog-pane > .button-bar > .container {
+    -fx-min-height: 0px;
+    -fx-pref-height: 0px;
+    -fx-max-height: 0px;
+    -fx-padding: 0px;
+    -fx-background-color: transparent;
+}
+
+.dialog-pane .custom-button-bar {
+    -fx-padding: 15px 20px 20px 20px;
+    -fx-border-color: #2b6b4c;
+    -fx-border-width: 1px 0 0 0;
+    -fx-background-color: transparent;
 }

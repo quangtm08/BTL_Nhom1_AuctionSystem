@@ -1,12 +1,10 @@
 package com.nhom1.auction.client.admin.controller;
 
+import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.admin.service.AdminClientService;
+import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.admin.UserSummaryDto;
 import com.nhom1.auction.common.enums.UserRole;
-import com.nhom1.auction.client.user.connection.ServerConnection;
-import com.nhom1.auction.common.protocol.MessageType;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -17,9 +15,8 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 
 public class UserManagementController {
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy");
-
     private final AdminClientService adminClientService = new AdminClientService();
+    private final ClientPushService pushService = ClientPushService.getInstance();
     private boolean loading;
     private String deletingUserId;
 
@@ -30,16 +27,8 @@ public class UserManagementController {
     public void initialize() {
         reloadUsers();
 
-        // Register push handlers so admin view updates in realtime
-        ServerConnection.getInstance().registerPushHandler(
-                MessageType.PUSH_USER_DELETED,
-                json -> Platform.runLater(this::reloadUsers)
-        );
-
-        ServerConnection.getInstance().registerPushHandler(
-                MessageType.PUSH_USER_CREATED,
-                json -> Platform.runLater(this::reloadUsers)
-        );
+        pushService.onUserDeleted(event -> Platform.runLater(this::reloadUsers));
+        pushService.onUserCreated(event -> Platform.runLater(this::reloadUsers));
     }
 
     private void reloadUsers() {
@@ -80,12 +69,14 @@ public class UserManagementController {
         Label email = styled(nvl(user.getEmail()), "table-text-sub");
         Label role = styled(user.getRole() != null ? user.getRole().name() : "USER",
                 user.getRole() == UserRole.ADMIN ? "status-pill-banned" : "status-pill-active");
-        Label createdAt = styled(formatDate(user.getCreatedAt()), "table-text-sub");
+        Label createdAt = styled(DisplayFormatters.shortDate(user.getCreatedAt()), "table-text-sub");
 
         Button deleteBtn = new Button("Delete");
         deleteBtn.getStyleClass().add("btn-cancel");
-        deleteBtn.setDisable(loading || user.getRole() == UserRole.ADMIN || user.getId().equals(deletingUserId));
-        deleteBtn.setOnAction(e -> deleteUser(user.getId(), deleteBtn));
+        String userId = user.getId();
+        boolean missingUserId = userId == null || userId.isBlank();
+        deleteBtn.setDisable(loading || missingUserId || user.getRole() == UserRole.ADMIN || userId.equals(deletingUserId));
+        deleteBtn.setOnAction(e -> deleteUser(userId, deleteBtn));
 
         HBox actions = new HBox(deleteBtn);
         actions.setAlignment(Pos.CENTER_RIGHT);
@@ -130,9 +121,6 @@ public class UserManagementController {
         });
     }
 
-    private String formatDate(LocalDateTime value) {
-        return value == null ? "-" : value.format(DATE_FORMATTER);
-    }
-
     private String nvl(String value) { return value == null || value.isBlank() ? "-" : value; }
+
 }

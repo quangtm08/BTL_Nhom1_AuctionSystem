@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS auctions (
     starting_price DECIMAL(19, 2) NOT NULL,
     current_highest_bid DECIMAL(19, 2) DEFAULT 0,
     highest_bidder_id VARCHAR(36),
+    version BIGINT NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     FOREIGN KEY (item_id) REFERENCES items(id),
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS auctions (
 CREATE INDEX IF NOT EXISTS idx_auctions_item_id ON auctions(item_id);
 CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status);
 CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id);
+CREATE INDEX IF NOT EXISTS idx_auctions_status_end_time ON auctions(status, end_time);
 
 -- 4. Table: bids
 CREATE TABLE IF NOT EXISTS bids (
@@ -73,6 +75,8 @@ CREATE TABLE IF NOT EXISTS auto_bid_configs (
     FOREIGN KEY (auction_id) REFERENCES auctions(id),
     FOREIGN KEY (bidder_id) REFERENCES users(id)
 );
+CREATE INDEX IF NOT EXISTS idx_auto_bid_configs_auction_id ON auto_bid_configs(auction_id);
+CREATE INDEX IF NOT EXISTS idx_auto_bid_configs_bidder_id ON auto_bid_configs(bidder_id);
 
 -- 6. Table: payment_transactions
 CREATE TABLE IF NOT EXISTS payment_transactions (
@@ -93,7 +97,7 @@ CREATE INDEX IF NOT EXISTS idx_payment_transactions_auction_id ON payment_transa
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payer_id ON payment_transactions(payer_id);
 CREATE INDEX IF NOT EXISTS idx_payment_transactions_payee_id ON payment_transactions(payee_id);
 
--- 6. Table: item_images (image URLs for auction items)
+-- 7. Table: item_images (image URLs for auction items)
 CREATE TABLE IF NOT EXISTS item_images (
     id VARCHAR(36) PRIMARY KEY,
     item_id VARCHAR(36) NOT NULL,

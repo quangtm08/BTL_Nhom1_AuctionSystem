@@ -6,6 +6,7 @@ import com.nhom1.auction.server.automation.AuctionGateway;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class AuctionGatewayImpl implements AuctionGateway {
@@ -18,6 +19,11 @@ public class AuctionGatewayImpl implements AuctionGateway {
     @Override
     public List<Auction> findAll() {
         return auctionRepository.findAll();
+    }
+
+    @Override
+    public Optional<Auction> findById(UUID auctionId) {
+        return auctionRepository.findById(auctionId);
     }
 
     @Override
