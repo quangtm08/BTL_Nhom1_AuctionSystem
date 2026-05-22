@@ -1,6 +1,9 @@
 package com.nhom1.auction.client.admin.service;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.nhom1.auction.client.user.service.BaseClientService;
+import com.nhom1.auction.common.dto.admin.AdminApproveAuctionRequest;
 import com.nhom1.auction.common.dto.admin.AdminAuctionListResponse;
 import com.nhom1.auction.common.dto.admin.AdminCancelAuctionRequest;
 import com.nhom1.auction.common.dto.admin.AdminDeleteUserRequest;
@@ -12,7 +15,6 @@ import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.utils.AppContext;
-import java.util.concurrent.CompletableFuture;
 
 public class AdminClientService extends BaseClientService {
 
@@ -44,6 +46,18 @@ public class AdminClientService extends BaseClientService {
         if (currentUser == null) return validationError("You must sign in as admin before canceling auctions.");
         return send(new RequestMessage<>(MessageType.ADMIN_CANCEL_AUCTION,
                 new AdminCancelAuctionRequest(auctionId, currentUser.getUserID())), String.class);
+    }
+
+    public CompletableFuture<String> approveAuction(String auctionId) {
+        return approveAuction(auctionId, null);
+    }
+
+    public CompletableFuture<String> approveAuction(String auctionId, String openingDate) {
+        if (auctionId == null || auctionId.isBlank()) return validationError("Auction ID is required.");
+        AuthResponse currentUser = requireAdminUser();
+        if (currentUser == null) return validationError("You must sign in as admin before approving auctions.");
+        AdminApproveAuctionRequest req = new AdminApproveAuctionRequest(auctionId, currentUser.getUserID(), openingDate);
+        return send(new RequestMessage<>(MessageType.ADMIN_APPROVE_AUCTION, req), String.class);
     }
 
     private AuthResponse requireAdminUser() {

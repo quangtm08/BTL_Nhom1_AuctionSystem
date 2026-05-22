@@ -1,10 +1,13 @@
 package com.nhom1.auction.server.auction;
 
+import java.util.List;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.dto.auction.MyListingsResponse;
+import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
@@ -12,7 +15,6 @@ import com.nhom1.auction.common.utils.JsonUtil;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 import com.nhom1.auction.server.infrastructure.ResponseFactory;
-import java.util.List;
 
 public class AuctionHandler {
     private final AuctionService auctionService;
@@ -29,7 +31,7 @@ public class AuctionHandler {
                 CreateAuctionRequest dto = JsonUtil.fromJson(payloadJson, CreateAuctionRequest.class);
                 return handleCreateAuction(requestId, dto);
             } catch (Exception e) {
-                return ResponseFactory.invalidFormat(requestId, "Invalid CreateAuction JSON");
+                return ResponseFactory.invalidFormat(requestId, "Invalid CreateAuction JSON: " + e.getMessage());
             }
         });
 
@@ -53,16 +55,19 @@ public class AuctionHandler {
                 return ResponseFactory.invalidFormat(requestId, "Invalid DeleteAuction JSON");
             }
         });
+        router.register(MessageType.UPDATE_AUCTION, (requestId, payloadJson) -> {
+            try {
+                UpdateAuctionRequest dto = JsonUtil.fromJson(payloadJson, UpdateAuctionRequest.class);
+                return handleUpdateAuction(requestId, dto);
+            } catch (Exception e) {
+                return ResponseFactory.invalidFormat(requestId, "Invalid UpdateAuction JSON: " + e.getMessage());
+            }
+        });
     }
 
     private ResponseMessage<CreateAuctionResponse> handleCreateAuction(String requestId, CreateAuctionRequest dto) {
         try {
-            Auction auction = auctionService.createAuction(dto.getSellerId(), dto);
-            notificationService.broadcastNewAuction(
-                    auction.getId().toString(),
-                    dto.getName(),
-                    auction.getStartingPrice()
-            );
+                Auction auction = auctionService.createAuction(dto.getSellerId(), dto);
 
             CreateAuctionResponse response = new CreateAuctionResponse(
                     auction.getId().toString(),
@@ -96,6 +101,15 @@ public class AuctionHandler {
             auctionService.deleteAuction(sellerId, auctionId);
             notificationService.broadcastAuctionDeleted(auctionId);
             return ResponseFactory.success(requestId, "Deleted");
+        } catch (Exception e) {
+            return ResponseFactory.fromException(requestId, e);
+        }
+    }
+
+    private ResponseMessage<String> handleUpdateAuction(String requestId, UpdateAuctionRequest dto) {
+        try {
+            auctionService.updateAuction(dto);
+            return ResponseFactory.success(requestId, "Updated");
         } catch (Exception e) {
             return ResponseFactory.fromException(requestId, e);
         }

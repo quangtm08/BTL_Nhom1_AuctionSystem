@@ -1,6 +1,9 @@
 package com.nhom1.auction.common.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /* This class hides all the Jackson logic
@@ -15,6 +18,13 @@ public class JsonUtil {
     // This static block runs EXACTLY ONCE when the program starts so Jackson understands Java LocalDateTime
     static {
         mapper.registerModule(new JavaTimeModule());
+        // Compatibility across client/server versions:
+        // do not fail when request payload contains extra fields.
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        // Accept enum values regardless of upper/lower case.
+        mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS, true);
+        // Keep Java time as ISO strings (not timestamps).
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
 

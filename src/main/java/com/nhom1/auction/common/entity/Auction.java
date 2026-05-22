@@ -11,9 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.enums.UserRole;
-import com.nhom1.auction.common.exception.AuctionClosedException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
-import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 
 public class Auction extends BaseEntity {
@@ -28,6 +26,7 @@ public class Auction extends BaseEntity {
     // Persistence-only concurrency token used by optimistic locking in the repository.
     // Business logic does not mutate this field directly; the database increments it.
     private final long version;
+    private final Integer durationDays;
 
     // volatile để đảm bảo giá trị được cập nhật và đồng bộ hóa, thread-safe !
     private volatile UUID highestBidderId;
@@ -50,11 +49,8 @@ public class Auction extends BaseEntity {
         if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("startingPrice must not be null or negative");
         }
-        if (startTime == null) {
-            throw new IllegalArgumentException("startTime must not be null");
-        }
-        if (endTime == null) {
-            throw new IllegalArgumentException("endTime must not be null");
+        if (startTime == null || endTime == null) {
+            throw new IllegalArgumentException("startTime and endTime must not be null");
         }
         if (!endTime.isAfter(startTime)) {
             throw new IllegalArgumentException("endTime must be after startTime");
@@ -70,6 +66,35 @@ public class Auction extends BaseEntity {
         this.currentHighestBid = null;
         this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
+        this.durationDays = null;
+        this.version = 0L;
+    }
+
+    public Auction(UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime, Integer durationDays) {
+        if (itemId == null) {
+            throw new IllegalArgumentException("itemId must not be null");
+        }
+        if (sellerId == null) {
+            throw new IllegalArgumentException("sellerId must not be null");
+        }
+        if (startingPrice == null || startingPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("startingPrice must not be null or negative");
+        }
+        if (startTime != null && endTime != null && !endTime.isAfter(startTime)) {
+            throw new IllegalArgumentException("endTime must be after startTime");
+        }
+
+        this.itemId = itemId;
+        this.sellerId = sellerId;
+        this.startingPrice = startingPrice;
+        this.startTime = startTime;
+        this.endTime = endTime;
+
+        this.highestBidderId = null;
+        this.currentHighestBid = null;
+        this.status = AuctionStatus.OPEN;
+        this.bidHistory = new ArrayList<>();
+        this.durationDays = durationDays;
         this.version = 0L;
     }
 
@@ -78,26 +103,7 @@ public class Auction extends BaseEntity {
      */
     public Auction(UUID id, UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime,
             UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
-            LocalDateTime createdAt, LocalDateTime updatedAt) {
-        this(
-            id,
-            itemId,
-            sellerId,
-            startingPrice,
-            startTime,
-            endTime,
-            highestBidderId,
-            currentHighestBid,
-            status,
-            createdAt,
-            updatedAt,
-            0L
-        );
-    }
-
-    public Auction(UUID id, UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime,
-            UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
-            LocalDateTime createdAt, LocalDateTime updatedAt, long version) {
+            LocalDateTime createdAt, LocalDateTime updatedAt, long version, Integer durationDays) {
         super(id, createdAt, updatedAt);
         this.itemId = itemId;
         this.sellerId = sellerId;
@@ -109,6 +115,7 @@ public class Auction extends BaseEntity {
         this.status = status;
         this.bidHistory = new ArrayList<>();
         this.version = version;
+        this.durationDays = durationDays;
     }
 
     public void startAuction() {
@@ -242,6 +249,10 @@ public class Auction extends BaseEntity {
 
     public LocalDateTime getEndTime() {
         return endTime;
+    }
+
+    public Integer getDurationDays() {
+        return durationDays;
     }
 
     public UUID getHighestBidderId() {
