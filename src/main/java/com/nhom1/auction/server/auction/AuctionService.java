@@ -209,6 +209,12 @@ public class AuctionService {
         try { auctionUuid = UUID.fromString(dto.getAuctionId()); } catch (IllegalArgumentException ex) { throw new ValidationException("auctionId is not a valid UUID"); }
         Auction auction = auctionRepository.findById(auctionUuid).orElseThrow(() -> new NotFoundException("Auction not found"));
         if (!sellerUuid.equals(auction.getSellerId())) throw new UnauthorizedActionException("You are not allowed to edit this auction");
+        if (auction.getStatus() == AuctionStatus.RUNNING
+                && auction.getStartTime() != null
+                && auction.getStartTime().isAfter(LocalDateTime.now())) {
+            auctionRepository.updateStatus(auctionUuid, AuctionStatus.OPEN);
+            auction = auctionRepository.findById(auctionUuid).orElseThrow(() -> new NotFoundException("Auction not found"));
+        }
         if (auction.getStatus() != AuctionStatus.OPEN) throw new ValidationException("Only open auctions can be edited");
         if (auction.getHighestBidderId() != null) throw new ValidationException("Auction already has bids and cannot be edited");
         if (dto.getEndTime() == null) throw new ValidationException("endTime is required");

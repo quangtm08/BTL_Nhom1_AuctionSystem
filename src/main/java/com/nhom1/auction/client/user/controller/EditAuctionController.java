@@ -2,6 +2,7 @@ package com.nhom1.auction.client.user.controller;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 
 import com.nhom1.auction.client.AppNavigator;
@@ -36,6 +37,8 @@ public class EditAuctionController {
     @FXML private TextField titleField;
     @FXML private TextArea descriptionArea;
     @FXML private Label statusLabel;
+    @FXML private Label metaLabel;
+    @FXML private Label statusSubLabel;
     @FXML private TextField startingBidField;
     private LocalDateTime loadedStartTime;
     private LocalDateTime loadedEndTime;
@@ -85,6 +88,7 @@ public class EditAuctionController {
                 loadedStartTime = dto.getStartTime();
                 loadedEndTime = dto.getEndTime();
                 applyDurationFromEndTime(loadedStartTime, loadedEndTime);
+                bindMeta(dto.getStartTime(), dto.getEndTime());
                 statusLabel.setText("Ready");
             }))
             .exceptionally(ex -> { Platform.runLater(() -> statusLabel.setText(ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage())); return null; });
@@ -112,5 +116,16 @@ public class EditAuctionController {
         else if (daysLeft == 14) duration14Btn.getStyleClass().add("duration-chip-active");
         else if (daysLeft == 30) duration30Btn.getStyleClass().add("duration-chip-active");
         else customDurationField.setText(String.valueOf(daysLeft));
+    }
+
+    private void bindMeta(LocalDateTime startTime, LocalDateTime endTime) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        metaLabel.setText(startTime != null ? "Opens: " + startTime.format(fmt) : "Opens: N/A");
+        if (endTime == null) {
+            statusSubLabel.setText("No end time");
+            return;
+        }
+        long daysLeft = ChronoUnit.DAYS.between(LocalDateTime.now(), endTime);
+        statusSubLabel.setText(daysLeft > 0 ? daysLeft + " days left" : "Ending soon");
     }
 }
