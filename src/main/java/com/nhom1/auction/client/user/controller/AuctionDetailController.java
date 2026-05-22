@@ -16,10 +16,13 @@ import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.BidSummaryDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
+import com.nhom1.auction.client.util.CountdownAnimator;
+import com.nhom1.auction.common.dto.notification.AuctionTimeExtendedEvent;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.utils.AppContext;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -37,6 +40,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 
 public class AuctionDetailController {
 	private static final double IMAGE_BOX_WIDTH = 420;
@@ -103,6 +107,15 @@ public class AuctionDetailController {
 	private VBox loadingBox;
 
 	@FXML
+	private Label lblCountdown;
+
+	@FXML
+	private Label lblExtensionToast;
+
+	private CountdownAnimator countdownAnimator;
+	private PauseTransition extensionToastPause;
+
+	@FXML
 	public void initialize() {
 		if (btnBid != null) {
 			btnBid.setOnAction(e -> onPlaceBid());
@@ -150,6 +163,37 @@ public class AuctionDetailController {
 			});
 
 		pushService.onBidUpdate(this::handleBidUpdatePush);
+		pushService.onAuctionTimeExtended(this::handleAuctionTimeExtendedPush);
+	}
+
+	private void handleAuctionTimeExtendedPush(AuctionTimeExtendedEvent event) {
+		String currentAuctionId = AppContext.getSelectedAuctionId();
+		if (event == null || event.getAuctionId() == null || !event.getAuctionId().equals(currentAuctionId)) {
+			return;
+		}
+		Platform.runLater(() -> {
+			if (countdownAnimator != null && event.getNewEndTime() != null) {
+				countdownAnimator.resetEndTime(event.getNewEndTime());
+			}
+			showExtensionToast();
+		});
+	}
+
+	private void showExtensionToast() {
+		if (lblExtensionToast == null) {
+			return;
+		}
+		lblExtensionToast.setVisible(true);
+		lblExtensionToast.setManaged(true);
+		if (extensionToastPause != null) {
+			extensionToastPause.stop();
+		}
+		extensionToastPause = new PauseTransition(Duration.seconds(3));
+		extensionToastPause.setOnFinished(e -> {
+			lblExtensionToast.setVisible(false);
+			lblExtensionToast.setManaged(false);
+		});
+		extensionToastPause.play();
 	}
 
 	private void handleBidUpdatePush(BidUpdateEvent event) {
@@ -222,6 +266,15 @@ public class AuctionDetailController {
 
 		if (bidHistoryList != null && dto.getBidHistory() != null) {
 			renderBidHistory(dto.getBidHistory());
+		}
+
+		if (lblCountdown != null && dto.getEndTime() != null) {
+			if (countdownAnimator != null) {
+				countdownAnimator.stop();
+			}
+			countdownAnimator = new CountdownAnimator(lblCountdown, dto.getEndTime());
+			countdownAnimator.setOnExpired(() -> setBidControlsDisabled(true));
+			countdownAnimator.start();
 		}
 		if (itemImageView != null) {
 			String imageUrl = dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()

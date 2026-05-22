@@ -221,3 +221,44 @@
     -fx-font-size: 11;
     -fx-min-width: 64;
 }
+
+/* ===== COUNTDOWN ===== */
+.countdown-row {
+    -fx-padding: 0 0 4 0;
+}
+
+.countdown-label {
+    -fx-text-fill: #b6c5be;
+    -fx-font-size: 12;
+}
+
+.countdown-value {
+    -fx-text-fill: #7ec8a0;
+    -fx-font-family: "Consolas", "JetBrains Mono", monospace;
+    -fx-font-size: 20;
+    -fx-font-weight: bold;
+}
+
+/* last 60s — warn (amber) */
+.countdown-value.warn {
+    -fx-text-fill: #f0b860;
+}
+
+/* last 15s = anti-sniping window — critical (red + glow) */
+.countdown-value.critical {
+    -fx-text-fill: #ff6b6b;
+    -fx-effect: dropshadow(gaussian, rgba(255, 107, 107, 0.6), 8, 0.4, 0, 0);
+}
+
+/* extension toast — shown briefly when server pushes a time-extended event */
+.extension-toast {
+    -fx-background-color: #1a3327;
+    -fx-text-fill: #7ec8a0;
+    -fx-padding: 6 12 6 12;
+    -fx-background-radius: 6;
+    -fx-border-color: #2b6b4c;
+    -fx-border-radius: 6;
+    -fx-font-size: 12;
+    -fx-font-style: italic;
+}
+
