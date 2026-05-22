@@ -274,4 +274,110 @@ public class AuctionServiceTest {
         dto.setEndTime(LocalDateTime.now().plusHours(1));
         return dto;
     }
+
+    @Test
+    public void testGetMyListings_Success() {
+        UUID sellerId = UUID.randomUUID();
+        Auction auction = new Auction(UUID.randomUUID(), sellerId, new BigDecimal("100"), LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        Item item = new Item("Art Item", "Desc", ItemCategory.ART, ItemCondition.NEW) {
+            @Override
+            public void printInfo() {}
+        };
+
+        when(auctionRepository.findBySellerId(sellerId)).thenReturn(java.util.List.of(auction));
+        when(itemRepository.findById(auction.getItemId())).thenReturn(Optional.of(item));
+
+        var result = auctionService.getMyListings(sellerId.toString());
+        assertEquals(1, result.size());
+        assertEquals("Art Item", result.get(0).getItemName());
+        assertEquals("ART", result.get(0).getItemCategory());
+    }
+
+    @Test
+    public void testGetMyListings_ItemNotFound_ThrowsIllegalStateException() {
+        UUID sellerId = UUID.randomUUID();
+        Auction auction = new Auction(UUID.randomUUID(), sellerId, new BigDecimal("100"), LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        when(auctionRepository.findBySellerId(sellerId)).thenReturn(java.util.List.of(auction));
+        when(itemRepository.findById(auction.getItemId())).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> auctionService.getMyListings(sellerId.toString()));
+    }
+
+    @Test
+    public void testCreateAuction_NullRequest_Throws() {
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(UUID.randomUUID().toString(), null));
+    }
+
+    @Test
+    public void testCreateAuction_MissingTimes_Throws() {
+        CreateAuctionRequest request = createValidCreateAuctionRequest();
+        request.setStartTime(null);
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(UUID.randomUUID().toString(), request));
+    }
+
+    @Test
+    public void testCreateAuction_NullCategory_Throws() {
+        CreateAuctionRequest request = createValidCreateAuctionRequest();
+        request.setCategory(null);
+        assertThrows(ValidationException.class, () -> auctionService.createAuction(UUID.randomUUID().toString(), request));
+    }
+
+    @Test
+    public void testCreateAuction_ElectronicsAndVehicleCategory() throws Exception {
+        String sellerId = UUID.randomUUID().toString();
+        CreateAuctionRequest reqElectronics = createValidCreateAuctionRequest();
+        reqElectronics.setCategory(ItemCategory.ELECTRONICS);
+        
+        CreateAuctionRequest reqVehicle = createValidCreateAuctionRequest();
+        reqVehicle.setCategory(ItemCategory.VEHICLE);
+
+        when(connection.getAutoCommit()).thenReturn(true);
+
+        assertNotNull(auctionService.createAuction(sellerId, reqElectronics));
+        assertNotNull(auctionService.createAuction(sellerId, reqVehicle));
+    }
+
+    @Test
+    public void testDeleteAuction_BlankOrInvalidUUID_Throws() {
+        String sellerId = UUID.randomUUID().toString();
+        assertThrows(ValidationException.class, () -> auctionService.deleteAuction(sellerId, null));
+        assertThrows(ValidationException.class, () -> auctionService.deleteAuction(sellerId, "   "));
+        assertThrows(ValidationException.class, () -> auctionService.deleteAuction(sellerId, "invalid-uuid"));
+    }
+
+    @Test
+    public void testDeleteAuction_ZeroAuctionsDeleted_ThrowsIllegalStateException() throws SQLException {
+        String sellerId = UUID.randomUUID().toString();
+        String auctionId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.fromString(auctionId);
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(auctionRepository.deleteById(parsedAuctionId, connection)).thenReturn(0);
+
+        assertThrows(RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
+    }
+
+    @Test
+    public void testDeleteAuction_ZeroItemsDeleted_ThrowsIllegalStateException() throws SQLException {
+        String sellerId = UUID.randomUUID().toString();
+        String auctionId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.fromString(auctionId);
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(auctionRepository.deleteById(parsedAuctionId, connection)).thenReturn(1);
+        when(itemRepository.deleteById(any(UUID.class), eq(connection))).thenReturn(0);
+
+        assertThrows(RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
+    }
 }

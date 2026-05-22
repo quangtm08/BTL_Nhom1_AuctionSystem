@@ -117,4 +117,23 @@ public class ResponseFactoryTest {
 
         assertEquals(root, result);
     }
+
+    @Test
+    public void testFindAppException_NullOrSelfReferencing() {
+        assertNull(ResponseFactory.findAppException(null));
+
+        // Create self-referencing exception using reflection or subclassing
+        class SelfReferencingException extends RuntimeException {
+            @Override
+            public synchronized Throwable getCause() {
+                return this;
+            }
+        }
+        SelfReferencingException ex = new SelfReferencingException();
+        assertNull(ResponseFactory.findAppException(ex));
+        assertNull(ResponseFactory.fromException("id", ex).getPayload());
+        
+        // Test logUnexpectedException null check
+        assertDoesNotThrow(() -> ResponseFactory.fromException("id", null));
+    }
 }
