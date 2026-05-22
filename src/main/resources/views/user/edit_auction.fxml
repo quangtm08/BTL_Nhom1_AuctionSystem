@@ -68,10 +68,6 @@
                     <TextField fx:id="startingBidField" styleClass="field-input"/>
                     <Label text="Cannot change once bidding starts" styleClass="note-text"/>
                 </VBox>
-                <VBox spacing="8.0" HBox.hgrow="ALWAYS">
-                    <Label text="Reserve price" styleClass="field-label"/>
-                    <TextField fx:id="reservePriceField" styleClass="field-input" editable="false"/>
-                </VBox>
             </HBox>
 
             <VBox spacing="8.0">

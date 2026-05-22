@@ -1,15 +1,17 @@
 package com.nhom1.auction.client.user.controller;
 
-import com.nhom1.auction.client.AppNavigator;
-import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.service.EditAuctionClientService;
-import com.nhom1.auction.client.user.service.BiddingClientService;
-import com.nhom1.auction.common.enums.ItemCategory;
-import com.nhom1.auction.common.enums.ItemCondition;
-import com.nhom1.auction.common.utils.AppContext;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+
+import com.nhom1.auction.client.AppNavigator;
+import com.nhom1.auction.client.AppView;
+import com.nhom1.auction.client.user.service.BiddingClientService;
+import com.nhom1.auction.client.user.service.EditAuctionClientService;
+import com.nhom1.auction.common.enums.ItemCategory;
+import com.nhom1.auction.common.enums.ItemCondition;
+import com.nhom1.auction.common.utils.AppContext;
+
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -35,7 +37,6 @@ public class EditAuctionController {
     @FXML private TextArea descriptionArea;
     @FXML private Label statusLabel;
     @FXML private TextField startingBidField;
-    @FXML private TextField reservePriceField;
     private LocalDateTime loadedEndTime;
 
     @FXML private void initialize() {
@@ -75,7 +76,6 @@ public class EditAuctionController {
                 titleField.setText(dto.getItemName());
                 descriptionArea.setText(dto.getItemDescription());
                 startingBidField.setText(dto.getStartingPrice() != null ? dto.getStartingPrice().stripTrailingZeros().toPlainString() : "");
-                reservePriceField.setText(dto.getStartingPrice() != null ? dto.getStartingPrice().stripTrailingZeros().toPlainString() : "");
                 if (dto.getItemCategory() != null) categoryComboBox.setValue(dto.getItemCategory());
                 if (dto.getItemCondition() != null) conditionComboBox.setValue(dto.getItemCondition());
                 loadedEndTime = dto.getEndTime();
