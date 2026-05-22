@@ -1,6 +1,7 @@
 package com.nhom1.auction.client.user.controller;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +25,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -61,7 +63,7 @@ public class CreateAuctionController {
     @FXML
     private TextField startingBidField;
     @FXML
-    private TextField reservePriceField;
+    private DatePicker openingDatePicker;
 
     @FXML
     private void initialize() {
@@ -134,7 +136,8 @@ public class CreateAuctionController {
                 startingBidField.getText(),
                 categoryComboBox.getValue(),
                 conditionComboBox.getValue(),
-                resolveDurationDays()
+                resolveDurationDays(),
+                openingDatePicker.getValue()
         );
         if (validationError != null) {
             uploadCountLabel.setText(validationError);
@@ -156,6 +159,7 @@ public class CreateAuctionController {
                         categoryComboBox.getValue(),
                         conditionComboBox.getValue(),
                         durationDays,
+                        openingDatePicker.getValue(),
                         selectedImageFiles
                 )
                 .thenAccept(response -> Platform.runLater(() -> {
