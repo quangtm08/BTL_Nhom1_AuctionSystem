@@ -1,15 +1,15 @@
 package com.nhom1.auction.server.infrastructure;
 
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.ResponseMessage;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.nhom1.auction.common.protocol.MessageType;
+import com.nhom1.auction.common.protocol.ResponseMessage;
 
 public class MessageRouterTest {
 
@@ -63,5 +63,26 @@ public class MessageRouterTest {
         String result = messageRouter.handleRequest(json);
 
         assertTrue(result.contains("INVALID_FORMAT"));
+    }
+
+    @Test
+    public void testHandleRequest_NoHandlerRegistered() {
+        String json = "{\"type\":\"REGISTER\",\"requestId\":\"123\"}";
+        String result = messageRouter.handleRequest(json);
+        assertTrue(result.contains("UNKNOWN_TYPE"));
+        assertTrue(result.contains("No handler registered for"));
+    }
+
+    @Test
+    public void testHandleRequest_ExceptionThrown() throws Exception {
+        MessageType type = MessageType.LOGIN;
+        messageRouter.register(type, mockAction);
+        String json = "{\"type\":\"LOGIN\",\"requestId\":\"123\"}";
+        when(mockAction.execute("123", null)).thenThrow(new RuntimeException("Something went wrong"));
+
+        String result = messageRouter.handleRequest(json);
+
+        assertTrue(result.contains("SERVER_ERROR"));
+        assertTrue(result.contains("Something went wrong"));
     }
 }
