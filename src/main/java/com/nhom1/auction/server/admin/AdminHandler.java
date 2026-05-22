@@ -108,7 +108,7 @@ public class AdminHandler {
     private ResponseMessage<String> handleApproveAuction(String requestId, com.nhom1.auction.common.dto.admin.AdminApproveAuctionRequest dto) {
         try {
             if (dto == null) return ResponseFactory.invalidFormat(requestId, "Missing approve auction payload.");
-            return ResponseFactory.success(requestId, adminService.approveAuction(dto.getAuctionId(), dto.getCallerId()));
+            return ResponseFactory.success(requestId, adminService.approveAuction(dto.getAuctionId(), dto.getCallerId(), dto.getOpeningDate()));
         } catch (Exception e) {
             return ResponseFactory.fromException(requestId, e);
         }

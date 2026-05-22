@@ -251,6 +251,12 @@ public class AuctionService {
         if (dto.getDurationDays() != null && dto.getDurationDays() <= 0) {
             throw new ValidationException("durationDays must be greater than 0");
         }
+        if (dto.getStartTime() == null) {
+            throw new ValidationException("opening date must be provided");
+        }
+        if (!dto.getStartTime().isAfter(LocalDateTime.now())) {
+            throw new ValidationException("opening date must be in the future");
+        }
         if (
             dto.getStartTime() != null &&
             dto.getEndTime() != null &&

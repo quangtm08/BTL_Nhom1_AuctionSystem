@@ -2,6 +2,7 @@ package com.nhom1.auction.server.admin;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -157,6 +158,7 @@ public class AdminService {
                 "Auction not found or cannot be canceled in current status."
             );
         }
+        notificationService.broadcastAuctionEnded(java.util.UUID.fromString(auctionId), null, null);
         return "CANCELED";
     }
 
@@ -167,7 +169,7 @@ public class AdminService {
         );
     }
 
-    public String approveAuction(String auctionId, String callerId) {
+    public String approveAuction(String auctionId, String callerId, String openingDateStr) {
         requireAdmin(callerId);
         if (auctionId == null || auctionId.isBlank()) throw new ValidationException("Auction ID is required.");
         UUID parsedAuctionId;
@@ -178,9 +180,28 @@ public class AdminService {
             throw new InvalidAuctionStateException("Only OPEN auctions can be approved");
         }
 
+        LocalDateTime scheduledStart;
+        if (openingDateStr != null && !openingDateStr.isBlank()) {
+            try {
+                scheduledStart = LocalDate.parse(openingDateStr).atStartOfDay();
+            } catch (Exception ex) {
+                throw new ValidationException("Opening date is not a valid date");
+            }
+        } else {
+            scheduledStart = auction.getStartTime();
+        }
+
+        if (scheduledStart == null) {
+            throw new InvalidAuctionStateException("Auction opening date is missing");
+        }
+        if (!LocalDateTime.now().isBefore(scheduledStart)) {
+            auctionRepository.updateStatus(parsedAuctionId, com.nhom1.auction.common.enums.AuctionStatus.CANCELED);
+            throw new InvalidAuctionStateException("Auction opening date has passed");
+        }
+
         Integer duration = auction.getDurationDays();
         if (duration == null || duration <= 0) duration = 7;
-        LocalDateTime start = LocalDateTime.now();
+        LocalDateTime start = scheduledStart;
         LocalDateTime end = start.plusDays(duration);
 
         try (Connection connection = dataSource.getConnection()) {

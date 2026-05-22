@@ -143,6 +143,7 @@ public class BidService {
     public ListAuctionsResponse listAllAuctions() {
     	List<AuctionSummaryDto> auctions = auctionRepository.findAll().stream()
     		.filter(a -> a.getStatus() == com.nhom1.auction.common.enums.AuctionStatus.RUNNING)
+            .filter(a -> a.getStartTime() == null || !a.getStartTime().isAfter(LocalDateTime.now()))
     		.map(this::toAuctionSummaryDto)
     		.toList(); // Only running auctions for browse
 
