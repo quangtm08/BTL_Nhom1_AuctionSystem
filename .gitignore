@@ -56,7 +56,4 @@ build/
 
 # Personal documents
 personal-docs
-
-# Databases
-/database/
 docs/sprints/controller-audit-checklist.md

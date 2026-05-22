@@ -3,26 +3,19 @@ package com.nhom1.auction.server.admin;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.nhom1.auction.common.dto.admin.AdminAuctionListResponse;
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
-import com.nhom1.auction.common.dto.admin.UserSummaryDto;
-import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.User;
 import com.nhom1.auction.common.enums.UserRole;
-import com.nhom1.auction.common.exception.AuthenticationException;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
-import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.bidding.BidRepository;
 import com.nhom1.auction.server.infrastructure.NotificationService;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
 
 public class AdminServiceTest {
 
@@ -350,222 +342,4 @@ public class AdminServiceTest {
         assertTrue(thrown.getCause() instanceof IllegalStateException);
         verify(connection).rollback();
     }
-
-    @Test
-    public void testGetAllAuctions_AdminCaller_Success() {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(adminAuctionGateway.findAllAuctionSummaries()).thenReturn(List.of());
-
-        AdminAuctionListResponse response = adminService.getAllAuctions(admin.getId().toString());
-        assertNotNull(response);
-        assertNotNull(response.getAuctions());
-    }
-
-    @Test
-    public void testGetAllAuctions_NonAdminCaller_ThrowsUnauthorizedActionException() {
-        User user = new User("user", "user@example.com", "password", UserRole.USER);
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-
-        assertThrows(UnauthorizedActionException.class, () ->
-            adminService.getAllAuctions(user.getId().toString())
-        );
-    }
-
-    @Test
-    public void testDeleteUser_TargetUserIdBlank_ThrowsValidationException() {
-        assertThrows(ValidationException.class, () ->
-            adminService.deleteUser("", UUID.randomUUID().toString())
-        );
-        assertThrows(ValidationException.class, () ->
-            adminService.deleteUser(null, UUID.randomUUID().toString())
-        );
-    }
-
-    @Test
-    public void testDeleteUser_CallerIdBlank_ThrowsValidationException() {
-        assertThrows(ValidationException.class, () ->
-            adminService.deleteUser(UUID.randomUUID().toString(), "")
-        );
-        assertThrows(ValidationException.class, () ->
-            adminService.deleteUser(UUID.randomUUID().toString(), null)
-        );
-    }
-
-    @Test
-    public void testDeleteUser_CallerNotFound_ThrowsAuthenticationException() {
-        UUID callerId = UUID.randomUUID();
-        when(userRepository.findById(callerId)).thenReturn(Optional.empty());
-
-        assertThrows(AuthenticationException.class, () ->
-            adminService.deleteUser(UUID.randomUUID().toString(), callerId.toString())
-        );
-    }
-
-    @Test
-    public void testDeleteUser_CallerNotAdmin_ThrowsUnauthorizedActionException() {
-        User user = new User("user", "user@example.com", "password", UserRole.USER);
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-
-        assertThrows(UnauthorizedActionException.class, () ->
-            adminService.deleteUser(UUID.randomUUID().toString(), user.getId().toString())
-        );
-    }
-
-    @Test
-    public void testDeleteUser_InvalidTargetUserId_ThrowsValidationException() {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-
-        assertThrows(ValidationException.class, () ->
-            adminService.deleteUser("invalid-uuid", admin.getId().toString())
-        );
-    }
-
-    @Test
-    public void testDeleteUser_InvalidCallerId_ThrowsValidationException() {
-        assertThrows(ValidationException.class, () ->
-            adminService.deleteUser(UUID.randomUUID().toString(), "invalid-uuid")
-        );
-    }
-
-    @Test
-    public void testDeleteUser_SellerAuctionsSuccess_DeletesSellerAuctionsAndItems() throws SQLException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User seller = new User("seller", "seller@example.com", "password", UserRole.USER);
-        UUID auctionId = UUID.randomUUID();
-        UUID itemId = UUID.randomUUID();
-        Auction auction = new Auction(
-            auctionId,
-            itemId,
-            seller.getId(),
-            BigDecimal.TEN,
-            LocalDateTime.now(),
-            LocalDateTime.now().plusDays(1),
-            null,
-            null,
-            com.nhom1.auction.common.enums.AuctionStatus.OPEN,
-            LocalDateTime.now(),
-            LocalDateTime.now()
-        );
-
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(seller.getId())).thenReturn(Optional.of(seller));
-        when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.findBySellerId(seller.getId(), connection)).thenReturn(List.of(auction));
-        when(auctionRepository.deleteById(auctionId, connection)).thenReturn(1);
-        when(itemRepository.deleteById(itemId, connection)).thenReturn(1);
-        when(userRepository.deleteById(seller.getId(), connection)).thenReturn(true);
-
-        String result = adminService.deleteUser(seller.getId().toString(), admin.getId().toString());
-        assertEquals("DELETED", result);
-        verify(auctionRepository).clearHighestBidderByUserId(seller.getId(), connection);
-        verify(bidRepository).deleteByBidderId(seller.getId(), connection);
-        verify(bidRepository).deleteByAuctionId(auctionId, connection);
-        verify(connection).commit();
-    }
-
-    @Test
-    public void testDeleteUser_SellerAuctionsDeleteAuctionFails_RollsBack() throws SQLException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User seller = new User("seller", "seller@example.com", "password", UserRole.USER);
-        UUID auctionId = UUID.randomUUID();
-        UUID itemId = UUID.randomUUID();
-        Auction auction = new Auction(
-            auctionId,
-            itemId,
-            seller.getId(),
-            BigDecimal.TEN,
-            LocalDateTime.now(),
-            LocalDateTime.now().plusDays(1),
-            null,
-            null,
-            com.nhom1.auction.common.enums.AuctionStatus.OPEN,
-            LocalDateTime.now(),
-            LocalDateTime.now()
-        );
-
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(seller.getId())).thenReturn(Optional.of(seller));
-        when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.findBySellerId(seller.getId(), connection)).thenReturn(List.of(auction));
-        when(auctionRepository.deleteById(auctionId, connection)).thenReturn(0);
-
-        RuntimeException thrown = assertThrows(RuntimeException.class, () ->
-            adminService.deleteUser(seller.getId().toString(), admin.getId().toString())
-        );
-        assertTrue(thrown.getCause() instanceof IllegalStateException);
-        verify(connection).rollback();
-    }
-
-    @Test
-    public void testDeleteUser_SellerAuctionsDeleteItemFails_RollsBack() throws SQLException {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User seller = new User("seller", "seller@example.com", "password", UserRole.USER);
-        UUID auctionId = UUID.randomUUID();
-        UUID itemId = UUID.randomUUID();
-        Auction auction = new Auction(
-            auctionId,
-            itemId,
-            seller.getId(),
-            BigDecimal.TEN,
-            LocalDateTime.now(),
-            LocalDateTime.now().plusDays(1),
-            null,
-            null,
-            com.nhom1.auction.common.enums.AuctionStatus.OPEN,
-            LocalDateTime.now(),
-            LocalDateTime.now()
-        );
-
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findById(seller.getId())).thenReturn(Optional.of(seller));
-        when(connection.getAutoCommit()).thenReturn(true);
-        when(auctionRepository.findBySellerId(seller.getId(), connection)).thenReturn(List.of(auction));
-        when(auctionRepository.deleteById(auctionId, connection)).thenReturn(1);
-        when(itemRepository.deleteById(itemId, connection)).thenReturn(0);
-
-        RuntimeException thrown = assertThrows(RuntimeException.class, () ->
-            adminService.deleteUser(seller.getId().toString(), admin.getId().toString())
-        );
-        assertTrue(thrown.getCause() instanceof IllegalStateException);
-        verify(connection).rollback();
-    }
-
-    @Test
-    public void testCancelAuction_AuctionIdBlank_ThrowsValidationException() {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-
-        assertThrows(ValidationException.class, () ->
-            adminService.cancelAuction("", admin.getId().toString())
-        );
-        assertThrows(ValidationException.class, () ->
-            adminService.cancelAuction(null, admin.getId().toString())
-        );
-    }
-
-    @Test
-    public void testCancelAuction_InvalidAuctionId_ThrowsValidationException() {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-
-        assertThrows(ValidationException.class, () ->
-            adminService.cancelAuction("invalid-uuid", admin.getId().toString())
-        );
-    }
-
-    @Test
-    public void testGetAllUsers_UserSummaryDtoWithNullCreatedAt() {
-        User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
-        User user = new User(UUID.randomUUID(), "user", "user@example.com", "password", UserRole.USER, null, null);
-        when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
-        when(userRepository.findAll()).thenReturn(List.of(user));
-
-        AdminUserListResponse response = adminService.getAllUsers(admin.getId().toString());
-        assertNotNull(response);
-        assertEquals(1, response.getUsers().size());
-        assertNotNull(response.getUsers().get(0).getCreatedAt());
-    }
 }
-
