@@ -6,6 +6,7 @@ import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
 import com.nhom1.auction.common.dto.notification.NewAuctionEvent;
 import com.nhom1.auction.common.dto.notification.UserCreatedEvent;
 import com.nhom1.auction.common.dto.notification.UserDeletedEvent;
+import com.nhom1.auction.common.dto.notification.WalletUpdateEvent;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.JsonUtil;
@@ -89,6 +90,32 @@ public class NotificationService {
         } catch (Exception e) {
             System.err.println(
                 "[NotificationService] Error sending push notification: " +
+                    e.getMessage()
+            );
+            e.printStackTrace();
+        }
+    }
+
+    public void sendWalletUpdate(UUID userId, BigDecimal newBalance) {
+        WalletUpdateEvent event = new WalletUpdateEvent(
+            userId.toString(),
+            newBalance
+        );
+        sendPushToUser(userId, MessageType.PUSH_WALLET_UPDATE, event);
+    }
+
+    private void sendPushToUser(UUID userId, MessageType type, Object payload) {
+        try {
+            ResponseMessage<Object> responseMessage = new ResponseMessage<>();
+            responseMessage.setSuccess(true);
+            responseMessage.setType(type);
+            responseMessage.setPayload(payload);
+
+            String json = JsonUtil.toJson(responseMessage);
+            clientRegistry.sendToUser(userId, json);
+        } catch (Exception e) {
+            System.err.println(
+                "[NotificationService] Error sending user push notification: " +
                     e.getMessage()
             );
             e.printStackTrace();

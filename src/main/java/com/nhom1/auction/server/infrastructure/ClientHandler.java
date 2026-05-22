@@ -6,12 +6,16 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.UUID;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /*
 Each client interacts with the server through a ClientHandler
 It reads from the socket, asks the MessageRouter for an answer, and writes back.
  */
 public class ClientHandler implements Runnable {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final Socket socket;
     private final MessageRouter router;
@@ -44,6 +48,24 @@ public class ClientHandler implements Runnable {
             while ((inputLine = in.readLine()) != null) {
                 String response = router.handleRequest(inputLine);
                 push(response);
+                
+                try {
+                    JsonNode respNode = mapper.readTree(response);
+                    if (respNode.has("success") && respNode.get("success").asBoolean()) {
+                        if (respNode.has("type")) {
+                            String typeStr = respNode.get("type").asText();
+                            if ("LOGIN".equals(typeStr) || "REGISTER".equals(typeStr)) {
+                                JsonNode payload = respNode.get("payload");
+                                if (payload != null && payload.has("userID")) {
+                                    UUID userId = UUID.fromString(payload.get("userID").asText());
+                                    registry.linkUser(userId, clientId);
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    // Ignore linking error
+                }
             }
         } catch (IOException e) {
             System.err.println(

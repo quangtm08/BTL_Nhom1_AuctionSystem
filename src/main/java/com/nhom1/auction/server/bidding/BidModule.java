@@ -27,10 +27,11 @@ public class BidModule {
 			ItemRepository itemRepository,
 			ItemImageRepository itemImageRepository,
 			NotificationService notificationService,
-			UserRepository userRepository
+			UserRepository userRepository,
+			com.nhom1.auction.server.wallet.WalletRepository walletRepository
 	) {
 		BidRepository repository = new BidRepository(dataSource);
-		BidService service = new BidService(repository, auctionRepository, itemRepository, itemImageRepository, userRepository, dataSource);
+		BidService service = new BidService(repository, auctionRepository, itemRepository, itemImageRepository, userRepository, walletRepository, dataSource);
 		BidHandler handler = new BidHandler(service, notificationService);
 		handler.register(router);
 		System.out.println("BidModule: Feature initialized successfully.");
