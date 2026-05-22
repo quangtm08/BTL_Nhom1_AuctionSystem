@@ -28,6 +28,7 @@ import static org.mockito.Mockito.when;
 import org.mockito.MockitoAnnotations;
 
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
+import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.AuctionStatus;
@@ -290,6 +291,64 @@ public class AuctionServiceTest {
         );
     }
 
+    @Test
+    public void testUpdateAuction_PendingAuction_UpdatesItemAndAuction()
+        throws SQLException {
+        String sellerId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+            sellerId,
+            parsedAuctionId.toString()
+        );
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getItemId()).thenReturn(itemId);
+        when(auction.getStatus()).thenReturn(AuctionStatus.PENDING);
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+        when(connection.getAutoCommit()).thenReturn(true);
+        when(itemRepository.updateBasicInfo(
+            eq(itemId),
+            eq(dto.getName()),
+            eq(dto.getDescription()),
+            eq(dto.getCategory()),
+            eq(dto.getCondition()),
+            eq(connection)
+        )).thenReturn(1);
+        when(auctionRepository.updateOpenAuctionForEdit(
+            eq(parsedAuctionId),
+            eq(dto.getStartingPrice()),
+            eq(dto.getEndTime()),
+            eq(connection)
+        )).thenReturn(1);
+
+        assertDoesNotThrow(() -> auctionService.updateAuction(dto));
+
+        verify(connection).setAutoCommit(false);
+        verify(connection).commit();
+        verify(connection).setAutoCommit(true);
+    }
+
+    @Test
+    public void testUpdateAuction_RunningAuction_ThrowsInvalidState() {
+        String sellerId = UUID.randomUUID().toString();
+        UUID parsedSellerId = UUID.fromString(sellerId);
+        UUID parsedAuctionId = UUID.randomUUID();
+        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+            sellerId,
+            parsedAuctionId.toString()
+        );
+        Auction auction = mock(Auction.class);
+        when(auction.getSellerId()).thenReturn(parsedSellerId);
+        when(auction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+        when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+
+        assertThrows(InvalidAuctionStateException.class, () ->
+            auctionService.updateAuction(dto)
+        );
+    }
+
     private CreateAuctionRequest createValidCreateAuctionRequest() {
         CreateAuctionRequest dto = new CreateAuctionRequest();
         dto.setName("Test Item");
@@ -299,6 +358,22 @@ public class AuctionServiceTest {
         dto.setStartingPrice(new BigDecimal("100.00"));
         dto.setStartTime(LocalDateTime.now().plusDays(1));
         dto.setEndTime(LocalDateTime.now().plusDays(1).plusHours(1));
+        return dto;
+    }
+
+    private UpdateAuctionRequest createValidUpdateAuctionRequest(
+        String sellerId,
+        String auctionId
+    ) {
+        UpdateAuctionRequest dto = new UpdateAuctionRequest();
+        dto.setSellerId(sellerId);
+        dto.setAuctionId(auctionId);
+        dto.setName("Updated Item");
+        dto.setDescription("Updated Description");
+        dto.setCategory(ItemCategory.ART);
+        dto.setCondition(ItemCondition.USED);
+        dto.setStartingPrice(new BigDecimal("150.00"));
+        dto.setEndTime(LocalDateTime.now().plusDays(2));
         return dto;
     }
 }

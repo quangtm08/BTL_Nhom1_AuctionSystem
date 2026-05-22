@@ -105,6 +105,6 @@ public class MyListingsController {
         return dto.getStartingPrice() != null ? dto.getStartingPrice() : BigDecimal.ZERO;
     }
     private boolean isEditableListing(AuctionSummaryDto dto) {
-        return dto != null && dto.getStatus() == AuctionStatus.OPEN;
+        return dto != null && (dto.getStatus() == AuctionStatus.PENDING || dto.getStatus() == AuctionStatus.OPEN);
     }
 }

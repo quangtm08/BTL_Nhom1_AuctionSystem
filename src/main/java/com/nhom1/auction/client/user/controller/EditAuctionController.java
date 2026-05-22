@@ -11,7 +11,6 @@ import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.client.user.service.MyListingsClientService;
-import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.ItemCategory;
@@ -50,7 +49,6 @@ public class EditAuctionController {
     @FXML private TextArea descriptionArea;
     @FXML private Label statusLabel;
     @FXML private Label metaLabel;
-    @FXML private Label statusSubLabel;
     @FXML private TextField startingBidField;
     @FXML private Button saveChangesButton;
     @FXML private Button deleteButton;
@@ -191,9 +189,9 @@ public class EditAuctionController {
         applyDurationFromEndTime(loadedStartTime, loadedEndTime);
         bindMeta(dto.getStartTime(), dto.getEndTime());
 
-        boolean open = dto.getStatus() == AuctionStatus.OPEN;
-        showStatus(open ? "Editing open listing - " + DisplayFormatters.timeLeft(dto.getEndTime()) : "Only open listings can be edited.");
-        setEditable(open);
+        boolean editable = isEditableStatus(dto.getStatus());
+        showStatus(editable ? "Editing " + statusName(dto.getStatus()) + " listing" : "Only pending or open listings can be edited.");
+        setEditable(editable);
     }
 
     private void setEditable(boolean editable) {
@@ -229,12 +227,16 @@ public class EditAuctionController {
 
     private void bindMeta(LocalDateTime startTime, LocalDateTime endTime) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-        metaLabel.setText(startTime != null ? "Opens: " + startTime.format(fmt) : "Opens: N/A");
-        if (endTime == null) {
-            statusSubLabel.setText("No end time");
-            return;
-        }
-        long daysLeft = ChronoUnit.DAYS.between(LocalDateTime.now(), endTime);
-        statusSubLabel.setText(daysLeft > 0 ? daysLeft + " days left" : "Ending soon");
+        String opens = startTime != null ? startTime.format(fmt) : "N/A";
+        String ends = endTime != null ? endTime.format(fmt) : "N/A";
+        metaLabel.setText("Opens: " + opens + " | Ends: " + ends);
+    }
+
+    private boolean isEditableStatus(AuctionStatus status) {
+        return status == AuctionStatus.PENDING || status == AuctionStatus.OPEN;
+    }
+
+    private String statusName(AuctionStatus status) {
+        return status == null ? "selected" : status.name().toLowerCase();
     }
 }

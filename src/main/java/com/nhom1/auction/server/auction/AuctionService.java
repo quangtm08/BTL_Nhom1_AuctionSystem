@@ -154,9 +154,9 @@ public class AuctionService {
                 "You are not allowed to delete this auction"
             );
         }
-        if (auction.getStatus() != AuctionStatus.OPEN) {
+        if (!isEditableAuctionStatus(auction.getStatus())) {
             throw new InvalidAuctionStateException(
-                "Only open auctions can be deleted"
+                "Only pending or open auctions can be deleted"
             );
         }
 
@@ -207,7 +207,7 @@ public class AuctionService {
         try { auctionUuid = UUID.fromString(dto.getAuctionId()); } catch (IllegalArgumentException ex) { throw new ValidationException("auctionId is not a valid UUID"); }
         Auction auction = auctionRepository.findById(auctionUuid).orElseThrow(() -> new NotFoundException("Auction not found"));
         if (!sellerUuid.equals(auction.getSellerId())) throw new UnauthorizedActionException("You are not allowed to edit this auction");
-        if (auction.getStatus() != AuctionStatus.OPEN) throw new InvalidAuctionStateException("Only open auctions can be edited");
+        if (!isEditableAuctionStatus(auction.getStatus())) throw new InvalidAuctionStateException("Only pending or open auctions can be edited");
         if (auction.getHighestBidderId() != null) throw new ValidationException("Auction already has bids and cannot be edited");
         if (dto.getEndTime() == null) throw new ValidationException("endTime is required");
         if (auction.getStartTime() != null && !dto.getEndTime().isAfter(auction.getStartTime())) throw new ValidationException("endTime must be after startTime");
@@ -283,6 +283,10 @@ public class AuctionService {
                 "sellerId in request must match sellerId parameter"
             );
         }
+    }
+
+    private boolean isEditableAuctionStatus(AuctionStatus status) {
+        return status == AuctionStatus.PENDING || status == AuctionStatus.OPEN;
     }
 
     private UUID parseSellerId(String sellerId) {

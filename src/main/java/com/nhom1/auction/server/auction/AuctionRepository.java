@@ -424,9 +424,8 @@ public class AuctionRepository {
                     UPDATE auctions
                     SET starting_price = ?, current_highest_bid = ?, end_time = ?, version = version + 1, updated_at = ?
                     WHERE id = ?
-                      AND status = 'OPEN'
+                      AND status IN ('PENDING', 'OPEN')
                       AND highest_bidder_id IS NULL
-                      AND (current_highest_bid IS NULL OR current_highest_bid = starting_price)
                 """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setBigDecimal(1, startingPrice);
