@@ -16,12 +16,16 @@
         <Button fx:id="btnBids" text="My bids" maxWidth="Infinity" styleClass="btn-ghost"/>
         <Button fx:id="btnListings" text="My listings" maxWidth="Infinity" styleClass="btn-ghost"/>
         <Button fx:id="btnPayment" text="Payments" maxWidth="Infinity" styleClass="btn-ghost"/>
+        <Button fx:id="btnWallet" text="My Wallet 💳" maxWidth="Infinity" styleClass="btn-ghost"/>
     </VBox>
     
     <VBox spacing="18.0" styleClass="user-footer">
         <HBox alignment="CENTER_LEFT" spacing="12.0">
             <Circle radius="18.0" fill="#3a3a3a" stroke="#4a4a4a"/>
-            <Label text="Loading.." fx:id="usernameLabel" styleClass="user-label" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
+            <VBox spacing="2.0">
+                <Label text="Loading.." fx:id="usernameLabel" styleClass="user-label" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
+                <Label text="$0.00" fx:id="balanceLabel" styleClass="balance-label" style="-fx-text-fill: #10b981; -fx-font-size: 11.5px; -fx-font-weight: bold;"/>
+            </VBox>
         </HBox>
         <Button fx:id="btnLogout" text="Logout ⎋" maxWidth="Infinity" styleClass="btn-danger"/>
     </VBox>
