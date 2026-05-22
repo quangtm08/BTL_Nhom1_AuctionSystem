@@ -56,8 +56,7 @@ public class AuctionService {
                     parsedSellerId,
                     dto.getStartingPrice(),
                     startTime,
-                    endTime,
-                    dto.getDurationDays()
+                    endTime
                 );
                 auctionRepository.save(auction, connection);
                 // Keep the opening price in auction state for listing/display and first-bid validation.

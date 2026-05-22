@@ -95,7 +95,8 @@ public class PaymentServiceTest {
                 new BigDecimal("150.00"),
                 AuctionStatus.RUNNING,
                 LocalDateTime.now().minusDays(2),
-                LocalDateTime.now().minusHours(1));
+                LocalDateTime.now().minusHours(1),
+                0);
         when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
         assertThrows(InvalidAuctionStateException.class,
@@ -115,7 +116,8 @@ public class PaymentServiceTest {
                 null,
                 AuctionStatus.FINISHED,
                 LocalDateTime.now().minusDays(3),
-                LocalDateTime.now().minusDays(1));
+                LocalDateTime.now().minusDays(1),
+                0);
         when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
         assertThrows(ValidationException.class,
@@ -158,7 +160,8 @@ public class PaymentServiceTest {
                 new BigDecimal("180.00"),
                 AuctionStatus.PAID,
                 LocalDateTime.now().minusDays(3),
-                LocalDateTime.now().minusHours(2));
+                LocalDateTime.now().minusHours(2),
+                0);
         when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
         assertThrows(InvalidAuctionStateException.class,
@@ -177,6 +180,7 @@ public class PaymentServiceTest {
                 new BigDecimal("150.00"),
                 AuctionStatus.FINISHED,
                 LocalDateTime.now().minusDays(3),
-                LocalDateTime.now().minusHours(2));
+                LocalDateTime.now().minusHours(2),
+                0);
     }
 }

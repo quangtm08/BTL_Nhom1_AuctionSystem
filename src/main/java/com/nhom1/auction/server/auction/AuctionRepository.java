@@ -470,7 +470,7 @@ public class AuctionRepository {
         LocalDateTime updatedAt = (updatedTs != null) ? updatedTs.toLocalDateTime() : LocalDateTime.now();
         // version is the optimistic-lock token for this auction row.
         // Any successful state-changing UPDATE increments it by 1.
-        long version = rs.getLong("version");
+        Integer version = (int) rs.getLong("version");
 
         return new Auction(
                 id,
