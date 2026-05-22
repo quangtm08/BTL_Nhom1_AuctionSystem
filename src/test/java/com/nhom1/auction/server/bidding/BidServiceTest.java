@@ -198,4 +198,98 @@ public class BidServiceTest {
 
         assertThrows(NotFoundException.class, () -> bidService.getAuctionDetail(auctionId));
     }
+
+    @Test
+    public void testGetAuctionDetail_ItemNotFound_ThrowsNotFoundException() {
+        UUID auctionId = UUID.randomUUID();
+        Auction auction = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"), LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        when(itemRepository.findById(auction.getItemId())).thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> bidService.getAuctionDetail(auctionId));
+    }
+
+    @Test
+    public void testGetAuctionDetail_ExceptionsInSubcalls_Handled() {
+        Item item = new Item("Test Item", "Test Description", ItemCategory.ART, ItemCondition.NEW) {
+            @Override
+            public void printInfo() {}
+        };
+        UUID itemId = item.getId();
+        Auction auction = new Auction(itemId, UUID.randomUUID(), new BigDecimal("100.00"), LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        UUID auctionId = auction.getId();
+
+        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        
+        // Throws exception during user lookup
+        when(userRepository.findById(any())).thenThrow(new RuntimeException("DB offline"));
+        // Throws exception during bid lookup
+        when(bidRepository.findByAuctionId(any())).thenThrow(new RuntimeException("DB offline"));
+        // Throws exception during image lookup
+        when(itemImageRepository.findImageUrlsByItemId(any())).thenThrow(new RuntimeException("S3 offline"));
+
+        AuctionDetailDto dto = bidService.getAuctionDetail(auctionId);
+        assertNotNull(dto);
+        assertEquals("Unknown", dto.getSellerName());
+        assertTrue(dto.getBidHistory().isEmpty());
+        assertTrue(dto.getImageUrls().isEmpty());
+    }
+
+    @Test
+    public void testListAllAuctions_AndToAuctionSummaryDtoNullItem() {
+        Auction auction1 = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"), LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        Auction auction2 = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("200.00"), LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+
+        Item item = new Item("Item 1", "Desc", ItemCategory.ELECTRONICS, ItemCondition.NEW) {
+            @Override
+            public void printInfo() {}
+        };
+
+        when(auctionRepository.findAll()).thenReturn(List.of(auction1, auction2));
+        when(itemRepository.findById(auction1.getItemId())).thenReturn(Optional.of(item));
+        when(itemRepository.findById(auction2.getItemId())).thenReturn(Optional.empty());
+
+        var response = bidService.listAllAuctions();
+        assertEquals(2, response.getAuctions().size());
+        assertEquals("Item 1", response.getAuctions().get(0).getItemName());
+        assertEquals("Unknown item", response.getAuctions().get(1).getItemName());
+    }
+
+    @Test
+    public void testGetMyBids() {
+        UUID bidderId = UUID.randomUUID();
+        var bids = List.of(new com.nhom1.auction.common.dto.bidding.BidWithAuctionDto());
+        when(bidRepository.findByBidderId(bidderId)).thenReturn(bids);
+
+        var response = bidService.getMyBids(bidderId);
+        assertEquals(bids, response.getBids());
+    }
+
+    @Test
+    public void testToBidSummaryDto_UserLookupSuccessAndFailure() {
+        Item item = new Item("Test Item", "Test Description", ItemCategory.ART, ItemCondition.NEW) {
+            @Override
+            public void printInfo() {}
+        };
+        UUID itemId = item.getId();
+        Auction auction = new Auction(itemId, UUID.randomUUID(), new BigDecimal("100.00"), LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+        UUID auctionId = auction.getId();
+
+        BidTransaction bid1 = new BidTransaction(UUID.randomUUID(), auctionId, UUID.randomUUID(), BigDecimal.TEN, BidType.MANUAL, LocalDateTime.now(), LocalDateTime.now());
+        BidTransaction bid2 = new BidTransaction(UUID.randomUUID(), auctionId, UUID.randomUUID(), BigDecimal.valueOf(12), BidType.MANUAL, LocalDateTime.now(), LocalDateTime.now());
+
+        when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(bidRepository.findByAuctionId(auctionId)).thenReturn(List.of(bid1, bid2));
+
+        com.nhom1.auction.common.entity.User user = new com.nhom1.auction.common.entity.User("bidder1", "email", "pass", com.nhom1.auction.common.enums.UserRole.USER);
+        when(userRepository.findById(bid1.getBidderId())).thenReturn(Optional.of(user));
+        when(userRepository.findById(bid2.getBidderId())).thenReturn(Optional.empty());
+
+        AuctionDetailDto dto = bidService.getAuctionDetail(auctionId);
+        assertEquals(2, dto.getBidHistory().size());
+        assertEquals("bidder1", dto.getBidHistory().get(0).getBidderName());
+        assertEquals("Unknown", dto.getBidHistory().get(1).getBidderName());
+    }
 }
