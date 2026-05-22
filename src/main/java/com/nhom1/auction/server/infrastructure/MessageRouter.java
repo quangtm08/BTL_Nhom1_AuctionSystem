@@ -51,6 +51,9 @@ public class MessageRouter {
             }
             // 4. If exists, execute
             ResponseMessage<?> response = action.execute(requestId, payloadJson);
+            if (response != null && response.getType() == null) {
+                response.setType(type);
+            }
 
             // 5. Translate back: Turn the Object into a String to send over the socket.
             // Use common/utils/JsonUtil (to simplify and hide Jackson library)

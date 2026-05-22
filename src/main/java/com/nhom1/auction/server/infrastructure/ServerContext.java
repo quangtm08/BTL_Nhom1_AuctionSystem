@@ -17,6 +17,9 @@ import com.nhom1.auction.server.bidding.BidRepository;
 import com.nhom1.auction.server.infrastructure.database.DBConnection;
 import com.nhom1.auction.server.payment.PaymentModule;
 import com.nhom1.auction.server.infrastructure.database.DatabaseInitializer;
+import com.nhom1.auction.server.wallet.WalletModule;
+import com.nhom1.auction.server.wallet.WalletService;
+import com.nhom1.auction.server.wallet.WalletRepository;
 import javax.sql.DataSource;
 
 public class ServerContext {
@@ -48,6 +51,14 @@ public class ServerContext {
             this.notificationService
         );
 
+        // Initialize Wallet Module
+        WalletService walletService = WalletModule.init(
+            this.dataSource,
+            this.router,
+            this.notificationService
+        );
+        WalletRepository walletRepository = new WalletRepository(this.dataSource);
+
         BidRepository bidRepository = new BidRepository(this.dataSource);
         BidComponents bidComponents = BidModule.init(
             this.dataSource,
@@ -56,7 +67,8 @@ public class ServerContext {
             auctionRepos.itemRepository,
             auctionRepos.itemImageRepository,
             this.notificationService,
-            userRepository
+            userRepository,
+            walletRepository
         );
 
         // 3. Automation & Scheduling
@@ -95,11 +107,12 @@ public class ServerContext {
             this.dataSource
         );
 
-        // Payment — depends on Auction infrastructure
+        // Payment — depends on Auction infrastructure and Wallet
         PaymentModule.init(
             this.dataSource,
             this.router,
-            auctionRepos.auctionRepository
+            auctionRepos.auctionRepository,
+            walletService
         );
 
         System.out.println("========================================");

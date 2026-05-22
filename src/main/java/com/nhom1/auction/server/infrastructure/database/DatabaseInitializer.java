@@ -127,7 +127,35 @@ public final class DatabaseInitializer {
         """,
         "CREATE INDEX IF NOT EXISTS idx_item_images_item_id ON item_images(item_id)",
         "CREATE INDEX IF NOT EXISTS idx_item_images_is_primary ON item_images(is_primary)",
-        "CREATE INDEX IF NOT EXISTS idx_item_images_item_sort ON item_images(item_id, sort_order)"
+        "CREATE INDEX IF NOT EXISTS idx_item_images_item_sort ON item_images(item_id, sort_order)",
+        """
+        CREATE TABLE IF NOT EXISTS wallets (
+            user_id VARCHAR(36) PRIMARY KEY,
+            balance DECIMAL(19, 2) NOT NULL DEFAULT 100000.00,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS wallet_transactions (
+            id VARCHAR(36) PRIMARY KEY,
+            user_id VARCHAR(36) NOT NULL,
+            amount DECIMAL(19, 2) NOT NULL,
+            transaction_type VARCHAR(50) NOT NULL,
+            reference_id VARCHAR(36),
+            description TEXT,
+            created_at TIMESTAMP NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_id ON wallet_transactions(user_id)",
+        """
+        INSERT INTO wallets (user_id, balance, created_at, updated_at)
+        SELECT id, 100000.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        FROM users
+        WHERE id NOT IN (SELECT user_id FROM wallets)
+        """
     };
 
     public static void init(DataSource dataSource) {
