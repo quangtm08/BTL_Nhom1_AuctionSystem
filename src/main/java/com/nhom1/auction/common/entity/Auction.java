@@ -26,7 +26,7 @@ public class Auction extends BaseEntity {
     private final Integer durationDays;
     // Persistence-only concurrency token used by optimistic locking in the repository.
     // Business logic does not mutate this field directly; the database increments it.
-    private final long version;
+    private final Integer version;
 
     // volatile để đảm bảo giá trị được cập nhật và đồng bộ hóa, thread-safe !
     private volatile UUID highestBidderId;
@@ -67,7 +67,7 @@ public class Auction extends BaseEntity {
         this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
         this.durationDays = null;
-        this.version = 0L;
+        this.version = 0;
     }
 
     /**
@@ -89,13 +89,13 @@ public class Auction extends BaseEntity {
             createdAt,
             updatedAt,
             durationDays,
-            0L
+            0
         );
     }
 
     public Auction(UUID id, UUID itemId, UUID sellerId, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime,
             UUID highestBidderId, BigDecimal currentHighestBid, AuctionStatus status,
-            LocalDateTime createdAt, LocalDateTime updatedAt, Integer durationDays, long version) {
+            LocalDateTime createdAt, LocalDateTime updatedAt, Integer durationDays, Integer version) {
         super(id, createdAt, updatedAt);
         this.itemId = itemId;
         this.sellerId = sellerId;

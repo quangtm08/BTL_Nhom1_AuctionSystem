@@ -55,6 +55,7 @@ public class AdminOverviewController {
 
         long adminCount = users.stream().filter(user -> user.getRole() == UserRole.ADMIN).count();
         long memberCount = Math.max(0, users.size() - adminCount);
+        long pendingAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.PENDING).count();
         long openAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.OPEN).count();
         long runningAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.RUNNING).count();
         long finishedAuctions = auctions.stream().filter(auction -> auction.getStatus() == AuctionStatus.FINISHED).count();
@@ -64,7 +65,7 @@ public class AdminOverviewController {
         lblTotalUsersValue.setText(String.valueOf(users.size()));
         lblTotalUsersBreakdown.setText(memberCount + " members | " + adminCount + " admins");
         lblActiveAuctionsValue.setText(String.valueOf(runningAuctions));
-        lblActiveAuctionsBreakdown.setText(openAuctions + " open | " + finishedAuctions + " finished | " + paidAuctions + " paid");
+        lblActiveAuctionsBreakdown.setText(pendingAuctions + " pending | " + openAuctions + " open | " + finishedAuctions + " finished | " + paidAuctions + " paid");
         lblRecentActivityBody.setText("Loaded " + users.size() + " users and " + auctions.size()
                 + " auctions. Current mix: " + runningAuctions + " running, " + canceledAuctions + " canceled.");
         lblRecentActivityTime.setText("live");

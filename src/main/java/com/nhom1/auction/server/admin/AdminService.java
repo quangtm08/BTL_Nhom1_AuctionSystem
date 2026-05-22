@@ -176,27 +176,23 @@ public class AdminService {
         try { parsedAuctionId = UUID.fromString(auctionId); } catch (IllegalArgumentException ex) { throw new ValidationException("auctionId is not a valid UUID"); }
 
         Auction auction = auctionRepository.findById(parsedAuctionId).orElseThrow(() -> new NotFoundException("Auction not found"));
-        if (auction.getStatus() != com.nhom1.auction.common.enums.AuctionStatus.OPEN) {
-            throw new InvalidAuctionStateException("Only OPEN auctions can be approved");
+        if (auction.getStatus() != com.nhom1.auction.common.enums.AuctionStatus.PENDING) {
+            throw new InvalidAuctionStateException("Only PENDING auctions can be approved");
         }
 
-        LocalDateTime scheduledStart;
+        LocalDateTime scheduledStart = auction.getStartTime();
         if (openingDateStr != null && !openingDateStr.isBlank()) {
             try {
                 scheduledStart = LocalDate.parse(openingDateStr).atStartOfDay();
             } catch (Exception ex) {
                 throw new ValidationException("Opening date is not a valid date");
             }
-        } else {
-            scheduledStart = auction.getStartTime();
         }
-
         if (scheduledStart == null) {
-            throw new InvalidAuctionStateException("Auction opening date is missing");
+            throw new ValidationException("Opening date is required for approval");
         }
-        if (!LocalDateTime.now().isBefore(scheduledStart)) {
-            auctionRepository.updateStatus(parsedAuctionId, com.nhom1.auction.common.enums.AuctionStatus.CANCELED);
-            throw new InvalidAuctionStateException("Auction opening date has passed");
+        if (!scheduledStart.isAfter(LocalDateTime.now())) {
+            throw new ValidationException("Opening date must be in the future");
         }
 
         Integer duration = auction.getDurationDays();
@@ -208,8 +204,8 @@ public class AdminService {
             boolean oldAuto = connection.getAutoCommit();
             connection.setAutoCommit(false);
             try {
-                boolean updated = auctionRepository.updateStartEndAndStatus(parsedAuctionId, start, end, com.nhom1.auction.common.enums.AuctionStatus.RUNNING, connection);
-                if (!updated) throw new IllegalStateException("Auction not found or not open");
+                boolean updated = auctionRepository.updateStartEndAndStatus(parsedAuctionId, start, end, com.nhom1.auction.common.enums.AuctionStatus.OPEN, connection);
+                if (!updated) throw new IllegalStateException("Auction not found or not pending");
 
                 connection.commit();
             } catch (AppException ex) {

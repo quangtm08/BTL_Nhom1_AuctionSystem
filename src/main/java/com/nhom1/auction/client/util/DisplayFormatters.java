@@ -64,6 +64,7 @@ public final class DisplayFormatters {
             return "Unknown";
         }
         return switch (status) {
+            case PENDING -> "Pending";
             case OPEN -> "Open";
             case RUNNING -> "Running";
             case FINISHED, CANCELED, PAID -> "Ended";

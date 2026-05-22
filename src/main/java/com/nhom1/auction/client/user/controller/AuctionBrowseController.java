@@ -129,6 +129,7 @@ public class AuctionBrowseController {
         if (status == null) return "Unknown";
         if (status instanceof AuctionStatus auctionStatus) {
             return switch (auctionStatus) {
+                case PENDING -> "Pending";
                 case OPEN -> "Open";
                 case RUNNING -> "Running";
                 case FINISHED, CANCELED, PAID -> "Ended";

@@ -59,15 +59,7 @@ public class AuctionService {
                     endTime
                 );
                 auctionRepository.save(auction, connection);
-                // Keep the opening price in auction state for listing/display and first-bid validation.
-                auctionRepository.updateHighestBid(
-                    auction.getId(),
-                    dto.getStartingPrice(),
-                    null,
-                    auction.getVersion(),
-                    connection
-                );
-
+                auctionRepository.updateStatus(auction.getId(), AuctionStatus.PENDING, connection);
                 connection.commit();
                 return auction;
             } catch (AppException ex) {
@@ -229,8 +221,9 @@ public class AuctionService {
             connection.setAutoCommit(false);
             try {
                 int updatedItem = itemRepository.updateBasicInfo(auction.getItemId(), dto.getName().trim(), dto.getDescription(), dto.getCategory(), dto.getCondition(), connection);
-                int updatedAuction = auctionRepository.updateStartingPriceAndEndTime(auctionUuid, dto.getStartingPrice(), dto.getEndTime(), connection);
-                if (updatedItem == 0 || updatedAuction == 0) throw new NotFoundException("Auction or item not found");
+                int updatedAuction = auctionRepository.updateOpenAuctionForEdit(auctionUuid, dto.getStartingPrice(), dto.getEndTime(), connection);
+                if (updatedAuction == 0) throw new ValidationException("Auction is no longer editable");
+                if (updatedItem == 0) throw new NotFoundException("Auction item not found");
                 connection.commit();
             } catch (Exception ex) {
                 connection.rollback();

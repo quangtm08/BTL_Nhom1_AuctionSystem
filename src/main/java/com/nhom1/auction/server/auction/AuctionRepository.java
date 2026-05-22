@@ -568,7 +568,7 @@ public class AuctionRepository {
         String sql = """
                     UPDATE auctions
                     SET start_time = ?, end_time = ?, status = ?, updated_at = ?
-                    WHERE id = ? AND status = 'OPEN'
+                    WHERE id = ? AND status = 'PENDING'
                 """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setTimestamp(1, startTime != null ? java.sql.Timestamp.valueOf(startTime) : null);
