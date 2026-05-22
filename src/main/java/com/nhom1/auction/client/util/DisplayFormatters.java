@@ -9,15 +9,20 @@ import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 public final class DisplayFormatters {
-    private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("MMM d, yyyy");
-    private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
-    private static final DateTimeFormatter BID_TIME = DateTimeFormatter.ofPattern("HH:mm dd/MM");
 
-    private DisplayFormatters() {
-    }
+    private static final DateTimeFormatter SHORT_DATE =
+        DateTimeFormatter.ofPattern("MMM d, yyyy");
+    private static final DateTimeFormatter DATE_TIME =
+        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter BID_TIME =
+        DateTimeFormatter.ofPattern("HH:mm dd/MM");
+
+    private DisplayFormatters() {}
 
     public static String money(BigDecimal amount) {
-        return amount == null ? "$0" : "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
+        return amount == null
+            ? "$0"
+            : "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
     }
 
     public static String moneyOrDash(BigDecimal amount) {
@@ -63,11 +68,19 @@ public final class DisplayFormatters {
         if (status == null) {
             return "Unknown";
         }
+        if (status == AuctionStatus.OPEN) {
+            return "Open";
+        }
+        if (status == AuctionStatus.PAID) {
+            return "Paid";
+        }
         return isEnded(status) ? "Ended" : "Running";
     }
 
     public static boolean isEnded(AuctionStatus status) {
-        return status == AuctionStatus.FINISHED || status == AuctionStatus.CANCELED || status == AuctionStatus.PAID;
+        return (
+            status == AuctionStatus.FINISHED || status == AuctionStatus.CANCELED
+        );
     }
 
     public static String adminAuctionStatusStyle(AuctionStatus status) {

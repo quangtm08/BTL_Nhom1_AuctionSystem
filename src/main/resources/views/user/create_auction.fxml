@@ -63,8 +63,11 @@
                     <TextField fx:id="startingBidField" promptText="1000" styleClass="field-input"/>
                 </VBox>
                 <VBox spacing="8.0" HBox.hgrow="ALWAYS">
-                    <Label text="Reserve price (optional)" styleClass="field-label"/>
-                    <TextField fx:id="reservePriceField" promptText="Hidden minimum" styleClass="field-input"/>
+                    <Label text="Start Date &amp; Time (Optional)" styleClass="field-label"/>
+                    <HBox spacing="8.0">
+                        <DatePicker fx:id="startDatePicker" promptText="Pick date" styleClass="field-input" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        <TextField fx:id="startTimeField" promptText="HH:mm" styleClass="field-input" prefWidth="100.0"/>
+                    </HBox>
                 </VBox>
             </HBox>
 
