@@ -208,7 +208,7 @@ public class AuctionService {
         try { auctionUuid = UUID.fromString(dto.getAuctionId()); } catch (IllegalArgumentException ex) { throw new ValidationException("auctionId is not a valid UUID"); }
         Auction auction = auctionRepository.findById(auctionUuid).orElseThrow(() -> new NotFoundException("Auction not found"));
         if (!sellerUuid.equals(auction.getSellerId())) throw new UnauthorizedActionException("You are not allowed to edit this auction");
-        if (auction.getStatus() != AuctionStatus.RUNNING) throw new ValidationException("Only running auctions can be edited");
+        if (auction.getStatus() != AuctionStatus.OPEN) throw new ValidationException("Only open auctions can be edited");
         if (auction.getHighestBidderId() != null) throw new ValidationException("Auction already has bids and cannot be edited");
         if (dto.getEndTime() == null || !dto.getEndTime().isAfter(auction.getStartTime())) throw new ValidationException("endTime must be after startTime");
         if (dto.getStartingPrice() == null || dto.getStartingPrice().compareTo(BigDecimal.ZERO) <= 0) throw new ValidationException("startingPrice must be greater than 0");
