@@ -1,5 +1,9 @@
 package com.nhom1.auction.client.admin.controller;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import com.nhom1.auction.client.admin.service.AdminClientService;
 import com.nhom1.auction.common.dto.admin.AdminAuctionListResponse;
 import com.nhom1.auction.common.dto.admin.AdminUserListResponse;
@@ -7,12 +11,12 @@ import com.nhom1.auction.common.dto.admin.UserSummaryDto;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.UserRole;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 
 public class AdminOverviewController {
     private final AdminClientService adminClientService = new AdminClientService();
@@ -25,6 +29,7 @@ public class AdminOverviewController {
     @FXML private Label lblRecentActivityBody;
     @FXML private Label lblRecentActivityTime;
     @FXML private Label lblSessionStatus;
+    @FXML private Circle circleSessionStatus;
 
     @FXML
     public void initialize() {
@@ -64,6 +69,7 @@ public class AdminOverviewController {
                 + " auctions. Current mix: " + runningAuctions + " running, " + canceledAuctions + " canceled.");
         lblRecentActivityTime.setText("live");
         lblSessionStatus.setText(runningAuctions + " running / " + finishedAuctions + " finished / " + paidAuctions + " paid");
+        updateSessionStatusCircle(runningAuctions, finishedAuctions, paidAuctions);
     }
 
     private void renderFailure(Throwable cause) {
@@ -74,6 +80,24 @@ public class AdminOverviewController {
         lblRecentActivityBody.setText("Admin dashboard failed to load: " + cause.getMessage());
         lblRecentActivityTime.setText("error");
         lblSessionStatus.setText("Unavailable");
+        setCircleColor(Color.web("#1a221e"));
+    }
+
+    private void updateSessionStatusCircle(long runningAuctions, long finishedAuctions, long paidAuctions) {
+        if (circleSessionStatus == null) return;
+        if (runningAuctions > finishedAuctions) {
+            setCircleColor(Color.web("#4d8055"));
+        } else if (finishedAuctions > runningAuctions) {
+            setCircleColor(Color.web("#d5a44c"));
+        } else if (runningAuctions == 0 && finishedAuctions == 0 && paidAuctions == 0) {
+            setCircleColor(Color.web("#1a221e"));
+        } else {
+            setCircleColor(Color.web("#4d8055"));
+        }
+    }
+
+    private void setCircleColor(Color color) {
+        if (circleSessionStatus != null) circleSessionStatus.setStroke(color);
     }
 
     private record DashboardSnapshot(

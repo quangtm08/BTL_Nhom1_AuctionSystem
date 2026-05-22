@@ -28,16 +28,24 @@
                     <ToggleButton text="Ended" styleClass="filter-btn"/>
                     <ToggleButton text="All" styleClass="filter-btn-active" selected="true"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <TextField promptText="Search auctions..." prefWidth="250" styleClass="search-field"/>
                 </HBox>
 
                 <VBox styleClass="table-card">
                     <GridPane fx:id="auctionGrid" hgap="15" vgap="0">
                         <columnConstraints>
-                            <ColumnConstraints minWidth="180" prefWidth="180" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="120" prefWidth="120" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="150" prefWidth="150" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="120" prefWidth="120" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" /> <ColumnConstraints minWidth="100" prefWidth="100" hgrow="ALWAYS" />    </columnConstraints>
+                            <ColumnConstraints minWidth="180" prefWidth="180" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="120" prefWidth="120" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="150" prefWidth="150" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="120" prefWidth="120" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="120" prefWidth="120" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="100" prefWidth="100" hgrow="SOMETIMES" />
+                            <ColumnConstraints minWidth="130" prefWidth="150" hgrow="ALWAYS" />
+                        </columnConstraints>
 
                         <children>
-                            <HBox styleClass="table-header-row" GridPane.columnSpan="8" GridPane.rowIndex="0">
+                            <HBox styleClass="table-header-row" GridPane.columnSpan="9" GridPane.rowIndex="0">
                                 <padding><Insets bottom="10" top="10" left="10" right="10"/></padding>
                             </HBox>
                             <Label text="ITEM" styleClass="table-header-text" GridPane.columnIndex="0" GridPane.rowIndex="0" />
@@ -45,9 +53,10 @@
                             <Label text="SELLER" styleClass="table-header-text" GridPane.columnIndex="2" GridPane.rowIndex="0" />
                             <Label text="START PRICE" styleClass="table-header-text" GridPane.columnIndex="3" GridPane.rowIndex="0" />
                             <Label text="TOP BID" styleClass="table-header-text" GridPane.columnIndex="4" GridPane.rowIndex="0" />
-                            <Label text="END TIME" styleClass="table-header-text" GridPane.columnIndex="5" GridPane.rowIndex="0" />
-                            <Label text="STATUS" styleClass="table-header-text" GridPane.columnIndex="6" GridPane.rowIndex="0" />
-                            <Label text="ACTIONS" styleClass="table-header-text" GridPane.columnIndex="7" GridPane.rowIndex="0" />
+                            <Label text="OPEN DATE" styleClass="table-header-text" GridPane.columnIndex="5" GridPane.rowIndex="0" />
+                            <Label text="END TIME" styleClass="table-header-text" GridPane.columnIndex="6" GridPane.rowIndex="0" />
+                            <Label text="STATUS" styleClass="table-header-text" GridPane.columnIndex="7" GridPane.rowIndex="0" />
+                            <Label text="ACTIONS" styleClass="table-header-text" GridPane.columnIndex="8" GridPane.rowIndex="0" />
 <!-- 
                             <HBox styleClass="table-row-bg" GridPane.columnSpan="8" GridPane.rowIndex="1">
                                 <padding><Insets bottom="12" top="12" left="10" right="10"/></padding>

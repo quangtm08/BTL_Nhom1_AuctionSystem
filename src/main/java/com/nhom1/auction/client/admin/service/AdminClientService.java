@@ -49,10 +49,14 @@ public class AdminClientService extends BaseClientService {
     }
 
     public CompletableFuture<String> approveAuction(String auctionId) {
+        return approveAuction(auctionId, null);
+    }
+
+    public CompletableFuture<String> approveAuction(String auctionId, String openingDate) {
         if (auctionId == null || auctionId.isBlank()) return validationError("Auction ID is required.");
         AuthResponse currentUser = requireAdminUser();
         if (currentUser == null) return validationError("You must sign in as admin before approving auctions.");
-        AdminApproveAuctionRequest req = new AdminApproveAuctionRequest(auctionId, currentUser.getUserID());
+        AdminApproveAuctionRequest req = new AdminApproveAuctionRequest(auctionId, currentUser.getUserID(), openingDate);
         return send(new RequestMessage<>(MessageType.ADMIN_APPROVE_AUCTION, req), String.class);
     }
 

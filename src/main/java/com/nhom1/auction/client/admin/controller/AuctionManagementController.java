@@ -87,18 +87,19 @@ public class AuctionManagementController {
     private void addRow(int row, AuctionSummaryDto auction) {
         HBox bg = new HBox();
         bg.getStyleClass().add("table-row-bg");
-        auctionGrid.add(bg, 0, row, 8, 1);
+        auctionGrid.add(bg, 0, row, 9, 1);
 
         addLabel(0, row, nvl(auction.getItemName()), "table-text-main");
         addLabel(1, row, nvl(auction.getItemCategory()), "table-text-sub");
         addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");
         addLabel(3, row, formatPrice(auction.getStartingPrice()), "table-text-sub");
         addLabel(4, row, formatPrice(auction.getCurrentHighestBid()), "price-highlight");
-        addLabel(5, row, formatDateTime(auction.getEndTime()), "table-text-sub");
+        addLabel(5, row, formatDateTime(auction.getStartTime()), "table-text-sub");
+        addLabel(6, row, formatDateTime(auction.getEndTime()), "table-text-sub");
 
         Label status = new Label(auction.getStatus() != null ? auction.getStatus().name() : "-");
         status.getStyleClass().add(statusStyle(auction.getStatus()));
-        auctionGrid.add(status, 6, row);
+        auctionGrid.add(status, 7, row);
 
         Button cancelBtn = new Button("Cancel");
         cancelBtn.getStyleClass().add("btn-cancel");
@@ -111,9 +112,9 @@ public class AuctionManagementController {
         approveBtn.setDisable(!(auction.getStatus() == AuctionStatus.OPEN));
         approveBtn.setOnAction(e -> approveAuction(auction.getId(), approveBtn));
 
-        HBox actions = new HBox(8, approveBtn, cancelBtn);
-        actions.setAlignment(Pos.CENTER);
-        auctionGrid.add(actions, 7, row);
+        HBox actions = new HBox(6, approveBtn, cancelBtn);
+        actions.setAlignment(Pos.CENTER_LEFT);
+        auctionGrid.add(actions, 8, row);
     }
 
     private void cancelAuction(String auctionId, Button cancelBtn) {
@@ -182,6 +183,9 @@ public class AuctionManagementController {
     }
 
     private String statusStyle(AuctionStatus status) {
+        if (status == AuctionStatus.OPEN) {
+            return "status-open";
+        }
         if (status == AuctionStatus.RUNNING) {
             return "status-running";
         }
