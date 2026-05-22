@@ -2,6 +2,7 @@ package com.nhom1.auction.server.auction;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +41,8 @@ public class AuctionService {
 
         UUID parsedSellerId = UUID.fromString(sellerId);
         Item item = createItem(dto);
+        LocalDateTime startTime = resolveCreateStartTime(dto);
+        LocalDateTime endTime = resolveCreateEndTime(dto, startTime);
 
         try (Connection connection = dataSource.getConnection()) {
             boolean oldAutoCommit = connection.getAutoCommit();
@@ -52,8 +55,8 @@ public class AuctionService {
                     item.getId(),
                     parsedSellerId,
                     dto.getStartingPrice(),
-                    dto.getStartTime(),
-                    dto.getEndTime(),
+                    startTime,
+                    endTime,
                     dto.getDurationDays()
                 );
                 auctionRepository.save(auction, connection);
@@ -74,6 +77,25 @@ public class AuctionService {
         } catch (Exception ex) {
             throw new RuntimeException("Create auction transaction failed", ex);
         }
+    }
+
+    private LocalDateTime resolveCreateStartTime(CreateAuctionRequest dto) {
+        if (dto.getStartTime() != null) {
+            return dto.getStartTime();
+        }
+        // OPEN auctions are not live until admin approval; this timestamp keeps
+        // legacy DB schemas with NOT NULL start_time working.
+        return LocalDateTime.now();
+    }
+
+    private LocalDateTime resolveCreateEndTime(CreateAuctionRequest dto, LocalDateTime startTime) {
+        if (dto.getEndTime() != null) {
+            return dto.getEndTime();
+        }
+        int durationDays = dto.getDurationDays() != null && dto.getDurationDays() > 0
+            ? dto.getDurationDays()
+            : 7;
+        return startTime.plusDays(durationDays);
     }
 
     public List<AuctionSummaryDto> getMyListings(String sellerId) {

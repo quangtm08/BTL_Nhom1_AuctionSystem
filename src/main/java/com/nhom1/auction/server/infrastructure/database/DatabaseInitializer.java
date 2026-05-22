@@ -47,8 +47,9 @@ public final class DatabaseInitializer {
         CREATE TABLE IF NOT EXISTS auctions (
             id VARCHAR(36) PRIMARY KEY,
             item_id VARCHAR(36) NOT NULL,
-            start_time TIMESTAMP NOT NULL,
-            end_time TIMESTAMP NOT NULL,
+            start_time TIMESTAMP,
+            end_time TIMESTAMP,
+            duration_days INTEGER,
             status VARCHAR(50) NOT NULL,
             starting_price NUMERIC(19, 2) NOT NULL,
             current_highest_bid NUMERIC(19, 2) DEFAULT 0,
@@ -59,6 +60,9 @@ public final class DatabaseInitializer {
             FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
         )
         """,
+        "ALTER TABLE auctions ALTER COLUMN start_time DROP NOT NULL",
+        "ALTER TABLE auctions ALTER COLUMN end_time DROP NOT NULL",
+        "ALTER TABLE auctions ADD COLUMN IF NOT EXISTS duration_days INTEGER",
         "CREATE INDEX IF NOT EXISTS idx_auctions_item_id ON auctions(item_id)",
         "CREATE INDEX IF NOT EXISTS idx_auctions_status ON auctions(status)",
         "CREATE INDEX IF NOT EXISTS idx_auctions_highest_bidder_id ON auctions(highest_bidder_id)",
