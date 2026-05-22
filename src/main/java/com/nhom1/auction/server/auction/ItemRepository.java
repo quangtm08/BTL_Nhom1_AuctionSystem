@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -34,19 +35,24 @@ public class ItemRepository {
     // }
 
     public void save(Item item, UUID sellerId, Connection conn) {
+        save(item, sellerId, conn, item.getCondition());
+    }
+
+    private void save(Item item, UUID sellerId, Connection conn, ItemCondition condition) {
         String sql = """
             INSERT INTO items(id, seller_id, name, description, category, condition,
                               created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
+        Savepoint savepoint = createSavepoint(conn);
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, item.getId().toString());
             ps.setString(2, sellerId.toString());
             ps.setString(3, item.getName());
             ps.setString(4, item.getDescription());
             ps.setString(5, item.getCategory().name());
-            ps.setString(6, item.getCondition().name());
+            ps.setString(6, condition.name());
 
             java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
             ps.setTimestamp(7, now);
@@ -54,8 +60,39 @@ public class ItemRepository {
 
             ps.executeUpdate();
         } catch (SQLException e) {
+            if (condition != ItemCondition.USED && isUnsupportedCondition(e)) {
+                rollbackToSavepoint(conn, savepoint);
+                save(item, sellerId, conn, ItemCondition.USED);
+                return;
+            }
             throw new RuntimeException("Failed to save item", e);
         }
+    }
+
+    private Savepoint createSavepoint(Connection conn) {
+        try {
+            return conn.getAutoCommit() ? null : conn.setSavepoint();
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+
+    private void rollbackToSavepoint(Connection conn, Savepoint savepoint) {
+        if (savepoint == null) {
+            return;
+        }
+        try {
+            conn.rollback(savepoint);
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to recover item save fallback", e);
+        }
+    }
+
+    private boolean isUnsupportedCondition(SQLException e) {
+        String message = e.getMessage();
+        String sqlState = e.getSQLState();
+        return "23514".equals(sqlState)
+            || (message != null && message.toLowerCase().contains("condition"));
     }
 
     // ===================== FIND BY ID =====================
@@ -125,6 +162,25 @@ public class ItemRepository {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Failed to delete item", e);
+        }
+    }
+
+    public int updateBasicInfo(UUID itemId, String name, String description, ItemCategory category, ItemCondition condition, Connection conn) {
+        String sql = """
+            UPDATE items
+            SET name = ?, description = ?, category = ?, condition = ?, updated_at = ?
+            WHERE id = ?
+            """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, name);
+            ps.setString(2, description);
+            ps.setString(3, category.name());
+            ps.setString(4, condition.name());
+            ps.setTimestamp(5, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+            ps.setString(6, itemId.toString());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update item", e);
         }
     }
 }

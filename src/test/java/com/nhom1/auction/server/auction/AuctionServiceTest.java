@@ -270,8 +270,8 @@ public class AuctionServiceTest {
         dto.setCategory(ItemCategory.ART);
         dto.setCondition(ItemCondition.NEW);
         dto.setStartingPrice(new BigDecimal("100.00"));
-        dto.setStartTime(LocalDateTime.now());
-        dto.setEndTime(LocalDateTime.now().plusHours(1));
+        dto.setStartTime(LocalDateTime.now().plusDays(1));
+        dto.setEndTime(LocalDateTime.now().plusDays(1).plusHours(1));
         return dto;
     }
 }

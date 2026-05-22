@@ -262,12 +262,13 @@ public class ServerConnection {
                         "DEBUG: No pending request found for ID: " + requestId
                     );
                 }
-            } else if (root.has("type")) {
-                MessageType pushType = MessageType.valueOf(
-                    root.get("type").asText()
-                );
-                Consumer<String> handler = pushHandlers.get(pushType);
-                if (handler != null) handler.accept(json);
+            } else if (root.has("type") && !root.get("type").isNull()) {
+                String typeText = root.get("type").asText();
+                if (typeText != null && !typeText.isBlank() && !"null".equalsIgnoreCase(typeText)) {
+                    MessageType pushType = MessageType.valueOf(typeText);
+                    Consumer<String> handler = pushHandlers.get(pushType);
+                    if (handler != null) handler.accept(json);
+                }
             }
         } catch (Exception e) {
             System.err.println(
