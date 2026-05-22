@@ -36,6 +36,7 @@ public class PaymentServiceTest {
 
     @Mock private PaymentRepository paymentRepository;
     @Mock private AuctionRepository auctionRepository;
+    @Mock private com.nhom1.auction.server.wallet.WalletService walletService;
     @Mock private DataSource dataSource;
     @Mock private Connection connection;
 
@@ -45,7 +46,7 @@ public class PaymentServiceTest {
     void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
         when(dataSource.getConnection()).thenReturn(connection);
-        paymentService = new PaymentService(paymentRepository, auctionRepository, dataSource);
+        paymentService = new PaymentService(paymentRepository, auctionRepository, walletService, dataSource);
     }
 
     @Test
