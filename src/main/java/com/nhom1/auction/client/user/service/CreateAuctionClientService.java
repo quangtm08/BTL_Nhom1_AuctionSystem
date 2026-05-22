@@ -2,6 +2,7 @@ package com.nhom1.auction.client.user.service;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,8 @@ public class CreateAuctionClientService extends BaseClientService {
             String startingBid,
             ItemCategory category,
             ItemCondition condition,
-            int durationDays
+            int durationDays,
+            LocalDate openingDate
     ) {
         AuthResponse user = AppContext.getCurrentUser();
         if (user == null || user.getUserID() == null || user.getUserID().isBlank()) {
@@ -47,6 +49,12 @@ public class CreateAuctionClientService extends BaseClientService {
         if (durationDays <= 0) {
             return "Duration must be greater than 0.";
         }
+        if (openingDate == null) {
+            return "Opening date is required.";
+        }
+        if (!openingDate.isAfter(LocalDate.now())) {
+            return "Opening date must be after today.";
+        }
         return null;
     }
 
@@ -57,12 +65,13 @@ public class CreateAuctionClientService extends BaseClientService {
             ItemCategory category,
             ItemCondition condition,
             int durationDays,
+            LocalDate openingDate,
             List<File> imageFiles
     ) {
         return uploadImages(imageFiles)
                 .thenCompose(imageUrls -> {
                     Map<String, Object> payload = buildCreateAuctionPayload(
-                            title, description, startingBid, category, condition, durationDays, imageUrls
+                            title, description, startingBid, category, condition, durationDays, openingDate, imageUrls
                     );
                     RequestMessage<Map<String, Object>> request = new RequestMessage<>(MessageType.CREATE_AUCTION, payload);
                     return send(request, CreateAuctionResponse.class);
@@ -87,6 +96,7 @@ public class CreateAuctionClientService extends BaseClientService {
             ItemCategory category,
             ItemCondition condition,
             int durationDays,
+            LocalDate openingDate,
             List<String> imageUrls
     ) {
         AuthResponse user = AppContext.getCurrentUser();
@@ -99,6 +109,7 @@ public class CreateAuctionClientService extends BaseClientService {
         payload.put("category", category);
         payload.put("condition", condition);
         payload.put("startingPrice", parsedStartingBid);
+        payload.put("startTime", openingDate.atStartOfDay());
         payload.put("durationDays", durationDays);
         // Backward compatibility with older Railway server schema:
         // only send imageUrls when it actually has data.
