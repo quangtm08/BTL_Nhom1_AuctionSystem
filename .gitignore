@@ -58,4 +58,4 @@ build/
 personal-docs
 
 # Databases
-database/
+/database/
