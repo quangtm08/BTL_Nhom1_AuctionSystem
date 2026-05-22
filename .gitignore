@@ -56,3 +56,6 @@ build/
 
 # Personal documents
 personal-docs
+
+# Databases
+database/
