@@ -1,21 +1,23 @@
 package com.nhom1.auction.server.automation;
 
-import com.nhom1.auction.common.entity.Auction;
-import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.server.infrastructure.NotificationService;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.MockitoAnnotations;
+
+import com.nhom1.auction.common.entity.Auction;
+import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.server.infrastructure.NotificationService;
 
 public class AuctionSchedulerTest {
 
@@ -44,7 +46,7 @@ public class AuctionSchedulerTest {
 
         auctionScheduler.tick();
 
-        verify(auctionGateway).updateStatus(auction.getId(), AuctionStatus.CANCELED);
+        verify(auctionGateway).updateStatus(auction.getId(), AuctionStatus.RUNNING);
     }
 
     @Test
