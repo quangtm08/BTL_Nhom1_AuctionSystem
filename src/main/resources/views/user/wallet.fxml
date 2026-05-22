@@ -24,7 +24,7 @@
                         <VBox styleClass="balance-card">
                             <children>
                                 <Label styleClass="balance-card-title" text="CURRENT BALANCE" />
-                                <Label fx:id="lblBalance" styleClass="balance-card-value" text="$0.00" />
+                                <Label fx:id="lblBalance" styleClass="balance-card-value" text="0.00" />
                                 <Label styleClass="balance-card-subtitle" text="Real-time mock wallet balance for bidding &amp; purchases" />
                             </children>
                         </VBox>

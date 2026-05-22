@@ -24,7 +24,7 @@
             <Circle radius="18.0" fill="#3a3a3a" stroke="#4a4a4a"/>
             <VBox spacing="2.0">
                 <Label text="Loading.." fx:id="usernameLabel" styleClass="user-label" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
-                <Label text="$0.00" fx:id="balanceLabel" styleClass="balance-label" style="-fx-text-fill: #10b981; -fx-font-size: 11.5px; -fx-font-weight: bold;"/>
+                <Label text="0.00" fx:id="balanceLabel" styleClass="balance-label" style="-fx-text-fill: #10b981; -fx-font-size: 11.5px; -fx-font-weight: bold;"/>
             </VBox>
         </HBox>
         <Button fx:id="btnLogout" text="Logout ⎋" maxWidth="Infinity" styleClass="btn-danger"/>
