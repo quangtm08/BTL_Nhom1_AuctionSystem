@@ -60,16 +60,28 @@ public class BidServiceTest {
     @Mock
     private ItemImageRepository itemImageRepository;
 
+    @Mock
+    private com.nhom1.auction.server.wallet.WalletRepository walletRepository;
+
     @BeforeEach
     public void setUp() throws SQLException {
         MockitoAnnotations.openMocks(this);
         when(dataSource.getConnection()).thenReturn(connection);
+        
+        // Mock default wallet search to return a wallet with $1,000,000 balance
+        when(walletRepository.findByUserId(any(UUID.class), any(Connection.class)))
+                .thenAnswer(invocation -> {
+                    UUID userId = invocation.getArgument(0);
+                    return java.util.Optional.of(new com.nhom1.auction.common.entity.Wallet(userId, new BigDecimal("1000000.00")));
+                });
+
         bidService = new BidService(
             bidRepository,
             auctionRepository, 
             itemRepository,
             itemImageRepository,
             userRepository,
+            walletRepository,
             dataSource);
     }
 

@@ -27,6 +27,8 @@ import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemImageRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
+import com.nhom1.auction.server.wallet.WalletRepository;
+import com.nhom1.auction.common.entity.Wallet;
 
 public class BidService {
     // We retry a small number of times when optimistic locking detects that
@@ -39,16 +41,18 @@ public class BidService {
     private final ItemRepository itemRepository;
     private final ItemImageRepository itemImageRepository;
     private final UserRepository userRepository;
+    private final WalletRepository walletRepository;
     private final DataSource dataSource;
 
     public BidService(BidRepository bidRepository, AuctionRepository auctionRepository,
                       ItemRepository itemRepository, ItemImageRepository itemImageRepository, UserRepository userRepository,
-                      DataSource dataSource) {
+                      WalletRepository walletRepository, DataSource dataSource) {
         this.bidRepository = bidRepository;
         this.auctionRepository = auctionRepository;
         this.itemRepository = itemRepository;
         this.itemImageRepository = itemImageRepository;
         this.userRepository = userRepository;
+        this.walletRepository = walletRepository;
         this.dataSource = dataSource;
     }
 
@@ -66,6 +70,17 @@ public class BidService {
                     // transaction changes this auction before our UPDATE runs,
                     // updateHighestBid(...) will affect 0 rows and we will retry.
                     long expectedVersion = auction.getVersion();
+
+                    // Check user's wallet balance
+                    Wallet wallet = walletRepository.findByUserId(bidderId, connection)
+                            .orElseGet(() -> {
+                                Wallet newWallet = new Wallet(bidderId, new BigDecimal("100000.00"));
+                                walletRepository.save(newWallet, connection);
+                                return newWallet;
+                            });
+                    if (wallet.getBalance().compareTo(amount) < 0) {
+                        throw new com.nhom1.auction.common.exception.ValidationException("Insufficient wallet balance to place this bid");
+                    }
 
                     BidTransaction bidTransaction = auction.placeBid(bidderId, amount, bidType, LocalDateTime.now());
 

@@ -80,6 +80,7 @@ public class AuctionSchedulerTest {
 
         verify(auctionGateway).updateEndTime(auction.getId(), endTime.plusSeconds(30));
         verify(auctionGateway, never()).updateStatus(any(), any());
+        verify(notificationService).broadcastAuctionTimeExtended(auction.getId(), endTime.plusSeconds(30));
     }
 
     @Test
