@@ -37,14 +37,14 @@ public class AuctionSchedulerTest {
     }
 
     @Test
-    public void testTick_OpenAuctionPastStartTime_NoStatusChange() {
+    public void testTick_OpenAuctionPastStartTime_StatusUpdatedToCanceled() {
         LocalDateTime now = LocalDateTime.now();
         Auction auction = new Auction(UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"), now.minusMinutes(1), now.plusHours(1));
         when(auctionGateway.findAll()).thenReturn(List.of(auction));
 
         auctionScheduler.tick();
 
-        verify(auctionGateway, never()).updateStatus(any(), any());
+        verify(auctionGateway).updateStatus(auction.getId(), AuctionStatus.CANCELED);
     }
 
     @Test
