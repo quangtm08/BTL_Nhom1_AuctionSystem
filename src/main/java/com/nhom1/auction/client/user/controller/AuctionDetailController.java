@@ -42,6 +42,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 public class AuctionDetailController {
+
   private static final double IMAGE_BOX_WIDTH = 420;
   private static final double IMAGE_BOX_HEIGHT = 320;
 
@@ -269,6 +270,7 @@ public class AuctionDetailController {
             && AppContext.getCurrentUser().getUserID() != null
             && dto.getSellerID() != null
             && AppContext.getCurrentUser().getUserID().equals(dto.getSellerID());
+
     applyBidAvailability(dto);
     if (dto.getStatus() == AuctionStatus.OPEN) {
       showBidError("Bidding opens when this auction starts.");

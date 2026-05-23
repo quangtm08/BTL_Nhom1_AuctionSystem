@@ -30,26 +30,44 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 
 public class EditAuctionController {
+
   private final BiddingClientService biddingService = new BiddingClientService();
   private final MyListingsClientService listingsService = new MyListingsClientService();
 
   private String auctionId;
 
   @FXML private ComboBox<ItemCategory> categoryComboBox;
+
   @FXML private ComboBox<ItemCondition> conditionComboBox;
+
   @FXML private Button duration1Btn;
+
   @FXML private Button duration3Btn;
+
   @FXML private Button duration7Btn;
+
   @FXML private Button duration14Btn;
+
   @FXML private Button duration30Btn;
+
   @FXML private TextField customDurationField;
+
   @FXML private TextField titleField;
+
   @FXML private TextArea descriptionArea;
+
   @FXML private Label statusLabel;
+
   @FXML private Label metaLabel;
+
+  @FXML private Label statusSubLabel;
+
   @FXML private TextField startingBidField;
+
   @FXML private Button saveChangesButton;
+
   @FXML private Button deleteButton;
+
   private LocalDateTime loadedStartTime;
   private LocalDateTime loadedEndTime;
 
@@ -57,6 +75,7 @@ public class EditAuctionController {
   private void initialize() {
     categoryComboBox.getItems().setAll(ItemCategory.values());
     conditionComboBox.getItems().setAll(ItemCondition.values());
+
     customDurationField
         .textProperty()
         .addListener(
@@ -106,6 +125,7 @@ public class EditAuctionController {
             ? loadedStartTime
             : LocalDateTime.now();
     LocalDateTime targetEndTime = days > 0 ? baseTime.plusDays(days) : loadedEndTime;
+
     showStatus("Saving changes...");
     setButtonsDisabled(true);
     listingsService

@@ -30,6 +30,7 @@ import java.util.UUID;
 import javax.sql.DataSource;
 
 public class BidService {
+
   // We retry a small number of times when optimistic locking detects that
   // another bidder updated the same auction row first. This keeps the flow
   // responsive without silently spinning forever on hot auctions.
@@ -118,7 +119,6 @@ public class BidService {
 
           connection.commit();
           return bidTransaction;
-
         } catch (ConflictException e) {
           connection.rollback();
           if (attempt == MAX_CONFLICT_RETRIES) {

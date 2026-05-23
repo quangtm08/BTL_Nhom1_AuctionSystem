@@ -32,13 +32,16 @@ import javafx.scene.layout.HBox;
 import javafx.util.Duration;
 
 public class AuctionBrowseController {
+
   private final BiddingClientService biddingService = new BiddingClientService();
   private final ObjectMapper mapper = new ObjectMapper();
   private final Map<String, Label> priceLabels = new HashMap<>();
   private List<AuctionSummaryDto> currentAuctions = new ArrayList<>();
 
   @FXML private Label welcomeLabel;
+
   @FXML private HBox mainContainer;
+
   @FXML private GridPane cardsGridPane;
 
   @FXML

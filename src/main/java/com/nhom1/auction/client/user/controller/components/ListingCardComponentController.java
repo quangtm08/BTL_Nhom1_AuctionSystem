@@ -6,12 +6,19 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 public class ListingCardComponentController {
+
   @FXML private Label titleLabel;
+
   @FXML private Label subLabel;
+
   @FXML private Label statusLabel;
+
   @FXML private Label priceLabel;
+
   @FXML private Label remainingLabel;
+
   @FXML private Button editButton;
+
   @FXML private Button deleteButton;
 
   public void bind(

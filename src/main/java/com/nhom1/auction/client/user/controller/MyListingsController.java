@@ -30,10 +30,13 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 
 public class MyListingsController {
+
   private final ClientPushService pushService = ClientPushService.getInstance();
   private final MyListingsClientService listingsService = new MyListingsClientService();
   private final Map<String, Label> priceLabels = new HashMap<>();
+
   @FXML private Label activeListingsLabel;
+
   @FXML private GridPane listingsGrid;
 
   @FXML
@@ -175,7 +178,7 @@ public class MyListingsController {
   }
 
   private boolean isEditableListing(AuctionSummaryDto dto) {
-    return dto != null
-        && (dto.getStatus() == AuctionStatus.PENDING || dto.getStatus() == AuctionStatus.OPEN);
+    return (dto != null
+        && (dto.getStatus() == AuctionStatus.PENDING || dto.getStatus() == AuctionStatus.OPEN));
   }
 }

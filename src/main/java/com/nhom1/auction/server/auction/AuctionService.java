@@ -146,10 +146,10 @@ public class AuctionService {
         auctionRepository
             .findById(parsedAuctionId)
             .orElseThrow(() -> new NotFoundException("Auction not found"));
-
     if (!parsedSellerId.equals(auction.getSellerId())) {
       throw new UnauthorizedActionException("You are not allowed to delete this auction");
     }
+
     if (!isEditableAuctionStatus(auction.getStatus())) {
       throw new InvalidAuctionStateException("Only pending or open auctions can be deleted");
     }
@@ -200,8 +200,20 @@ public class AuctionService {
             .orElseThrow(() -> new NotFoundException("Auction not found"));
     if (!sellerUuid.equals(auction.getSellerId()))
       throw new UnauthorizedActionException("You are not allowed to edit this auction");
+
+    if (auction.getStatus() == AuctionStatus.RUNNING
+        && auction.getStartTime() != null
+        && auction.getStartTime().isAfter(LocalDateTime.now())) {
+      auctionRepository.updateStatus(auctionUuid, AuctionStatus.OPEN);
+      auction =
+          auctionRepository
+              .findById(auctionUuid)
+              .orElseThrow(() -> new NotFoundException("Auction not found"));
+    }
+
     if (!isEditableAuctionStatus(auction.getStatus()))
       throw new InvalidAuctionStateException("Only pending or open auctions can be edited");
+
     if (auction.getHighestBidderId() != null)
       throw new ValidationException("Auction already has bids and cannot be edited");
     if (dto.getEndTime() == null) throw new ValidationException("endTime is required");
