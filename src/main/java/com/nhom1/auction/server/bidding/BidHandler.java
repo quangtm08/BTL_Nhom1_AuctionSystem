@@ -140,5 +140,4 @@ public class BidHandler {
       return ResponseFactory.fromException(requestId, e);
     }
   }
-
 }

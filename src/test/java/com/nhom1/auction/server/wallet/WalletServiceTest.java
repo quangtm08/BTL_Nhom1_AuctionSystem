@@ -240,5 +240,4 @@ public class WalletServiceTest {
             walletService.transfer(
                 fromUserId, toUserId, new BigDecimal("50.01"), "ref", "desc", mockConnection));
   }
-
 }

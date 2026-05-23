@@ -92,7 +92,8 @@ public class AuctionManagementController {
     addLabel(1, row, nvl(auction.getItemCategory()), "table-text-sub");
     addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");
     addLabel(3, row, DisplayFormatters.moneyOrDash(auction.getStartingPrice()), "table-text-sub");
-    addLabel(4, row, DisplayFormatters.moneyOrDash(auction.getCurrentHighestBid()), "price-highlight");
+    addLabel(
+        4, row, DisplayFormatters.moneyOrDash(auction.getCurrentHighestBid()), "price-highlight");
     addLabel(5, row, DisplayFormatters.dateTime(auction.getStartTime()), "table-text-sub");
     addLabel(6, row, DisplayFormatters.dateTime(auction.getEndTime()), "table-text-sub");
 
@@ -189,5 +190,4 @@ public class AuctionManagementController {
   private String shortId(String id) {
     return (id == null || id.length() < 8) ? nvl(id) : id.substring(0, 8) + "...";
   }
-
 }
