@@ -77,7 +77,7 @@ public class ServerConnectionTest {
   @Test
   public void testConnectFallbackSuccessLocal() throws Exception {
     ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-    ByteArrayInputStream inStream = new ByteArrayInputStream("".getBytes());
+    java.io.InputStream inStream = getBlockingInputStream();
 
     AtomicReference<Integer> connectCalls = new AtomicReference<>(0);
 
