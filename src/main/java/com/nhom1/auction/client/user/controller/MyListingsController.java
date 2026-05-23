@@ -10,6 +10,8 @@ import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.MyListingsResponse;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
+import com.nhom1.auction.common.enums.AuctionStatus;
+import com.nhom1.auction.common.utils.AppContext;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -28,10 +30,13 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 
 public class MyListingsController {
+
   private final ClientPushService pushService = ClientPushService.getInstance();
   private final MyListingsClientService listingsService = new MyListingsClientService();
   private final Map<String, Label> priceLabels = new HashMap<>();
+
   @FXML private Label activeListingsLabel;
+
   @FXML private GridPane listingsGrid;
 
   @FXML
@@ -48,8 +53,9 @@ public class MyListingsController {
     AppNavigator.navigateTo(AppView.CREATE_LISTING);
   }
 
-  @FXML
-  private void handleEditListing() {
+  private void handleEditListing(AuctionSummaryDto dto) {
+    if (dto == null || dto.getId() == null || dto.getId().isBlank()) return;
+    AppContext.setSelectedAuctionId(dto.getId());
     AppNavigator.navigateTo(AppView.EDIT_LISTING);
   }
 
@@ -71,8 +77,9 @@ public class MyListingsController {
           DisplayFormatters.auctionStatusLabel(dto.getStatus()),
           DisplayFormatters.money(resolveDisplayCurrentBid(dto)),
           DisplayFormatters.timeLeft(dto.getEndTime()),
+          !isEditableListing(dto),
           DisplayFormatters.isEnded(dto.getStatus()),
-          this::handleEditListing,
+          () -> handleEditListing(dto),
           () -> handleDeleteListing(dto));
       if (dto.getId() != null) priceLabels.put(dto.getId(), c.getPriceLabel());
       return card;
@@ -168,5 +175,10 @@ public class MyListingsController {
     BigDecimal current = dto.getCurrentHighestBid();
     if (current != null && current.compareTo(BigDecimal.ZERO) > 0) return current;
     return dto.getStartingPrice() != null ? dto.getStartingPrice() : BigDecimal.ZERO;
+  }
+
+  private boolean isEditableListing(AuctionSummaryDto dto) {
+    return (dto != null
+        && (dto.getStatus() == AuctionStatus.PENDING || dto.getStatus() == AuctionStatus.OPEN));
   }
 }

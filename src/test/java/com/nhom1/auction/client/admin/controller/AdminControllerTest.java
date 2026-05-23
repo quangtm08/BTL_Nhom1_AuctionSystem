@@ -16,7 +16,7 @@ import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.utils.AppContext;
-import java.math.BigDecimal;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -42,6 +42,10 @@ public class AdminControllerTest {
       // Already initialized
     }
     mockConnection = mock(ServerConnection.class);
+    lenient()
+        .when(mockConnection.sendRequest(any(), any()))
+        .thenReturn(
+            CompletableFuture.failedFuture(new IOException("Mock connection: not connected")));
     java.lang.reflect.Field field = ServerConnection.class.getDeclaredField("instance");
     field.setAccessible(true);
     field.set(null, mockConnection);
@@ -470,16 +474,6 @@ public class AdminControllerTest {
   public void testAuctionManagementControllerHelperMethodsAndStatusPills() throws Exception {
     AuctionManagementController controller = new AuctionManagementController();
 
-    // statusStyle(AuctionStatus)
-    java.lang.reflect.Method mStatusStyle =
-        AuctionManagementController.class.getDeclaredMethod("statusStyle", AuctionStatus.class);
-    mStatusStyle.setAccessible(true);
-    assertEquals("status-running", mStatusStyle.invoke(controller, AuctionStatus.RUNNING));
-    assertEquals("status-pill-active", mStatusStyle.invoke(controller, AuctionStatus.PAID));
-    assertEquals("status-pill-banned", mStatusStyle.invoke(controller, AuctionStatus.CANCELED));
-    assertEquals("table-text-sub", mStatusStyle.invoke(controller, AuctionStatus.FINISHED));
-    assertEquals("table-text-sub", mStatusStyle.invoke(controller, (AuctionStatus) null));
-
     // shortId(String)
     java.lang.reflect.Method mShortId =
         AuctionManagementController.class.getDeclaredMethod("shortId", String.class);
@@ -487,21 +481,6 @@ public class AdminControllerTest {
     assertEquals("-", mShortId.invoke(controller, (String) null));
     assertEquals("abc", mShortId.invoke(controller, "abc"));
     assertEquals("12345678...", mShortId.invoke(controller, "1234567890"));
-
-    // formatPrice(BigDecimal)
-    java.lang.reflect.Method mFormatPrice =
-        AuctionManagementController.class.getDeclaredMethod("formatPrice", BigDecimal.class);
-    mFormatPrice.setAccessible(true);
-    assertEquals("-", mFormatPrice.invoke(controller, (BigDecimal) null));
-    assertEquals("100.5", mFormatPrice.invoke(controller, new BigDecimal("100.5")));
-
-    // formatDateTime(LocalDateTime)
-    java.lang.reflect.Method mFormatDateTime =
-        AuctionManagementController.class.getDeclaredMethod("formatDateTime", LocalDateTime.class);
-    mFormatDateTime.setAccessible(true);
-    assertEquals("-", mFormatDateTime.invoke(controller, (LocalDateTime) null));
-    LocalDateTime time = LocalDateTime.of(2026, 5, 22, 10, 30);
-    assertEquals("2026-05-22 10:30", mFormatDateTime.invoke(controller, time));
 
     // nvl(String)
     java.lang.reflect.Method mNvl =

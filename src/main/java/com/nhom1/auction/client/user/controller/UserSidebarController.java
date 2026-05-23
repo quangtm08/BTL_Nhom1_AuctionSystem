@@ -2,8 +2,6 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.service.ClientPushService;
-import com.nhom1.auction.client.user.service.WalletClientService;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.utils.AppContext;
 import javafx.fxml.FXML;
@@ -26,15 +24,9 @@ public class UserSidebarController {
 
   @FXML private Label usernameLabel;
 
-  @FXML private Label balanceLabel;
-
-  private final WalletClientService walletClientService = new WalletClientService();
-
   @FXML
   public void initialize() {
     bindCurrentUsername();
-    loadInitialBalance();
-    subscribeToWalletUpdates();
 
     btnExplore.setOnAction(e -> navigateWithLoading(AppView.AUCTION_BROWSE));
     btnBids.setOnAction(e -> navigateWithLoading(AppView.MY_BIDS));
@@ -55,42 +47,6 @@ public class UserSidebarController {
       return;
     }
     usernameLabel.setText("Guest");
-  }
-
-  private void loadInitialBalance() {
-    AuthResponse currentUser = AppContext.getCurrentUser();
-    if (currentUser != null && currentUser.getUserID() != null) {
-      walletClientService
-          .getWallet(currentUser.getUserID())
-          .thenAccept(
-              wallet -> {
-                javafx.application.Platform.runLater(
-                    () -> {
-                      balanceLabel.setText(String.format("$%,.2f", wallet.getBalance()));
-                    });
-              })
-          .exceptionally(
-              ex -> {
-                System.err.println("Failed to load initial wallet balance: " + ex.getMessage());
-                return null;
-              });
-    }
-  }
-
-  private void subscribeToWalletUpdates() {
-    ClientPushService.getInstance()
-        .addWalletUpdateListener(
-            event -> {
-              AuthResponse currentUser = AppContext.getCurrentUser();
-              if (currentUser != null
-                  && currentUser.getUserID() != null
-                  && currentUser.getUserID().equals(event.getUserId())) {
-                javafx.application.Platform.runLater(
-                    () -> {
-                      balanceLabel.setText(String.format("$%,.2f", event.getNewBalance()));
-                    });
-              }
-            });
   }
 
   private void navigateWithLoading(AppView targetView) {

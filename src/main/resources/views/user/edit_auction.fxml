@@ -27,19 +27,14 @@
                     <Button text="←  My listings" styleClass="btn-ghost" onAction="#handleBackToListings"/>
                     <Label text="Edit listing" styleClass="page-title"/>
                     <Label fx:id="metaLabel" text="" styleClass="meta-text"/>
+                    <Label fx:id="statusLabel" text="Loading listing..." styleClass="meta-text"/>
                 </VBox>
                 <Button text="⋯" styleClass="icon-btn"/>
             </HBox>
 
-            <HBox styleClass="status-banner" alignment="CENTER_LEFT">
-                <Label fx:id="statusLabel" text="Ready" styleClass="status-text"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="statusSubLabel" text="" styleClass="status-sub"/>
-            </HBox>
-
             <VBox spacing="8.0">
                 <Label text="Title" styleClass="field-label"/>
-                <TextField fx:id="titleField" text="Vintage Fender Guitar" styleClass="field-input"/>
+                <TextField fx:id="titleField" promptText="Listing title" styleClass="field-input"/>
             </VBox>
 
             <HBox spacing="16.0">
@@ -55,7 +50,7 @@
 
             <VBox spacing="8.0">
                 <Label text="Description" styleClass="field-label"/>
-                <TextArea fx:id="descriptionArea" prefRowCount="4" wrapText="true" styleClass="field-area" text="1972 Fender Stratocaster in original sunburst finish. Plays beautifully, light buckle rash on the back, all original hardware."/>
+                <TextArea fx:id="descriptionArea" promptText="Describe the item" prefRowCount="4" wrapText="true" styleClass="field-area"/>
             </VBox>
 
             <Separator styleClass="line-separator"/>
@@ -87,7 +82,7 @@
             <Separator styleClass="line-separator"/>
 
             <HBox>
-                <Button text="Delete listing" styleClass="btn-danger"/>
+                <Button fx:id="deleteButton" text="Delete listing" styleClass="btn-danger" onAction="#handleDeleteListing"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <HBox spacing="12.0">
                     <Button text="Cancel" styleClass="btn-secondary" onAction="#handleBackToListings"/>
@@ -99,4 +94,3 @@
         </ScrollPane>
     </center>
 </BorderPane>
-

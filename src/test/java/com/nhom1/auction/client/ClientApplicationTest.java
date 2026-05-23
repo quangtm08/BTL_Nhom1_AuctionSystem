@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.nhom1.auction.client.user.connection.ServerConnection;
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import javafx.application.Platform;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -22,6 +24,12 @@ public class ClientApplicationTest {
     try {
       // Mock ServerConnection singleton to prevent blocking network attempts
       ServerConnection mockConnection = mock(ServerConnection.class);
+      // Return a non-null failed future by default so that .thenApply calls don't NPE
+      lenient()
+          .when(mockConnection.sendRequest(any(), any()))
+          .thenReturn(
+              CompletableFuture.failedFuture(new IOException("Mock connection: not connected")));
+
       java.lang.reflect.Field instanceField = ServerConnection.class.getDeclaredField("instance");
       instanceField.setAccessible(true);
       instanceField.set(null, mockConnection);

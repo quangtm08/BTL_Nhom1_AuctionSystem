@@ -18,6 +18,7 @@ import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.AppContext;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.net.http.HttpClient;
@@ -38,6 +39,10 @@ public class ClientServiceTest {
   public void setUp() throws Exception {
     // Set up mock ServerConnection singleton
     mockConnection = mock(ServerConnection.class);
+    lenient()
+        .when(mockConnection.sendRequest(any(), any()))
+        .thenReturn(
+            CompletableFuture.failedFuture(new IOException("Mock connection: not connected")));
     Field instanceField = ServerConnection.class.getDeclaredField("instance");
     instanceField.setAccessible(true);
     instanceField.set(null, mockConnection);
@@ -473,29 +478,24 @@ public class ClientServiceTest {
   }
 
   @Test
-  public void testBidderRequests() {
-    // Test BiddingClientService.BidderRequest
-    com.nhom1.auction.client.user.service.BiddingClientService.BidderRequest req1 =
-        new com.nhom1.auction.client.user.service.BiddingClientService.BidderRequest();
+  public void testListMyBidsRequest() {
+    com.nhom1.auction.common.dto.bidding.ListMyBidsRequest req1 =
+        new com.nhom1.auction.common.dto.bidding.ListMyBidsRequest();
     assertNull(req1.getBidderId());
     req1.setBidderId("bidder-123");
     assertEquals("bidder-123", req1.getBidderId());
 
-    com.nhom1.auction.client.user.service.BiddingClientService.BidderRequest req2 =
-        new com.nhom1.auction.client.user.service.BiddingClientService.BidderRequest("bidder-456");
+    com.nhom1.auction.common.dto.bidding.ListMyBidsRequest req2 =
+        new com.nhom1.auction.common.dto.bidding.ListMyBidsRequest("bidder-456");
     assertEquals("bidder-456", req2.getBidderId());
-
-    // Test BidHandler.BidderRequest
-    com.nhom1.auction.server.bidding.BidHandler.BidderRequest req3 =
-        new com.nhom1.auction.server.bidding.BidHandler.BidderRequest();
-    assertNull(req3.getBidderId());
-    req3.setBidderId("bidder-789");
-    assertEquals("bidder-789", req3.getBidderId());
   }
 
   @Test
   public void testWalletClientService() throws Exception {
     WalletClientService service = new WalletClientService();
+    AuthResponse user = new AuthResponse();
+    user.setUserID("user-1");
+    AppContext.setCurrentUser(user);
 
     // 1. Get Wallet success
     WalletResponse walletRes =
@@ -504,43 +504,41 @@ public class ClientServiceTest {
     CompletableFuture rawFuture = CompletableFuture.completedFuture(successMsg);
     when(mockConnection.sendRequest(any(RequestMessage.class), any())).thenReturn(rawFuture);
 
-    WalletResponse resp = service.getWallet("user-1").get();
+    WalletResponse resp = service.getWallet().get();
     assertEquals("user-1", resp.getUserId());
     assertEquals(new BigDecimal("1000.00"), resp.getBalance());
 
     // 2. Get Wallet validation failure
-    assertThrows(CompletionException.class, () -> service.getWallet(null).join());
-    assertThrows(CompletionException.class, () -> service.getWallet("").join());
+    AppContext.clearSession();
+    assertThrows(CompletionException.class, () -> service.getWallet().join());
+    AppContext.setCurrentUser(user);
 
     // 3. Deposit success
     when(mockConnection.sendRequest(any(RequestMessage.class), any())).thenReturn(rawFuture);
-    WalletResponse respDep = service.deposit("user-1", new BigDecimal("500.00")).get();
+    WalletResponse respDep = service.deposit(new BigDecimal("500.00")).get();
     assertNotNull(respDep);
 
     // 4. Deposit validation failure
-    assertThrows(
-        CompletionException.class, () -> service.deposit(null, new BigDecimal("500.00")).join());
-    assertThrows(CompletionException.class, () -> service.deposit("user-1", null).join());
-    assertThrows(
-        CompletionException.class, () -> service.deposit("user-1", BigDecimal.ZERO).join());
-    assertThrows(
-        CompletionException.class,
-        () -> service.deposit("user-1", new BigDecimal("-10.00")).join());
+    AppContext.clearSession();
+    assertThrows(CompletionException.class, () -> service.deposit(new BigDecimal("500.00")).join());
+    AppContext.setCurrentUser(user);
+    assertThrows(CompletionException.class, () -> service.deposit(null).join());
+    assertThrows(CompletionException.class, () -> service.deposit(BigDecimal.ZERO).join());
+    assertThrows(CompletionException.class, () -> service.deposit(new BigDecimal("-10.00")).join());
 
     // 5. Withdraw success
     when(mockConnection.sendRequest(any(RequestMessage.class), any())).thenReturn(rawFuture);
-    WalletResponse respWith = service.withdraw("user-1", new BigDecimal("200.00")).get();
+    WalletResponse respWith = service.withdraw(new BigDecimal("200.00")).get();
     assertNotNull(respWith);
 
     // 6. Withdraw validation failure
+    AppContext.clearSession();
     assertThrows(
-        CompletionException.class, () -> service.withdraw(null, new BigDecimal("200.00")).join());
-    assertThrows(CompletionException.class, () -> service.withdraw("user-1", null).join());
-    assertThrows(
-        CompletionException.class, () -> service.withdraw("user-1", BigDecimal.ZERO).join());
-    assertThrows(
-        CompletionException.class,
-        () -> service.withdraw("user-1", new BigDecimal("-5.00")).join());
+        CompletionException.class, () -> service.withdraw(new BigDecimal("200.00")).join());
+    AppContext.setCurrentUser(user);
+    assertThrows(CompletionException.class, () -> service.withdraw(null).join());
+    assertThrows(CompletionException.class, () -> service.withdraw(BigDecimal.ZERO).join());
+    assertThrows(CompletionException.class, () -> service.withdraw(new BigDecimal("-5.00")).join());
   }
 
   @Test
@@ -575,14 +573,14 @@ public class ClientServiceTest {
 
   @Test
   public void testEditAuctionClientService() throws Exception {
-    EditAuctionClientService service = new EditAuctionClientService();
+    MyListingsClientService service = new MyListingsClientService();
 
     // 1. Not logged in
     assertThrows(
         CompletionException.class,
         () ->
             service
-                .updateAuction(
+                .updateListing(
                     "auc-1",
                     "title",
                     "desc",
@@ -602,7 +600,7 @@ public class ClientServiceTest {
         CompletionException.class,
         () ->
             service
-                .updateAuction(
+                .updateListing(
                     null,
                     "title",
                     "desc",
@@ -615,7 +613,7 @@ public class ClientServiceTest {
         CompletionException.class,
         () ->
             service
-                .updateAuction(
+                .updateListing(
                     "auc-1",
                     "",
                     "desc",
@@ -628,7 +626,7 @@ public class ClientServiceTest {
         CompletionException.class,
         () ->
             service
-                .updateAuction(
+                .updateListing(
                     "auc-1",
                     "title",
                     "desc",
@@ -641,7 +639,7 @@ public class ClientServiceTest {
         CompletionException.class,
         () ->
             service
-                .updateAuction(
+                .updateListing(
                     "auc-1",
                     "title",
                     "desc",
@@ -654,7 +652,7 @@ public class ClientServiceTest {
         CompletionException.class,
         () ->
             service
-                .updateAuction(
+                .updateListing(
                     "auc-1",
                     "title",
                     "desc",
@@ -672,7 +670,7 @@ public class ClientServiceTest {
     assertEquals(
         "updated",
         service
-            .updateAuction(
+            .updateListing(
                 "auc-1",
                 "title",
                 "desc",

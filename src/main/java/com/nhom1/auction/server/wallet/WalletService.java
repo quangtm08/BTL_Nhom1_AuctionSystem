@@ -5,7 +5,6 @@ import com.nhom1.auction.common.dto.wallet.WalletTransactionDto;
 import com.nhom1.auction.common.entity.Wallet;
 import com.nhom1.auction.common.entity.WalletTransaction;
 import com.nhom1.auction.common.exception.ValidationException;
-import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.List;
@@ -14,11 +13,9 @@ import java.util.stream.Collectors;
 
 public class WalletService {
   private final WalletRepository walletRepository;
-  private final NotificationService notificationService;
 
-  public WalletService(WalletRepository walletRepository, NotificationService notificationService) {
+  public WalletService(WalletRepository walletRepository) {
     this.walletRepository = walletRepository;
-    this.notificationService = notificationService;
   }
 
   public WalletResponse getWallet(UUID userId) {
@@ -78,8 +75,6 @@ public class WalletService {
     WalletTransaction tx =
         new WalletTransaction(userId, amount, "DEPOSIT", null, "Deposited money via Mock Wallet");
     walletRepository.saveTransaction(tx);
-
-    notificationService.sendWalletUpdate(userId, newBalance);
   }
 
   public void withdraw(UUID userId, BigDecimal amount) {
@@ -100,8 +95,6 @@ public class WalletService {
     WalletTransaction tx =
         new WalletTransaction(userId, amount, "WITHDRAW", null, "Withdrew money from Mock Wallet");
     walletRepository.saveTransaction(tx);
-
-    notificationService.sendWalletUpdate(userId, newBalance);
   }
 
   public void transfer(
@@ -142,10 +135,5 @@ public class WalletService {
     WalletTransaction toTx =
         new WalletTransaction(toUserId, amount, "RECEIPT", referenceId, description);
     walletRepository.saveTransaction(toTx, conn);
-  }
-
-  public void pushWalletUpdate(UUID userId) {
-    Wallet wallet = getOrCreateWallet(userId);
-    notificationService.sendWalletUpdate(userId, wallet.getBalance());
   }
 }

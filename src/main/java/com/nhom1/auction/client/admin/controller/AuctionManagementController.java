@@ -2,11 +2,9 @@ package com.nhom1.auction.client.admin.controller;
 
 import com.nhom1.auction.client.admin.service.AdminClientService;
 import com.nhom1.auction.client.service.ClientPushService;
+import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -93,13 +91,14 @@ public class AuctionManagementController {
     addLabel(0, row, nvl(auction.getItemName()), "table-text-main");
     addLabel(1, row, nvl(auction.getItemCategory()), "table-text-sub");
     addLabel(2, row, shortId(auction.getSellerId()), "table-text-sub");
-    addLabel(3, row, formatPrice(auction.getStartingPrice()), "table-text-sub");
-    addLabel(4, row, formatPrice(auction.getCurrentHighestBid()), "price-highlight");
-    addLabel(5, row, formatDateTime(auction.getStartTime()), "table-text-sub");
-    addLabel(6, row, formatDateTime(auction.getEndTime()), "table-text-sub");
+    addLabel(3, row, DisplayFormatters.moneyOrDash(auction.getStartingPrice()), "table-text-sub");
+    addLabel(
+        4, row, DisplayFormatters.moneyOrDash(auction.getCurrentHighestBid()), "price-highlight");
+    addLabel(5, row, DisplayFormatters.dateTime(auction.getStartTime()), "table-text-sub");
+    addLabel(6, row, DisplayFormatters.dateTime(auction.getEndTime()), "table-text-sub");
 
-    Label status = new Label(auction.getStatus() != null ? auction.getStatus().name() : "-");
-    status.getStyleClass().add(statusStyle(auction.getStatus()));
+    Label status = new Label(DisplayFormatters.auctionStatusLabel(auction.getStatus()));
+    status.getStyleClass().add(DisplayFormatters.adminAuctionStatusStyle(auction.getStatus()));
     auctionGrid.add(status, 7, row);
 
     Button cancelBtn = new Button("Cancel");
@@ -110,13 +109,13 @@ public class AuctionManagementController {
         auction.getStatus() == AuctionStatus.PENDING
             || auction.getStatus() == AuctionStatus.OPEN
             || auction.getStatus() == AuctionStatus.RUNNING;
-    cancelBtn.setDisable(!canCancel || auction.getId().equals(cancelingAuctionId));
-    cancelBtn.setOnAction(e -> cancelAuction(auction.getId(), cancelBtn));
+    cancelBtn.setDisable(missingAuctionId || !canCancel || auctionId.equals(cancelingAuctionId));
+    cancelBtn.setOnAction(e -> cancelAuction(auctionId, cancelBtn));
     // Approve button for OPEN auctions
     Button approveBtn = new Button("Approve");
     approveBtn.getStyleClass().add("btn-approve");
-    approveBtn.setDisable(!(auction.getStatus() == AuctionStatus.PENDING));
-    approveBtn.setOnAction(e -> approveAuction(auction.getId(), approveBtn));
+    approveBtn.setDisable(missingAuctionId || !(auction.getStatus() == AuctionStatus.PENDING));
+    approveBtn.setOnAction(e -> approveAuction(auctionId, approveBtn));
 
     HBox actions = new HBox(6, approveBtn, cancelBtn);
     actions.setAlignment(Pos.CENTER_LEFT);
@@ -190,32 +189,5 @@ public class AuctionManagementController {
 
   private String shortId(String id) {
     return (id == null || id.length() < 8) ? nvl(id) : id.substring(0, 8) + "...";
-  }
-
-  private String formatPrice(BigDecimal price) {
-    return price == null ? "-" : price.toPlainString();
-  }
-
-  private String formatDateTime(LocalDateTime time) {
-    return time == null ? "-" : time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-  }
-
-  private String statusStyle(AuctionStatus status) {
-    if (status == AuctionStatus.OPEN) {
-      return "status-open";
-    }
-    if (status == AuctionStatus.PENDING) {
-      return "status-open";
-    }
-    if (status == AuctionStatus.RUNNING) {
-      return "status-running";
-    }
-    if (status == AuctionStatus.PAID) {
-      return "status-pill-active";
-    }
-    if (status == AuctionStatus.CANCELED) {
-      return "status-pill-banned";
-    }
-    return "table-text-sub";
   }
 }

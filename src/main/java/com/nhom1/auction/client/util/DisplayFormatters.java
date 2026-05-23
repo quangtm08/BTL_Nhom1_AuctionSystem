@@ -78,6 +78,9 @@ public final class DisplayFormatters {
   }
 
   public static String adminAuctionStatusStyle(AuctionStatus status) {
+    if (status == AuctionStatus.OPEN || status == AuctionStatus.PENDING) {
+      return "status-open";
+    }
     if (status == AuctionStatus.RUNNING) {
       return "status-running";
     }

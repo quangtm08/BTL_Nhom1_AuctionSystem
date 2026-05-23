@@ -17,6 +17,7 @@ import java.util.UUID;
 import javax.sql.DataSource;
 
 public class AuctionRepository {
+
   private final DataSource dataSource;
 
   public AuctionRepository(DataSource dataSource) {
@@ -442,9 +443,9 @@ public class AuctionRepository {
     UPDATE auctions
     SET starting_price = ?, current_highest_bid = ?, end_time = ?, version = version + 1, updated_at = ?
     WHERE id = ?
-      AND status = 'OPEN'
+      AND status IN ('PENDING', 'OPEN')
       AND highest_bidder_id IS NULL
-      AND (current_highest_bid IS NULL OR current_highest_bid = starting_price)
+      AND NOT EXISTS (SELECT 1 FROM bids WHERE bids.auction_id = auctions.id)
 """;
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setBigDecimal(1, startingPrice);
@@ -517,16 +518,16 @@ public class AuctionRepository {
 
   private boolean isMissingDurationDaysOrVersionColumn(SQLException e) {
     String message = e.getMessage();
-    return "42703".equals(e.getSQLState())
+    return ("42703".equals(e.getSQLState())
         || (message != null
             && (message.toLowerCase().contains("duration_days")
-                || message.toLowerCase().contains("version")));
+                || message.toLowerCase().contains("version"))));
   }
 
   private boolean isMissingVersionColumn(SQLException e) {
     String message = e.getMessage();
-    return "42703".equals(e.getSQLState())
-        || (message != null && message.toLowerCase().contains("version"));
+    return ("42703".equals(e.getSQLState())
+        || (message != null && message.toLowerCase().contains("version")));
   }
 
   // ===================== MAPPER =====================

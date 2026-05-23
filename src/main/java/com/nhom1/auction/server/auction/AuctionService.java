@@ -8,6 +8,7 @@ import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.exception.AppException;
+import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.NotFoundException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
@@ -145,9 +146,12 @@ public class AuctionService {
         auctionRepository
             .findById(parsedAuctionId)
             .orElseThrow(() -> new NotFoundException("Auction not found"));
-
     if (!parsedSellerId.equals(auction.getSellerId())) {
       throw new UnauthorizedActionException("You are not allowed to delete this auction");
+    }
+
+    if (!isEditableAuctionStatus(auction.getStatus())) {
+      throw new InvalidAuctionStateException("Only pending or open auctions can be deleted");
     }
 
     try (Connection connection = dataSource.getConnection()) {
@@ -196,6 +200,7 @@ public class AuctionService {
             .orElseThrow(() -> new NotFoundException("Auction not found"));
     if (!sellerUuid.equals(auction.getSellerId()))
       throw new UnauthorizedActionException("You are not allowed to edit this auction");
+
     if (auction.getStatus() == AuctionStatus.RUNNING
         && auction.getStartTime() != null
         && auction.getStartTime().isAfter(LocalDateTime.now())) {
@@ -205,8 +210,10 @@ public class AuctionService {
               .findById(auctionUuid)
               .orElseThrow(() -> new NotFoundException("Auction not found"));
     }
-    if (auction.getStatus() != AuctionStatus.OPEN)
-      throw new ValidationException("Only open auctions can be edited");
+
+    if (!isEditableAuctionStatus(auction.getStatus()))
+      throw new InvalidAuctionStateException("Only pending or open auctions can be edited");
+
     if (auction.getHighestBidderId() != null)
       throw new ValidationException("Auction already has bids and cannot be edited");
     if (dto.getEndTime() == null) throw new ValidationException("endTime is required");
@@ -281,6 +288,10 @@ public class AuctionService {
         && !dto.getSellerId().equals(sellerId)) {
       throw new ValidationException("sellerId in request must match sellerId parameter");
     }
+  }
+
+  private boolean isEditableAuctionStatus(AuctionStatus status) {
+    return status == AuctionStatus.PENDING || status == AuctionStatus.OPEN;
   }
 
   private UUID parseSellerId(String sellerId) {

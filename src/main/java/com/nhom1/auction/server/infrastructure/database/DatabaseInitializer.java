@@ -162,7 +162,7 @@ public final class DatabaseInitializer {
     SELECT id, 100000.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
     FROM users
     WHERE id NOT IN (SELECT user_id FROM wallets)
-    """
+    """,
   };
 
   public static void init(DataSource dataSource) {
@@ -173,6 +173,13 @@ public final class DatabaseInitializer {
           conn.getMetaData().getDatabaseProductName().toLowerCase().contains("sqlite");
       for (String ddl : STATEMENTS) {
         String sql = ddl;
+
+        // SQLite does not support ALTER COLUMN (type/constraint changes).
+        // Since the CREATE TABLE already defines these as nullable, we can skip them.
+        if (isSqlite && ddl.contains("ALTER COLUMN")) {
+          continue;
+        }
+
         // SQLite không hỗ trợ cú pháp "ADD COLUMN IF NOT EXISTS".
         // Do đó, nếu là SQLite, chúng ta chuyển đổi thành "ADD COLUMN".
         if (isSqlite && ddl.contains("ADD COLUMN IF NOT EXISTS")) {

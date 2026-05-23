@@ -103,7 +103,7 @@
               <include>src/test/java/**/*.java</include>
             </includes>
             <googleJavaFormat>
-              <version>1.25.0</version>
+              <version>1.25.2</version>
               <style>GOOGLE</style>
               <reflowLongStrings>true</reflowLongStrings>
             </googleJavaFormat>

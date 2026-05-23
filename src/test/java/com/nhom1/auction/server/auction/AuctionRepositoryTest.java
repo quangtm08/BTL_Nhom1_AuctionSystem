@@ -482,6 +482,14 @@ public class AuctionRepositoryTest {
             id, new BigDecimal("200.00"), LocalDateTime.now().plusDays(7), mockConnection);
     assertEquals(1, result);
     verify(ps).executeUpdate();
+    verify(mockConnection)
+        .prepareStatement(
+            argThat(
+                sql ->
+                    sql.contains("status IN ('PENDING', 'OPEN')")
+                        && sql.contains("NOT EXISTS")
+                        && sql.contains("FROM bids")
+                        && !sql.contains("current_highest_bid = starting_price")));
   }
 
   @Test

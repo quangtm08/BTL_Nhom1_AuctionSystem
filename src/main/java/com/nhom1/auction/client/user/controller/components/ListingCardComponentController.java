@@ -6,12 +6,19 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
 public class ListingCardComponentController {
+
   @FXML private Label titleLabel;
+
   @FXML private Label subLabel;
+
   @FXML private Label statusLabel;
+
   @FXML private Label priceLabel;
+
   @FXML private Label remainingLabel;
+
   @FXML private Button editButton;
+
   @FXML private Button deleteButton;
 
   public void bind(
@@ -20,6 +27,7 @@ public class ListingCardComponentController {
       String price,
       String remaining,
       boolean disableActions,
+      boolean endedStyle,
       Runnable onEdit,
       Runnable onDelete) {
     titleLabel.setText(dto.getItemName() != null ? dto.getItemName() : "Untitled listing");
@@ -29,7 +37,7 @@ public class ListingCardComponentController {
     remainingLabel.setText(remaining);
 
     statusLabel.getStyleClass().remove("status-badge-ended");
-    if (disableActions && !statusLabel.getStyleClass().contains("status-badge-ended"))
+    if (endedStyle && !statusLabel.getStyleClass().contains("status-badge-ended"))
       statusLabel.getStyleClass().add("status-badge-ended");
 
     editButton.setDisable(disableActions);

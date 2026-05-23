@@ -1,9 +1,10 @@
 package com.nhom1.auction.server.auction;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
+import com.nhom1.auction.common.dto.auction.DeleteAuctionRequest;
+import com.nhom1.auction.common.dto.auction.ListMyListingsRequest;
 import com.nhom1.auction.common.dto.auction.MyListingsResponse;
 import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
@@ -41,9 +42,8 @@ public class AuctionHandler {
         MessageType.LIST_MY_LISTINGS,
         (requestId, payloadJson) -> {
           try {
-            JsonNode payload = JsonUtil.fromJson(payloadJson, JsonNode.class);
-            String sellerId = payload.has("sellerId") ? payload.get("sellerId").asText() : null;
-            return handleListMyListings(requestId, sellerId);
+            ListMyListingsRequest dto = JsonUtil.fromJson(payloadJson, ListMyListingsRequest.class);
+            return handleListMyListings(requestId, dto.getSellerId());
           } catch (Exception e) {
             return ResponseFactory.invalidFormat(requestId, "Invalid ListMyListings JSON");
           }
@@ -53,10 +53,8 @@ public class AuctionHandler {
         MessageType.DELETE_AUCTION,
         (requestId, payloadJson) -> {
           try {
-            JsonNode payload = JsonUtil.fromJson(payloadJson, JsonNode.class);
-            String sellerId = payload.has("sellerId") ? payload.get("sellerId").asText() : null;
-            String auctionId = payload.has("auctionId") ? payload.get("auctionId").asText() : null;
-            return handleDeleteAuction(requestId, sellerId, auctionId);
+            DeleteAuctionRequest dto = JsonUtil.fromJson(payloadJson, DeleteAuctionRequest.class);
+            return handleDeleteAuction(requestId, dto.getSellerId(), dto.getAuctionId());
           } catch (Exception e) {
             return ResponseFactory.invalidFormat(requestId, "Invalid DeleteAuction JSON");
           }

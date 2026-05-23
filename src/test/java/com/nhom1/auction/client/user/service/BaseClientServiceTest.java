@@ -10,6 +10,7 @@ import com.nhom1.auction.common.protocol.ErrorResponse;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
@@ -23,6 +24,7 @@ public class BaseClientServiceTest {
 
   // Concrete implementation for testing
   private static class TestClientService extends BaseClientService {
+
     public TestClientService() {
       super();
     }
@@ -52,6 +54,10 @@ public class BaseClientServiceTest {
   @BeforeEach
   public void setUp() throws Exception {
     mockConnection = mock(ServerConnection.class);
+    lenient()
+        .when(mockConnection.sendRequest(any(), any()))
+        .thenReturn(
+            CompletableFuture.failedFuture(new IOException("Mock connection: not connected")));
     Field instanceField = ServerConnection.class.getDeclaredField("instance");
     instanceField.setAccessible(true);
     instanceField.set(null, mockConnection);

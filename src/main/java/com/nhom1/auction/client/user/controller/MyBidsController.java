@@ -2,23 +2,20 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.user.connection.ServerConnection;
+import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.user.controller.components.BidCardComponentController;
+import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
+import com.nhom1.auction.client.util.DisplayFormatters;
 import com.nhom1.auction.common.dto.bidding.BidWithAuctionDto;
 import com.nhom1.auction.common.dto.bidding.MyBidsResponse;
 import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.utils.AppContext;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -32,13 +29,12 @@ public class MyBidsController {
   @FXML private Label activeBidCountLabel;
   @FXML private Label endingSoonCountLabel;
   private final BiddingClientService biddingService = new BiddingClientService();
+  private final ClientPushService pushService = ClientPushService.getInstance();
 
   @FXML
   public void initialize() {
     loadMyBids();
-    ServerConnection.getInstance()
-        .registerPushHandler(
-            MessageType.PUSH_AUCTION_ENDED, json -> Platform.runLater(this::loadMyBids));
+    pushService.onAuctionEnded(event -> Platform.runLater(this::loadMyBids));
   }
 
   private void loadMyBids() {
@@ -47,9 +43,9 @@ public class MyBidsController {
         .thenAccept(resp -> Platform.runLater(() -> renderMyBids(resp)))
         .exceptionally(
             ex -> {
+              Throwable cause = BaseClientService.extractFailure(ex);
               Platform.runLater(
-                  () ->
-                      System.err.println("Failed to load my bids: " + ex.getCause().getMessage()));
+                  () -> System.err.println("Failed to load my bids: " + cause.getMessage()));
               return null;
             });
   }
@@ -89,9 +85,9 @@ public class MyBidsController {
       BidCardComponentController c = loader.getController();
       c.bind(
           bid,
-          formatMoney(bid.getYourBid()),
-          formatMoney(bid.getCurrentHighestBid()),
-          formatTimeLeft(bid.getStatus(), bid.getEndTime()),
+          DisplayFormatters.money(bid.getYourBid()),
+          DisplayFormatters.money(bid.getCurrentHighestBid()),
+          formatBidTimeLeft(bid.getStatus(), bid.getEndTime()),
           this::navigateToDetail);
       return card;
     } catch (IOException e) {
@@ -116,23 +112,10 @@ public class MyBidsController {
     AppNavigator.navigateTo(AppView.AUCTION_DETAIL);
   }
 
-  private String formatMoney(BigDecimal amount) {
-    return amount == null ? "$0" : "$" + NumberFormat.getNumberInstance(Locale.US).format(amount);
-  }
-
-  private String formatTimeLeft(AuctionStatus status, LocalDateTime endTime) {
-    if (status == AuctionStatus.FINISHED
-        || status == AuctionStatus.CANCELED
-        || status == AuctionStatus.PAID) {
+  private String formatBidTimeLeft(AuctionStatus status, LocalDateTime endTime) {
+    if (DisplayFormatters.isEnded(status)) {
       return "Ended";
     }
-    if (endTime == null) return "N/A";
-    long d = ChronoUnit.DAYS.between(LocalDateTime.now(), endTime);
-    long h = ChronoUnit.HOURS.between(LocalDateTime.now(), endTime);
-    long m = ChronoUnit.MINUTES.between(LocalDateTime.now(), endTime);
-    if (d > 0) return d + " day" + (d > 1 ? "s" : "");
-    if (h > 0) return h + " hour" + (h > 1 ? "s" : "");
-    if (m > 0) return m + " min" + (m > 1 ? "s" : "");
-    return "Ended";
+    return DisplayFormatters.timeLeft(endTime);
   }
 }

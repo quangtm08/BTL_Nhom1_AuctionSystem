@@ -15,6 +15,7 @@ import com.nhom1.auction.common.dto.bidding.BidSummaryDto;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
 import com.nhom1.auction.common.dto.notification.AuctionTimeExtendedEvent;
 import com.nhom1.auction.common.dto.notification.BidUpdateEvent;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.utils.AppContext;
 import java.math.BigDecimal;
@@ -41,6 +42,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
 public class AuctionDetailController {
+
   private static final double IMAGE_BOX_WIDTH = 420;
   private static final double IMAGE_BOX_HEIGHT = 320;
 
@@ -63,6 +65,8 @@ public class AuctionDetailController {
   @FXML private Button btnCancelAutoBid;
 
   @FXML private Button btnViewBidHistory;
+
+  @FXML private VBox bidBox;
 
   @FXML private Label lblCurrentBid;
 
@@ -87,6 +91,8 @@ public class AuctionDetailController {
   @FXML private VBox loadingBox;
 
   @FXML private Label lblCountdown;
+
+  @FXML private Label lblCountdownLabel;
 
   @FXML private Label lblExtensionToast;
 
@@ -123,7 +129,13 @@ public class AuctionDetailController {
     }
 
     setLoadingState(true);
+    loadAuctionDetail();
 
+    pushService.onBidUpdate(this::handleBidUpdatePush);
+    pushService.onAuctionTimeExtended(this::handleAuctionTimeExtendedPush);
+  }
+
+  private void loadAuctionDetail() {
     String selectedAuctionId = AppContext.getSelectedAuctionId();
     if (selectedAuctionId == null || selectedAuctionId.isBlank()) {
       AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
@@ -149,9 +161,6 @@ public class AuctionDetailController {
                   });
               return null;
             });
-
-    pushService.onBidUpdate(this::handleBidUpdatePush);
-    pushService.onAuctionTimeExtended(this::handleAuctionTimeExtendedPush);
   }
 
   private void handleAuctionTimeExtendedPush(AuctionTimeExtendedEvent event) {
@@ -167,7 +176,7 @@ public class AuctionDetailController {
             countdownAnimator.resetEndTime(event.getNewEndTime());
           }
           if (!isOwnAuction) {
-            setBidControlsDisabled(false);
+            setBidSectionDisabled(false);
           }
           showExtensionToast();
         });
@@ -261,9 +270,14 @@ public class AuctionDetailController {
             && AppContext.getCurrentUser().getUserID() != null
             && dto.getSellerID() != null
             && AppContext.getCurrentUser().getUserID().equals(dto.getSellerID());
-    setBidControlsDisabled(isOwnAuction);
+
+    applyBidAvailability(dto);
     if (isOwnAuction) {
       showBidError("You cannot bid on your own auction.");
+    } else if (dto.getStatus() == AuctionStatus.OPEN) {
+      showBidError("Bidding opens when this auction starts.");
+    } else if (DisplayFormatters.isEnded(dto.getStatus())) {
+      showBidError("This auction has ended.");
     } else {
       clearBidError();
     }
@@ -272,14 +286,7 @@ public class AuctionDetailController {
       renderBidHistory(dto.getBidHistory());
     }
 
-    if (lblCountdown != null && dto.getEndTime() != null) {
-      if (countdownAnimator != null) {
-        countdownAnimator.stop();
-      }
-      countdownAnimator = new CountdownAnimator(lblCountdown, dto.getEndTime());
-      countdownAnimator.setOnExpired(() -> setBidControlsDisabled(true));
-      countdownAnimator.start();
-    }
+    applyCountdown(dto);
     if (itemImageView != null) {
       String imageUrl =
           dto.getImageUrls() != null && !dto.getImageUrls().isEmpty()
@@ -290,6 +297,43 @@ public class AuctionDetailController {
       } else {
         clearPrimaryImage();
       }
+    }
+  }
+
+  private void applyBidAvailability(AuctionDetailDto dto) {
+    boolean notStarted = dto.getStatus() == AuctionStatus.OPEN;
+    boolean ended = DisplayFormatters.isEnded(dto.getStatus());
+    setBidSectionDisabled(isOwnAuction || notStarted || ended);
+  }
+
+  private void applyCountdown(AuctionDetailDto dto) {
+    if (lblCountdown == null) {
+      return;
+    }
+    if (countdownAnimator != null) {
+      countdownAnimator.stop();
+      countdownAnimator = null;
+    }
+    if (dto.getStatus() == AuctionStatus.OPEN && dto.getStartTime() != null) {
+      if (lblCountdownLabel != null) {
+        lblCountdownLabel.setText("Starts in");
+      }
+      countdownAnimator = new CountdownAnimator(lblCountdown, dto.getStartTime());
+      countdownAnimator.setOnExpired(this::loadAuctionDetail);
+      countdownAnimator.start();
+      return;
+    }
+    if (dto.getEndTime() != null) {
+      if (lblCountdownLabel != null) {
+        lblCountdownLabel.setText("Time remaining");
+      }
+      countdownAnimator = new CountdownAnimator(lblCountdown, dto.getEndTime());
+      countdownAnimator.setOnExpired(
+          () -> {
+            setBidSectionDisabled(true);
+            loadAuctionDetail();
+          });
+      countdownAnimator.start();
     }
   }
 
@@ -320,6 +364,14 @@ public class AuctionDetailController {
     }
     if (txtBidInput != null) {
       txtBidInput.setDisable(disabled);
+    }
+  }
+
+  private void setBidSectionDisabled(boolean disabled) {
+    if (bidBox != null) {
+      bidBox.setDisable(disabled);
+    } else {
+      setBidControlsDisabled(disabled);
     }
   }
 

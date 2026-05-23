@@ -5,6 +5,7 @@ import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.GetAuctionDetailRequest;
 import com.nhom1.auction.common.dto.bidding.ListAuctionsResponse;
+import com.nhom1.auction.common.dto.bidding.ListMyBidsRequest;
 import com.nhom1.auction.common.dto.bidding.MyBidsResponse;
 import com.nhom1.auction.common.dto.bidding.PlaceBidRequest;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
@@ -123,28 +124,9 @@ public class BiddingClientService extends BaseClientService {
       return validationError("User not logged in.");
     }
 
-    BidderRequest requestPayload = new BidderRequest(user.getUserID());
-    RequestMessage<BidderRequest> request =
+    ListMyBidsRequest requestPayload = new ListMyBidsRequest(user.getUserID());
+    RequestMessage<ListMyBidsRequest> request =
         new RequestMessage<>(MessageType.LIST_MY_BIDS, requestPayload);
     return send(request, MyBidsResponse.class);
-  }
-
-  /** Simple DTO for sending bidderId in LIST_MY_BIDS request. */
-  public static class BidderRequest {
-    private String bidderId;
-
-    public BidderRequest() {}
-
-    public BidderRequest(String bidderId) {
-      this.bidderId = bidderId;
-    }
-
-    public String getBidderId() {
-      return bidderId;
-    }
-
-    public void setBidderId(String bidderId) {
-      this.bidderId = bidderId;
-    }
   }
 }

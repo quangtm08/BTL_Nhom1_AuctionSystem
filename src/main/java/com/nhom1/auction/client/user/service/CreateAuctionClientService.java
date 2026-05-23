@@ -1,5 +1,6 @@
 package com.nhom1.auction.client.user.service;
 
+import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
 import com.nhom1.auction.common.dto.auction.CreateAuctionResponse;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
 import com.nhom1.auction.common.enums.ItemCategory;
@@ -10,9 +11,7 @@ import com.nhom1.auction.common.utils.AppContext;
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class CreateAuctionClientService extends BaseClientService {
@@ -68,8 +67,8 @@ public class CreateAuctionClientService extends BaseClientService {
     return uploadImages(imageFiles)
         .thenCompose(
             imageUrls -> {
-              Map<String, Object> payload =
-                  buildCreateAuctionPayload(
+              CreateAuctionRequest payload =
+                  buildCreateAuctionRequest(
                       title,
                       description,
                       startingBid,
@@ -78,7 +77,7 @@ public class CreateAuctionClientService extends BaseClientService {
                       durationDays,
                       openingDate,
                       imageUrls);
-              RequestMessage<Map<String, Object>> request =
+              RequestMessage<CreateAuctionRequest> request =
                   new RequestMessage<>(MessageType.CREATE_AUCTION, payload);
               return send(request, CreateAuctionResponse.class);
             });
@@ -94,7 +93,7 @@ public class CreateAuctionClientService extends BaseClientService {
         .thenApply(ignored -> uploadTasks.stream().map(CompletableFuture::join).toList());
   }
 
-  private Map<String, Object> buildCreateAuctionPayload(
+  private CreateAuctionRequest buildCreateAuctionRequest(
       String title,
       String description,
       String startingBid,
@@ -106,19 +105,19 @@ public class CreateAuctionClientService extends BaseClientService {
     AuthResponse user = AppContext.getCurrentUser();
     BigDecimal parsedStartingBid = new BigDecimal(startingBid.trim());
 
-    Map<String, Object> payload = new LinkedHashMap<>();
-    payload.put("sellerId", user.getUserID());
-    payload.put("name", title.trim());
-    payload.put("description", description);
-    payload.put("category", category);
-    payload.put("condition", condition);
-    payload.put("startingPrice", parsedStartingBid);
-    payload.put("startTime", openingDate.atStartOfDay());
-    payload.put("durationDays", durationDays);
+    CreateAuctionRequest payload = new CreateAuctionRequest();
+    payload.setSellerId(user.getUserID());
+    payload.setName(title.trim());
+    payload.setDescription(description);
+    payload.setCategory(category);
+    payload.setCondition(condition);
+    payload.setStartingPrice(parsedStartingBid);
+    payload.setStartTime(openingDate.atStartOfDay());
+    payload.setDurationDays(durationDays);
     // Backward compatibility with older Railway server schema:
     // only send imageUrls when it actually has data.
     if (imageUrls != null && !imageUrls.isEmpty()) {
-      payload.put("imageUrls", imageUrls);
+      payload.setImageUrls(imageUrls);
     }
     return payload;
   }

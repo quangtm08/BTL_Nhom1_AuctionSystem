@@ -102,9 +102,8 @@ public class DisplayFormattersTest {
         "status-pill-active", DisplayFormatters.adminAuctionStatusStyle(AuctionStatus.PAID));
     assertEquals(
         "status-pill-banned", DisplayFormatters.adminAuctionStatusStyle(AuctionStatus.CANCELED));
-    assertEquals(
-        "table-text-sub", DisplayFormatters.adminAuctionStatusStyle(AuctionStatus.PENDING));
-    assertEquals("table-text-sub", DisplayFormatters.adminAuctionStatusStyle(AuctionStatus.OPEN));
+    assertEquals("status-open", DisplayFormatters.adminAuctionStatusStyle(AuctionStatus.PENDING));
+    assertEquals("status-open", DisplayFormatters.adminAuctionStatusStyle(AuctionStatus.OPEN));
     assertEquals(
         "table-text-sub", DisplayFormatters.adminAuctionStatusStyle(AuctionStatus.FINISHED));
   }
