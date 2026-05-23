@@ -13,39 +13,42 @@ import org.junit.jupiter.api.Test;
 
 public class DatabaseInitializerTest {
 
-    @Test
-    public void testPrivateConstructor() throws Exception {
-        Constructor<DatabaseInitializer> constructor = DatabaseInitializer.class.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        DatabaseInitializer instance = constructor.newInstance();
-        assertNotNull(instance);
-    }
+  @Test
+  public void testPrivateConstructor() throws Exception {
+    Constructor<DatabaseInitializer> constructor =
+        DatabaseInitializer.class.getDeclaredConstructor();
+    constructor.setAccessible(true);
+    DatabaseInitializer instance = constructor.newInstance();
+    assertNotNull(instance);
+  }
 
-    @Test
-    public void testInit_Success() throws SQLException {
-        DataSource dataSource = mock(DataSource.class);
-        Connection connection = mock(Connection.class);
-        Statement statement = mock(Statement.class);
+  @Test
+  public void testInit_Success() throws SQLException {
+    DataSource dataSource = mock(DataSource.class);
+    Connection connection = mock(Connection.class);
+    Statement statement = mock(Statement.class);
+    java.sql.DatabaseMetaData metaData = mock(java.sql.DatabaseMetaData.class);
 
-        when(dataSource.getConnection()).thenReturn(connection);
-        when(connection.createStatement()).thenReturn(statement);
+    when(dataSource.getConnection()).thenReturn(connection);
+    when(connection.createStatement()).thenReturn(statement);
+    when(connection.getMetaData()).thenReturn(metaData);
+    when(metaData.getDatabaseProductName()).thenReturn("PostgreSQL");
 
-        assertDoesNotThrow(() -> DatabaseInitializer.init(dataSource));
+    assertDoesNotThrow(() -> DatabaseInitializer.init(dataSource));
 
-        verify(dataSource).getConnection();
-        verify(connection).createStatement();
-        verify(statement, atLeastOnce()).execute(anyString());
-    }
+    verify(dataSource).getConnection();
+    verify(connection).createStatement();
+    verify(statement, atLeastOnce()).execute(anyString());
+  }
 
-    @Test
-    public void testInit_ThrowsSQLException() throws SQLException {
-        DataSource dataSource = mock(DataSource.class);
-        when(dataSource.getConnection()).thenThrow(new SQLException("Mock DB error"));
+  @Test
+  public void testInit_ThrowsSQLException() throws SQLException {
+    DataSource dataSource = mock(DataSource.class);
+    when(dataSource.getConnection()).thenThrow(new SQLException("Mock DB error"));
 
-        RuntimeException thrown = assertThrows(RuntimeException.class, () -> 
-            DatabaseInitializer.init(dataSource)
-        );
+    RuntimeException thrown =
+        assertThrows(RuntimeException.class, () -> DatabaseInitializer.init(dataSource));
 
-        assertTrue(thrown.getMessage().contains("DatabaseInitializer: schema bootstrap failed"));
-    }
+    assertTrue(thrown.getMessage().contains("DatabaseInitializer: schema bootstrap failed"));
+  }
 }
