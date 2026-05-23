@@ -544,6 +544,7 @@ public class AuctionServiceTest {
         Auction auction = mock(Auction.class);
         when(auction.getSellerId()).thenReturn(parsedSellerId);
         when(auction.getItemId()).thenReturn(UUID.randomUUID());
+        when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
         when(auctionRepository.findById(parsedAuctionId)).thenReturn(
             Optional.of(auction)
         );
@@ -705,7 +706,7 @@ public class AuctionServiceTest {
             Optional.of(auction)
         );
         UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
-        assertThrows(ValidationException.class, () ->
+        assertThrows(InvalidAuctionStateException.class, () ->
             auctionService.updateAuction(req)
         );
     }

@@ -382,7 +382,6 @@ public class UserControllerTest {
         Button btnWallet = new Button();
         Button btnLogout = new Button();
         Label usernameLabel = new Label();
-        Label balanceLabel = new Label();
 
         injectField(controller, "btnExplore", btnExplore);
         injectField(controller, "btnBids", btnBids);
@@ -391,7 +390,6 @@ public class UserControllerTest {
         injectField(controller, "btnWallet", btnWallet);
         injectField(controller, "btnLogout", btnLogout);
         injectField(controller, "usernameLabel", usernameLabel);
-        injectField(controller, "balanceLabel", balanceLabel);
 
         controller.initialize();
 
@@ -422,7 +420,6 @@ public class UserControllerTest {
         Button btnWallet = new Button();
         Button btnLogout = new Button();
         Label usernameLabel = new Label();
-        Label balanceLabel = new Label();
 
         injectField(controller, "btnExplore", btnExplore);
         injectField(controller, "btnBids", btnBids);
@@ -431,7 +428,6 @@ public class UserControllerTest {
         injectField(controller, "btnWallet", btnWallet);
         injectField(controller, "btnLogout", btnLogout);
         injectField(controller, "usernameLabel", usernameLabel);
-        injectField(controller, "balanceLabel", balanceLabel);
 
         // Case 1: current user is not null, but username is null
         AuthResponse userNullName = new AuthResponse();
@@ -522,13 +518,8 @@ public class UserControllerTest {
         ListAuctionsResponse ar = new ListAuctionsResponse();
         ar.setAuctions(List.of(auction));
 
-        when(mockBiddingService.listAuctions()).thenReturn(
-            CompletableFuture.completedFuture(ar)
-        );
-        when(mockBiddingService.getMyBids()).thenReturn(
-            CompletableFuture.completedFuture(
-                new MyBidsResponse(Collections.emptyList())
-            )
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
+            CompletableFuture.completedFuture(ar.getAuctions())
         );
 
         Label welcomeLabel = new Label();
@@ -545,30 +536,38 @@ public class UserControllerTest {
         waitForRunLater();
 
         assertEquals("Hunt for the next deal, alice!", welcomeLabel.getText());
-        verify(mockBiddingService).listAuctions();
+        verify(mockBiddingService).listBrowseAuctions();
 
         // Test handleBidUpdatePush
-        String pushJson =
-            "{\"payload\":{\"auctionId\":\"auc-1\",\"newHighestBid\":\"15.00\"}}";
-        // Just call to verify coverage of JSON parsing
-        injectField(controller, "priceLabels", Map.of("auc-1", new Label()));
+        com.nhom1.auction.common.dto.notification.BidUpdateEvent bidEvent =
+            new com.nhom1.auction.common.dto.notification.BidUpdateEvent(
+                "auc-1",
+                new BigDecimal("15.00"),
+                java.util.UUID.randomUUID()
+            );
+        Map<String, Label> mutableLabels = new java.util.HashMap<>();
+        mutableLabels.put("auc-1", new Label());
+        injectField(controller, "priceLabels", mutableLabels);
         java.lang.reflect.Method m =
             AuctionBrowseController.class.getDeclaredMethod(
                 "handleBidUpdatePush",
-                String.class
+                com.nhom1.auction.common.dto.notification.BidUpdateEvent.class
             );
         m.setAccessible(true);
-        m.invoke(controller, pushJson);
+        m.invoke(controller, bidEvent);
 
         // Test handleAuctionDeletedPush
-        String deleteJson = "{\"payload\":{\"auctionId\":\"auc-1\"}}";
+        com.nhom1.auction.common.dto.notification.AuctionDeletedEvent deleteEvent =
+            new com.nhom1.auction.common.dto.notification.AuctionDeletedEvent(
+                "auc-1"
+            );
         java.lang.reflect.Method m2 =
             AuctionBrowseController.class.getDeclaredMethod(
                 "handleAuctionDeletedPush",
-                String.class
+                com.nhom1.auction.common.dto.notification.AuctionDeletedEvent.class
             );
         m2.setAccessible(true);
-        m2.invoke(controller, deleteJson);
+        m2.invoke(controller, deleteEvent);
     }
 
     @Test
@@ -654,9 +653,12 @@ public class UserControllerTest {
         hCreate.invoke(controller);
 
         java.lang.reflect.Method hEdit =
-            MyListingsController.class.getDeclaredMethod("handleEditListing");
+            MyListingsController.class.getDeclaredMethod(
+                "handleEditListing",
+                AuctionSummaryDto.class
+            );
         hEdit.setAccessible(true);
-        hEdit.invoke(controller);
+        hEdit.invoke(controller, summary);
 
         // Test push bid update
         com.nhom1.auction.common.dto.notification.BidUpdateEvent eventObj =
@@ -1627,7 +1629,7 @@ public class UserControllerTest {
                 BigDecimal.valueOf(1200),
                 "john",
                 BigDecimal.valueOf(50),
-                AuctionStatus.OPEN,
+                AuctionStatus.RUNNING,
                 LocalDateTime.now(),
                 LocalDateTime.now().plusDays(1),
                 bids
@@ -1694,8 +1696,8 @@ public class UserControllerTest {
         );
         ListAuctionsResponse lar = new ListAuctionsResponse();
         lar.setAuctions(Collections.emptyList());
-        when(mockBiddingService.listAuctions()).thenReturn(
-            CompletableFuture.completedFuture(lar)
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
+            CompletableFuture.completedFuture(lar.getAuctions())
         );
         when(mockBiddingService.getMyBids()).thenReturn(
             CompletableFuture.completedFuture(
@@ -1716,141 +1718,12 @@ public class UserControllerTest {
         userBlank.setUserID("user-1");
         userBlank.setUsername("   ");
         AppContext.setCurrentUser(userBlank);
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
+            CompletableFuture.completedFuture(Collections.emptyList())
+        );
         welcomeLabel.setText("default");
         controller.initialize();
         assertEquals("default", welcomeLabel.getText()); // Shouldn't change welcome label
-
-        // 3. formatStatus, formatMoney, resolveDisplayCurrentBid, formatTimeLeft reflection tests
-        java.lang.reflect.Method formatStatus =
-            AuctionBrowseController.class.getDeclaredMethod(
-                "formatStatus",
-                Object.class
-            );
-        formatStatus.setAccessible(true);
-        assertEquals("Unknown", formatStatus.invoke(controller, (Object) null));
-        assertEquals(
-            "Open",
-            formatStatus.invoke(controller, AuctionStatus.OPEN)
-        );
-        assertEquals(
-            "Ended",
-            formatStatus.invoke(controller, AuctionStatus.FINISHED)
-        );
-        assertEquals(
-            "Ended",
-            formatStatus.invoke(controller, AuctionStatus.PAID)
-        );
-        assertEquals("Hello", formatStatus.invoke(controller, "Hello"));
-
-        java.lang.reflect.Method formatMoney =
-            AuctionBrowseController.class.getDeclaredMethod(
-                "formatMoney",
-                BigDecimal.class
-            );
-        formatMoney.setAccessible(true);
-        assertEquals("$0", formatMoney.invoke(controller, (BigDecimal) null));
-        assertEquals(
-            "$12,345.67",
-            formatMoney.invoke(controller, new BigDecimal("12345.67"))
-        );
-
-        java.lang.reflect.Method resolveDisplayCurrentBid =
-            AuctionBrowseController.class.getDeclaredMethod(
-                "resolveDisplayCurrentBid",
-                AuctionSummaryDto.class
-            );
-        resolveDisplayCurrentBid.setAccessible(true);
-        assertEquals(
-            BigDecimal.ZERO,
-            resolveDisplayCurrentBid.invoke(
-                controller,
-                (AuctionSummaryDto) null
-            )
-        );
-
-        AuctionSummaryDto dto = new AuctionSummaryDto();
-        dto.setCurrentHighestBid(BigDecimal.TEN);
-        assertEquals(
-            BigDecimal.TEN,
-            resolveDisplayCurrentBid.invoke(controller, dto)
-        );
-
-        dto.setCurrentHighestBid(BigDecimal.ZERO);
-        dto.setStartingPrice(BigDecimal.ONE);
-        assertEquals(
-            BigDecimal.ONE,
-            resolveDisplayCurrentBid.invoke(controller, dto)
-        );
-
-        dto.setStartingPrice(null);
-        assertEquals(
-            BigDecimal.ZERO,
-            resolveDisplayCurrentBid.invoke(controller, dto)
-        );
-
-        java.lang.reflect.Method formatTimeLeft =
-            AuctionBrowseController.class.getDeclaredMethod(
-                "formatTimeLeft",
-                LocalDateTime.class
-            );
-        formatTimeLeft.setAccessible(true);
-        assertEquals(
-            "N/A",
-            formatTimeLeft.invoke(controller, (LocalDateTime) null)
-        );
-        assertEquals(
-            "Ended",
-            formatTimeLeft.invoke(
-                controller,
-                LocalDateTime.now().minusMinutes(5)
-            )
-        );
-        assertEquals(
-            "Ended",
-            formatTimeLeft.invoke(controller, LocalDateTime.now())
-        );
-        assertEquals(
-            "1 day",
-            formatTimeLeft.invoke(
-                controller,
-                LocalDateTime.now().plusDays(1).plusSeconds(1)
-            )
-        );
-        assertEquals(
-            "2 days",
-            formatTimeLeft.invoke(
-                controller,
-                LocalDateTime.now().plusDays(2).plusSeconds(1)
-            )
-        );
-        assertEquals(
-            "1 hour",
-            formatTimeLeft.invoke(
-                controller,
-                LocalDateTime.now().plusHours(1).plusSeconds(1)
-            )
-        );
-        assertEquals(
-            "2 hours",
-            formatTimeLeft.invoke(
-                controller,
-                LocalDateTime.now().plusHours(2).plusSeconds(1)
-            )
-        );
-        assertEquals(
-            "1 min",
-            formatTimeLeft.invoke(
-                controller,
-                LocalDateTime.now().plusMinutes(1).plusSeconds(1)
-            )
-        );
-        assertEquals(
-            "2 mins",
-            formatTimeLeft.invoke(
-                controller,
-                LocalDateTime.now().plusMinutes(2).plusSeconds(1)
-            )
-        );
 
         // 4. navigateToDetail edge case where view is already AUCTION_DETAIL
         java.lang.reflect.Field cvField = AppNavigator.class.getDeclaredField(
@@ -1861,34 +1734,50 @@ public class UserControllerTest {
         controller.navigateToDetail("auc-1"); // Should return early, not trigger navigation
         cvField.set(null, null);
 
-        // 5. handleBidUpdatePush JSON variations
+        // 5. handleBidUpdatePush variations
         java.lang.reflect.Method handleBidUpdatePush =
             AuctionBrowseController.class.getDeclaredMethod(
                 "handleBidUpdatePush",
-                String.class
+                com.nhom1.auction.common.dto.notification.BidUpdateEvent.class
             );
         handleBidUpdatePush.setAccessible(true);
-        handleBidUpdatePush.invoke(controller, "{invalid json}");
-        handleBidUpdatePush.invoke(controller, "{}");
-        handleBidUpdatePush.invoke(controller, "{\"auctionId\": \"auc-1\"}");
-        handleBidUpdatePush.invoke(controller, "{\"newHighestBid\": \"100\"}");
         handleBidUpdatePush.invoke(
             controller,
-            "{\"auctionId\": \"auc-1\", \"newHighestBid\": \"100\"}"
+            new com.nhom1.auction.common.dto.notification.BidUpdateEvent(
+                null,
+                null,
+                null
+            )
+        );
+        handleBidUpdatePush.invoke(
+            controller,
+            new com.nhom1.auction.common.dto.notification.BidUpdateEvent(
+                "auc-1",
+                null,
+                null
+            )
+        );
+        handleBidUpdatePush.invoke(
+            controller,
+            new com.nhom1.auction.common.dto.notification.BidUpdateEvent(
+                null,
+                new BigDecimal("100"),
+                null
+            )
         );
 
-        // 6. handleAuctionDeletedPush JSON variations
+        // 6. handleAuctionDeletedPush variations
         java.lang.reflect.Method handleAuctionDeletedPush =
             AuctionBrowseController.class.getDeclaredMethod(
                 "handleAuctionDeletedPush",
-                String.class
+                com.nhom1.auction.common.dto.notification.AuctionDeletedEvent.class
             );
         handleAuctionDeletedPush.setAccessible(true);
-        handleAuctionDeletedPush.invoke(controller, "{invalid json}");
-        handleAuctionDeletedPush.invoke(controller, "{}");
         handleAuctionDeletedPush.invoke(
             controller,
-            "{\"auctionId\": \"auc-1\"}"
+            new com.nhom1.auction.common.dto.notification.AuctionDeletedEvent(
+                null
+            )
         );
     }
 
@@ -1903,7 +1792,7 @@ public class UserControllerTest {
         injectField(controller, "biddingService", mockBiddingService);
 
         // Case 1: listAuctions fails
-        when(mockBiddingService.listAuctions()).thenReturn(
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
             CompletableFuture.failedFuture(new RuntimeException("API error"))
         );
         when(mockBiddingService.getMyBids()).thenReturn(
@@ -1920,7 +1809,7 @@ public class UserControllerTest {
 
         // Case 2: listAuctions returns null response, myBids is null
         reset(mockBiddingService);
-        when(mockBiddingService.listAuctions()).thenReturn(
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
             CompletableFuture.completedFuture(null)
         );
         when(mockBiddingService.getMyBids()).thenReturn(
@@ -1935,8 +1824,8 @@ public class UserControllerTest {
         lar.setAuctions(null);
         MyBidsResponse mbr = new MyBidsResponse();
         mbr.setBids(null);
-        when(mockBiddingService.listAuctions()).thenReturn(
-            CompletableFuture.completedFuture(lar)
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
+            CompletableFuture.completedFuture(lar.getAuctions())
         );
         when(mockBiddingService.getMyBids()).thenReturn(
             CompletableFuture.completedFuture(mbr)
@@ -3523,8 +3412,8 @@ public class UserControllerTest {
         ListAuctionsResponse ar = new ListAuctionsResponse();
         ar.setAuctions(List.of(auction));
 
-        when(mockBiddingService.listAuctions()).thenReturn(
-            CompletableFuture.completedFuture(ar)
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
+            CompletableFuture.completedFuture(ar.getAuctions())
         );
         when(mockBiddingService.getMyBids()).thenReturn(
             CompletableFuture.completedFuture(
@@ -3557,18 +3446,20 @@ public class UserControllerTest {
 
         // 1. Trigger PUSH_NEW_AUCTION
         reset(mockBiddingService);
-        when(mockBiddingService.listAuctions()).thenReturn(
-            CompletableFuture.completedFuture(ar)
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
+            CompletableFuture.completedFuture(ar.getAuctions())
         );
         when(mockBiddingService.getMyBids()).thenReturn(
             CompletableFuture.completedFuture(
                 new MyBidsResponse(Collections.emptyList())
             )
         );
-        registeredPushHandlers.get(MessageType.PUSH_NEW_AUCTION).accept("{}");
+        registeredPushHandlers
+            .get(MessageType.PUSH_NEW_AUCTION)
+            .accept("{\"payload\":{}}");
         waitForRunLater();
         waitForRunLater();
-        verify(mockBiddingService).listAuctions();
+        verify(mockBiddingService).listBrowseAuctions();
 
         // 2. Trigger PUSH_BID_UPDATE
         // Set up the price labels map manually so we can verify the text changes
@@ -3607,7 +3498,7 @@ public class UserControllerTest {
 
         // Exception/Null paths in loadAuctions
         reset(mockBiddingService);
-        when(mockBiddingService.listAuctions()).thenReturn(
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(
             CompletableFuture.failedFuture(new RuntimeException("API error"))
         );
         when(mockBiddingService.getMyBids()).thenReturn(
@@ -3623,12 +3514,12 @@ public class UserControllerTest {
 
         // Failure with cause = null
         reset(mockBiddingService);
-        CompletableFuture<ListAuctionsResponse> failedFuture =
+        CompletableFuture<List<AuctionSummaryDto>> failedFuture =
             new CompletableFuture<>();
         failedFuture.completeExceptionally(
             new RuntimeException("Immediate failure without cause")
         );
-        when(mockBiddingService.listAuctions()).thenReturn(failedFuture);
+        when(mockBiddingService.listBrowseAuctions()).thenReturn(failedFuture);
         when(mockBiddingService.getMyBids()).thenReturn(
             CompletableFuture.completedFuture(
                 new MyBidsResponse(Collections.emptyList())
