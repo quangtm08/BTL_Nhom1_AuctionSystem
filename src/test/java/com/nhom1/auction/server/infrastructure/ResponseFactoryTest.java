@@ -9,28 +9,9 @@ import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.common.protocol.ErrorCode;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class ResponseFactoryTest {
-  private static final Logger RESPONSE_FACTORY_LOGGER =
-      Logger.getLogger(ResponseFactory.class.getName());
-
-  private Level previousLogLevel;
-
-  @BeforeEach
-  public void muteResponseFactoryLogger() {
-    previousLogLevel = RESPONSE_FACTORY_LOGGER.getLevel();
-    RESPONSE_FACTORY_LOGGER.setLevel(Level.OFF);
-  }
-
-  @AfterEach
-  public void restoreResponseFactoryLogger() {
-    RESPONSE_FACTORY_LOGGER.setLevel(previousLogLevel);
-  }
 
   @Test
   public void testSuccess_ReturnsSuccessfulResponse() {
@@ -134,5 +115,24 @@ public class ResponseFactoryTest {
     AppException result = ResponseFactory.findAppException(wrapper);
 
     assertEquals(root, result);
+  }
+
+  @Test
+  public void testFindAppException_NullOrSelfReferencing() {
+    assertNull(ResponseFactory.findAppException(null));
+
+    // Create self-referencing exception using reflection or subclassing
+    class SelfReferencingException extends RuntimeException {
+      @Override
+      public synchronized Throwable getCause() {
+        return this;
+      }
+    }
+    SelfReferencingException ex = new SelfReferencingException();
+    assertNull(ResponseFactory.findAppException(ex));
+    assertNull(ResponseFactory.fromException("id", ex).getPayload());
+
+    // Test logUnexpectedException null check
+    assertDoesNotThrow(() -> ResponseFactory.fromException("id", null));
   }
 }
