@@ -1,7 +1,8 @@
 package com.nhom1.auction.server.infrastructure;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
@@ -66,5 +67,71 @@ public class MessageRouterTest {
     String result = messageRouter.handleRequest(json);
 
     assertTrue(result.contains("INVALID_FORMAT"));
+  }
+
+  @Test
+  public void testHandleRequest_NoHandlerRegistered() {
+    String json = "{\"type\":\"REGISTER\",\"requestId\":\"123\"}";
+    String result = messageRouter.handleRequest(json);
+    assertTrue(result.contains("UNKNOWN_TYPE"));
+    assertTrue(result.contains("No handler registered for"));
+  }
+
+  @Test
+  public void testHandleRequest_ExceptionThrown() throws Exception {
+    MessageType type = MessageType.LOGIN;
+    messageRouter.register(type, mockAction);
+    String json = "{\"type\":\"LOGIN\",\"requestId\":\"123\"}";
+    when(mockAction.execute("123", null)).thenThrow(new RuntimeException("Something went wrong"));
+
+    String result = messageRouter.handleRequest(json);
+
+    assertTrue(result.contains("SERVER_ERROR"));
+    assertTrue(result.contains("Something went wrong"));
+  }
+
+  @Test
+  public void testHandleRequest_ResponseTypeAlreadySet_IsNotOverwritten() throws Exception {
+    MessageType type = MessageType.LOGIN;
+    messageRouter.register(type, mockAction);
+    String json = "{\"type\":\"LOGIN\",\"requestId\":\"r1\",\"payload\":{}}";
+    // Response already has a type set
+    ResponseMessage<String> response = new ResponseMessage<>("r1", "ok");
+    response.setType(MessageType.REGISTER); // deliberately different
+    when(mockAction.execute("r1", "{}")).thenReturn((ResponseMessage) response);
+
+    String result = messageRouter.handleRequest(json);
+    // The router should NOT overwrite a type that is already set
+    assertTrue(result.contains("REGISTER"));
+  }
+
+  @Test
+  public void testHandleRequest_NoRequestId_ErrorStillReturned() {
+    // JSON with missing "requestId" field -> requestId = null, but error still returned
+    String json = "{\"type\":\"UNKNOWN_XYZ\"}";
+    String result = messageRouter.handleRequest(json);
+    assertTrue(result.contains("INVALID_TYPE") || result.contains("false"));
+  }
+
+  @Test
+  public void testHandleRequest_NullPayload_NoRegisteredHandler() {
+    // Payload is missing entirely -> payloadJson = null, action not registered
+    String json = "{\"type\":\"REGISTER\",\"requestId\":\"r1\"}";
+    String result = messageRouter.handleRequest(json);
+    assertTrue(result.contains("UNKNOWN_TYPE"));
+  }
+
+  @Test
+  public void testHandleRequest_ResponseWithNullType_GetsTypeSet() throws Exception {
+    MessageType type = MessageType.LOGIN;
+    messageRouter.register(type, mockAction);
+    String json = "{\"type\":\"LOGIN\",\"requestId\":\"r1\",\"payload\":{}}";
+    // Response with null type -> router sets it to the request type
+    ResponseMessage<String> response = new ResponseMessage<>("r1", "ok");
+    response.setType(null); // null type
+    when(mockAction.execute("r1", "{}")).thenReturn((ResponseMessage) response);
+
+    String result = messageRouter.handleRequest(json);
+    assertTrue(result.contains("LOGIN"));
   }
 }

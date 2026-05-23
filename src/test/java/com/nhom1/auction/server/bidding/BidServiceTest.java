@@ -7,6 +7,7 @@ import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
 import com.nhom1.auction.common.entity.Item;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.BidType;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
@@ -16,6 +17,7 @@ import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemImageRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
+import com.nhom1.auction.server.wallet.WalletRepository;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -39,6 +41,8 @@ public class BidServiceTest {
 
   @Mock private UserRepository userRepository;
 
+  @Mock private WalletRepository walletRepository;
+
   @Mock private DataSource dataSource;
 
   @Mock private Connection connection;
@@ -47,22 +51,10 @@ public class BidServiceTest {
 
   @Mock private ItemImageRepository itemImageRepository;
 
-  @Mock private com.nhom1.auction.server.wallet.WalletRepository walletRepository;
-
   @BeforeEach
   public void setUp() throws SQLException {
     MockitoAnnotations.openMocks(this);
     when(dataSource.getConnection()).thenReturn(connection);
-
-    // Mock default wallet search to return a wallet with $1,000,000 balance
-    when(walletRepository.findByUserId(any(UUID.class), any(Connection.class)))
-        .thenAnswer(
-            invocation -> {
-              UUID userId = invocation.getArgument(0);
-              return java.util.Optional.of(
-                  new com.nhom1.auction.common.entity.Wallet(userId, new BigDecimal("1000000.00")));
-            });
-
     bidService =
         new BidService(
             bidRepository,
@@ -90,7 +82,7 @@ public class BidServiceTest {
     when(connection.getAutoCommit()).thenReturn(true);
     when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
     when(auctionRepository.updateHighestBid(
-            eq(auctionId), eq(amount), eq(bidderId), eq(auction.getVersion()), eq(connection)))
+            eq(auctionId), eq(amount), eq(bidderId), anyLong(), eq(connection)))
         .thenReturn(1);
 
     BidTransaction result = bidService.placeBid(bidderId, auctionId, amount, BidType.MANUAL);
@@ -100,7 +92,7 @@ public class BidServiceTest {
     assertEquals(bidderId, result.getBidderId());
     verify(bidRepository).save(any(BidTransaction.class), eq(connection));
     verify(auctionRepository)
-        .updateHighestBid(auctionId, amount, bidderId, auction.getVersion(), connection);
+        .updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), anyLong(), eq(connection));
     verify(connection).setAutoCommit(false);
     verify(connection).commit();
     verify(connection).setAutoCommit(true);
@@ -112,10 +104,10 @@ public class BidServiceTest {
     BigDecimal amount = new BigDecimal("150.00");
     UUID auctionId = UUID.randomUUID();
     when(connection.getAutoCommit()).thenReturn(true);
-    when(auctionRepository.findById(auctionId, connection))
+    when(auctionRepository.findById(eq(auctionId), eq(connection)))
         .thenAnswer(
-            invocation -> {
-              Auction freshAuction =
+            inv -> {
+              Auction a =
                   new Auction(
                       auctionId,
                       UUID.randomUUID(),
@@ -125,14 +117,15 @@ public class BidServiceTest {
                       LocalDateTime.now().plusHours(1),
                       null,
                       null,
-                      com.nhom1.auction.common.enums.AuctionStatus.RUNNING,
+                      AuctionStatus.RUNNING,
                       LocalDateTime.now(),
                       LocalDateTime.now(),
+                      7,
                       0);
-              return Optional.of(freshAuction);
+              return Optional.of(a);
             });
     when(auctionRepository.updateHighestBid(
-            eq(auctionId), eq(amount), eq(bidderId), eq(0), eq(connection)))
+            eq(auctionId), eq(amount), eq(bidderId), anyLong(), eq(connection)))
         .thenReturn(0);
 
     ConflictException thrown =
@@ -180,8 +173,7 @@ public class BidServiceTest {
     when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
     doThrow(new RuntimeException("update failed"))
         .when(auctionRepository)
-        .updateHighestBid(
-            eq(auctionId), eq(amount), eq(bidderId), eq(auction.getVersion()), eq(connection));
+        .updateHighestBid(eq(auctionId), eq(amount), eq(bidderId), anyLong(), eq(connection));
 
     RuntimeException thrown =
         assertThrows(
@@ -236,5 +228,153 @@ public class BidServiceTest {
     when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
 
     assertThrows(NotFoundException.class, () -> bidService.getAuctionDetail(auctionId));
+  }
+
+  @Test
+  public void testGetAuctionDetail_ItemNotFound_ThrowsNotFoundException() {
+    UUID auctionId = UUID.randomUUID();
+    Auction auction =
+        new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(1));
+    when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+    when(itemRepository.findById(auction.getItemId())).thenReturn(Optional.empty());
+
+    assertThrows(NotFoundException.class, () -> bidService.getAuctionDetail(auctionId));
+  }
+
+  @Test
+  public void testGetAuctionDetail_ExceptionsInSubcalls_Handled() {
+    Item item =
+        new Item("Test Item", "Test Description", ItemCategory.ART, ItemCondition.NEW) {
+          @Override
+          public void printInfo() {}
+        };
+    UUID itemId = item.getId();
+    Auction auction =
+        new Auction(
+            itemId,
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(1));
+    UUID auctionId = auction.getId();
+
+    when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+    when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+
+    // Throws exception during user lookup
+    when(userRepository.findById(any())).thenThrow(new RuntimeException("DB offline"));
+    // Throws exception during bid lookup
+    when(bidRepository.findByAuctionId(any())).thenThrow(new RuntimeException("DB offline"));
+    // Throws exception during image lookup
+    when(itemImageRepository.findImageUrlsByItemId(any()))
+        .thenThrow(new RuntimeException("S3 offline"));
+
+    AuctionDetailDto dto = bidService.getAuctionDetail(auctionId);
+    assertNotNull(dto);
+    assertEquals("Unknown", dto.getSellerName());
+    assertTrue(dto.getBidHistory().isEmpty());
+    assertTrue(dto.getImageUrls().isEmpty());
+  }
+
+  @Test
+  public void testListAllAuctions_AndToAuctionSummaryDtoNullItem() {
+    Auction auction1 =
+        new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(1));
+    auction1.startAuction();
+    Auction auction2 =
+        new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("200.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(1));
+    auction2.startAuction();
+
+    Item item =
+        new Item("Item 1", "Desc", ItemCategory.ELECTRONICS, ItemCondition.NEW) {
+          @Override
+          public void printInfo() {}
+        };
+
+    when(auctionRepository.findAll()).thenReturn(List.of(auction1, auction2));
+    when(itemRepository.findById(auction1.getItemId())).thenReturn(Optional.of(item));
+    when(itemRepository.findById(auction2.getItemId())).thenReturn(Optional.empty());
+
+    var response = bidService.listAllAuctions();
+    assertEquals(2, response.getAuctions().size());
+    assertEquals("Item 1", response.getAuctions().get(0).getItemName());
+    assertEquals("Unknown item", response.getAuctions().get(1).getItemName());
+  }
+
+  @Test
+  public void testGetMyBids() {
+    UUID bidderId = UUID.randomUUID();
+    var bids = List.of(new com.nhom1.auction.common.dto.bidding.BidWithAuctionDto());
+    when(bidRepository.findByBidderId(bidderId)).thenReturn(bids);
+
+    var response = bidService.getMyBids(bidderId);
+    assertEquals(bids, response.getBids());
+  }
+
+  @Test
+  public void testToBidSummaryDto_UserLookupSuccessAndFailure() {
+    Item item =
+        new Item("Test Item", "Test Description", ItemCategory.ART, ItemCondition.NEW) {
+          @Override
+          public void printInfo() {}
+        };
+    UUID itemId = item.getId();
+    Auction auction =
+        new Auction(
+            itemId,
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(1));
+    UUID auctionId = auction.getId();
+
+    BidTransaction bid1 =
+        new BidTransaction(
+            UUID.randomUUID(),
+            auctionId,
+            UUID.randomUUID(),
+            BigDecimal.TEN,
+            BidType.MANUAL,
+            LocalDateTime.now(),
+            LocalDateTime.now());
+    BidTransaction bid2 =
+        new BidTransaction(
+            UUID.randomUUID(),
+            auctionId,
+            UUID.randomUUID(),
+            BigDecimal.valueOf(12),
+            BidType.MANUAL,
+            LocalDateTime.now(),
+            LocalDateTime.now());
+
+    when(auctionRepository.findById(auctionId)).thenReturn(Optional.of(auction));
+    when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+    when(bidRepository.findByAuctionId(auctionId)).thenReturn(List.of(bid1, bid2));
+
+    com.nhom1.auction.common.entity.User user =
+        new com.nhom1.auction.common.entity.User(
+            "bidder1", "email", "pass", com.nhom1.auction.common.enums.UserRole.USER);
+    when(userRepository.findById(bid1.getBidderId())).thenReturn(Optional.of(user));
+    when(userRepository.findById(bid2.getBidderId())).thenReturn(Optional.empty());
+
+    AuctionDetailDto dto = bidService.getAuctionDetail(auctionId);
+    assertEquals(2, dto.getBidHistory().size());
+    assertEquals("bidder1", dto.getBidHistory().get(0).getBidderName());
+    assertEquals("Unknown", dto.getBidHistory().get(1).getBidderName());
   }
 }

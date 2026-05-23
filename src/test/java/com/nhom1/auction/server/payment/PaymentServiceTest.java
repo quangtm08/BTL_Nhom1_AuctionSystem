@@ -14,9 +14,11 @@ import com.nhom1.auction.common.dto.payment.ProcessPaymentResponse;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.exception.InvalidAuctionStateException;
+import com.nhom1.auction.common.exception.PaymentException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.auction.AuctionRepository;
+import com.nhom1.auction.server.wallet.WalletService;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -34,7 +36,7 @@ public class PaymentServiceTest {
 
   @Mock private PaymentRepository paymentRepository;
   @Mock private AuctionRepository auctionRepository;
-  @Mock private com.nhom1.auction.server.wallet.WalletService walletService;
+  @Mock private WalletService walletService;
   @Mock private DataSource dataSource;
   @Mock private Connection connection;
 
@@ -101,7 +103,7 @@ public class PaymentServiceTest {
             AuctionStatus.RUNNING,
             LocalDateTime.now().minusDays(2),
             LocalDateTime.now().minusHours(1),
-            0);
+            null);
     when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
     assertThrows(
@@ -126,7 +128,7 @@ public class PaymentServiceTest {
             AuctionStatus.FINISHED,
             LocalDateTime.now().minusDays(3),
             LocalDateTime.now().minusDays(1),
-            0);
+            null);
     when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
     assertThrows(
@@ -178,7 +180,7 @@ public class PaymentServiceTest {
             AuctionStatus.PAID,
             LocalDateTime.now().minusDays(3),
             LocalDateTime.now().minusHours(2),
-            0);
+            null);
     when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
 
     assertThrows(
@@ -201,6 +203,111 @@ public class PaymentServiceTest {
         AuctionStatus.FINISHED,
         LocalDateTime.now().minusDays(3),
         LocalDateTime.now().minusHours(2),
-        0);
+        null);
+  }
+
+  @Test
+  void listPaymentHistory_DelegatesToRepository() {
+    UUID userId = UUID.randomUUID();
+    when(paymentRepository.findPaymentHistoryForUser(userId)).thenReturn(List.of());
+
+    var response = paymentService.listPaymentHistory(userId.toString());
+    assertFalse(response.getEntries().iterator().hasNext());
+  }
+
+  @Test
+  void listPaymentHistory_InvalidUserId_Throws() {
+    assertThrows(
+        ValidationException.class, () -> paymentService.listPaymentHistory("invalid-uuid"));
+    assertThrows(ValidationException.class, () -> paymentService.listPaymentHistory(""));
+    assertThrows(ValidationException.class, () -> paymentService.listPaymentHistory(null));
+  }
+
+  @Test
+  void listPendingPayments_InvalidBidderId_Throws() {
+    assertThrows(
+        ValidationException.class, () -> paymentService.listPendingPayments("invalid-uuid"));
+  }
+
+  @Test
+  void processPayment_AuctionNotFound_ThrowsNotFound() {
+    UUID auctionId = UUID.randomUUID();
+    when(auctionRepository.findById(auctionId)).thenReturn(Optional.empty());
+
+    assertThrows(
+        com.nhom1.auction.common.exception.NotFoundException.class,
+        () -> paymentService.processPayment(auctionId.toString(), UUID.randomUUID().toString()));
+  }
+
+  @Test
+  void processPayment_AlreadyPaidInRepository_ThrowsPaymentException() {
+    Auction auction = finishedAuction();
+    when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
+    when(paymentRepository.existsCompletedPaymentForAuction(eq(auction.getId()), any()))
+        .thenReturn(true);
+
+    assertThrows(
+        PaymentException.class,
+        () ->
+            paymentService.processPayment(
+                auction.getId().toString(), auction.getHighestBidderId().toString()));
+  }
+
+  @Test
+  void processPayment_CanceledAuction_ThrowsInvalidState() {
+    Auction auction =
+        new Auction(
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now().minusDays(2),
+            LocalDateTime.now().minusDays(1),
+            UUID.randomUUID(),
+            new BigDecimal("150.00"),
+            AuctionStatus.CANCELED,
+            LocalDateTime.now().minusDays(3),
+            LocalDateTime.now().minusHours(2),
+            null);
+    when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
+
+    assertThrows(
+        InvalidAuctionStateException.class,
+        () ->
+            paymentService.processPayment(
+                auction.getId().toString(), auction.getHighestBidderId().toString()));
+  }
+
+  @Test
+  void processPayment_ConnectionThrowsSQLException_ThrowsRuntimeException() throws SQLException {
+    when(dataSource.getConnection()).thenThrow(new SQLException("Simulated connection failure"));
+    Auction auction = finishedAuction();
+
+    assertThrows(
+        RuntimeException.class,
+        () ->
+            paymentService.processPayment(
+                auction.getId().toString(), auction.getHighestBidderId().toString()));
+  }
+
+  @Test
+  void processPayment_AppExceptionDuringSave_RollsBackAndRethrows() throws Exception {
+    Auction auction = finishedAuction();
+    when(auctionRepository.findById(auction.getId())).thenReturn(Optional.of(auction));
+    when(connection.getAutoCommit()).thenReturn(true);
+
+    PaymentException appEx = new PaymentException("App failure");
+
+    doThrow(appEx)
+        .when(paymentRepository)
+        .saveCompletedPayment(any(), any(), any(), any(), any(), eq(connection));
+
+    assertThrows(
+        PaymentException.class,
+        () ->
+            paymentService.processPayment(
+                auction.getId().toString(), auction.getHighestBidderId().toString()));
+    verify(connection).rollback();
+    verify(connection).setAutoCommit(true);
   }
 }

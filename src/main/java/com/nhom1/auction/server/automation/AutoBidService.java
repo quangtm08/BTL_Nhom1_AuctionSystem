@@ -160,6 +160,7 @@ public class AutoBidService {
       }
 
       BigDecimal nextAmt = requiredBid.min(selected.getMaxAmount());
+      if (nextAmt.compareTo(requiredBid) < 0) break;
       if (nextAmt.compareTo(currentHighestBid) <= 0) break;
 
       try {

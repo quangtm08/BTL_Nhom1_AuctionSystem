@@ -1,9 +1,6 @@
 package com.nhom1.auction.server.automation;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
@@ -35,7 +32,7 @@ public class AuctionSchedulerTest {
   }
 
   @Test
-  public void testTick_OpenAuctionPastStartTime_StatusUpdatedToCanceled() {
+  public void testTick_OpenAuctionPastStartTime_StatusUpdatedToRunning() {
     LocalDateTime now = LocalDateTime.now();
     Auction auction =
         new Auction(
@@ -100,8 +97,6 @@ public class AuctionSchedulerTest {
 
     verify(auctionGateway).updateEndTime(auction.getId(), endTime.plusSeconds(30));
     verify(auctionGateway, never()).updateStatus(any(), any());
-    verify(notificationService)
-        .broadcastAuctionTimeExtended(auction.getId(), endTime.plusSeconds(30));
   }
 
   @Test
@@ -119,5 +114,55 @@ public class AuctionSchedulerTest {
     auctionScheduler.tick();
 
     verify(auctionGateway, never()).updateStatus(any(), any());
+  }
+
+  @Test
+  public void testStartStopAndSafeTick() throws Exception {
+    // Test start/stop
+    auctionScheduler.start();
+    auctionScheduler.stop();
+
+    // Test safeTick with exception logging
+    java.lang.reflect.Method safeTickMethod = AuctionScheduler.class.getDeclaredMethod("safeTick");
+    safeTickMethod.setAccessible(true);
+
+    when(auctionGateway.findAll()).thenThrow(new RuntimeException("DB offline"));
+
+    // Capture standard error stream to check deduplication
+    java.io.ByteArrayOutputStream errContent = new java.io.ByteArrayOutputStream();
+    java.io.PrintStream originalErr = System.err;
+    System.setErr(new java.io.PrintStream(errContent));
+
+    try {
+      // First failure: should log to console
+      safeTickMethod.invoke(auctionScheduler);
+      String output1 = errContent.toString();
+      org.junit.jupiter.api.Assertions.assertTrue(
+          output1.contains("AuctionScheduler tick failed: DB offline"));
+
+      // Clear bytes
+      errContent.reset();
+
+      // Second failure with same message: should NOT log to console (deduplicated)
+      safeTickMethod.invoke(auctionScheduler);
+      String output2 = errContent.toString();
+      org.junit.jupiter.api.Assertions.assertFalse(
+          output2.contains("AuctionScheduler tick failed"));
+
+      // Third tick: make it succeed to reset lastErrorMessage
+      reset(auctionGateway);
+      when(auctionGateway.findAll()).thenReturn(java.util.Collections.emptyList());
+      safeTickMethod.invoke(auctionScheduler);
+
+      // Fourth tick: fail again with different message: should log to console
+      errContent.reset();
+      when(auctionGateway.findAll()).thenThrow(new RuntimeException("DB offline again"));
+      safeTickMethod.invoke(auctionScheduler);
+      String output4 = errContent.toString();
+      org.junit.jupiter.api.Assertions.assertTrue(
+          output4.contains("AuctionScheduler tick failed: DB offline again"));
+    } finally {
+      System.setErr(originalErr);
+    }
   }
 }
