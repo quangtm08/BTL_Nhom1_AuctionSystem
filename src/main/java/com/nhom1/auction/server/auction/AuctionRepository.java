@@ -445,7 +445,7 @@ public class AuctionRepository {
     WHERE id = ?
       AND status IN ('PENDING', 'OPEN')
       AND highest_bidder_id IS NULL
-      AND (current_highest_bid IS NULL OR current_highest_bid = starting_price)
+      AND NOT EXISTS (SELECT 1 FROM bids WHERE bids.auction_id = auctions.id)
 """;
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setBigDecimal(1, startingPrice);
