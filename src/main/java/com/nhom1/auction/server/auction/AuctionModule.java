@@ -6,40 +6,32 @@ import javax.sql.DataSource;
 
 public class AuctionModule {
 
-    public static class AuctionRepositories {
+  public static class AuctionRepositories {
 
-        public final AuctionRepository auctionRepository;
-        public final ItemRepository itemRepository;
-        public final ItemImageRepository itemImageRepository;
+    public final AuctionRepository auctionRepository;
+    public final ItemRepository itemRepository;
+    public final ItemImageRepository itemImageRepository;
 
-        public AuctionRepositories(
-            AuctionRepository auctionRepository,
-            ItemRepository itemRepository,
-            ItemImageRepository itemImageRepository
-        ) {
-            this.auctionRepository = auctionRepository;
-            this.itemRepository = itemRepository;
-            this.itemImageRepository = itemImageRepository;
-        }
+    public AuctionRepositories(
+        AuctionRepository auctionRepository,
+        ItemRepository itemRepository,
+        ItemImageRepository itemImageRepository) {
+      this.auctionRepository = auctionRepository;
+      this.itemRepository = itemRepository;
+      this.itemImageRepository = itemImageRepository;
     }
+  }
 
-    public static AuctionRepositories init(
-        DataSource dataSource,
-        MessageRouter router,
-        NotificationService notificationService
-    ) {
-        ItemRepository itemRepository = new ItemRepository(dataSource);
-        ItemImageRepository itemImageRepository = new ItemImageRepository(dataSource);
-        AuctionRepository auctionRepository = new AuctionRepository(dataSource);
-        AuctionService auctionService = new AuctionService(
-            auctionRepository,
-            itemRepository,
-            itemImageRepository,
-            dataSource
-        );
-        AuctionHandler auctionHandler = new AuctionHandler(auctionService, notificationService);
-        auctionHandler.register(router);
-        System.out.println("AuctionModule: Feature initialized successfully.");
-        return new AuctionRepositories(auctionRepository, itemRepository, itemImageRepository);
-    }
+  public static AuctionRepositories init(
+      DataSource dataSource, MessageRouter router, NotificationService notificationService) {
+    ItemRepository itemRepository = new ItemRepository(dataSource);
+    ItemImageRepository itemImageRepository = new ItemImageRepository(dataSource);
+    AuctionRepository auctionRepository = new AuctionRepository(dataSource);
+    AuctionService auctionService =
+        new AuctionService(auctionRepository, itemRepository, itemImageRepository, dataSource);
+    AuctionHandler auctionHandler = new AuctionHandler(auctionService, notificationService);
+    auctionHandler.register(router);
+    System.out.println("AuctionModule: Feature initialized successfully.");
+    return new AuctionRepositories(auctionRepository, itemRepository, itemImageRepository);
+  }
 }
