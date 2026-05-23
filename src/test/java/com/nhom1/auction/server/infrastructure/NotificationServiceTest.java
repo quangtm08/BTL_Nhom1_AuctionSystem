@@ -90,7 +90,9 @@ public class NotificationServiceTest {
   @Test
   public void testBroadcastBidUpdate_BroadcastThrows_DoesNotPropagate() {
     java.util.UUID auctionId = java.util.UUID.randomUUID();
-    doThrow(new RuntimeException("Serialization failure")).when(mockRegistry).broadcast(anyString());
+    doThrow(new RuntimeException("Serialization failure"))
+        .when(mockRegistry)
+        .broadcast(anyString());
     // Should not throw - error is caught and logged
     org.junit.jupiter.api.Assertions.assertDoesNotThrow(
         () -> service.broadcastBidUpdate(auctionId, java.math.BigDecimal.TEN, null));

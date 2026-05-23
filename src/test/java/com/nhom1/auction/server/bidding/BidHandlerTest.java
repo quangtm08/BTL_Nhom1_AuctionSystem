@@ -46,8 +46,13 @@ public class BidHandlerTest {
     UUID bidderId = UUID.randomUUID();
     BidTransaction tx =
         new BidTransaction(
-            UUID.randomUUID(), auctionId, bidderId, BigDecimal.TEN, BidType.MANUAL,
-            LocalDateTime.now(), LocalDateTime.now());
+            UUID.randomUUID(),
+            auctionId,
+            bidderId,
+            BigDecimal.TEN,
+            BidType.MANUAL,
+            LocalDateTime.now(),
+            LocalDateTime.now());
     when(bidService.placeBid(any(), any(), any(), any())).thenReturn(tx);
 
     // Wire autoBidService so the "if (autoBidService != null)" branch is taken
@@ -71,8 +76,13 @@ public class BidHandlerTest {
     UUID bidderId = UUID.randomUUID();
     BidTransaction tx =
         new BidTransaction(
-            UUID.randomUUID(), auctionId, bidderId, BigDecimal.TEN, BidType.MANUAL,
-            LocalDateTime.now(), LocalDateTime.now());
+            UUID.randomUUID(),
+            auctionId,
+            bidderId,
+            BigDecimal.TEN,
+            BidType.MANUAL,
+            LocalDateTime.now(),
+            LocalDateTime.now());
     when(bidService.placeBid(any(), any(), any(), any())).thenReturn(tx);
     // autoBidService is null (not set) -> the null branch
 
@@ -183,8 +193,7 @@ public class BidHandlerTest {
 
   @Test
   public void testGetAuctionDetail_BadJson_ReturnsInvalidFormat() {
-    String json =
-        "{\"type\":\"GET_AUCTION_DETAIL\",\"requestId\":\"r3\",\"payload\":\"bad\"}";
+    String json = "{\"type\":\"GET_AUCTION_DETAIL\",\"requestId\":\"r3\",\"payload\":\"bad\"}";
     String result = router.handleRequest(json);
     assertTrue(result.contains("false"));
   }

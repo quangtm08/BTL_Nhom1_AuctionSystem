@@ -525,8 +525,7 @@ public class AuctionRepositoryTest {
     when(ps.executeUpdate()).thenReturn(0);
 
     boolean result =
-        repo.updateStartEndAndStatus(
-            id, null, null, AuctionStatus.OPEN, mockConnection);
+        repo.updateStartEndAndStatus(id, null, null, AuctionStatus.OPEN, mockConnection);
     assertFalse(result);
   }
 

@@ -298,4 +298,3 @@ public class BidRepositoryTest {
     assertFalse(result.isPresent());
   }
 }
-

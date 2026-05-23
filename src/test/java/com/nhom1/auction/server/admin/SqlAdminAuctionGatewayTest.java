@@ -99,7 +99,7 @@ public class SqlAdminAuctionGatewayTest {
     when(rs.getBigDecimal("starting_price")).thenReturn(java.math.BigDecimal.valueOf(200));
     when(rs.getBigDecimal("current_highest_bid")).thenReturn(null);
     when(rs.getTimestamp("start_time")).thenReturn(null); // null → s = null
-    when(rs.getTimestamp("end_time")).thenReturn(null);   // null → e = null
+    when(rs.getTimestamp("end_time")).thenReturn(null); // null → e = null
     when(rs.getString("status")).thenReturn("PENDING");
     when(rs.getString("seller_id")).thenReturn("seller-456");
 
@@ -130,4 +130,3 @@ public class SqlAdminAuctionGatewayTest {
     assertTrue(result);
   }
 }
-

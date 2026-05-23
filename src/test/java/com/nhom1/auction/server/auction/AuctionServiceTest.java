@@ -366,7 +366,9 @@ public class AuctionServiceTest {
     when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
     when(dataSource.getConnection()).thenThrow(new SQLException("Connection failed"));
 
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
+    RuntimeException ex =
+        assertThrows(
+            RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
     assertEquals("Delete transaction failed", ex.getMessage());
   }
 
@@ -593,8 +595,10 @@ public class AuctionServiceTest {
     Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
     when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
     when(connection.getAutoCommit()).thenReturn(true);
-    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(1);
-    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(1);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection)))
+        .thenReturn(1);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection)))
+        .thenReturn(1);
     UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
     assertDoesNotThrow(() -> auctionService.updateAuction(req));
     verify(connection).commit();
@@ -609,10 +613,13 @@ public class AuctionServiceTest {
     Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
     when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
     when(connection.getAutoCommit()).thenReturn(true);
-    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(1);
-    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(0);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection)))
+        .thenReturn(1);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection)))
+        .thenReturn(0);
     UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
     // inner cause is ValidationException
     assertTrue(ex.getCause() instanceof ValidationException || ex instanceof ValidationException);
     verify(connection).rollback();
@@ -627,8 +634,10 @@ public class AuctionServiceTest {
     Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
     when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
     when(connection.getAutoCommit()).thenReturn(true);
-    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(0);
-    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(1);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection)))
+        .thenReturn(0);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection)))
+        .thenReturn(1);
     UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
     assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
     verify(connection).rollback();
@@ -644,7 +653,8 @@ public class AuctionServiceTest {
     when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
     when(dataSource.getConnection()).thenThrow(new SQLException("DB down"));
     UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
-    RuntimeException ex = assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
+    RuntimeException ex =
+        assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
     assertEquals("Update auction transaction failed", ex.getMessage());
   }
 
@@ -671,8 +681,10 @@ public class AuctionServiceTest {
         .thenReturn(Optional.of(runningAuction))
         .thenReturn(Optional.of(openAuction));
     when(connection.getAutoCommit()).thenReturn(true);
-    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(1);
-    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(1);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection)))
+        .thenReturn(1);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection)))
+        .thenReturn(1);
     UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
     assertDoesNotThrow(() -> auctionService.updateAuction(req));
     verify(auctionRepository).updateStatus(auctionUuid, AuctionStatus.OPEN);

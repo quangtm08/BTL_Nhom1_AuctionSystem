@@ -135,4 +135,3 @@ public class MessageRouterTest {
     assertTrue(result.contains("LOGIN"));
   }
 }
-

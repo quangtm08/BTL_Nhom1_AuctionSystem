@@ -124,4 +124,3 @@ public class DatabaseInitializerTest {
     assertEquals("DatabaseInitializer: schema bootstrap failed", ex.getMessage());
   }
 }
-

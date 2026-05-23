@@ -5,15 +5,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.nhom1.auction.common.dto.auction.AuctionSummaryDto;
-import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
-import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.enums.AuctionStatus;
-import com.nhom1.auction.common.enums.ItemCategory;
-import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.exception.ValidationException;
-import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
@@ -94,7 +88,8 @@ public class AuctionHandlerTest {
 
   @Test
   public void testCreateAuction_ServiceThrows_ReturnsError() throws Exception {
-    when(auctionService.createAuction(any(), any())).thenThrow(new ValidationException("Bad input"));
+    when(auctionService.createAuction(any(), any()))
+        .thenThrow(new ValidationException("Bad input"));
 
     String json =
         "{\"type\":\"CREATE_AUCTION\",\"requestId\":\"r1\",\"payload\":{\"sellerId\":\"x\"}}";
@@ -105,7 +100,8 @@ public class AuctionHandlerTest {
   @Test
   public void testCreateAuction_InvalidJson_ReturnsInvalidFormat() {
     // Completely malformed inner payload that cannot be deserialized to CreateAuctionRequest
-    String json = "{\"type\":\"CREATE_AUCTION\",\"requestId\":\"r1\",\"payload\":\"not-an-object\"}";
+    String json =
+        "{\"type\":\"CREATE_AUCTION\",\"requestId\":\"r1\",\"payload\":\"not-an-object\"}";
     String result = router.handleRequest(json);
     // Either invalid format or error response
     assertNotNull(result);
@@ -115,17 +111,19 @@ public class AuctionHandlerTest {
 
   @Test
   public void testListMyListings_Success() {
-    when(auctionService.getMyListings(any())).thenReturn(List.of(
-        new AuctionSummaryDto(
-            UUID.randomUUID().toString(),
-            "Watch",
-            "ELECTRONICS",
-            new BigDecimal("100.00"),
-            null,
-            null,
-            LocalDateTime.now().plusDays(1),
-            AuctionStatus.OPEN,
-            UUID.randomUUID().toString())));
+    when(auctionService.getMyListings(any()))
+        .thenReturn(
+            List.of(
+                new AuctionSummaryDto(
+                    UUID.randomUUID().toString(),
+                    "Watch",
+                    "ELECTRONICS",
+                    new BigDecimal("100.00"),
+                    null,
+                    null,
+                    LocalDateTime.now().plusDays(1),
+                    AuctionStatus.OPEN,
+                    UUID.randomUUID().toString())));
 
     String json =
         "{\"type\":\"LIST_MY_LISTINGS\",\"requestId\":\"r2\","
@@ -148,7 +146,8 @@ public class AuctionHandlerTest {
 
   @Test
   public void testListMyListings_ServiceThrows_ReturnsError() {
-    when(auctionService.getMyListings(any())).thenThrow(new ValidationException("Seller not found"));
+    when(auctionService.getMyListings(any()))
+        .thenThrow(new ValidationException("Seller not found"));
     String json =
         "{\"type\":\"LIST_MY_LISTINGS\",\"requestId\":\"r2\","
             + "\"payload\":{\"sellerId\":\"bad\"}}";
@@ -178,8 +177,7 @@ public class AuctionHandlerTest {
   public void testDeleteAuction_MissingFields_NullBranch() throws Exception {
     doNothing().when(auctionService).deleteAuction(any(), any());
     // payload with no sellerId or auctionId -> both null
-    String json =
-        "{\"type\":\"DELETE_AUCTION\",\"requestId\":\"r3\",\"payload\":{}}";
+    String json = "{\"type\":\"DELETE_AUCTION\",\"requestId\":\"r3\",\"payload\":{}}";
     String result = router.handleRequest(json);
     // service is called with nulls
     assertNotNull(result);
