@@ -18,6 +18,7 @@ import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
 import com.nhom1.auction.common.utils.AppContext;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.net.http.HttpClient;
@@ -38,6 +39,10 @@ public class ClientServiceTest {
   public void setUp() throws Exception {
     // Set up mock ServerConnection singleton
     mockConnection = mock(ServerConnection.class);
+    lenient()
+        .when(mockConnection.sendRequest(any(), any()))
+        .thenReturn(
+            CompletableFuture.failedFuture(new IOException("Mock connection: not connected")));
     Field instanceField = ServerConnection.class.getDeclaredField("instance");
     instanceField.setAccessible(true);
     instanceField.set(null, mockConnection);

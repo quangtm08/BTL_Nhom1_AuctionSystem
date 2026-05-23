@@ -16,6 +16,7 @@ import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.utils.AppContext;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -41,6 +42,10 @@ public class AdminControllerTest {
       // Already initialized
     }
     mockConnection = mock(ServerConnection.class);
+    lenient()
+        .when(mockConnection.sendRequest(any(), any()))
+        .thenReturn(
+            CompletableFuture.failedFuture(new IOException("Mock connection: not connected")));
     java.lang.reflect.Field field = ServerConnection.class.getDeclaredField("instance");
     field.setAccessible(true);
     field.set(null, mockConnection);

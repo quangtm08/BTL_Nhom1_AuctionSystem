@@ -106,6 +106,10 @@ public class UserControllerTest {
       // Already initialized
     }
     mockConnection = mock(ServerConnection.class);
+    org.mockito.Mockito.lenient()
+        .when(mockConnection.sendRequest(any(), any()))
+        .thenReturn(
+            CompletableFuture.failedFuture(new IOException("Mock connection: not connected")));
     java.lang.reflect.Field field = ServerConnection.class.getDeclaredField("instance");
     field.setAccessible(true);
     field.set(null, mockConnection);

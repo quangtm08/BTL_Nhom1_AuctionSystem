@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -287,24 +286,42 @@ public class ServerConnectionTest {
 
   @Test
   public void testStartListeningThread_EofAndException() throws Exception {
+    // Reset singleton to ensure fresh state
+    Field instanceField = ServerConnection.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    instanceField.set(null, null);
+
     // EOF simulation (readLine returns null)
     try (var socketMock =
         mockConstruction(
             Socket.class,
             (mock, context) -> {
               when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
-              when(mock.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
+              try {
+                java.io.InputStream eofInput = mock(java.io.InputStream.class);
+                // Add delay to prevent race condition where connection drops before assertTrue
+                when(eofInput.read(any(byte[].class), anyInt(), anyInt()))
+                    .thenAnswer(
+                        invocation -> {
+                          Thread.sleep(200);
+                          return -1;
+                        });
+                when(mock.getInputStream()).thenReturn(eofInput);
+              } catch (IOException e) {
+              }
             })) {
       ServerConnection conn = ServerConnection.getInstance();
       assertTrue(conn.isConnected());
-      // Wait for listener thread to process EOF
-      Thread.sleep(100);
-      assertFalse(conn.isConnected());
+
+      // Wait for listener thread to process EOF (poll for drop)
+      int retries = 20;
+      while (conn.isConnected() && retries-- > 0) {
+        Thread.sleep(50);
+      }
+      assertFalse(conn.isConnected(), "Connection should have dropped after EOF");
     }
 
     // Reset singleton
-    Field instanceField = ServerConnection.class.getDeclaredField("instance");
-    instanceField.setAccessible(true);
     instanceField.set(null, null);
 
     // IOException simulation in BufferedReader readLine
@@ -313,15 +330,28 @@ public class ServerConnectionTest {
             Socket.class,
             (mock, context) -> {
               when(mock.getOutputStream()).thenReturn(new ByteArrayOutputStream());
-              java.io.InputStream badInput = mock(java.io.InputStream.class);
-              when(badInput.read(any(byte[].class), anyInt(), anyInt()))
-                  .thenThrow(new IOException("Socket read error"));
-              when(mock.getInputStream()).thenReturn(badInput);
+              try {
+                java.io.InputStream badInput = mock(java.io.InputStream.class);
+                // Add delay to prevent race condition where connection drops before assertTrue
+                when(badInput.read(any(byte[].class), anyInt(), anyInt()))
+                    .thenAnswer(
+                        invocation -> {
+                          Thread.sleep(200);
+                          throw new IOException("Socket read error");
+                        });
+                when(mock.getInputStream()).thenReturn(badInput);
+              } catch (IOException e) {
+              }
             })) {
       ServerConnection conn = ServerConnection.getInstance();
       assertTrue(conn.isConnected());
-      Thread.sleep(100);
-      assertFalse(conn.isConnected());
+
+      // Wait for listener thread to hit exception (poll for drop)
+      int retries = 20;
+      while (conn.isConnected() && retries-- > 0) {
+        Thread.sleep(50);
+      }
+      assertFalse(conn.isConnected(), "Connection should have dropped after IOException");
     }
   }
 }
