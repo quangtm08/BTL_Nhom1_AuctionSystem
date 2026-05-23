@@ -89,4 +89,50 @@ public class MessageRouterTest {
     assertTrue(result.contains("SERVER_ERROR"));
     assertTrue(result.contains("Something went wrong"));
   }
+
+  @Test
+  public void testHandleRequest_ResponseTypeAlreadySet_IsNotOverwritten() throws Exception {
+    MessageType type = MessageType.LOGIN;
+    messageRouter.register(type, mockAction);
+    String json = "{\"type\":\"LOGIN\",\"requestId\":\"r1\",\"payload\":{}}";
+    // Response already has a type set
+    ResponseMessage<String> response = new ResponseMessage<>("r1", "ok");
+    response.setType(MessageType.REGISTER); // deliberately different
+    when(mockAction.execute("r1", "{}")).thenReturn((ResponseMessage) response);
+
+    String result = messageRouter.handleRequest(json);
+    // The router should NOT overwrite a type that is already set
+    assertTrue(result.contains("REGISTER"));
+  }
+
+  @Test
+  public void testHandleRequest_NoRequestId_ErrorStillReturned() {
+    // JSON with missing "requestId" field -> requestId = null, but error still returned
+    String json = "{\"type\":\"UNKNOWN_XYZ\"}";
+    String result = messageRouter.handleRequest(json);
+    assertTrue(result.contains("INVALID_TYPE") || result.contains("false"));
+  }
+
+  @Test
+  public void testHandleRequest_NullPayload_NoRegisteredHandler() {
+    // Payload is missing entirely -> payloadJson = null, action not registered
+    String json = "{\"type\":\"REGISTER\",\"requestId\":\"r1\"}";
+    String result = messageRouter.handleRequest(json);
+    assertTrue(result.contains("UNKNOWN_TYPE"));
+  }
+
+  @Test
+  public void testHandleRequest_ResponseWithNullType_GetsTypeSet() throws Exception {
+    MessageType type = MessageType.LOGIN;
+    messageRouter.register(type, mockAction);
+    String json = "{\"type\":\"LOGIN\",\"requestId\":\"r1\",\"payload\":{}}";
+    // Response with null type -> router sets it to the request type
+    ResponseMessage<String> response = new ResponseMessage<>("r1", "ok");
+    response.setType(null); // null type
+    when(mockAction.execute("r1", "{}")).thenReturn((ResponseMessage) response);
+
+    String result = messageRouter.handleRequest(json);
+    assertTrue(result.contains("LOGIN"));
+  }
 }
+

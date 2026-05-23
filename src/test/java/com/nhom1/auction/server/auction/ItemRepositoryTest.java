@@ -188,4 +188,82 @@ public class ItemRepositoryTest {
         assertThrows(RuntimeException.class, () -> repo.deleteById(itemId, mockConnection));
     assertTrue(thrown.getMessage().contains("Failed to delete item"));
   }
+
+  @Test
+  public void testUpdateBasicInfo_Success() throws SQLException {
+    UUID itemId = UUID.randomUUID();
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(anyString())).thenReturn(ps);
+    when(ps.executeUpdate()).thenReturn(1);
+
+    int result =
+        repo.updateBasicInfo(
+            itemId, "New Name", "New Desc", ItemCategory.ART, ItemCondition.USED, mockConnection);
+    assertEquals(1, result);
+    verify(ps).executeUpdate();
+  }
+
+  @Test
+  public void testUpdateBasicInfo_ThrowsException() throws SQLException {
+    UUID itemId = UUID.randomUUID();
+    when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Prep failed"));
+
+    RuntimeException thrown =
+        assertThrows(
+            RuntimeException.class,
+            () ->
+                repo.updateBasicInfo(
+                    itemId,
+                    "Name",
+                    "Desc",
+                    ItemCategory.ELECTRONICS,
+                    ItemCondition.NEW,
+                    mockConnection));
+    assertTrue(thrown.getMessage().contains("Failed to update item"));
+  }
+
+  @Test
+  public void testFindById_NullTimestamps() throws SQLException {
+    UUID itemId = UUID.randomUUID();
+    when(mockResultSet.next()).thenReturn(true);
+    when(mockResultSet.getString("id")).thenReturn(itemId.toString());
+    when(mockResultSet.getString("name")).thenReturn("Car");
+    when(mockResultSet.getString("description")).thenReturn("Fast");
+    when(mockResultSet.getString("category")).thenReturn("VEHICLE");
+    when(mockResultSet.getString("condition")).thenReturn("USED");
+    when(mockResultSet.getTimestamp("created_at")).thenReturn(null); // null
+    when(mockResultSet.getTimestamp("updated_at")).thenReturn(null); // null
+
+    Optional<Item> itemOpt = repo.findById(itemId);
+    assertTrue(itemOpt.isPresent());
+    assertNotNull(itemOpt.get());
+  }
+
+  @Test
+  public void testSave_ConditionFallback_WhenConstraintFails() throws SQLException {
+    UUID itemId = UUID.randomUUID();
+    UUID sellerId = UUID.randomUUID();
+    Item item =
+        new Art(
+            itemId,
+            "Painting",
+            "Nice",
+            ItemCategory.ART,
+            ItemCondition.REFURBISHED,
+            LocalDateTime.now(),
+            LocalDateTime.now());
+
+    PreparedStatement fallbackPs = mock(PreparedStatement.class);
+    when(mockConnection.getAutoCommit()).thenReturn(false);
+    when(mockConnection.setSavepoint()).thenReturn(mock(java.sql.Savepoint.class));
+
+    // First save throws a constraint violation (unsupported condition)
+    SQLException constraintViolation = new SQLException("check constraint on condition", "23514");
+    when(mockConnection.prepareStatement(anyString()))
+        .thenThrow(constraintViolation)
+        .thenReturn(fallbackPs);
+
+    assertDoesNotThrow(() -> repo.save(item, sellerId, mockConnection));
+    verify(fallbackPs).executeUpdate();
+  }
 }

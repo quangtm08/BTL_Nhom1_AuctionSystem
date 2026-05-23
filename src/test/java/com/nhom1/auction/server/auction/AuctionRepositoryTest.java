@@ -411,4 +411,259 @@ public class AuctionRepositoryTest {
             () -> repo.clearHighestBidderByUserId(bidderId, mockConnection));
     assertTrue(thrown.getMessage().contains("Failed to clear highest bidder on auctions"));
   }
+
+  // ===================== updateEndTime (with Connection) =====================
+
+  @Test
+  public void testUpdateEndTimeWithConnection_Success() throws SQLException {
+    UUID id = UUID.randomUUID();
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(anyString())).thenReturn(ps);
+    when(ps.executeUpdate()).thenReturn(1);
+
+    int result = repo.updateEndTime(id, LocalDateTime.now().plusDays(1), mockConnection);
+    assertEquals(1, result);
+    verify(ps).executeUpdate();
+  }
+
+  @Test
+  public void testUpdateEndTimeWithConnection_ThrowsException() throws SQLException {
+    UUID id = UUID.randomUUID();
+    when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Prep failed"));
+
+    RuntimeException thrown =
+        assertThrows(
+            RuntimeException.class,
+            () -> repo.updateEndTime(id, LocalDateTime.now().plusDays(1), mockConnection));
+    assertTrue(thrown.getMessage().contains("Failed to update end time"));
+  }
+
+  // ===================== updateStartingPriceAndEndTime =====================
+
+  @Test
+  public void testUpdateStartingPriceAndEndTime_Success() throws SQLException {
+    UUID id = UUID.randomUUID();
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(anyString())).thenReturn(ps);
+    when(ps.executeUpdate()).thenReturn(1);
+
+    int result =
+        repo.updateStartingPriceAndEndTime(
+            id, new BigDecimal("150.00"), LocalDateTime.now().plusDays(3), mockConnection);
+    assertEquals(1, result);
+    verify(ps).executeUpdate();
+  }
+
+  @Test
+  public void testUpdateStartingPriceAndEndTime_ThrowsException() throws SQLException {
+    UUID id = UUID.randomUUID();
+    when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Prep failed"));
+
+    RuntimeException thrown =
+        assertThrows(
+            RuntimeException.class,
+            () ->
+                repo.updateStartingPriceAndEndTime(
+                    id, BigDecimal.TEN, LocalDateTime.now().plusDays(3), mockConnection));
+    assertTrue(thrown.getMessage().contains("Failed to update auction pricing/time"));
+  }
+
+  // ===================== updateOpenAuctionForEdit =====================
+
+  @Test
+  public void testUpdateOpenAuctionForEdit_Success() throws SQLException {
+    UUID id = UUID.randomUUID();
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(anyString())).thenReturn(ps);
+    when(ps.executeUpdate()).thenReturn(1);
+
+    int result =
+        repo.updateOpenAuctionForEdit(
+            id, new BigDecimal("200.00"), LocalDateTime.now().plusDays(7), mockConnection);
+    assertEquals(1, result);
+    verify(ps).executeUpdate();
+  }
+
+  @Test
+  public void testUpdateOpenAuctionForEdit_ThrowsException() throws SQLException {
+    UUID id = UUID.randomUUID();
+    when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Prep failed"));
+
+    RuntimeException thrown =
+        assertThrows(
+            RuntimeException.class,
+            () ->
+                repo.updateOpenAuctionForEdit(
+                    id, BigDecimal.TEN, LocalDateTime.now().plusDays(7), mockConnection));
+    assertTrue(thrown.getMessage().contains("Failed to update open auction for edit"));
+  }
+
+  // ===================== updateStartEndAndStatus =====================
+
+  @Test
+  public void testUpdateStartEndAndStatus_Success() throws SQLException {
+    UUID id = UUID.randomUUID();
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(anyString())).thenReturn(ps);
+    when(ps.executeUpdate()).thenReturn(1);
+
+    boolean result =
+        repo.updateStartEndAndStatus(
+            id,
+            LocalDateTime.now().plusDays(1),
+            LocalDateTime.now().plusDays(8),
+            AuctionStatus.OPEN,
+            mockConnection);
+    assertTrue(result);
+  }
+
+  @Test
+  public void testUpdateStartEndAndStatus_NoRowsUpdated() throws SQLException {
+    UUID id = UUID.randomUUID();
+    PreparedStatement ps = mock(PreparedStatement.class);
+    when(mockConnection.prepareStatement(anyString())).thenReturn(ps);
+    when(ps.executeUpdate()).thenReturn(0);
+
+    boolean result =
+        repo.updateStartEndAndStatus(
+            id, null, null, AuctionStatus.OPEN, mockConnection);
+    assertFalse(result);
+  }
+
+  @Test
+  public void testUpdateStartEndAndStatus_ThrowsException() throws SQLException {
+    UUID id = UUID.randomUUID();
+    when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Prep failed"));
+
+    RuntimeException thrown =
+        assertThrows(
+            RuntimeException.class,
+            () ->
+                repo.updateStartEndAndStatus(
+                    id,
+                    LocalDateTime.now().plusDays(1),
+                    LocalDateTime.now().plusDays(8),
+                    AuctionStatus.OPEN,
+                    mockConnection));
+    assertTrue(thrown.getMessage().contains("Failed to update auction start/end/status"));
+  }
+
+  // ===================== Fallback save paths =====================
+
+  @Test
+  public void testSave_FallbackToWithoutDurationDays_WhenSQLStateIs42703() throws SQLException {
+    UUID auctionId = UUID.randomUUID();
+    UUID itemId = UUID.randomUUID();
+    UUID sellerId = UUID.randomUUID();
+    Auction auction =
+        new Auction(
+            auctionId,
+            itemId,
+            sellerId,
+            BigDecimal.TEN,
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(2),
+            null,
+            null,
+            AuctionStatus.OPEN,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            3);
+
+    // First prepareStatement call (full insert) throws a 42703 error (missing column)
+    PreparedStatement fallbackPs = mock(PreparedStatement.class);
+    when(mockConnection.getAutoCommit()).thenReturn(false);
+    when(mockConnection.setSavepoint()).thenReturn(mock(java.sql.Savepoint.class));
+
+    SQLException missingColumn = new SQLException("column duration_days does not exist", "42703");
+    when(mockConnection.prepareStatement(anyString()))
+        .thenThrow(missingColumn)
+        .thenReturn(fallbackPs);
+
+    // Should not throw - falls back to without-duration-days path
+    assertDoesNotThrow(() -> repo.save(auction, mockConnection));
+    verify(fallbackPs).executeUpdate();
+  }
+
+  @Test
+  public void testSave_FallbackToLegacy_WhenVersionColumnMissing() throws SQLException {
+    UUID auctionId = UUID.randomUUID();
+    UUID itemId = UUID.randomUUID();
+    UUID sellerId = UUID.randomUUID();
+    Auction auction =
+        new Auction(
+            auctionId,
+            itemId,
+            sellerId,
+            BigDecimal.TEN,
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(2),
+            null,
+            null,
+            AuctionStatus.OPEN,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
+
+    PreparedStatement legacyPs = mock(PreparedStatement.class);
+    when(mockConnection.getAutoCommit()).thenReturn(false);
+    when(mockConnection.setSavepoint()).thenReturn(mock(java.sql.Savepoint.class));
+
+    // First call: full insert fails with 42703 (missing duration_days)
+    // Second call (without duration_days): fails with version missing
+    // Third call (legacy): succeeds
+    SQLException missingDuration = new SQLException("column duration_days", "42703");
+    SQLException missingVersion = new SQLException("column version does not exist", "42703");
+    when(mockConnection.prepareStatement(anyString()))
+        .thenThrow(missingDuration)
+        .thenThrow(missingVersion)
+        .thenReturn(legacyPs);
+
+    assertDoesNotThrow(() -> repo.save(auction, mockConnection));
+    verify(legacyPs).executeUpdate();
+  }
+
+  @Test
+  public void testFindById_NullHighestBidderId() throws SQLException {
+    UUID id = UUID.randomUUID();
+    when(mockResultSet.next()).thenReturn(true);
+    when(mockResultSet.getString("id")).thenReturn(id.toString());
+    when(mockResultSet.getString("item_id")).thenReturn(UUID.randomUUID().toString());
+    when(mockResultSet.getString("seller_id")).thenReturn(UUID.randomUUID().toString());
+    when(mockResultSet.getTimestamp("start_time")).thenReturn(null);
+    when(mockResultSet.getTimestamp("end_time")).thenReturn(null);
+    when(mockResultSet.getBigDecimal("starting_price")).thenReturn(BigDecimal.TEN);
+    when(mockResultSet.getString("highest_bidder_id")).thenReturn(null); // null bidder
+    when(mockResultSet.getBigDecimal("current_highest_bid")).thenReturn(null);
+    when(mockResultSet.getString("status")).thenReturn("OPEN");
+    when(mockResultSet.getTimestamp("created_at")).thenReturn(null);
+    when(mockResultSet.getTimestamp("updated_at")).thenReturn(null);
+
+    Optional<Auction> opt = repo.findById(id);
+    assertTrue(opt.isPresent());
+    assertNull(opt.get().getHighestBidderId());
+    assertNull(opt.get().getStartTime());
+  }
+
+  @Test
+  public void testFindById_DurationDaysColumnMissingIgnored() throws SQLException {
+    UUID id = UUID.randomUUID();
+    when(mockResultSet.next()).thenReturn(true);
+    when(mockResultSet.getString("id")).thenReturn(id.toString());
+    when(mockResultSet.getString("item_id")).thenReturn(UUID.randomUUID().toString());
+    when(mockResultSet.getString("seller_id")).thenReturn(UUID.randomUUID().toString());
+    when(mockResultSet.getBigDecimal("starting_price")).thenReturn(BigDecimal.TEN);
+    when(mockResultSet.getString("status")).thenReturn("OPEN");
+    // Simulate missing duration_days column
+    when(mockResultSet.getInt("duration_days")).thenThrow(new SQLException("no such column"));
+    when(mockResultSet.getTimestamp("created_at"))
+        .thenReturn(java.sql.Timestamp.valueOf(LocalDateTime.now()));
+    when(mockResultSet.getTimestamp("updated_at"))
+        .thenReturn(java.sql.Timestamp.valueOf(LocalDateTime.now()));
+    when(mockResultSet.getLong("version")).thenReturn(0L);
+
+    Optional<Auction> opt = repo.findById(id);
+    assertTrue(opt.isPresent());
+    assertNull(opt.get().getDurationDays());
+  }
 }

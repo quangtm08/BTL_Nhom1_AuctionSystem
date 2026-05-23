@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import com.nhom1.auction.common.dto.auction.CreateAuctionRequest;
+import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.Item;
 import com.nhom1.auction.common.enums.AuctionStatus;
@@ -18,6 +19,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.sql.DataSource;
@@ -350,5 +352,431 @@ public class AuctionServiceTest {
     when(itemRepository.deleteById(any(UUID.class), eq(connection))).thenReturn(0);
 
     assertThrows(RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
+  }
+
+  @Test
+  public void testDeleteAuction_SqlConnectionFails_ThrowsRuntimeException() throws SQLException {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID parsedAuctionId = UUID.fromString(auctionId);
+    UUID parsedSellerId = UUID.fromString(sellerId);
+    Auction auction = mock(Auction.class);
+    when(auction.getSellerId()).thenReturn(parsedSellerId);
+    when(auction.getItemId()).thenReturn(UUID.randomUUID());
+    when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
+    when(dataSource.getConnection()).thenThrow(new SQLException("Connection failed"));
+
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
+    assertEquals("Delete transaction failed", ex.getMessage());
+  }
+
+  // ======================== updateAuction ========================
+
+  private UpdateAuctionRequest buildValidUpdateRequest(String sellerId, String auctionId) {
+    UpdateAuctionRequest req = new UpdateAuctionRequest();
+    req.setSellerId(sellerId);
+    req.setAuctionId(auctionId);
+    req.setName("Updated Name");
+    req.setDescription("Updated Desc");
+    req.setCategory(ItemCategory.ART);
+    req.setCondition(ItemCondition.NEW);
+    req.setStartingPrice(new BigDecimal("200.00"));
+    req.setEndTime(LocalDateTime.now().plusDays(5));
+    return req;
+  }
+
+  private Auction buildOpenAuction(UUID auctionUuid, UUID sellerUuid) {
+    Auction auction = mock(Auction.class);
+    when(auction.getId()).thenReturn(auctionUuid);
+    when(auction.getSellerId()).thenReturn(sellerUuid);
+    when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
+    when(auction.getHighestBidderId()).thenReturn(null);
+    when(auction.getStartTime()).thenReturn(LocalDateTime.now().minusDays(1));
+    when(auction.getItemId()).thenReturn(UUID.randomUUID());
+    return auction;
+  }
+
+  @Test
+  public void testUpdateAuction_NullRequest_Throws() {
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(null));
+  }
+
+  @Test
+  public void testUpdateAuction_NullSellerId_Throws() {
+    UpdateAuctionRequest req = buildValidUpdateRequest(null, UUID.randomUUID().toString());
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_BlankSellerId_Throws() {
+    UpdateAuctionRequest req = buildValidUpdateRequest("", UUID.randomUUID().toString());
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_InvalidSellerUUID_Throws() {
+    UpdateAuctionRequest req = buildValidUpdateRequest("not-a-uuid", UUID.randomUUID().toString());
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_NullAuctionId_Throws() {
+    UpdateAuctionRequest req = buildValidUpdateRequest(UUID.randomUUID().toString(), null);
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_BlankAuctionId_Throws() {
+    UpdateAuctionRequest req = buildValidUpdateRequest(UUID.randomUUID().toString(), "");
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_InvalidAuctionUUID_Throws() {
+    UpdateAuctionRequest req = buildValidUpdateRequest(UUID.randomUUID().toString(), "bad-uuid");
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_AuctionNotFound_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.empty());
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    assertThrows(NotFoundException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_NonOwner_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, UUID.randomUUID()); // different seller
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    assertThrows(UnauthorizedActionException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_StatusNotOpen_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = mock(Auction.class);
+    when(auction.getSellerId()).thenReturn(sellerUuid);
+    when(auction.getStatus()).thenReturn(AuctionStatus.FINISHED);
+    when(auction.getStartTime()).thenReturn(LocalDateTime.now().minusDays(1));
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_HasBidder_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = mock(Auction.class);
+    when(auction.getSellerId()).thenReturn(sellerUuid);
+    when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
+    when(auction.getHighestBidderId()).thenReturn(UUID.randomUUID()); // has a bidder
+    when(auction.getStartTime()).thenReturn(LocalDateTime.now().minusDays(1));
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_NullEndTime_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    req.setEndTime(null);
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_EndTimeNotAfterStartTime_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = mock(Auction.class);
+    when(auction.getSellerId()).thenReturn(sellerUuid);
+    when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
+    when(auction.getHighestBidderId()).thenReturn(null);
+    LocalDateTime startTime = LocalDateTime.now().plusDays(2);
+    when(auction.getStartTime()).thenReturn(startTime);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    req.setEndTime(startTime.minusHours(1)); // end before start
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_EndTimeInPast_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    req.setEndTime(LocalDateTime.now().minusHours(1)); // past
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_ZeroStartingPrice_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    req.setStartingPrice(BigDecimal.ZERO);
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_NullStartingPrice_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    req.setStartingPrice(null);
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_BlankName_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    req.setName("  ");
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_NullCategory_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    req.setCategory(null);
+    assertThrows(ValidationException.class, () -> auctionService.updateAuction(req));
+  }
+
+  @Test
+  public void testUpdateAuction_Success() throws Exception {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    when(connection.getAutoCommit()).thenReturn(true);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(1);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(1);
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    assertDoesNotThrow(() -> auctionService.updateAuction(req));
+    verify(connection).commit();
+  }
+
+  @Test
+  public void testUpdateAuction_AuctionNoLongerEditable_Throws() throws Exception {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    when(connection.getAutoCommit()).thenReturn(true);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(1);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(0);
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
+    // inner cause is ValidationException
+    assertTrue(ex.getCause() instanceof ValidationException || ex instanceof ValidationException);
+    verify(connection).rollback();
+  }
+
+  @Test
+  public void testUpdateAuction_ItemNotFound_Throws() throws Exception {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    when(connection.getAutoCommit()).thenReturn(true);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(0);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(1);
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
+    verify(connection).rollback();
+  }
+
+  @Test
+  public void testUpdateAuction_SqlConnectionFails_Throws() throws Exception {
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
+    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
+    when(dataSource.getConnection()).thenThrow(new SQLException("DB down"));
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    RuntimeException ex = assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
+    assertEquals("Update auction transaction failed", ex.getMessage());
+  }
+
+  @Test
+  public void testUpdateAuction_RunningStatusRevertedToOpen_ThenEdited() throws Exception {
+    // When auction is RUNNING but start_time is in the future, it gets reverted to OPEN
+    String sellerId = UUID.randomUUID().toString();
+    String auctionId = UUID.randomUUID().toString();
+    UUID sellerUuid = UUID.fromString(sellerId);
+    UUID auctionUuid = UUID.fromString(auctionId);
+
+    Auction runningAuction = mock(Auction.class);
+    when(runningAuction.getId()).thenReturn(auctionUuid);
+    when(runningAuction.getSellerId()).thenReturn(sellerUuid);
+    when(runningAuction.getStatus()).thenReturn(AuctionStatus.RUNNING);
+    when(runningAuction.getStartTime()).thenReturn(LocalDateTime.now().plusDays(2)); // future start
+    when(runningAuction.getHighestBidderId()).thenReturn(null);
+    when(runningAuction.getItemId()).thenReturn(UUID.randomUUID());
+
+    Auction openAuction = buildOpenAuction(auctionUuid, sellerUuid);
+
+    // First findById returns running, second returns open (after status revert)
+    when(auctionRepository.findById(auctionUuid))
+        .thenReturn(Optional.of(runningAuction))
+        .thenReturn(Optional.of(openAuction));
+    when(connection.getAutoCommit()).thenReturn(true);
+    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection))).thenReturn(1);
+    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection))).thenReturn(1);
+    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
+    assertDoesNotThrow(() -> auctionService.updateAuction(req));
+    verify(auctionRepository).updateStatus(auctionUuid, AuctionStatus.OPEN);
+  }
+
+  // ======================== getMyListings edge cases ========================
+
+  @Test
+  public void testGetMyListings_NullCategory_UsesUnknown() {
+    UUID sellerId = UUID.randomUUID();
+    Auction auction =
+        new Auction(
+            UUID.randomUUID(),
+            sellerId,
+            new BigDecimal("100"),
+            LocalDateTime.now(),
+            LocalDateTime.now().plusDays(1));
+    Item item = mock(Item.class);
+    when(item.getName()).thenReturn("Art");
+    when(item.getCategory()).thenReturn(null); // null category
+    when(auctionRepository.findBySellerId(sellerId)).thenReturn(List.of(auction));
+    when(itemRepository.findById(auction.getItemId())).thenReturn(Optional.of(item));
+    var result = auctionService.getMyListings(sellerId.toString());
+    assertEquals(1, result.size());
+    assertEquals("UNKNOWN", result.get(0).getItemCategory());
+  }
+
+  @Test
+  public void testGetMyListings_RepoThrows_ReturnsEmpty() {
+    UUID sellerId = UUID.randomUUID();
+    when(auctionRepository.findBySellerId(sellerId)).thenThrow(new RuntimeException("DB error"));
+    var result = auctionService.getMyListings(sellerId.toString());
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  public void testCreateAuction_DurationDaysZero_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    CreateAuctionRequest dto = createValidCreateAuctionRequest();
+    dto.setEndTime(null);
+    dto.setDurationDays(0); // 0 is invalid
+    assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
+  }
+
+  @Test
+  public void testCreateAuction_NullDurationDays_DefaultsToSeven() throws Exception {
+    String sellerId = UUID.randomUUID().toString();
+    CreateAuctionRequest dto = createValidCreateAuctionRequest();
+    dto.setEndTime(null);
+    dto.setDurationDays(null); // null -> defaults to 7
+    when(connection.getAutoCommit()).thenReturn(true);
+    Auction result = auctionService.createAuction(sellerId, dto);
+    assertNotNull(result);
+    // end time should be ~7 days from start time
+    assertTrue(result.getEndTime().isAfter(dto.getStartTime().plusDays(6)));
+  }
+
+  @Test
+  public void testCreateAuction_DurationDaysPositive_UsesSpecified() throws Exception {
+    String sellerId = UUID.randomUUID().toString();
+    CreateAuctionRequest dto = createValidCreateAuctionRequest();
+    dto.setEndTime(null);
+    dto.setDurationDays(14);
+    when(connection.getAutoCommit()).thenReturn(true);
+    Auction result = auctionService.createAuction(sellerId, dto);
+    assertNotNull(result);
+    assertTrue(result.getEndTime().isAfter(dto.getStartTime().plusDays(13)));
+  }
+
+  @Test
+  public void testCreateAuction_NegativeDurationDays_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    CreateAuctionRequest dto = createValidCreateAuctionRequest();
+    dto.setDurationDays(-3);
+    assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
+  }
+
+  @Test
+  public void testCreateAuction_StartTimeInPast_Throws() {
+    String sellerId = UUID.randomUUID().toString();
+    CreateAuctionRequest dto = createValidCreateAuctionRequest();
+    dto.setStartTime(LocalDateTime.now().minusDays(1));
+    assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
+  }
+
+  @Test
+  public void testCreateAuction_SellerIdInRequestMatchesSeller_Succeeds() throws Exception {
+    String sellerId = UUID.randomUUID().toString();
+    CreateAuctionRequest dto = createValidCreateAuctionRequest();
+    dto.setSellerId(sellerId); // same as parameter
+    when(connection.getAutoCommit()).thenReturn(true);
+    assertNotNull(auctionService.createAuction(sellerId, dto));
+  }
+
+  @Test
+  public void testCreateAuction_AppExceptionRollsBack() throws SQLException {
+    String sellerId = UUID.randomUUID().toString();
+    CreateAuctionRequest dto = createValidCreateAuctionRequest();
+    when(connection.getAutoCommit()).thenReturn(true);
+    doThrow(new ValidationException("bad item"))
+        .when(itemRepository)
+        .save(any(), any(), eq(connection));
+
+    assertThrows(ValidationException.class, () -> auctionService.createAuction(sellerId, dto));
+    verify(connection).rollback();
   }
 }

@@ -440,4 +440,195 @@ public class AdminServiceTest {
     assertEquals(1, response.getUsers().size());
     assertNotNull(response.getUsers().get(0).getCreatedAt());
   }
+
+  // ======================== approveAuction ========================
+
+  @Test
+  public void testApproveAuction_BlankId_ThrowsValidation() {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    assertThrows(
+        com.nhom1.auction.common.exception.ValidationException.class,
+        () -> adminService.approveAuction("", admin.getId().toString(), null));
+    assertThrows(
+        com.nhom1.auction.common.exception.ValidationException.class,
+        () -> adminService.approveAuction(null, admin.getId().toString(), null));
+  }
+
+  @Test
+  public void testApproveAuction_InvalidUUID_ThrowsValidation() {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    assertThrows(
+        com.nhom1.auction.common.exception.ValidationException.class,
+        () -> adminService.approveAuction("bad-uuid", admin.getId().toString(), null));
+  }
+
+  @Test
+  public void testApproveAuction_AuctionNotFound_ThrowsNotFoundException() {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.empty());
+    assertThrows(
+        com.nhom1.auction.common.exception.NotFoundException.class,
+        () -> adminService.approveAuction(auctionId, admin.getId().toString(), null));
+  }
+
+  @Test
+  public void testApproveAuction_NotPending_ThrowsInvalidState() {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.OPEN);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    assertThrows(
+        com.nhom1.auction.common.exception.InvalidAuctionStateException.class,
+        () -> adminService.approveAuction(auctionId, admin.getId().toString(), null));
+  }
+
+  @Test
+  public void testApproveAuction_InvalidOpeningDate_ThrowsValidation() {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.PENDING);
+    when(auction.getStartTime()).thenReturn(null);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    assertThrows(
+        com.nhom1.auction.common.exception.ValidationException.class,
+        () -> adminService.approveAuction(auctionId, admin.getId().toString(), "not-a-date"));
+  }
+
+  @Test
+  public void testApproveAuction_NullScheduledStart_ThrowsValidation() {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.PENDING);
+    when(auction.getStartTime()).thenReturn(null); // null start, no openingDateStr either
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    assertThrows(
+        com.nhom1.auction.common.exception.ValidationException.class,
+        () -> adminService.approveAuction(auctionId, admin.getId().toString(), null));
+  }
+
+  @Test
+  public void testApproveAuction_PastOpeningDate_ThrowsValidation() {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.PENDING);
+    when(auction.getStartTime()).thenReturn(LocalDateTime.now().minusDays(2));
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    assertThrows(
+        com.nhom1.auction.common.exception.ValidationException.class,
+        () -> adminService.approveAuction(auctionId, admin.getId().toString(), null));
+  }
+
+  @Test
+  public void testApproveAuction_Success_WithNullDuration() throws SQLException {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.PENDING);
+    when(auction.getStartTime()).thenReturn(LocalDateTime.now().plusDays(1));
+    when(auction.getDurationDays()).thenReturn(null); // defaults to 7
+    when(auction.getItemId()).thenReturn(UUID.randomUUID());
+    when(auction.getStartingPrice()).thenReturn(BigDecimal.TEN);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    when(connection.getAutoCommit()).thenReturn(true);
+    when(auctionRepository.updateStartEndAndStatus(any(), any(), any(), any(), eq(connection)))
+        .thenReturn(true);
+    when(itemRepository.findById(auction.getItemId())).thenReturn(Optional.empty());
+
+    String result = adminService.approveAuction(auctionId, admin.getId().toString(), null);
+    assertEquals("APPROVED", result);
+    verify(connection).commit();
+  }
+
+  @Test
+  public void testApproveAuction_Success_WithExplicitOpeningDate() throws SQLException {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.PENDING);
+    when(auction.getStartTime()).thenReturn(null);
+    when(auction.getDurationDays()).thenReturn(14);
+    when(auction.getItemId()).thenReturn(UUID.randomUUID());
+    when(auction.getStartingPrice()).thenReturn(BigDecimal.TEN);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    when(connection.getAutoCommit()).thenReturn(true);
+    when(auctionRepository.updateStartEndAndStatus(any(), any(), any(), any(), eq(connection)))
+        .thenReturn(true);
+    when(itemRepository.findById(any())).thenReturn(Optional.empty());
+
+    // Opening date is tomorrow
+    String openingDate =
+        java.time.LocalDate.now().plusDays(1).format(java.time.format.DateTimeFormatter.ISO_DATE);
+    String result = adminService.approveAuction(auctionId, admin.getId().toString(), openingDate);
+    assertEquals("APPROVED", result);
+  }
+
+  @Test
+  public void testApproveAuction_UpdateNotApplied_ThrowsRuntimeException() throws SQLException {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.PENDING);
+    when(auction.getStartTime()).thenReturn(LocalDateTime.now().plusDays(1));
+    when(auction.getDurationDays()).thenReturn(7);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    when(connection.getAutoCommit()).thenReturn(true);
+    when(auctionRepository.updateStartEndAndStatus(any(), any(), any(), any(), eq(connection)))
+        .thenReturn(false); // update did not apply
+
+    RuntimeException ex =
+        assertThrows(
+            RuntimeException.class,
+            () -> adminService.approveAuction(auctionId, admin.getId().toString(), null));
+    assertEquals("Approve auction failed", ex.getMessage());
+    verify(connection).rollback();
+  }
+
+  @Test
+  public void testApproveAuction_DbConnectionFails_ThrowsRuntimeException() throws SQLException {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    String auctionId = UUID.randomUUID().toString();
+    Auction auction = mock(Auction.class);
+    when(auction.getStatus()).thenReturn(com.nhom1.auction.common.enums.AuctionStatus.PENDING);
+    when(auction.getStartTime()).thenReturn(LocalDateTime.now().plusDays(1));
+    when(auction.getDurationDays()).thenReturn(7);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(auctionRepository.findById(UUID.fromString(auctionId))).thenReturn(Optional.of(auction));
+    when(dataSource.getConnection()).thenThrow(new SQLException("DB down"));
+
+    RuntimeException ex =
+        assertThrows(
+            RuntimeException.class,
+            () -> adminService.approveAuction(auctionId, admin.getId().toString(), null));
+    assertEquals("Approve auction failed", ex.getMessage());
+  }
+
+  @Test
+  public void testDeleteUser_DatabaseConnectionFails_ThrowsRuntimeException() throws SQLException {
+    User admin = new User("admin", "admin@example.com", "password", UserRole.ADMIN);
+    User target = new User("user", "user@example.com", "password", UserRole.USER);
+    when(userRepository.findById(admin.getId())).thenReturn(Optional.of(admin));
+    when(userRepository.findById(target.getId())).thenReturn(Optional.of(target));
+    when(dataSource.getConnection()).thenThrow(new SQLException("DB down"));
+
+    RuntimeException ex =
+        assertThrows(
+            RuntimeException.class,
+            () -> adminService.deleteUser(target.getId().toString(), admin.getId().toString()));
+    assertEquals("User deletion failed due to database error", ex.getMessage());
+  }
 }

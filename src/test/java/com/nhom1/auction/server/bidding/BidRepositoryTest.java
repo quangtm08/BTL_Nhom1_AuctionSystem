@@ -231,4 +231,71 @@ public class BidRepositoryTest {
             () -> repo.deleteByAuctionId(UUID.randomUUID(), mockConnection));
     assertTrue(thrown.getMessage().contains("Failed to delete bids by auction id"));
   }
+
+  @Test
+  public void testFindByAuctionId_NullCreatedAt() throws SQLException {
+    UUID auctionId = UUID.randomUUID();
+    when(mockResultSet.next()).thenReturn(true, false);
+    when(mockResultSet.getString("id")).thenReturn(UUID.randomUUID().toString());
+    when(mockResultSet.getString("auction_id")).thenReturn(auctionId.toString());
+    when(mockResultSet.getString("bidder_id")).thenReturn(UUID.randomUUID().toString());
+    when(mockResultSet.getBigDecimal("amount")).thenReturn(BigDecimal.TEN);
+    when(mockResultSet.getString("bid_type")).thenReturn("AUTO");
+    when(mockResultSet.getTimestamp("created_at")).thenReturn(null); // null branch
+
+    List<BidTransaction> list = repo.findByAuctionId(auctionId);
+    assertEquals(1, list.size());
+    assertNotNull(list.get(0).getCreatedAt()); // defaults to now
+  }
+
+  @Test
+  public void testFindByBidderId_NullHighestBidderId_NotWinning() throws SQLException {
+    UUID bidderId = UUID.randomUUID();
+    UUID auctionId = UUID.randomUUID();
+
+    when(mockResultSet.next()).thenReturn(true, false);
+    when(mockResultSet.getString("auction_id")).thenReturn(auctionId.toString());
+    when(mockResultSet.getString("item_name")).thenReturn("Laptop");
+    when(mockResultSet.getBigDecimal("your_bid")).thenReturn(new BigDecimal("100.0"));
+    when(mockResultSet.getBigDecimal("current_highest_bid")).thenReturn(new BigDecimal("150.0"));
+    when(mockResultSet.getString("status")).thenReturn("OPEN");
+    when(mockResultSet.getTimestamp("end_time")).thenReturn(null); // null end_time branch
+    when(mockResultSet.getString("highest_bidder_id")).thenReturn(null); // null UUID branch
+
+    List<BidWithAuctionDto> list = repo.findByBidderId(bidderId);
+    assertEquals(1, list.size());
+    assertFalse(list.get(0).isWinning()); // bidderId != null (highest_bidder_id is null)
+    assertNull(list.get(0).getEndTime()); // null endTime branch covered
+  }
+
+  @Test
+  public void testFindByBidderId_BlankHighestBidderId_NotWinning() throws SQLException {
+    UUID bidderId = UUID.randomUUID();
+    UUID auctionId = UUID.randomUUID();
+
+    when(mockResultSet.next()).thenReturn(true, false);
+    when(mockResultSet.getString("auction_id")).thenReturn(auctionId.toString());
+    when(mockResultSet.getString("item_name")).thenReturn("Bike");
+    when(mockResultSet.getBigDecimal("your_bid")).thenReturn(new BigDecimal("80.0"));
+    when(mockResultSet.getBigDecimal("current_highest_bid")).thenReturn(new BigDecimal("90.0"));
+    when(mockResultSet.getString("status")).thenReturn("RUNNING");
+    when(mockResultSet.getTimestamp("end_time"))
+        .thenReturn(Timestamp.valueOf(LocalDateTime.now().plusDays(1)));
+    when(mockResultSet.getString("highest_bidder_id")).thenReturn("  "); // blank -> null UUID
+
+    List<BidWithAuctionDto> list = repo.findByBidderId(bidderId);
+    assertEquals(1, list.size());
+    assertFalse(list.get(0).isWinning());
+  }
+
+  @Test
+  public void testFindLastBidTime_NullTimestamp_ReturnsEmpty() throws SQLException {
+    UUID auctionId = UUID.randomUUID();
+    when(mockResultSet.next()).thenReturn(true);
+    when(mockResultSet.getTimestamp("last_bid_time")).thenReturn(null); // null branch -> empty
+
+    Optional<LocalDateTime> result = repo.findLastBidTime(auctionId);
+    assertFalse(result.isPresent());
+  }
 }
+
