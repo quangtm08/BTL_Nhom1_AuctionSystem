@@ -6,13 +6,10 @@ import java.text.NumberFormat;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -94,16 +91,13 @@ public class AuctionBrowseController {
         } catch (Exception e) { System.err.println("Error parsing bid update push: " + e.getMessage()); }
     }
 
-    private void loadAuctions() { /* unchanged behavior */
-        biddingService.listAuctions().thenCombine(biddingService.getMyBids().exceptionally(ex -> new com.nhom1.auction.common.dto.bidding.MyBidsResponse(Collections.emptyList())), (auctionsResp, myBidsResp) -> {
-            if (auctionsResp == null || auctionsResp.getAuctions() == null) return java.util.List.<AuctionSummaryDto>of();
-            String currentUserId = AppContext.getCurrentUser() != null ? AppContext.getCurrentUser().getUserID() : null;
-            Set<String> myBidAuctionIds = myBidsResp == null || myBidsResp.getBids() == null ? Set.of() : myBidsResp.getBids().stream().map(b -> b.getAuctionId()).filter(id -> id != null && !id.isBlank()).collect(Collectors.toSet());
-            return auctionsResp.getAuctions().stream()
-                    .filter(a -> a.getId() != null && !myBidAuctionIds.contains(a.getId()))
-                    .filter(a -> currentUserId == null || a.getSellerId() == null || !currentUserId.equals(a.getSellerId()))
-                    .toList();
-        }).thenAccept(filtered -> Platform.runLater(() -> handleFilteredAuctions(filtered))).exceptionally(ex -> { Platform.runLater(() -> showError("Load auctions failed", ex.getCause().getMessage())); return null; });
+    private void loadAuctions() {
+        biddingService.listBrowseAuctions()
+                .thenAccept(filtered -> Platform.runLater(() -> handleFilteredAuctions(filtered)))
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> showError("Load auctions failed", resolveErrorMessage(ex)));
+                    return null;
+                });
     }
 
     private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
@@ -124,6 +118,10 @@ public class AuctionBrowseController {
     }
 
     private void showError(String title, String message) { System.err.println(title + ": " + message); }
+    private String resolveErrorMessage(Throwable throwable) {
+        Throwable cause = throwable != null && throwable.getCause() != null ? throwable.getCause() : throwable;
+        return cause == null || cause.getMessage() == null ? "Unknown error" : cause.getMessage();
+    }
     public void navigateToDetail(String auctionId) { if (auctionId != null) AppContext.setSelectedAuctionId(auctionId); if (AppNavigator.getCurrentView() == AppView.AUCTION_DETAIL) return; AppNavigator.navigateTo(AppView.LOADING); PauseTransition d = new PauseTransition(Duration.seconds(0.4)); d.setOnFinished(e -> AppNavigator.navigateTo(AppView.AUCTION_DETAIL)); d.play(); }
     private String formatStatus(Object status) {
         if (status == null) return "Unknown";
