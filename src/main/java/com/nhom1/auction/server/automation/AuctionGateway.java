@@ -8,13 +8,15 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Cross-team contract:
- * - Implemented by auction module (member owning AuctionRepository).
- * - Keeps scheduler independent from concrete repository classes.
+ * Cross-team contract: - Implemented by auction module (member owning AuctionRepository). - Keeps
+ * scheduler independent from concrete repository classes.
  */
 public interface AuctionGateway {
-    List<Auction> findAll();
-    Optional<Auction> findById(UUID auctionId);
-    void updateStatus(UUID auctionId, AuctionStatus status);
-    void updateEndTime(UUID auctionId, LocalDateTime newEndTime);
+  List<Auction> findAll();
+
+  Optional<Auction> findById(UUID auctionId);
+
+  void updateStatus(UUID auctionId, AuctionStatus status);
+
+  void updateEndTime(UUID auctionId, LocalDateTime newEndTime);
 }

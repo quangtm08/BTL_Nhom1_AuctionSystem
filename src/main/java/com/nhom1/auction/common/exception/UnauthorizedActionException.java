@@ -4,7 +4,7 @@ import com.nhom1.auction.common.protocol.ErrorCode;
 
 public class UnauthorizedActionException extends AppException {
 
-    public UnauthorizedActionException(String message) {
-        super(ErrorCode.UNAUTHORIZED, message);
-    }
+  public UnauthorizedActionException(String message) {
+    super(ErrorCode.UNAUTHORIZED, message);
+  }
 }
