@@ -1,6 +1,5 @@
 package com.nhom1.auction.client.user.controller;
 
-import com.nhom1.auction.client.service.ClientPushService;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.WalletClientService;
 import com.nhom1.auction.client.util.DisplayFormatters;
@@ -55,7 +54,6 @@ public class WalletController {
   public void initialize() {
     setupQuickButtons();
     loadWalletData();
-    subscribeToWalletUpdates();
 
     btnDeposit.setOnAction(e -> handleDeposit());
     btnWithdraw.setOnAction(e -> handleWithdraw());
@@ -76,13 +74,8 @@ public class WalletController {
   }
 
   private void loadWalletData() {
-    AuthResponse currentUser = AppContext.getCurrentUser();
-    if (currentUser == null || currentUser.getUserID() == null) {
-      return;
-    }
-
     walletClientService
-        .getWallet(currentUser.getUserID())
+        .getWallet()
         .thenAccept(wallet -> Platform.runLater(() -> render(wallet)))
         .exceptionally(
             ex -> {
@@ -99,30 +92,7 @@ public class WalletController {
             });
   }
 
-  private void subscribeToWalletUpdates() {
-    ClientPushService.getInstance()
-        .addWalletUpdateListener(
-            event -> {
-              AuthResponse currentUser = AppContext.getCurrentUser();
-              if (currentUser != null
-                  && currentUser.getUserID() != null
-                  && currentUser.getUserID().equals(event.getUserId())) {
-                Platform.runLater(
-                    () -> {
-                      lblBalance.setText(String.format("$%,.2f", event.getNewBalance()));
-                      loadWalletData(); // Refresh history logs too
-                    });
-              }
-            });
-  }
-
   private void handleDeposit() {
-    AuthResponse currentUser = AppContext.getCurrentUser();
-    if (currentUser == null || currentUser.getUserID() == null) {
-      showAlert("Action Failed", "You must be logged in to deposit funds.", false);
-      return;
-    }
-
     String input = txtDepositAmount.getText().trim();
     if (input.isEmpty()) {
       showAlert("Invalid Amount", "Please enter an amount to deposit.", false);
@@ -142,7 +112,7 @@ public class WalletController {
 
     btnDeposit.setDisable(true);
     walletClientService
-        .deposit(currentUser.getUserID(), amount)
+        .deposit(amount)
         .thenAccept(
             wallet ->
                 Platform.runLater(
@@ -170,12 +140,6 @@ public class WalletController {
   }
 
   private void handleWithdraw() {
-    AuthResponse currentUser = AppContext.getCurrentUser();
-    if (currentUser == null || currentUser.getUserID() == null) {
-      showAlert("Action Failed", "You must be logged in to withdraw funds.", false);
-      return;
-    }
-
     String input = txtWithdrawAmount.getText().trim();
     if (input.isEmpty()) {
       showAlert("Invalid Amount", "Please enter an amount to withdraw.", false);
@@ -195,7 +159,7 @@ public class WalletController {
 
     btnWithdraw.setDisable(true);
     walletClientService
-        .withdraw(currentUser.getUserID(), amount)
+        .withdraw(amount)
         .thenAccept(
             wallet ->
                 Platform.runLater(
@@ -225,7 +189,7 @@ public class WalletController {
   private void render(WalletResponse wallet) {
     if (wallet == null) return;
 
-    lblBalance.setText(String.format("$%,.2f", wallet.getBalance()));
+    lblBalance.setText(DisplayFormatters.money(wallet.getBalance()));
     historyBox.getChildren().clear();
 
     List<WalletTransactionDto> transactions = wallet.getTransactions();

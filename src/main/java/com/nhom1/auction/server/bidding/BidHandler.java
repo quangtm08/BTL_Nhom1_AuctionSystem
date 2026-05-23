@@ -3,6 +3,7 @@ package com.nhom1.auction.server.bidding;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.dto.bidding.GetAuctionDetailRequest;
 import com.nhom1.auction.common.dto.bidding.ListAuctionsResponse;
+import com.nhom1.auction.common.dto.bidding.ListMyBidsRequest;
 import com.nhom1.auction.common.dto.bidding.MyBidsResponse;
 import com.nhom1.auction.common.dto.bidding.PlaceBidRequest;
 import com.nhom1.auction.common.dto.bidding.PlaceBidResponse;
@@ -70,7 +71,7 @@ public class BidHandler {
         MessageType.LIST_MY_BIDS,
         (requestId, payloadJson) -> {
           try {
-            BidderRequest request = JsonUtil.fromJson(payloadJson, BidderRequest.class);
+            ListMyBidsRequest request = JsonUtil.fromJson(payloadJson, ListMyBidsRequest.class);
             return handleListMyBids(requestId, request);
           } catch (Exception e) {
             return ResponseFactory.invalidFormat(requestId, "Invalid LIST_MY_BIDS payload");
@@ -129,7 +130,7 @@ public class BidHandler {
   }
 
   private ResponseMessage<MyBidsResponse> handleListMyBids(
-      String requestId, BidderRequest request) {
+      String requestId, ListMyBidsRequest request) {
     try {
       UUID bidderId = UUID.fromString(request.getBidderId());
       return ResponseFactory.success(requestId, bidService.getMyBids(bidderId));
@@ -140,17 +141,4 @@ public class BidHandler {
     }
   }
 
-  public static class BidderRequest {
-    private String bidderId;
-
-    public BidderRequest() {}
-
-    public String getBidderId() {
-      return bidderId;
-    }
-
-    public void setBidderId(String bidderId) {
-      this.bidderId = bidderId;
-    }
-  }
 }

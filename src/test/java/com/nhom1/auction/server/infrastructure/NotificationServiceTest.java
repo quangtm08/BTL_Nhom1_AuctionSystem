@@ -2,7 +2,6 @@ package com.nhom1.auction.server.infrastructure;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
@@ -74,13 +73,6 @@ public class NotificationServiceTest {
   }
 
   @Test
-  public void testSendWalletUpdate() {
-    java.util.UUID userId = java.util.UUID.randomUUID();
-    service.sendWalletUpdate(userId, java.math.BigDecimal.TEN);
-    verify(mockRegistry).sendToUser(eq(userId), anyString());
-  }
-
-  @Test
   public void testBroadcastAuctionTimeExtended() {
     java.util.UUID auctionId = java.util.UUID.randomUUID();
     service.broadcastAuctionTimeExtended(auctionId, java.time.LocalDateTime.now().plusDays(1));
@@ -98,13 +90,4 @@ public class NotificationServiceTest {
         () -> service.broadcastBidUpdate(auctionId, java.math.BigDecimal.TEN, null));
   }
 
-  @Test
-  public void testSendWalletUpdate_SendToUserThrows_DoesNotPropagate() {
-    java.util.UUID userId = java.util.UUID.randomUUID();
-    doThrow(new RuntimeException("Network error"))
-        .when(mockRegistry)
-        .sendToUser(any(), anyString());
-    org.junit.jupiter.api.Assertions.assertDoesNotThrow(
-        () -> service.sendWalletUpdate(userId, java.math.BigDecimal.valueOf(500)));
-  }
 }

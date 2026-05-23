@@ -82,7 +82,7 @@ public void initialize() {
 
 Quy tắc khi dùng push:
 
-- dùng các method `onBidUpdate`, `onNewAuction`, `onAuctionDeleted`, `onAuctionEnded`, `onUserDeleted`, `onUserCreated`;
+- dùng các method `onBidUpdate`, `onNewAuction`, `onAuctionDeleted`, `onAuctionEnded`, `onAuctionTimeExtended`, `onUserDeleted`, `onUserCreated`;
 - callback nhận DTO đã parse sẵn, ví dụ `BidUpdateEvent`;
 - luôn dùng `Platform.runLater(...)` khi sửa UI;
 - controller cha đăng ký push, component/card con không tự đăng ký;

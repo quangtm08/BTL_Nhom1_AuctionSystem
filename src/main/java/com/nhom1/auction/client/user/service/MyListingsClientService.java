@@ -1,5 +1,7 @@
 package com.nhom1.auction.client.user.service;
 
+import com.nhom1.auction.common.dto.auction.DeleteAuctionRequest;
+import com.nhom1.auction.common.dto.auction.ListMyListingsRequest;
 import com.nhom1.auction.common.dto.auction.MyListingsResponse;
 import com.nhom1.auction.common.dto.auction.UpdateAuctionRequest;
 import com.nhom1.auction.common.dto.auth.AuthResponse;
@@ -10,7 +12,6 @@ import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.utils.AppContext;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class MyListingsClientService extends BaseClientService {
@@ -21,8 +22,9 @@ public class MyListingsClientService extends BaseClientService {
       return validationError("No user session. Please sign in again.");
     }
 
-    RequestMessage<Map<String, String>> request =
-        new RequestMessage<>(MessageType.LIST_MY_LISTINGS, Map.of("sellerId", user.getUserID()));
+    RequestMessage<ListMyListingsRequest> request =
+        new RequestMessage<>(
+            MessageType.LIST_MY_LISTINGS, new ListMyListingsRequest(user.getUserID()));
     return send(request, MyListingsResponse.class);
   }
 
@@ -36,10 +38,9 @@ public class MyListingsClientService extends BaseClientService {
       return validationError("No user session. Please sign in again.");
     }
 
-    RequestMessage<Map<String, String>> request =
+    RequestMessage<DeleteAuctionRequest> request =
         new RequestMessage<>(
-            MessageType.DELETE_AUCTION,
-            Map.of("sellerId", user.getUserID(), "auctionId", auctionId));
+            MessageType.DELETE_AUCTION, new DeleteAuctionRequest(user.getUserID(), auctionId));
     return send(request, String.class);
   }
 

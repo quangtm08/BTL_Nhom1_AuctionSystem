@@ -78,15 +78,6 @@ public class PaymentService {
         auctionRepository.updateStatus(parsedAuctionId, AuctionStatus.PAID, connection);
         connection.commit();
 
-        // Trigger real-time wallet push updates post-commit
-        try {
-          walletService.pushWalletUpdate(parsedBidderId);
-          walletService.pushWalletUpdate(auction.getSellerId());
-        } catch (Exception e) {
-          System.err.println(
-              "[PaymentService] Error sending real-time wallet push updates: " + e.getMessage());
-        }
-
         return new ProcessPaymentResponse(parsedAuctionId.toString(), amount, "COMPLETED", now);
       } catch (AppException e) {
         connection.rollback();

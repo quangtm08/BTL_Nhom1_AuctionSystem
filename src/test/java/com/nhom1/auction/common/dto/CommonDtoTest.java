@@ -64,7 +64,6 @@ public class CommonDtoTest {
     AuctionTimeExtendedEvent.class,
     UserCreatedEvent.class,
     UserDeletedEvent.class,
-    WalletUpdateEvent.class,
     DepositRequest.class,
     GetWalletRequest.class,
     WalletResponse.class,

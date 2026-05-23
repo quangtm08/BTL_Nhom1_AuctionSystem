@@ -31,7 +31,6 @@ public enum MessageType {
   WITHDRAW_MONEY,
 
   // Push notifications
-  PUSH_WALLET_UPDATE,
   PUSH_BID_UPDATE,
   PUSH_AUCTION_ENDED,
   PUSH_AUCTION_TIME_EXTENDED,

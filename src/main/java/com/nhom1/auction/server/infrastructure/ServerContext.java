@@ -46,8 +46,7 @@ public class ServerContext {
         AuctionModule.init(this.dataSource, this.router, this.notificationService);
 
     // Initialize Wallet Module
-    WalletService walletService =
-        WalletModule.init(this.dataSource, this.router, this.notificationService);
+    WalletService walletService = WalletModule.init(this.dataSource, this.router);
     WalletRepository walletRepository = new WalletRepository(this.dataSource);
 
     BidRepository bidRepository = new BidRepository(this.dataSource);

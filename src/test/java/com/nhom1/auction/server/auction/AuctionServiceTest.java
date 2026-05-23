@@ -302,7 +302,7 @@ public class AuctionServiceTest {
         UUID parsedSellerId = UUID.fromString(sellerId);
         UUID parsedAuctionId = UUID.randomUUID();
         UUID itemId = UUID.randomUUID();
-        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+        UpdateAuctionRequest dto = buildValidUpdateRequest(
             sellerId,
             parsedAuctionId.toString()
         );
@@ -345,7 +345,7 @@ public class AuctionServiceTest {
         String sellerId = UUID.randomUUID().toString();
         UUID parsedSellerId = UUID.fromString(sellerId);
         UUID parsedAuctionId = UUID.randomUUID();
-        UpdateAuctionRequest dto = createValidUpdateAuctionRequest(
+        UpdateAuctionRequest dto = buildValidUpdateRequest(
             sellerId,
             parsedAuctionId.toString()
         );

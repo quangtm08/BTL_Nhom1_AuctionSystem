@@ -7,7 +7,6 @@ import com.nhom1.auction.common.dto.wallet.WalletResponse;
 import com.nhom1.auction.common.entity.Wallet;
 import com.nhom1.auction.common.entity.WalletTransaction;
 import com.nhom1.auction.common.exception.ValidationException;
-import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.time.LocalDateTime;
@@ -20,16 +19,14 @@ import org.junit.jupiter.api.Test;
 public class WalletServiceTest {
 
   private WalletRepository mockWalletRepository;
-  private NotificationService mockNotificationService;
   private WalletService walletService;
   private Connection mockConnection;
 
   @BeforeEach
   public void setUp() {
     mockWalletRepository = mock(WalletRepository.class);
-    mockNotificationService = mock(NotificationService.class);
     mockConnection = mock(Connection.class);
-    walletService = new WalletService(mockWalletRepository, mockNotificationService);
+    walletService = new WalletService(mockWalletRepository);
   }
 
   @Test
@@ -122,7 +119,6 @@ public class WalletServiceTest {
     assertEquals(new BigDecimal("1500.00"), wallet.getBalance());
     verify(mockWalletRepository).save(wallet);
     verify(mockWalletRepository).saveTransaction(any(WalletTransaction.class));
-    verify(mockNotificationService).sendWalletUpdate(userId, new BigDecimal("1500.00"));
   }
 
   @Test
@@ -154,7 +150,6 @@ public class WalletServiceTest {
     assertEquals(new BigDecimal("600.00"), wallet.getBalance());
     verify(mockWalletRepository).save(wallet);
     verify(mockWalletRepository).saveTransaction(any(WalletTransaction.class));
-    verify(mockNotificationService).sendWalletUpdate(userId, new BigDecimal("600.00"));
   }
 
   @Test
@@ -246,14 +241,4 @@ public class WalletServiceTest {
                 fromUserId, toUserId, new BigDecimal("50.01"), "ref", "desc", mockConnection));
   }
 
-  @Test
-  public void testPushWalletUpdate() {
-    UUID userId = UUID.randomUUID();
-    Wallet wallet = new Wallet(userId, new BigDecimal("300.00"));
-    when(mockWalletRepository.findByUserId(userId)).thenReturn(Optional.of(wallet));
-
-    walletService.pushWalletUpdate(userId);
-
-    verify(mockNotificationService).sendWalletUpdate(userId, new BigDecimal("300.00"));
-  }
 }
