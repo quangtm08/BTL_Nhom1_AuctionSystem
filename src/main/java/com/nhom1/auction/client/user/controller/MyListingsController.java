@@ -62,7 +62,7 @@ public class MyListingsController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/user/components/listing_card.fxml"));
             Parent card = loader.load();
             ListingCardComponentController c = loader.getController();
-            c.bind(dto, DisplayFormatters.auctionStatusLabel(dto.getStatus()), DisplayFormatters.money(resolveDisplayCurrentBid(dto)), DisplayFormatters.timeLeft(dto.getEndTime()), !isEditableListing(dto), () -> handleEditListing(dto), () -> handleDeleteListing(dto));
+            c.bind(dto, DisplayFormatters.auctionStatusLabel(dto.getStatus()), DisplayFormatters.money(resolveDisplayCurrentBid(dto)), DisplayFormatters.timeLeft(dto.getEndTime()), !isEditableListing(dto), DisplayFormatters.isEnded(dto.getStatus()), () -> handleEditListing(dto), () -> handleDeleteListing(dto));
             if (dto.getId() != null) priceLabels.put(dto.getId(), c.getPriceLabel());
             return card;
         } catch (IOException e) { throw new RuntimeException("Failed to load listing card component", e); }

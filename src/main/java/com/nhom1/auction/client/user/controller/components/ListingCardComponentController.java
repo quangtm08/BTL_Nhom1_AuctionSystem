@@ -22,7 +22,7 @@ public class ListingCardComponentController {
     @FXML
     private Button deleteButton;
 
-    public void bind(AuctionSummaryDto dto, String status, String price, String remaining, boolean disableActions, Runnable onEdit, Runnable onDelete) {
+    public void bind(AuctionSummaryDto dto, String status, String price, String remaining, boolean disableActions, boolean endedStyle, Runnable onEdit, Runnable onDelete) {
         titleLabel.setText(dto.getItemName() != null ? dto.getItemName() : "Untitled listing");
         subLabel.setText("Seller listing");
         statusLabel.setText(status);
@@ -30,7 +30,7 @@ public class ListingCardComponentController {
         remainingLabel.setText(remaining);
 
         statusLabel.getStyleClass().remove("status-badge-ended");
-        if (disableActions && !statusLabel.getStyleClass().contains("status-badge-ended")) statusLabel.getStyleClass().add("status-badge-ended");
+        if (endedStyle && !statusLabel.getStyleClass().contains("status-badge-ended")) statusLabel.getStyleClass().add("status-badge-ended");
 
         editButton.setDisable(disableActions);
         deleteButton.setDisable(disableActions);
