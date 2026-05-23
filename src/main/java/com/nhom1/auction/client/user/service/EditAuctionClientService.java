@@ -12,27 +12,40 @@ import java.time.LocalDateTime;
 import java.util.concurrent.CompletableFuture;
 
 public class EditAuctionClientService extends BaseClientService {
-    public CompletableFuture<String> updateAuction(String auctionId, String title, String description, String startingBid, ItemCategory category, ItemCondition condition, LocalDateTime endTime) {
-        AuthResponse user = AppContext.getCurrentUser();
-        if (user == null || user.getUserID() == null || user.getUserID().isBlank()) {
-            return validationError("Please sign in again.");
-        }
-        if (auctionId == null || auctionId.isBlank()) return validationError("Auction ID is required.");
-        if (title == null || title.isBlank()) return validationError("Title is required.");
-        BigDecimal parsedStartingBid;
-        try { parsedStartingBid = new BigDecimal(startingBid.trim()); } catch (Exception ex) { return validationError("Starting bid must be a valid number."); }
-        if (category == null || condition == null) return validationError("Category and condition are required.");
-        if (endTime == null || !endTime.isAfter(LocalDateTime.now())) return validationError("End time must be in the future.");
-
-        UpdateAuctionRequest payload = new UpdateAuctionRequest();
-        payload.setAuctionId(auctionId);
-        payload.setSellerId(user.getUserID());
-        payload.setName(title.trim());
-        payload.setDescription(description);
-        payload.setCategory(category);
-        payload.setCondition(condition);
-        payload.setStartingPrice(parsedStartingBid);
-        payload.setEndTime(endTime);
-        return send(new RequestMessage<>(MessageType.UPDATE_AUCTION, payload), String.class);
+  public CompletableFuture<String> updateAuction(
+      String auctionId,
+      String title,
+      String description,
+      String startingBid,
+      ItemCategory category,
+      ItemCondition condition,
+      LocalDateTime endTime) {
+    AuthResponse user = AppContext.getCurrentUser();
+    if (user == null || user.getUserID() == null || user.getUserID().isBlank()) {
+      return validationError("Please sign in again.");
     }
+    if (auctionId == null || auctionId.isBlank()) return validationError("Auction ID is required.");
+    if (title == null || title.isBlank()) return validationError("Title is required.");
+    BigDecimal parsedStartingBid;
+    try {
+      parsedStartingBid = new BigDecimal(startingBid.trim());
+    } catch (Exception ex) {
+      return validationError("Starting bid must be a valid number.");
+    }
+    if (category == null || condition == null)
+      return validationError("Category and condition are required.");
+    if (endTime == null || !endTime.isAfter(LocalDateTime.now()))
+      return validationError("End time must be in the future.");
+
+    UpdateAuctionRequest payload = new UpdateAuctionRequest();
+    payload.setAuctionId(auctionId);
+    payload.setSellerId(user.getUserID());
+    payload.setName(title.trim());
+    payload.setDescription(description);
+    payload.setCategory(category);
+    payload.setCondition(condition);
+    payload.setStartingPrice(parsedStartingBid);
+    payload.setEndTime(endTime);
+    return send(new RequestMessage<>(MessageType.UPDATE_AUCTION, payload), String.class);
+  }
 }

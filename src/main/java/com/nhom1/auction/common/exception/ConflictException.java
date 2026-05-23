@@ -4,7 +4,7 @@ import com.nhom1.auction.common.protocol.ErrorCode;
 
 public class ConflictException extends AppException {
 
-    public ConflictException(String message) {
-        super(ErrorCode.CONFLICT, message);
-    }
+  public ConflictException(String message) {
+    super(ErrorCode.CONFLICT, message);
+  }
 }

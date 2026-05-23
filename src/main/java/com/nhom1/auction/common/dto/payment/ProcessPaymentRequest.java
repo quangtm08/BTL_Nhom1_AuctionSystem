@@ -1,29 +1,29 @@
 package com.nhom1.auction.common.dto.payment;
 
 public class ProcessPaymentRequest {
-    private String auctionId;
-    private String bidderId;
+  private String auctionId;
+  private String bidderId;
 
-    public ProcessPaymentRequest() {}
+  public ProcessPaymentRequest() {}
 
-    public ProcessPaymentRequest(String auctionId, String bidderId) {
-        this.auctionId = auctionId;
-        this.bidderId = bidderId;
-    }
+  public ProcessPaymentRequest(String auctionId, String bidderId) {
+    this.auctionId = auctionId;
+    this.bidderId = bidderId;
+  }
 
-    public String getAuctionId() {
-        return auctionId;
-    }
+  public String getAuctionId() {
+    return auctionId;
+  }
 
-    public void setAuctionId(String auctionId) {
-        this.auctionId = auctionId;
-    }
+  public void setAuctionId(String auctionId) {
+    this.auctionId = auctionId;
+  }
 
-    public String getBidderId() {
-        return bidderId;
-    }
+  public String getBidderId() {
+    return bidderId;
+  }
 
-    public void setBidderId(String bidderId) {
-        this.bidderId = bidderId;
-    }
+  public void setBidderId(String bidderId) {
+    this.bidderId = bidderId;
+  }
 }
