@@ -24,15 +24,17 @@ Sau khi chinh sua, luong xu ly nen la:
 
 ```text
 Co bid moi
--> Lay danh sach auto-bid theo thu tu dang ky som nhat truoc
+-> Lay danh sach auto-bid co thong tin created_at
 -> Bo qua nguoi dang dan dau
--> Tim nguoi dau tien con du maxAmount de dat bid tiep theo
+-> Dua cac cau hinh du dieu kien vao PriorityQueue
+-> PriorityQueue uu tien nguoi dang ky auto-bid som nhat truoc
+-> Poll PriorityQueue de tim nguoi dau tien con du maxAmount de dat bid tiep theo
 -> Dat bid tu dong
 -> Lap lai den khi khong con ai du dieu kien
 ```
 
-Cach nay de hieu hon, it logic phu hon va phu hop hon voi yeu cau uu tien theo
-thoi diem dang ky.
+Cach nay de hieu hon, it logic phu hon, dung duoc PriorityQueue that trong Java
+va phu hop hon voi yeu cau uu tien theo thoi diem dang ky.
 
 ## 3. Pham vi chinh sua
 
@@ -51,13 +53,15 @@ Giu nguyen cac phan sau:
 
 Chi nen chinh o hai diem chinh:
 
-- Sap xep danh sach auto-bid theo thoi diem dang ky.
-- Don gian hoa logic chon nguoi duoc auto-bid tiep theo trong `AutoBidService`.
+- Tra ve hoac map them `created_at` cho cau hinh auto-bid.
+- Dung `PriorityQueue` trong `AutoBidService` voi comparator theo thoi diem dang
+  ky.
+- Don gian hoa logic chon nguoi duoc auto-bid tiep theo.
 
-## 4. Buoc 1: Sap xep auto-bid theo thoi diem dang ky
+## 4. Buoc 1: Lay them thoi diem dang ky auto-bid
 
-Trong `AutoBidRepository.findByAuctionId(...)`, sua cau SQL de tra ve cau hinh
-auto-bid theo `created_at` tang dan.
+Trong `AutoBidRepository.findByAuctionId(...)`, sua cau SQL de lay them
+`created_at` cua cau hinh auto-bid.
 
 Hien tai:
 
@@ -70,19 +74,21 @@ WHERE auction_id = ?
 Nen sua thanh:
 
 ```sql
-SELECT auction_id, bidder_id, max_amount, increment_amount
+SELECT auction_id, bidder_id, max_amount, increment_amount, created_at
 FROM auto_bid_configs
 WHERE auction_id = ?
-ORDER BY created_at ASC
 ```
 
 Y nghia:
 
-- Nguoi dang ky auto-bid som hon se duoc xet truoc.
-- Khong can tao them `PriorityQueue` trong Java.
-- Co the giai thich rang he thong dung `created_at` lam do uu tien.
+- `created_at` la du lieu dung de xac dinh do uu tien.
+- Khong sap xep bang SQL la bat buoc neu da dung `PriorityQueue`, nhung co the
+  them `ORDER BY created_at ASC` de ket qua doc log/on dinh hon.
+- Neu `AutoBidConfig` chua co field `createdAt`, nen them field nay hoac tao
+  mot class noi bo nho trong service, vi `PriorityQueue` can gia tri nay de so
+  sanh.
 
-## 5. Buoc 2: Don gian hoa logic chon auto-bidder
+## 5. Buoc 2: Dung PriorityQueue de chon auto-bidder
 
 Trong `AutoBidService.runAutoBids(...)`, bo cach chon nguoi co `maxAmount` cao
 nhat.
@@ -94,18 +100,29 @@ eligibleConfigs.stream()
     .max(Comparator.comparing(AutoBidConfig::getMaxAmount))
 ```
 
-Thay vao do, vi danh sach da duoc sap xep theo `created_at`, chi can duyet tu
-dau danh sach va chon nguoi dau tien du dieu kien.
+Thay vao do, tao `PriorityQueue` that trong Java. Priority khong phai la
+`maxAmount`, ma la thoi diem dang ky auto-bid som hon:
+
+```java
+PriorityQueue<AutoBidConfig> queue =
+    new PriorityQueue<>(Comparator.comparing(AutoBidConfig::getCreatedAt));
+```
+
+Neu can tie-break khi hai config co cung `created_at`, co the them
+`thenComparing(AutoBidConfig::getBidderId)` de thu tu on dinh.
 
 Logic mong muon:
 
 ```text
-Voi tung cau hinh auto-bid trong danh sach:
-- Neu la nguoi dang dan dau thi bo qua
+Voi tung cau hinh auto-bid:
+- Neu la nguoi dang dan dau thi khong dua vao queue
 - Tinh gia bid tiep theo = gia hien tai + buoc gia toi thieu
-- Neu maxAmount cua nguoi do du tra gia nay thi chon nguoi do
-- Dung vong duyet
+- Neu maxAmount cua nguoi do du tra gia nay thi dua vao queue
+- Poll queue de lay nguoi co uu tien cao nhat
 ```
+
+Trong cach nay, `maxAmount` chi la dieu kien hop le va gioi han gia toi da.
+`maxAmount` khong quyet dinh do uu tien.
 
 ## 6. Buoc 3: Giu co che dat bid hien co
 
@@ -133,11 +150,12 @@ Tuy nhien, ben trong vong lap chi nen co cac buoc ro rang:
 
 ```text
 1. Lay auction hien tai
-2. Lay danh sach auto-bid theo thu tu uu tien
-3. Tim nguoi dau tien du dieu kien
-4. Neu khong co ai thi dung
-5. Dat auto-bid
-6. Cap nhat currentHighestBid va currentHighestBidderId
+2. Lay danh sach auto-bid kem created_at
+3. Dua cac config du dieu kien vao PriorityQueue theo created_at
+4. Poll PriorityQueue de lay nguoi dau tien du dieu kien
+5. Neu khong co ai thi dung
+6. Dat auto-bid
+7. Cap nhat currentHighestBid va currentHighestBidderId
 ```
 
 Khong can tinh `nextBestMax` neu muc tieu la don gian hoa va uu tien theo thoi
