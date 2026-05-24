@@ -42,8 +42,6 @@ public class CreateAuctionResponse {
     this.updatedAt = updatedAt;
   }
 
-  // Getters and setters...
-
   public String getId() {
     return id;
   }

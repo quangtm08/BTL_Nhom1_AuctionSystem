@@ -1,8 +1,5 @@
 package com.nhom1.auction.client.service;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.nhom1.auction.client.user.connection.ServerConnection;
 import com.nhom1.auction.common.dto.notification.AuctionDeletedEvent;
 import com.nhom1.auction.common.dto.notification.AuctionEndedEvent;
@@ -12,13 +9,12 @@ import com.nhom1.auction.common.dto.notification.NewAuctionEvent;
 import com.nhom1.auction.common.dto.notification.UserCreatedEvent;
 import com.nhom1.auction.common.dto.notification.UserDeletedEvent;
 import com.nhom1.auction.common.protocol.MessageType;
-import com.nhom1.auction.common.protocol.ResponseMessage;
+import com.nhom1.auction.common.utils.JsonUtil;
 import java.util.function.Consumer;
 
 public class ClientPushService {
   private static ClientPushService instance;
 
-  private final ObjectMapper mapper = new ObjectMapper();
   private volatile Consumer<BidUpdateEvent> bidUpdateHandler;
   private volatile Consumer<NewAuctionEvent> newAuctionHandler;
   private volatile Consumer<AuctionDeletedEvent> auctionDeletedHandler;
@@ -28,7 +24,6 @@ public class ClientPushService {
   private volatile Consumer<UserCreatedEvent> userCreatedHandler;
 
   private ClientPushService() {
-    mapper.registerModule(new JavaTimeModule());
     ServerConnection connection = ServerConnection.getInstance();
     connection.registerPushHandler(
         MessageType.PUSH_BID_UPDATE,
@@ -121,9 +116,6 @@ public class ClientPushService {
   }
 
   private <T> T readPayload(String json, Class<T> payloadClass) throws Exception {
-    JavaType responseType =
-        mapper.getTypeFactory().constructParametricType(ResponseMessage.class, payloadClass);
-    ResponseMessage<T> response = mapper.readValue(json, responseType);
-    return response.getPayload();
+    return JsonUtil.responsePayload(json, payloadClass);
   }
 }

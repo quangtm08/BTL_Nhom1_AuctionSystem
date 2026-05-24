@@ -196,7 +196,6 @@ public class WalletController {
       return;
     }
 
-    // Sort descending by creation date (newest first)
     transactions.sort(
         (t1, t2) -> {
           if (t1.getCreatedAt() == null || t2.getCreatedAt() == null) return 0;
@@ -234,7 +233,6 @@ public class WalletController {
 
     leftBox.getChildren().addAll(typeAndDateBox, descLabel, refLabel);
 
-    // Price formatting
     boolean isCredit = isCreditTransaction(tx.getTransactionType());
     String sign = isCredit ? "+" : "-";
     Label priceLabel = new Label(sign + " " + DisplayFormatters.money(tx.getAmount()));

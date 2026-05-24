@@ -24,7 +24,6 @@ public class AutoBidService {
   private final BidGateway bidGateway;
   private final NotificationService notificationService;
 
-  // Single daemon thread: auto-bid chains queue up and run sequentially
   private final ExecutorService executor =
       Executors.newSingleThreadExecutor(
           r -> {
@@ -44,6 +43,7 @@ public class AutoBidService {
     this.notificationService = notificationService;
   }
 
+  // Business operations
   public AutoBidConfigResponse saveConfig(AutoBidConfigRequest dto) {
     UUID auctionId = parseUuid(dto.getAuctionId(), "auctionId");
     UUID bidderId = parseUuid(dto.getBidderId(), "bidderId");
@@ -72,6 +72,23 @@ public class AutoBidService {
     return new AutoBidConfigResponse("CONFIG_SAVED");
   }
 
+  public AutoBidConfigResponse deleteConfig(String auctionIdRaw, String bidderIdRaw) {
+    UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
+    UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
+    int deleted = autoBidRepository.deleteByAuctionAndBidder(auctionId, bidderId);
+    return new AutoBidConfigResponse(deleted > 0 ? "CONFIG_DELETED" : "CONFIG_NOT_FOUND");
+  }
+
+  public void scheduleAutoBids(UUID auctionId, BigDecimal highestBid, UUID highestBidderId) {
+    executor.submit(() -> runAutoBids(auctionId, highestBid, highestBidderId));
+  }
+
+  public void triggerAutoBids(
+      UUID auctionId, BigDecimal newHighestBid, UUID currentHighestBidderId) {
+    runAutoBids(auctionId, newHighestBid, currentHighestBidderId);
+  }
+
+  // Query operations
   public AutoBidConfigDetailResponse getConfig(String auctionIdRaw, String bidderIdRaw) {
     UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
     UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
@@ -90,24 +107,7 @@ public class AutoBidService {
                 auctionId.toString(), bidderId.toString(), null, null, false));
   }
 
-  public AutoBidConfigResponse deleteConfig(String auctionIdRaw, String bidderIdRaw) {
-    UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
-    UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
-    int deleted = autoBidRepository.deleteByAuctionAndBidder(auctionId, bidderId);
-    return new AutoBidConfigResponse(deleted > 0 ? "CONFIG_DELETED" : "CONFIG_NOT_FOUND");
-  }
-
-  // Called from BidHandler — submits task and returns immediately
-  public void scheduleAutoBids(UUID auctionId, BigDecimal highestBid, UUID highestBidderId) {
-    executor.submit(() -> runAutoBids(auctionId, highestBid, highestBidderId));
-  }
-
-  // Kept for AuctionScheduler compatibility
-  public void triggerAutoBids(
-      UUID auctionId, BigDecimal newHighestBid, UUID currentHighestBidderId) {
-    runAutoBids(auctionId, newHighestBid, currentHighestBidderId);
-  }
-
+  // Helpers
   private void runAutoBids(
       UUID auctionId, BigDecimal currentHighestBid, UUID currentHighestBidderId) {
     Auction auction = auctionGateway.findById(auctionId).orElse(null);
@@ -125,7 +125,6 @@ public class AutoBidService {
             && currentHighestBid.compareTo(BigDecimal.ZERO) > 0);
 
     for (int depth = 0; depth < MAX_TRIGGER_DEPTH; depth++) {
-      // Effectively-final snapshots required by lambda capture rules
       final BigDecimal snapshotBid = currentHighestBid;
       final UUID snapshotBidderId = currentHighestBidderId;
 
@@ -178,7 +177,6 @@ public class AutoBidService {
       }
     }
 
-    // Broadcast once after the entire chain settles
     if (anyBidPlaced) {
       notificationService.broadcastBidUpdate(auctionId, finalBid, finalBidderId);
     }

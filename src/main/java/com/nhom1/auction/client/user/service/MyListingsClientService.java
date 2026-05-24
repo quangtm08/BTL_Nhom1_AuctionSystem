@@ -16,6 +16,8 @@ import java.util.concurrent.CompletableFuture;
 
 public class MyListingsClientService extends BaseClientService {
 
+  // Query operations
+
   public CompletableFuture<MyListingsResponse> listMyListings() {
     AuthResponse user = AppContext.getCurrentUser();
     if (user == null || user.getUserID() == null || user.getUserID().isBlank()) {
@@ -27,6 +29,8 @@ public class MyListingsClientService extends BaseClientService {
             MessageType.LIST_MY_LISTINGS, new ListMyListingsRequest(user.getUserID()));
     return send(request, MyListingsResponse.class);
   }
+
+  // Business operations
 
   public CompletableFuture<String> deleteListing(String auctionId) {
     if (auctionId == null || auctionId.isBlank()) {
@@ -74,6 +78,8 @@ public class MyListingsClientService extends BaseClientService {
         new RequestMessage<>(MessageType.UPDATE_AUCTION, payload);
     return send(request, String.class);
   }
+
+  // Validation
 
   private String validateUpdateInput(
       String auctionId,

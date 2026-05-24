@@ -7,7 +7,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,7 +23,7 @@ public class AuctionRepository {
     this.dataSource = dataSource;
   }
 
-  // ===================== SAVE =====================
+  // Writes
   public void save(Auction auction) {
     try (Connection conn = dataSource.getConnection()) {
       save(auction, conn);
@@ -44,7 +43,6 @@ public class AuctionRepository {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """;
 
-    Savepoint savepoint = createSavepoint(conn);
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
       ps.setString(1, auction.getId().toString());
       ps.setString(2, auction.getItemId().toString());
@@ -87,113 +85,11 @@ public class AuctionRepository {
 
       ps.executeUpdate();
     } catch (SQLException e) {
-      if (isMissingDurationDaysOrVersionColumn(e)) {
-        rollbackToSavepoint(conn, savepoint);
-        saveWithoutDurationDays(auction, conn);
-        return;
-      }
       throw new RuntimeException("Failed to save auction", e);
     }
   }
 
-  private void saveWithoutDurationDays(Auction auction, Connection conn) {
-    String sql =
-        """
-            INSERT INTO auctions(
-                id, item_id, start_time, end_time, status, starting_price,
-                current_highest_bid, highest_bidder_id, version, created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, auction.getId().toString());
-      ps.setString(2, auction.getItemId().toString());
-      if (auction.getStartTime() != null) {
-        ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
-      } else {
-        ps.setNull(3, java.sql.Types.TIMESTAMP);
-      }
-      if (auction.getEndTime() != null) {
-        ps.setTimestamp(4, java.sql.Timestamp.valueOf(auction.getEndTime()));
-      } else {
-        ps.setNull(4, java.sql.Types.TIMESTAMP);
-      }
-      ps.setString(5, auction.getStatus().name());
-      ps.setBigDecimal(6, auction.getStartingPrice());
-      ps.setBigDecimal(
-          7,
-          auction.getCurrentHighestBid() != null
-              ? auction.getCurrentHighestBid()
-              : BigDecimal.ZERO);
-      if (auction.getHighestBidderId() != null) {
-        ps.setString(8, auction.getHighestBidderId().toString());
-      } else {
-        ps.setNull(8, Types.VARCHAR);
-      }
-      ps.setLong(9, auction.getVersion());
-
-      java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
-      ps.setTimestamp(10, now);
-      ps.setTimestamp(11, now);
-
-      ps.executeUpdate();
-    } catch (SQLException e) {
-      if (isMissingVersionColumn(e)) {
-        saveLegacyWithoutDurationAndVersion(auction, conn);
-        return;
-      }
-      throw new RuntimeException("Failed to save auction", e);
-    }
-  }
-
-  private void saveLegacyWithoutDurationAndVersion(Auction auction, Connection conn) {
-    String sql =
-        """
-            INSERT INTO auctions(
-                id, item_id, start_time, end_time, status, starting_price,
-                current_highest_bid, highest_bidder_id, created_at, updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """;
-
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, auction.getId().toString());
-      ps.setString(2, auction.getItemId().toString());
-      if (auction.getStartTime() != null) {
-        ps.setTimestamp(3, java.sql.Timestamp.valueOf(auction.getStartTime()));
-      } else {
-        ps.setNull(3, java.sql.Types.TIMESTAMP);
-      }
-      if (auction.getEndTime() != null) {
-        ps.setTimestamp(4, java.sql.Timestamp.valueOf(auction.getEndTime()));
-      } else {
-        ps.setNull(4, java.sql.Types.TIMESTAMP);
-      }
-      ps.setString(5, auction.getStatus().name());
-      ps.setBigDecimal(6, auction.getStartingPrice());
-      ps.setBigDecimal(
-          7,
-          auction.getCurrentHighestBid() != null
-              ? auction.getCurrentHighestBid()
-              : BigDecimal.ZERO);
-      if (auction.getHighestBidderId() != null) {
-        ps.setString(8, auction.getHighestBidderId().toString());
-      } else {
-        ps.setNull(8, Types.VARCHAR);
-      }
-
-      java.sql.Timestamp now = new java.sql.Timestamp(System.currentTimeMillis());
-      ps.setTimestamp(9, now);
-      ps.setTimestamp(10, now);
-
-      ps.executeUpdate();
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to save auction", e);
-    }
-  }
-
-  // ===================== FIND BY ID =====================
+  // Reads
   public Optional<Auction> findById(UUID id) {
     try (Connection conn = dataSource.getConnection()) {
       return findById(id, conn);
@@ -224,7 +120,6 @@ public class AuctionRepository {
     return Optional.empty();
   }
 
-  // ===================== FIND ALL =====================
   public List<Auction> findAll() {
     String sql =
         """
@@ -247,7 +142,6 @@ public class AuctionRepository {
     return list;
   }
 
-  // ===================== FIND BY SELLER =====================
   public List<Auction> findBySellerId(UUID sellerId) {
     try (Connection conn = dataSource.getConnection()) {
       return findBySellerId(sellerId, conn);
@@ -280,7 +174,6 @@ public class AuctionRepository {
     return list;
   }
 
-  // ===================== FIND BY ITEM =====================
   public Optional<Auction> findByItemId(UUID itemId) {
     String sql =
         """
@@ -304,7 +197,7 @@ public class AuctionRepository {
     return Optional.empty();
   }
 
-  // ===================== UPDATE STATUS =====================
+  // Updates
   public void updateStatus(UUID auctionId, AuctionStatus status) {
     try (Connection conn = dataSource.getConnection()) {
       updateStatus(auctionId, status, conn);
@@ -331,7 +224,6 @@ public class AuctionRepository {
     }
   }
 
-  // ===================== UPDATE BID =====================
   /**
    * Atomic optimistic update for the auction row.
    *
@@ -379,7 +271,6 @@ public class AuctionRepository {
     }
   }
 
-  // ===================== UPDATE END TIME =====================
   public void updateEndTime(UUID auctionId, LocalDateTime newEndTime) {
     String sql =
         """
@@ -459,7 +350,31 @@ public class AuctionRepository {
     }
   }
 
-  // ===================== DELETE BY ID =====================
+  public boolean updateStartEndAndStatus(
+      UUID auctionId,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      AuctionStatus status,
+      Connection conn) {
+    String sql =
+        """
+            UPDATE auctions
+            SET start_time = ?, end_time = ?, status = ?, updated_at = ?
+            WHERE id = ? AND status = 'PENDING'
+        """;
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setTimestamp(1, startTime != null ? java.sql.Timestamp.valueOf(startTime) : null);
+      ps.setTimestamp(2, endTime != null ? java.sql.Timestamp.valueOf(endTime) : null);
+      ps.setString(3, status.name());
+      ps.setTimestamp(4, java.sql.Timestamp.valueOf(LocalDateTime.now()));
+      ps.setString(5, auctionId.toString());
+      return ps.executeUpdate() > 0;
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to update auction start/end/status", e);
+    }
+  }
+
+  // Deletes
   public int deleteById(UUID auctionId) {
     try (Connection conn = dataSource.getConnection()) {
       return deleteById(auctionId, conn);
@@ -478,7 +393,6 @@ public class AuctionRepository {
     }
   }
 
-  // ===================== CLEAR HIGHEST BIDDER =====================
   public int clearHighestBidderByUserId(UUID bidderId) {
     try (Connection conn = dataSource.getConnection()) {
       return clearHighestBidderByUserId(bidderId, conn);
@@ -497,40 +411,7 @@ public class AuctionRepository {
     }
   }
 
-  private Savepoint createSavepoint(Connection conn) {
-    try {
-      return conn.getAutoCommit() ? null : conn.setSavepoint();
-    } catch (SQLException e) {
-      return null;
-    }
-  }
-
-  private void rollbackToSavepoint(Connection conn, Savepoint savepoint) {
-    if (savepoint == null) {
-      return;
-    }
-    try {
-      conn.rollback(savepoint);
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to recover auction save fallback", e);
-    }
-  }
-
-  private boolean isMissingDurationDaysOrVersionColumn(SQLException e) {
-    String message = e.getMessage();
-    return ("42703".equals(e.getSQLState())
-        || (message != null
-            && (message.toLowerCase().contains("duration_days")
-                || message.toLowerCase().contains("version"))));
-  }
-
-  private boolean isMissingVersionColumn(SQLException e) {
-    String message = e.getMessage();
-    return ("42703".equals(e.getSQLState())
-        || (message != null && message.toLowerCase().contains("version")));
-  }
-
-  // ===================== MAPPER =====================
+  // Row mapping
   private Auction map(ResultSet rs) throws SQLException {
     UUID id = UUID.fromString(rs.getString("id"));
     UUID itemId = UUID.fromString(rs.getString("item_id"));
@@ -549,13 +430,8 @@ public class AuctionRepository {
     AuctionStatus status = AuctionStatus.valueOf(rs.getString("status"));
 
     Integer durationDays = null;
-    try {
-      int dur = rs.getInt("duration_days");
-      if (!rs.wasNull()) durationDays = dur;
-    } catch (SQLException ignored) {
-      // Backward compatibility: older DB schema may not have duration_days.
-      durationDays = null;
-    }
+    int dur = rs.getInt("duration_days");
+    if (!rs.wasNull()) durationDays = dur;
 
     java.sql.Timestamp createdTs = rs.getTimestamp("created_at");
     java.sql.Timestamp updatedTs = rs.getTimestamp("updated_at");
@@ -581,30 +457,5 @@ public class AuctionRepository {
         updatedAt,
         durationDays,
         version);
-  }
-
-  // Update start, end and status atomically (used by admin approve flow)
-  public boolean updateStartEndAndStatus(
-      UUID auctionId,
-      LocalDateTime startTime,
-      LocalDateTime endTime,
-      AuctionStatus status,
-      Connection conn) {
-    String sql =
-        """
-            UPDATE auctions
-            SET start_time = ?, end_time = ?, status = ?, updated_at = ?
-            WHERE id = ? AND status = 'PENDING'
-        """;
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setTimestamp(1, startTime != null ? java.sql.Timestamp.valueOf(startTime) : null);
-      ps.setTimestamp(2, endTime != null ? java.sql.Timestamp.valueOf(endTime) : null);
-      ps.setString(3, status.name());
-      ps.setTimestamp(4, java.sql.Timestamp.valueOf(LocalDateTime.now()));
-      ps.setString(5, auctionId.toString());
-      return ps.executeUpdate() > 0;
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to update auction start/end/status", e);
-    }
   }
 }

@@ -61,6 +61,7 @@ public class BidService {
     this.dataSource = dataSource;
   }
 
+  // Business operations
   public BidTransaction placeBid(UUID bidderId, UUID auctionId, BigDecimal amount, BidType bidType)
       throws InvalidBidException,
           AuctionClosedException,
@@ -82,7 +83,6 @@ public class BidService {
           // updateHighestBid(...) will affect 0 rows and we will retry.
           long expectedVersion = auction.getVersion();
 
-          // Check user's wallet balance
           Wallet wallet =
               walletRepository
                   .findByUserId(bidderId, connection)
@@ -142,6 +142,7 @@ public class BidService {
     throw new ConflictException("Bid lost race after retrying");
   }
 
+  // Query operations
   public AuctionDetailDto getAuctionDetail(UUID auctionId) {
     Auction auction =
         auctionRepository
@@ -220,6 +221,7 @@ public class BidService {
     return new MyBidsResponse(bids);
   }
 
+  // DTO mapping
   private BidSummaryDto toBidSummaryDto(BidTransaction bidTransaction) {
     String bidderName =
         userRepository

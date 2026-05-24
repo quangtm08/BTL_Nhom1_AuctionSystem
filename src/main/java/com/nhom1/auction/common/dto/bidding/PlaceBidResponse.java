@@ -13,7 +13,6 @@ public class PlaceBidResponse {
     this.newHighestBidId = newHighestBidId;
   }
 
-  // Getters and Setters
   public String getBidId() {
     return bidId;
   }

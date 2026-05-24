@@ -18,13 +18,6 @@ import com.nhom1.auction.common.protocol.ResponseMessage;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
-/*
- * Abstract base for all client-side services.
- * Responsibilities handled here so subclasses don't repeat them:
- *   1. Sending a RequestMessage through ServerConnection.
- *   2. Unwrapping ResponseMessage<T> -> T on success.
- *   3. Mapping standardized server errors to typed exceptions.
- */
 public abstract class BaseClientService {
 
   protected final ServerConnection connection;

@@ -7,6 +7,7 @@ import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
@@ -41,10 +42,16 @@ public class AutoBidServiceTest {
         new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
+            UUID.randomUUID(),
             new BigDecimal("200.00"),
             LocalDateTime.now().minusHours(1),
-            LocalDateTime.now().plusHours(1));
-    defaultAuction.startAuction();
+            LocalDateTime.now().plusHours(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
     when(auctionGateway.findById(any(UUID.class))).thenReturn(Optional.of(defaultAuction));
   }
 

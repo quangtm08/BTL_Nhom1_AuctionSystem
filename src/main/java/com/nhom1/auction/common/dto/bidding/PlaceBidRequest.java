@@ -15,7 +15,6 @@ public class PlaceBidRequest {
     this.amount = amount;
   }
 
-  // Getters and Setters:
   public String getAuctionId() {
     return auctionId;
   }

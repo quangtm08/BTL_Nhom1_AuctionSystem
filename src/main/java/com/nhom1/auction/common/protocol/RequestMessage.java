@@ -21,7 +21,6 @@ public class RequestMessage<T> {
     this.payload = payload;
   }
 
-  // Getters and Setters
   public MessageType getType() {
     return type;
   }

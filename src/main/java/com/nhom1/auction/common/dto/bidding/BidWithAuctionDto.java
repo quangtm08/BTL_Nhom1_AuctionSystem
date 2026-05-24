@@ -32,7 +32,6 @@ public class BidWithAuctionDto {
     this.winning = winning;
   }
 
-  // Getters and Setters
   public String getAuctionId() {
     return auctionId;
   }

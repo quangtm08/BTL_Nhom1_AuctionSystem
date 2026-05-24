@@ -39,12 +39,13 @@ public class AuctionService {
     this.dataSource = dataSource;
   }
 
+  // Business operations
   public Auction createAuction(String sellerId, CreateAuctionRequest dto) {
     validateCreateAuctionRequest(sellerId, dto);
 
     UUID parsedSellerId = UUID.fromString(sellerId);
     Item item = createItem(dto);
-    LocalDateTime startTime = resolveCreateStartTime(dto);
+    LocalDateTime startTime = dto.getStartTime();
     LocalDateTime endTime = resolveCreateEndTime(dto, startTime);
 
     try (Connection connection = dataSource.getConnection()) {
@@ -74,59 +75,6 @@ public class AuctionService {
     } catch (Exception ex) {
       throw new RuntimeException("Create auction transaction failed", ex);
     }
-  }
-
-  private LocalDateTime resolveCreateStartTime(CreateAuctionRequest dto) {
-    if (dto.getStartTime() != null) {
-      return dto.getStartTime();
-    }
-    // OPEN auctions are not live until admin approval; this timestamp keeps
-    // legacy DB schemas with NOT NULL start_time working.
-    return LocalDateTime.now();
-  }
-
-  private LocalDateTime resolveCreateEndTime(CreateAuctionRequest dto, LocalDateTime startTime) {
-    if (dto.getEndTime() != null) {
-      return dto.getEndTime();
-    }
-    int durationDays =
-        dto.getDurationDays() != null && dto.getDurationDays() > 0 ? dto.getDurationDays() : 7;
-    return startTime.plusDays(durationDays);
-  }
-
-  public List<AuctionSummaryDto> getMyListings(String sellerId) {
-    UUID parsedSellerId = parseSellerId(sellerId);
-    List<AuctionSummaryDto> listings = new ArrayList<>();
-    try {
-      for (Auction auction : auctionRepository.findBySellerId(parsedSellerId)) {
-        try {
-          Item item = itemRepository.findById(auction.getItemId()).orElse(null);
-          if (item == null) {
-            // Data may be inconsistent in production; skip corrupted row instead of failing all
-            // listings.
-            continue;
-          }
-          BigDecimal startingPrice = auction.getStartingPrice();
-          String itemCategory = item.getCategory() != null ? item.getCategory().name() : "UNKNOWN";
-          listings.add(
-              new AuctionSummaryDto(
-                  auction.getId().toString(),
-                  item.getName(),
-                  itemCategory,
-                  startingPrice,
-                  auction.getCurrentHighestBid(),
-                  auction.getStartTime(),
-                  auction.getEndTime(),
-                  auction.getStatus(),
-                  auction.getSellerId().toString()));
-        } catch (Exception ignored) {
-          // Skip malformed listing row and continue returning other valid records.
-        }
-      }
-    } catch (Exception ignored) {
-      // Last-resort fallback for production: avoid bubbling runtime DB errors to client.
-    }
-    return listings;
   }
 
   public void deleteAuction(String sellerId, String auctionId) {
@@ -259,6 +207,35 @@ public class AuctionService {
     }
   }
 
+  // Query operations
+  public List<AuctionSummaryDto> getMyListings(String sellerId) {
+    UUID parsedSellerId = parseSellerId(sellerId);
+    List<AuctionSummaryDto> listings = new ArrayList<>();
+    for (Auction auction : auctionRepository.findBySellerId(parsedSellerId)) {
+      Item item = itemRepository.findById(auction.getItemId()).orElse(null);
+      if (item == null) {
+        // Data may be inconsistent in production; skip corrupted row instead of failing all
+        // listings.
+        continue;
+      }
+      BigDecimal startingPrice = auction.getStartingPrice();
+      String itemCategory = item.getCategory() != null ? item.getCategory().name() : "UNKNOWN";
+      listings.add(
+          new AuctionSummaryDto(
+              auction.getId().toString(),
+              item.getName(),
+              itemCategory,
+              startingPrice,
+              auction.getCurrentHighestBid(),
+              auction.getStartTime(),
+              auction.getEndTime(),
+              auction.getStatus(),
+              auction.getSellerId().toString()));
+    }
+    return listings;
+  }
+
+  // Validation
   private void validateCreateAuctionRequest(String sellerId, CreateAuctionRequest dto) {
     parseSellerId(sellerId);
 
@@ -305,6 +282,7 @@ public class AuctionService {
     }
   }
 
+  // DTO mapping
   private Item createItem(CreateAuctionRequest dto) {
     if (dto.getCategory() == null) {
       throw new ValidationException("category must not be null");
@@ -318,5 +296,14 @@ public class AuctionService {
       case VEHICLE ->
           ItemFactory.createVehicle(dto.getName(), dto.getDescription(), dto.getCondition());
     };
+  }
+
+  private LocalDateTime resolveCreateEndTime(CreateAuctionRequest dto, LocalDateTime startTime) {
+    if (dto.getEndTime() != null) {
+      return dto.getEndTime();
+    }
+    int durationDays =
+        dto.getDurationDays() != null && dto.getDurationDays() > 0 ? dto.getDurationDays() : 7;
+    return startTime.plusDays(durationDays);
   }
 }

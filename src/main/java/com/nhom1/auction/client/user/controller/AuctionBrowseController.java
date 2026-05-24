@@ -40,6 +40,7 @@ public class AuctionBrowseController {
 
   @FXML private GridPane cardsGridPane;
 
+  // Initialization
   @FXML
   public void initialize() {
     if (AppContext.getCurrentUser() != null) {
@@ -57,6 +58,7 @@ public class AuctionBrowseController {
     }
   }
 
+  // Rendering
   private void renderAuctionCards(List<AuctionSummaryDto> auctions) {
     priceLabels.clear();
     cardsGridPane.getChildren().clear();
@@ -85,14 +87,7 @@ public class AuctionBrowseController {
     }
   }
 
-  private void handleBidUpdatePush(BidUpdateEvent event) {
-    String auctionId = event.getAuctionId();
-    BigDecimal newBid = event.getNewHighestBid();
-    if (auctionId == null || newBid == null) return;
-    Label label = priceLabels.get(auctionId);
-    if (label != null) label.setText(DisplayFormatters.money(newBid));
-  }
-
+  // Data loading
   private void loadAuctions() {
     biddingService
         .listBrowseAuctions()
@@ -117,6 +112,15 @@ public class AuctionBrowseController {
     AppContext.setSelectedAuctionId(auctions.get(0).getId());
   }
 
+  // Event handlers
+  private void handleBidUpdatePush(BidUpdateEvent event) {
+    String auctionId = event.getAuctionId();
+    BigDecimal newBid = event.getNewHighestBid();
+    if (auctionId == null || newBid == null) return;
+    Label label = priceLabels.get(auctionId);
+    if (label != null) label.setText(DisplayFormatters.money(newBid));
+  }
+
   private void handleAuctionDeletedPush(AuctionDeletedEvent event) {
     String auctionId = event.getAuctionId();
     if (auctionId == null) return;
@@ -124,10 +128,7 @@ public class AuctionBrowseController {
     renderAuctionCards(currentAuctions);
   }
 
-  private void showError(String title, String message) {
-    System.err.println(title + ": " + message);
-  }
-
+  // Navigation
   public void navigateToDetail(String auctionId) {
     if (auctionId != null) AppContext.setSelectedAuctionId(auctionId);
     if (AppNavigator.getCurrentView() == AppView.AUCTION_DETAIL) return;
@@ -135,6 +136,11 @@ public class AuctionBrowseController {
     PauseTransition d = new PauseTransition(Duration.seconds(0.4));
     d.setOnFinished(e -> AppNavigator.navigateTo(AppView.AUCTION_DETAIL));
     d.play();
+  }
+
+  // Helpers
+  private void showError(String title, String message) {
+    System.err.println(title + ": " + message);
   }
 
   private BigDecimal resolveDisplayCurrentBid(AuctionSummaryDto dto) {

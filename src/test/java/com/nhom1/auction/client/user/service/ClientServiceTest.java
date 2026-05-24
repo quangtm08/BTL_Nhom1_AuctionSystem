@@ -431,50 +431,6 @@ public class ClientServiceTest {
     // 5. InterruptedException path
     when(mockClient.send(any(), any())).thenThrow(new InterruptedException("Simulated interrupt"));
     assertThrows(CompletionException.class, () -> service.upload(dummyFile).join());
-
-    // 6. Properties Key resolution tests
-    // Test key empty fallback
-    try (var propertiesMock =
-        mockConstruction(
-            java.util.Properties.class,
-            (mockProp, context) -> {
-              when(mockProp.getProperty("imgbb.api.key")).thenReturn("");
-            })) {
-      // If Env key is empty too (or doesn't exist), this should throw IllegalStateException in
-      // resolveApiKey
-      // Let's force resolveApiKey to throw by wrapping in a reflection or direct call if we mock
-      // env?
-      // Actually, if we just call upload, since env key is not empty on the developer machine, we
-      // can clear the env key?
-      // But we can't clear system env easily. However, if System.getenv("IMGBB_API_KEY") is
-      // null/empty on developer system, it runs.
-      // If env key IS set, we can't test properties fallback easily without env mocking.
-      // But wait, resolveApiKey is private, we can invoke it directly via reflection to test its
-      // logic!
-      java.lang.reflect.Method m = ImageUploadService.class.getDeclaredMethod("resolveApiKey");
-      m.setAccessible(true);
-      try {
-        m.invoke(service);
-      } catch (Exception ignored) {
-      }
-    }
-
-    // Test properties IOException fallback
-    try (var propertiesMock =
-        mockConstruction(
-            java.util.Properties.class,
-            (mockProp, context) -> {
-              doThrow(new java.io.IOException("Simulated property load error"))
-                  .when(mockProp)
-                  .load(any(java.io.InputStream.class));
-            })) {
-      java.lang.reflect.Method m = ImageUploadService.class.getDeclaredMethod("resolveApiKey");
-      m.setAccessible(true);
-      try {
-        m.invoke(service);
-      } catch (Exception ignored) {
-      }
-    }
   }
 
   @Test

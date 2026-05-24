@@ -22,9 +22,6 @@ public abstract class Item extends BaseEntity {
     this.condition = condition;
   }
 
-  /*
-   * Use this constructor for loading an EXISTING item from the database.
-   */
   protected Item(
       UUID id,
       String name,
@@ -42,7 +39,6 @@ public abstract class Item extends BaseEntity {
 
   public abstract void printInfo();
 
-  // Getter
   public String getName() {
     return name;
   }
@@ -59,7 +55,6 @@ public abstract class Item extends BaseEntity {
     return description;
   }
 
-  // Setter
   public void setCondition(ItemCondition condition) {
     this.condition = condition;
   }

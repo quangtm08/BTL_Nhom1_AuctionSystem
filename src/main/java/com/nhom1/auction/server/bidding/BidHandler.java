@@ -90,7 +90,6 @@ public class BidHandler {
       notificationService.broadcastBidUpdate(
           auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());
 
-      // Fire-and-forget: schedule auto-bids asynchronously, do NOT block
       if (autoBidService != null) {
         autoBidService.scheduleAutoBids(
             auctionId, bidTransaction.getAmount(), bidTransaction.getBidderId());

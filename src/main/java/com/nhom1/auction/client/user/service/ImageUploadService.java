@@ -1,7 +1,7 @@
 package com.nhom1.auction.client.user.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nhom1.auction.common.utils.JsonUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +22,6 @@ public class ImageUploadService {
 
   private static final String IMGBB_UPLOAD_URL = "https://api.imgbb.com/1/upload";
   private static final Path LOCAL_CONFIG_PATH = Path.of("config.local.properties");
-  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private final HttpClient httpClient = HttpClient.newHttpClient();
 
   public CompletableFuture<String> upload(File imageFile) {
@@ -49,7 +48,6 @@ public class ImageUploadService {
           return fileKey.trim();
         }
       } catch (IOException ignored) {
-        // Fallback to final error below.
       }
     }
 
@@ -79,7 +77,7 @@ public class ImageUploadService {
         throw new IllegalStateException("imgBB upload failed with status " + response.statusCode());
       }
 
-      JsonNode root = OBJECT_MAPPER.readTree(response.body());
+      JsonNode root = JsonUtil.readTree(response.body());
       boolean success = root.path("success").asBoolean(false);
       String displayUrl = root.path("data").path("display_url").asText("");
       if (!success || displayUrl.isBlank()) {

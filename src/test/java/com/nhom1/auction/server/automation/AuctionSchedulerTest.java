@@ -57,10 +57,16 @@ public class AuctionSchedulerTest {
         new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
+            UUID.randomUUID(),
             new BigDecimal("100.00"),
             now.minusMinutes(2),
-            now.minusMinutes(1));
-    auction.startAuction();
+            now.minusMinutes(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            now,
+            now,
+            null);
     UUID bidderId = UUID.randomUUID();
     auction.placeBid(
         bidderId,
@@ -86,8 +92,18 @@ public class AuctionSchedulerTest {
     LocalDateTime startTime = endTime.minusHours(1);
     Auction auction =
         new Auction(
-            UUID.randomUUID(), UUID.randomUUID(), new BigDecimal("100.00"), startTime, endTime);
-    auction.startAuction();
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            startTime,
+            endTime,
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            now,
+            now,
+            null);
     LocalDateTime lastBidTime = endTime.minusSeconds(5);
 
     when(auctionGateway.findAll()).thenReturn(List.of(auction));

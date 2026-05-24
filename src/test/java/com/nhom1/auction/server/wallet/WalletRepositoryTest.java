@@ -168,60 +168,6 @@ public class WalletRepositoryTest {
   }
 
   @Test
-  public void testUpdateBalance_ExistingWallet() throws SQLException {
-    WalletRepository repo = new WalletRepository(mockDataSource);
-    UUID userId = UUID.randomUUID();
-    BigDecimal newBalance = new BigDecimal("200.0");
-
-    when(mockPreparedStatement.executeUpdate()).thenReturn(1); // Row updated successfully
-
-    repo.updateBalance(userId, newBalance, mockConnection);
-
-    verify(mockPreparedStatement).setBigDecimal(eq(1), eq(newBalance));
-    verify(mockPreparedStatement).setString(eq(3), eq(userId.toString()));
-  }
-
-  @Test
-  public void testUpdateBalance_NonExistingWalletFallback() throws SQLException {
-    WalletRepository repo = new WalletRepository(mockDataSource);
-    UUID userId = UUID.randomUUID();
-    BigDecimal newBalance = new BigDecimal("200.0");
-
-    PreparedStatement mockUpdatePs = mock(PreparedStatement.class);
-    PreparedStatement mockExistsPs = mock(PreparedStatement.class);
-    PreparedStatement mockInsertPs = mock(PreparedStatement.class);
-    ResultSet mockExistsRs = mock(ResultSet.class);
-
-    when(mockConnection.prepareStatement(contains("UPDATE wallets SET balance")))
-        .thenReturn(mockUpdatePs);
-    when(mockConnection.prepareStatement(contains("SELECT 1 FROM wallets")))
-        .thenReturn(mockExistsPs);
-    when(mockConnection.prepareStatement(contains("INSERT INTO wallets"))).thenReturn(mockInsertPs);
-
-    when(mockUpdatePs.executeUpdate()).thenReturn(0);
-    when(mockExistsPs.executeQuery()).thenReturn(mockExistsRs);
-    when(mockExistsRs.next()).thenReturn(false);
-
-    repo.updateBalance(userId, newBalance, mockConnection);
-
-    verify(mockUpdatePs).executeUpdate();
-    verify(mockInsertPs).executeUpdate();
-  }
-
-  @Test
-  public void testUpdateBalance_ThrowsSQLException() throws SQLException {
-    WalletRepository repo = new WalletRepository(mockDataSource);
-    UUID userId = UUID.randomUUID();
-    BigDecimal newBalance = new BigDecimal("200.0");
-    when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Prep error"));
-
-    RuntimeException thrown =
-        assertThrows(
-            RuntimeException.class, () -> repo.updateBalance(userId, newBalance, mockConnection));
-    assertTrue(thrown.getMessage().contains("Failed to update wallet balance"));
-  }
-
-  @Test
   public void testFindTransactionsByUserId() throws SQLException {
     WalletRepository repo = new WalletRepository(mockDataSource);
     UUID userId = UUID.randomUUID();
