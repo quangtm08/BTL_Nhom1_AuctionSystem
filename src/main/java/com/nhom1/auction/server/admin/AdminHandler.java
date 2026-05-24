@@ -13,87 +13,131 @@ import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.ResponseFactory;
 
 public class AdminHandler {
-    private final AdminService adminService;
+  private final AdminService adminService;
 
-    public AdminHandler(AdminService adminService) {
-        this.adminService = adminService;
-    }
+  public AdminHandler(AdminService adminService) {
+    this.adminService = adminService;
+  }
 
-    public void register(MessageRouter router) {
-        router.register(MessageType.ADMIN_LIST_USERS, (requestId, payloadJson) -> {
-            try {
-                return handleListUsers(requestId, JsonUtil.fromJson(payloadJson, AdminListUsersRequest.class));
-            } catch (Exception e) {
-                return ResponseFactory.invalidFormat(requestId, "Invalid admin list users JSON");
-            }
+  public void register(MessageRouter router) {
+    router.register(
+        MessageType.ADMIN_LIST_USERS,
+        (requestId, payloadJson) -> {
+          try {
+            return handleListUsers(
+                requestId, JsonUtil.fromJson(payloadJson, AdminListUsersRequest.class));
+          } catch (Exception e) {
+            return ResponseFactory.invalidFormat(requestId, "Invalid admin list users JSON");
+          }
         });
 
-        router.register(MessageType.ADMIN_LIST_AUCTIONS, (requestId, payloadJson) -> {
-            try {
-                return handleListAuctions(requestId, JsonUtil.fromJson(payloadJson, AdminListAuctionsRequest.class));
-            } catch (Exception e) {
-                return ResponseFactory.invalidFormat(requestId, "Invalid admin list auctions JSON");
-            }
+    router.register(
+        MessageType.ADMIN_LIST_AUCTIONS,
+        (requestId, payloadJson) -> {
+          try {
+            return handleListAuctions(
+                requestId, JsonUtil.fromJson(payloadJson, AdminListAuctionsRequest.class));
+          } catch (Exception e) {
+            return ResponseFactory.invalidFormat(requestId, "Invalid admin list auctions JSON");
+          }
         });
 
-        router.register(MessageType.ADMIN_DELETE_USER, (requestId, payloadJson) -> {
-            try {
-                return handleDeleteUser(requestId, JsonUtil.fromJson(payloadJson, AdminDeleteUserRequest.class));
-            } catch (Exception e) {
-                return ResponseFactory.invalidFormat(requestId, "Invalid delete user JSON");
-            }
+    router.register(
+        MessageType.ADMIN_DELETE_USER,
+        (requestId, payloadJson) -> {
+          try {
+            return handleDeleteUser(
+                requestId, JsonUtil.fromJson(payloadJson, AdminDeleteUserRequest.class));
+          } catch (Exception e) {
+            return ResponseFactory.invalidFormat(requestId, "Invalid delete user JSON");
+          }
         });
 
-        router.register(MessageType.ADMIN_CANCEL_AUCTION, (requestId, payloadJson) -> {
-            try {
-                return handleCancelAuction(requestId, JsonUtil.fromJson(payloadJson, AdminCancelAuctionRequest.class));
-            } catch (Exception e) {
-                return ResponseFactory.invalidFormat(requestId, "Invalid cancel auction JSON");
-            }
+    router.register(
+        MessageType.ADMIN_CANCEL_AUCTION,
+        (requestId, payloadJson) -> {
+          try {
+            return handleCancelAuction(
+                requestId, JsonUtil.fromJson(payloadJson, AdminCancelAuctionRequest.class));
+          } catch (Exception e) {
+            return ResponseFactory.invalidFormat(requestId, "Invalid cancel auction JSON");
+          }
         });
-    }
 
-    private ResponseMessage<String> handleDeleteUser(String requestId, AdminDeleteUserRequest dto) {
-        try {
-            if (dto == null) {
-                return ResponseFactory.invalidFormat(requestId, "Missing delete user payload.");
-            }
-            return ResponseFactory.success(requestId, adminService.deleteUser(dto.getTargetUserId(), dto.getCallerId()));
-        } catch (Exception e) {
-            return ResponseFactory.fromException(requestId, e);
-        }
-    }
+    router.register(
+        MessageType.ADMIN_APPROVE_AUCTION,
+        (requestId, payloadJson) -> {
+          try {
+            return handleApproveAuction(
+                requestId,
+                JsonUtil.fromJson(
+                    payloadJson,
+                    com.nhom1.auction.common.dto.admin.AdminApproveAuctionRequest.class));
+          } catch (Exception e) {
+            return ResponseFactory.invalidFormat(requestId, "Invalid approve auction JSON");
+          }
+        });
+  }
 
-    private ResponseMessage<String> handleCancelAuction(String requestId, AdminCancelAuctionRequest dto) {
-        try {
-            if (dto == null) {
-                return ResponseFactory.invalidFormat(requestId, "Missing cancel auction payload.");
-            }
-            return ResponseFactory.success(requestId, adminService.cancelAuction(dto.getAuctionId(), dto.getCallerId()));
-        } catch (Exception e) {
-            return ResponseFactory.fromException(requestId, e);
-        }
+  private ResponseMessage<String> handleDeleteUser(String requestId, AdminDeleteUserRequest dto) {
+    try {
+      if (dto == null) {
+        return ResponseFactory.invalidFormat(requestId, "Missing delete user payload.");
+      }
+      return ResponseFactory.success(
+          requestId, adminService.deleteUser(dto.getTargetUserId(), dto.getCallerId()));
+    } catch (Exception e) {
+      return ResponseFactory.fromException(requestId, e);
     }
+  }
 
-    private ResponseMessage<AdminUserListResponse> handleListUsers(String requestId, AdminListUsersRequest dto) {
-        try {
-            if (dto == null) {
-                return ResponseFactory.invalidFormat(requestId, "Missing admin list users payload.");
-            }
-            return ResponseFactory.success(requestId, adminService.getAllUsers(dto.getCallerId()));
-        } catch (Exception e) {
-            return ResponseFactory.fromException(requestId, e);
-        }
+  private ResponseMessage<String> handleCancelAuction(
+      String requestId, AdminCancelAuctionRequest dto) {
+    try {
+      if (dto == null) {
+        return ResponseFactory.invalidFormat(requestId, "Missing cancel auction payload.");
+      }
+      return ResponseFactory.success(
+          requestId, adminService.cancelAuction(dto.getAuctionId(), dto.getCallerId()));
+    } catch (Exception e) {
+      return ResponseFactory.fromException(requestId, e);
     }
+  }
 
-    private ResponseMessage<AdminAuctionListResponse> handleListAuctions(String requestId, AdminListAuctionsRequest dto) {
-        try {
-            if (dto == null) {
-                return ResponseFactory.invalidFormat(requestId, "Missing admin list auctions payload.");
-            }
-            return ResponseFactory.success(requestId, adminService.getAllAuctions(dto.getCallerId()));
-        } catch (Exception e) {
-            return ResponseFactory.fromException(requestId, e);
-        }
+  private ResponseMessage<AdminUserListResponse> handleListUsers(
+      String requestId, AdminListUsersRequest dto) {
+    try {
+      if (dto == null) {
+        return ResponseFactory.invalidFormat(requestId, "Missing admin list users payload.");
+      }
+      return ResponseFactory.success(requestId, adminService.getAllUsers(dto.getCallerId()));
+    } catch (Exception e) {
+      return ResponseFactory.fromException(requestId, e);
     }
+  }
+
+  private ResponseMessage<AdminAuctionListResponse> handleListAuctions(
+      String requestId, AdminListAuctionsRequest dto) {
+    try {
+      if (dto == null) {
+        return ResponseFactory.invalidFormat(requestId, "Missing admin list auctions payload.");
+      }
+      return ResponseFactory.success(requestId, adminService.getAllAuctions(dto.getCallerId()));
+    } catch (Exception e) {
+      return ResponseFactory.fromException(requestId, e);
+    }
+  }
+
+  private ResponseMessage<String> handleApproveAuction(
+      String requestId, com.nhom1.auction.common.dto.admin.AdminApproveAuctionRequest dto) {
+    try {
+      if (dto == null)
+        return ResponseFactory.invalidFormat(requestId, "Missing approve auction payload.");
+      return ResponseFactory.success(
+          requestId,
+          adminService.approveAuction(dto.getAuctionId(), dto.getCallerId(), dto.getOpeningDate()));
+    } catch (Exception e) {
+      return ResponseFactory.fromException(requestId, e);
+    }
+  }
 }

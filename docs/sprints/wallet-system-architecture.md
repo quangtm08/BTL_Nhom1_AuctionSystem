@@ -86,12 +86,10 @@ sequenceDiagram
     autonumber
     actor User
     participant WalletView as WalletController (Client)
-    participant PushSvc as ClientPushService (Client)
     participant ClientConn as ServerConnection (Client)
     participant ServerHub as ClientHandler/Router (Server)
     participant WalletSvc as WalletService (Server)
     participant DB as SQLite/Postgres (Database)
-    participant NotifSvc as NotificationService (Server)
 
     User->>WalletView: Enters amount + Click Deposit/Withdraw
     WalletView->>WalletView: Validates input format & positivity
@@ -102,21 +100,12 @@ sequenceDiagram
     WalletSvc->>DB: Open DB Transaction
     WalletSvc->>DB: Update balance row & Save WalletTransaction row
     WalletSvc->>DB: Commit Transaction
-    WalletSvc->>NotifSvc: sendWalletUpdate(userId, newBalance)
-    
-    par Push Updates in Parallel
-        NotifSvc->>ServerHub: Route push event to target user socket
-        ServerHub->>ClientConn: PUSH_WALLET_UPDATE payload
-        ClientConn->>PushSvc: Notify registered wallet handlers
-        PushSvc->>UserSidebarController: Update sidebar balance Label
-        PushSvc->>WalletView: Update main balance Label & trigger list reload
-    and Service Response
-        WalletSvc-->>ServerHub: Return updated Wallet DTO
-        deactivate WalletSvc
-        ServerHub-->>ClientConn: Return Success Response
-        ClientConn-->>WalletView: CompletableFuture finishes
-        WalletView->>User: Display custom success popup alert
-    end
+    WalletSvc-->>ServerHub: Return updated Wallet DTO
+    deactivate WalletSvc
+    ServerHub-->>ClientConn: Return Success Response
+    ClientConn-->>WalletView: CompletableFuture finishes
+    WalletView->>WalletView: Render new balance and transaction list
+    WalletView->>User: Display custom success popup alert
 ```
 
 ---
@@ -182,12 +171,9 @@ sequenceDiagram
     PaySvc->>DB: Save PaymentInvoice & Mark Auction status PAID
     PaySvc->>DB: Commit Transaction
     
-    PaySvc->>NotifSvc: push updates
-    NotifSvc-->>Buyer: PUSH_WALLET_UPDATE (new lower balance)
-    NotifSvc-->>Seller: PUSH_WALLET_UPDATE (new higher balance)
-    
     PaySvc-->>PayView: Return PaymentResponse
     deactivate PaySvc
+    PayView->>PayView: Refresh pending/history from request-response flow
     PayView->>Buyer: Payment Completed!
 ```
 
@@ -238,11 +224,4 @@ Communications pass over socket JSON envelopes using `RequestMessage<T>` and `Re
   }
   ```
 
-### Push Event DTOs
-* **`PUSH_WALLET_UPDATE`** ([WalletUpdateEvent.java](file:///c:/Users/ACER/BTL_Nhom1_AuctionSystem/src/main/java/com/nhom1/auction/common/dto/notification/WalletUpdateEvent.java))
-  ```json
-  {
-    "userId": "uuid-string",
-    "newBalance": 100300.00
-  }
-  ```
+Wallet balance changes use normal request/response refreshes. The wallet module does not define a wallet-specific push event.

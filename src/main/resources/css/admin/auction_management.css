@@ -43,13 +43,13 @@
 }
 
 .search-field {
-    -fx-background-color: #0c120f;
-    -fx-text-fill: white;
-    -fx-prompt-text-fill: #444444;
-    -fx-border-color: #1a221e;
+    -fx-background-color: #2f3533;
+    -fx-text-fill: #ecefed;
+    -fx-prompt-text-fill: #7f8b84;
+    -fx-border-color: #45504a;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
-    -fx-padding: 10 15; /* Làm ô search dày hơn */
+    -fx-padding: 10 15;
 }
 
 /* ===== TABLE CARD ===== */
@@ -115,12 +115,18 @@
     -fx-font-weight: bold;
 }
 
+.status-open {
+    -fx-text-fill: #52b788;
+    -fx-font-weight: bold;
+}
+
 /* ===== BUTTONS ===== */
 .btn-cancel {
     -fx-background-color: #2a1515;
     -fx-text-fill: #ff4d4d;
     -fx-background-radius: 8;
-    -fx-padding: 6 15; /* Nút to hơn một chút cho cân đối */
+    -fx-padding: 6 10;
+    -fx-min-width: 64px;
     -fx-font-size: 11px;
     -fx-cursor: hand;
     -fx-font-weight: bold;
@@ -128,6 +134,22 @@
 
 .btn-cancel:hover {
     -fx-background-color: #4a1a1a;
+    -fx-text-fill: white;
+}
+
+.btn-approve {
+    -fx-background-color: #163626;
+    -fx-text-fill: #52b788;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10;
+    -fx-min-width: 70px;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-approve:hover {
+    -fx-background-color: #1f4d36;
     -fx-text-fill: white;
 }
 

@@ -26,11 +26,16 @@ jobs:
           distribution: "temurin"
           cache: "maven"
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libpango-1.0-0 libasound2t64 libxtst6
+
       - name: Grant execute permission for Maven wrapper
         run: chmod +x mvnw
 
       - name: Build and Test with Maven
-        run: ./mvnw -B test --file pom.xml
+        run: xvfb-run ./mvnw -B test --file pom.xml
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4

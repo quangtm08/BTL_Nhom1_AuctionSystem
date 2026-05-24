@@ -1,115 +1,132 @@
 package com.nhom1.auction.common.dto.auction;
 
+import com.nhom1.auction.common.enums.ItemCategory;
+import com.nhom1.auction.common.enums.ItemCondition;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import com.nhom1.auction.common.enums.ItemCategory;
-import com.nhom1.auction.common.enums.ItemCondition;
 public class CreateAuctionRequest {
-    
-    // Item information
-    private String name;
-    private String description;
-    private ItemCategory category;
-    private ItemCondition condition;
-    
-    // Auction pricing and timing
-    private BigDecimal startingPrice;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    
-    // Seller information
-    private String sellerId;
-       private List<String> imageUrls;
 
-    public CreateAuctionRequest() {}
+  // Item information
+  private String name;
+  private String description;
+  private ItemCategory category;
+  private ItemCondition condition;
 
-    public CreateAuctionRequest(String name, String description, ItemCategory category, ItemCondition condition, BigDecimal startingPrice, LocalDateTime startTime, LocalDateTime endTime, String sellerId) {
-        this.name = name;
-        this.description = description;
-        this.category = category;
-        this.condition = condition;
-        this.startingPrice = startingPrice;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.sellerId = sellerId;
-    }
+  // Auction pricing and timing
+  private BigDecimal startingPrice;
+  private LocalDateTime startTime;
+  private LocalDateTime endTime;
+  private Integer durationDays;
 
-    
+  // Seller information
+  private String sellerId;
+  private List<String> imageUrls;
 
-    // Getters and Setters for basic item info
-    public String getName() {
-        return name;
-    }
+  public CreateAuctionRequest() {}
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public CreateAuctionRequest(
+      String name,
+      String description,
+      ItemCategory category,
+      ItemCondition condition,
+      BigDecimal startingPrice,
+      LocalDateTime startTime,
+      LocalDateTime endTime,
+      Integer durationDays,
+      String sellerId) {
+    this.name = name;
+    this.description = description;
+    this.category = category;
+    this.condition = condition;
+    this.startingPrice = startingPrice;
+    this.startTime = startTime;
+    this.endTime = endTime;
+    this.durationDays = durationDays;
+    this.sellerId = sellerId;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  // Getters and Setters for basic item info
+  public String getName() {
+    return name;
+  }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public ItemCategory getCategory() {
-        return category;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public void setCategory(ItemCategory category) {
-        this.category = category;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public ItemCondition getCondition() {
-        return condition;
-    }
+  public ItemCategory getCategory() {
+    return category;
+  }
 
-    public void setCondition(ItemCondition condition) {
-        this.condition = condition;
-    }
+  public void setCategory(ItemCategory category) {
+    this.category = category;
+  }
 
-    // Getters and Setters for auction pricing and timing
-    public BigDecimal getStartingPrice() {
-        return startingPrice;
-    }
+  public ItemCondition getCondition() {
+    return condition;
+  }
 
-    public void setStartingPrice(BigDecimal startingPrice) {
-        this.startingPrice = startingPrice;
-    }
+  public void setCondition(ItemCondition condition) {
+    this.condition = condition;
+  }
 
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
+  // Getters and Setters for auction pricing and timing
+  public BigDecimal getStartingPrice() {
+    return startingPrice;
+  }
 
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
+  public void setStartingPrice(BigDecimal startingPrice) {
+    this.startingPrice = startingPrice;
+  }
 
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
+  public LocalDateTime getStartTime() {
+    return startTime;
+  }
 
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
+  public void setStartTime(LocalDateTime startTime) {
+    this.startTime = startTime;
+  }
 
-    // Getters and Setters for seller
-    public String getSellerId() {
-        return sellerId;
-    }
+  public LocalDateTime getEndTime() {
+    return endTime;
+  }
 
-    public void setSellerId(String sellerId) {
-        this.sellerId = sellerId;
-    }
+  public void setEndTime(LocalDateTime endTime) {
+    this.endTime = endTime;
+  }
 
-        public List<String> getImageUrls() {
-        return imageUrls;
-    }
+  public Integer getDurationDays() {
+    return durationDays;
+  }
 
-    public void setImageUrls(List<String> imageUrls) {
-        this.imageUrls = imageUrls;
-    }
+  public void setDurationDays(Integer durationDays) {
+    this.durationDays = durationDays;
+  }
+
+  // Getters and Setters for seller
+  public String getSellerId() {
+    return sellerId;
+  }
+
+  public void setSellerId(String sellerId) {
+    this.sellerId = sellerId;
+  }
+
+  public List<String> getImageUrls() {
+    return imageUrls;
+  }
+
+  public void setImageUrls(List<String> imageUrls) {
+    this.imageUrls = imageUrls;
+  }
 }

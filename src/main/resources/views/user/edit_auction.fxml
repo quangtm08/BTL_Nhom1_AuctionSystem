@@ -26,20 +26,15 @@
                 <VBox spacing="4.0" HBox.hgrow="ALWAYS">
                     <Button text="←  My listings" styleClass="btn-ghost" onAction="#handleBackToListings"/>
                     <Label text="Edit listing" styleClass="page-title"/>
-                    <Label text="Vintage Fender Guitar · Listed Mar 25, 2026" styleClass="meta-text"/>
+                    <Label fx:id="metaLabel" text="" styleClass="meta-text"/>
+                    <Label fx:id="statusLabel" text="Loading listing..." styleClass="meta-text"/>
                 </VBox>
                 <Button text="⋯" styleClass="icon-btn"/>
             </HBox>
 
-            <HBox styleClass="status-banner" alignment="CENTER_LEFT">
-                <Label text="●  Auction is live · 12 bids so far" styleClass="status-text"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label text="2 days left" styleClass="status-sub"/>
-            </HBox>
-
             <VBox spacing="8.0">
                 <Label text="Title" styleClass="field-label"/>
-                <TextField text="Vintage Fender Guitar" styleClass="field-input"/>
+                <TextField fx:id="titleField" promptText="Listing title" styleClass="field-input"/>
             </VBox>
 
             <HBox spacing="16.0">
@@ -55,17 +50,7 @@
 
             <VBox spacing="8.0">
                 <Label text="Description" styleClass="field-label"/>
-                <TextArea prefRowCount="4" wrapText="true" styleClass="field-area" text="1972 Fender Stratocaster in original sunburst finish. Plays beautifully, light buckle rash on the back, all original hardware."/>
-            </VBox>
-
-            <VBox spacing="8.0">
-                <Label text="Photos" styleClass="field-label"/>
-                <HBox spacing="10.0">
-                    <VBox styleClass="photo-box"><Label text="cover" styleClass="photo-meta"/></VBox>
-                    <VBox styleClass="photo-box"/>
-                    <VBox styleClass="photo-box"/>
-                    <VBox styleClass="photo-add"><Label text="+" styleClass="photo-add-text"/></VBox>
-                </HBox>
+                <TextArea fx:id="descriptionArea" promptText="Describe the item" prefRowCount="4" wrapText="true" styleClass="field-area"/>
             </VBox>
 
             <Separator styleClass="line-separator"/>
@@ -75,12 +60,8 @@
             <HBox spacing="16.0">
                 <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                     <Label text="Starting bid" styleClass="field-label"/>
-                    <TextField text="880" styleClass="field-input"/>
+                    <TextField fx:id="startingBidField" styleClass="field-input"/>
                     <Label text="Cannot change once bidding starts" styleClass="note-text"/>
-                </VBox>
-                <VBox spacing="8.0" HBox.hgrow="ALWAYS">
-                    <Label text="Reserve price" styleClass="field-label"/>
-                    <TextField text="4500" styleClass="field-input"/>
                 </VBox>
             </HBox>
 
@@ -89,7 +70,7 @@
                 <HBox spacing="10.0">
                     <Button fx:id="duration1Btn" text="1 day" styleClass="duration-chip" onAction="#handleDurationPreset"/>
                     <Button fx:id="duration3Btn" text="3 days" styleClass="duration-chip" onAction="#handleDurationPreset"/>
-                    <Button fx:id="duration7Btn" text="7 days" styleClass="duration-chip,duration-chip-active" onAction="#handleDurationPreset"/>
+                    <Button fx:id="duration7Btn" text="7 days" styleClass="duration-chip" onAction="#handleDurationPreset"/>
                     <Button fx:id="duration14Btn" text="14 days" styleClass="duration-chip" onAction="#handleDurationPreset"/>
                     <Button fx:id="duration30Btn" text="30 days" styleClass="duration-chip" onAction="#handleDurationPreset"/>
                     <TextField fx:id="customDurationField" promptText="Custom days" styleClass="duration-custom-input" prefWidth="130.0"/>
@@ -101,11 +82,11 @@
             <Separator styleClass="line-separator"/>
 
             <HBox>
-                <Button text="Delete listing" styleClass="btn-danger"/>
+                <Button fx:id="deleteButton" text="Delete listing" styleClass="btn-danger" onAction="#handleDeleteListing"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <HBox spacing="12.0">
-                    <Button text="Cancel" styleClass="btn-secondary"/>
-                    <Button text="Save changes" styleClass="btn-primary"/>
+                    <Button text="Cancel" styleClass="btn-secondary" onAction="#handleBackToListings"/>
+                    <Button fx:id="saveChangesButton" text="Save changes" styleClass="btn-primary" onAction="#handleSaveChanges"/>
                 </HBox>
             </HBox>
                 </VBox>
