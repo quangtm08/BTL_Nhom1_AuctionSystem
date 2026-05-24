@@ -1,46 +1,46 @@
-# Ke Hoach Don Gian Hoa Auto-Bid
+# Kế Hoạch Đơn Giản Hóa Auto-Bid
 
-## 1. Hien trang hien tai
+## 1. Hiện trạng hiện tại
 
-Tinh nang Auto-Bid hien da hoat dong duoc, nhung phan xu ly trong
-`AutoBidService` dang kha phuc tap. Khi co mot luot bid moi, he thong lay danh
-sach cau hinh auto-bid, loc cac nguoi dung du dieu kien, sau do chon nguoi co
-`maxAmount` cao nhat de dat gia tu dong.
+Tính năng Auto-Bid hiện đã hoạt động được, nhưng phần xử lý trong
+`AutoBidService` đang khá phức tạp. Khi có một lượt bid mới, hệ thống lấy danh
+sách cấu hình auto-bid, lọc các người dùng đủ điều kiện, sau đó chọn người có
+`maxAmount` cao nhất để đặt giá tự động.
 
-Cach lam hien tai co hai van de chinh:
+Cách làm hiện tại có hai vấn đề chính:
 
-- Logic kho giai thich trong buoi bao ve vi co nhieu phan xu ly nang cao nhu
-  background thread, vong lap nhieu buoc, stream, chon `maxAmount` lon nhat va
-  tinh `nextBestMax`.
-- Chua khop hoan toan voi yeu cau de bai. De bai co nhac den viec uu tien theo
-  thoi diem dang ky auto-bid, trong khi hien tai he thong dang uu tien nguoi co
-  muc gia toi da cao nhat.
+- Logic khó giải thích trong buổi bảo vệ vì có nhiều phần xử lý nâng cao như
+  background thread, vòng lặp nhiều bước, stream, chọn `maxAmount` lớn nhất và
+  tính `nextBestMax`.
+- Chưa khớp hoàn toàn với yêu cầu đề bài. Đề bài có nhắc đến việc ưu tiên theo
+  thời điểm đăng ký auto-bid, trong khi hiện tại hệ thống đang ưu tiên người có
+  mức giá tối đa cao nhất.
 
-## 2. Muc tieu chinh sua
+## 2. Mục tiêu chỉnh sửa
 
-Don gian hoa logic Auto-Bid nhung khong viet lai toan bo tinh nang.
+Đơn giản hóa logic Auto-Bid nhưng không viết lại toàn bộ tính năng.
 
-Sau khi chinh sua, luong xu ly nen la:
+Sau khi chỉnh sửa, luồng xử lý nên là:
 
 ```text
-Co bid moi
--> Lay danh sach auto-bid co thong tin created_at
--> Bo qua nguoi dang dan dau
--> Dua cac cau hinh du dieu kien vao PriorityQueue
--> PriorityQueue uu tien nguoi dang ky auto-bid som nhat truoc
--> Poll PriorityQueue de tim nguoi dau tien con du maxAmount de dat bid tiep theo
--> Dat bid tu dong
--> Lap lai den khi khong con ai du dieu kien
+Có bid mới
+-> Lấy danh sách auto-bid có thông tin created_at
+-> Bỏ qua người đang dẫn đầu
+-> Đưa các cấu hình đủ điều kiện vào PriorityQueue
+-> PriorityQueue ưu tiên người đăng ký auto-bid sớm nhất trước
+-> Poll PriorityQueue để tìm người đầu tiên còn đủ maxAmount để đặt bid tiếp theo
+-> Đặt bid tự động
+-> Lặp lại đến khi không còn ai đủ điều kiện
 ```
 
-Cach nay de hieu hon, it logic phu hon, dung duoc PriorityQueue that trong Java
-va phu hop hon voi yeu cau uu tien theo thoi diem dang ky.
+Cách này dễ hiểu hơn, ít logic phụ hơn, dùng được PriorityQueue thật trong Java
+và phù hợp hơn với yêu cầu ưu tiên theo thời điểm đăng ký.
 
-## 3. Pham vi chinh sua
+## 3. Phạm vi chỉnh sửa
 
-Khong can thay doi toan bo kien truc hien tai.
+Không cần thay đổi toàn bộ kiến trúc hiện tại.
 
-Giu nguyen cac phan sau:
+Giữ nguyên các phần sau:
 
 - `AutoBidHandler`
 - `AutoBidConfig`
@@ -48,22 +48,22 @@ Giu nguyen cac phan sau:
 - `BidGateway`
 - `BidGatewayImpl`
 - `BidHandler`
-- Co che goi `BidService.placeBid(...)` de dat bid tu dong
-- Bang `auto_bid_configs` hien co
+- Cơ chế gọi `BidService.placeBid(...)` để đặt bid tự động
+- Bảng `auto_bid_configs` hiện có
 
-Chi nen chinh o hai diem chinh:
+Chỉ nên chỉnh ở hai điểm chính:
 
-- Tra ve hoac map them `created_at` cho cau hinh auto-bid.
-- Dung `PriorityQueue` trong `AutoBidService` voi comparator theo thoi diem dang
-  ky.
-- Don gian hoa logic chon nguoi duoc auto-bid tiep theo.
+- Trả về hoặc map thêm `created_at` cho cấu hình auto-bid.
+- Dùng `PriorityQueue` trong `AutoBidService` với comparator theo thời điểm đăng
+  ký.
+- Đơn giản hóa logic chọn người được auto-bid tiếp theo.
 
-## 4. Buoc 1: Lay them thoi diem dang ky auto-bid
+## 4. Bước 1: Lấy thêm thời điểm đăng ký auto-bid
 
-Trong `AutoBidRepository.findByAuctionId(...)`, sua cau SQL de lay them
-`created_at` cua cau hinh auto-bid.
+Trong `AutoBidRepository.findByAuctionId(...)`, sửa câu SQL để lấy thêm
+`created_at` của cấu hình auto-bid.
 
-Hien tai:
+Hiện tại:
 
 ```sql
 SELECT auction_id, bidder_id, max_amount, increment_amount
@@ -71,7 +71,7 @@ FROM auto_bid_configs
 WHERE auction_id = ?
 ```
 
-Nen sua thanh:
+Nên sửa thành:
 
 ```sql
 SELECT auction_id, bidder_id, max_amount, increment_amount, created_at
@@ -79,96 +79,96 @@ FROM auto_bid_configs
 WHERE auction_id = ?
 ```
 
-Y nghia:
+Ý nghĩa:
 
-- `created_at` la du lieu dung de xac dinh do uu tien.
-- Khong sap xep bang SQL la bat buoc neu da dung `PriorityQueue`, nhung co the
-  them `ORDER BY created_at ASC` de ket qua doc log/on dinh hon.
-- Neu `AutoBidConfig` chua co field `createdAt`, nen them field nay hoac tao
-  mot class noi bo nho trong service, vi `PriorityQueue` can gia tri nay de so
-  sanh.
+- `created_at` là dữ liệu dùng để xác định độ ưu tiên.
+- Không sắp xếp bằng SQL là bắt buộc nếu đã dùng `PriorityQueue`, nhưng có thể
+  thêm `ORDER BY created_at ASC` để kết quả đọc log/ổn định hơn.
+- Nếu `AutoBidConfig` chưa có field `createdAt`, nên thêm field này hoặc tạo
+  một class nội bộ nhỏ trong service, vì `PriorityQueue` cần giá trị này để so
+  sánh.
 
-## 5. Buoc 2: Dung PriorityQueue de chon auto-bidder
+## 5. Bước 2: Dùng PriorityQueue để chọn auto-bidder
 
-Trong `AutoBidService.runAutoBids(...)`, bo cach chon nguoi co `maxAmount` cao
-nhat.
+Trong `AutoBidService.runAutoBids(...)`, bỏ cách chọn người có `maxAmount` cao
+nhất.
 
-Khong nen tiep tuc dung logic kieu:
+Không nên tiếp tục dùng logic kiểu:
 
 ```java
 eligibleConfigs.stream()
     .max(Comparator.comparing(AutoBidConfig::getMaxAmount))
 ```
 
-Thay vao do, tao `PriorityQueue` that trong Java. Priority khong phai la
-`maxAmount`, ma la thoi diem dang ky auto-bid som hon:
+Thay vào đó, tạo `PriorityQueue` thật trong Java. Priority không phải là
+`maxAmount`, mà là thời điểm đăng ký auto-bid sớm hơn:
 
 ```java
 PriorityQueue<AutoBidConfig> queue =
     new PriorityQueue<>(Comparator.comparing(AutoBidConfig::getCreatedAt));
 ```
 
-Neu can tie-break khi hai config co cung `created_at`, co the them
-`thenComparing(AutoBidConfig::getBidderId)` de thu tu on dinh.
+Nếu cần tie-break khi hai config có cùng `created_at`, có thể thêm
+`thenComparing(AutoBidConfig::getBidderId)` để thứ tự ổn định.
 
-Logic mong muon:
+Logic mong muốn:
 
 ```text
-Voi tung cau hinh auto-bid:
-- Neu la nguoi dang dan dau thi khong dua vao queue
-- Tinh gia bid tiep theo = gia hien tai + buoc gia toi thieu
-- Neu maxAmount cua nguoi do du tra gia nay thi dua vao queue
-- Poll queue de lay nguoi co uu tien cao nhat
+Với từng cấu hình auto-bid:
+- Nếu là người đang dẫn đầu thì không đưa vào queue
+- Tính giá bid tiếp theo = giá hiện tại + bước giá tối thiểu
+- Nếu maxAmount của người đó đủ trả giá này thì đưa vào queue
+- Poll queue để lấy người có ưu tiên cao nhất
 ```
 
-Trong cach nay, `maxAmount` chi la dieu kien hop le va gioi han gia toi da.
-`maxAmount` khong quyet dinh do uu tien.
+Trong cách này, `maxAmount` chỉ là điều kiện hợp lệ và giới hạn giá tối đa.
+`maxAmount` không quyết định độ ưu tiên.
 
-## 6. Buoc 3: Giu co che dat bid hien co
+## 6. Bước 3: Giữ cơ chế đặt bid hiện có
 
-Khi da chon duoc nguoi auto-bid tiep theo, van goi:
+Khi đã chọn được người auto-bid tiếp theo, vẫn gọi:
 
 ```java
 bidGateway.placeAutoBid(...)
 ```
 
-Khong nen tu cap nhat gia truc tiep trong `AutoBidService`.
+Không nên tự cập nhật giá trực tiếp trong `AutoBidService`.
 
-Ly do:
+Lý do:
 
-- `BidService.placeBid(...)` da co san validate gia bid.
-- Logic chong bid sai, bid khi auction dong, bid thap hon gia hien tai van duoc
-  tai su dung.
-- Co che chong race condition hien tai van duoc giu lai.
+- `BidService.placeBid(...)` đã có sẵn validate giá bid.
+- Logic chống bid sai, bid khi auction đóng, bid thấp hơn giá hiện tại vẫn được
+  tái sử dụng.
+- Cơ chế chống race condition hiện tại vẫn được giữ lại.
 
-## 7. Buoc 4: Giu vong lap nhung lam ro hon
+## 7. Bước 4: Giữ vòng lặp nhưng làm rõ hơn
 
-Co the giu `MAX_TRIGGER_DEPTH` de tranh vong lap vo han khi nhieu nguoi cung bat
+Có thể giữ `MAX_TRIGGER_DEPTH` để tránh vòng lặp vô hạn khi nhiều người cùng bật
 auto-bid.
 
-Tuy nhien, ben trong vong lap chi nen co cac buoc ro rang:
+Tuy nhiên, bên trong vòng lặp chỉ nên có các bước rõ ràng:
 
 ```text
-1. Lay auction hien tai
-2. Lay danh sach auto-bid kem created_at
-3. Dua cac config du dieu kien vao PriorityQueue theo created_at
-4. Poll PriorityQueue de lay nguoi dau tien du dieu kien
-5. Neu khong co ai thi dung
-6. Dat auto-bid
-7. Cap nhat currentHighestBid va currentHighestBidderId
+1. Lấy auction hiện tại
+2. Lấy danh sách auto-bid kèm created_at
+3. Đưa các config đủ điều kiện vào PriorityQueue theo created_at
+4. Poll PriorityQueue để lấy người đầu tiên đủ điều kiện
+5. Nếu không có ai thì dừng
+6. Đặt auto-bid
+7. Cập nhật currentHighestBid và currentHighestBidderId
 ```
 
-Khong can tinh `nextBestMax` neu muc tieu la don gian hoa va uu tien theo thoi
-diem dang ky.
+Không cần tính `nextBestMax` nếu mục tiêu là đơn giản hóa và ưu tiên theo thời
+điểm đăng ký.
 
-## 8. Ket qua mong muon
+## 8. Kết quả mong muốn
 
-Sau khi chinh sua:
+Sau khi chỉnh sửa:
 
-- Auto-Bid van hoat dong.
-- Code de doc hon.
-- Luong xu ly de giai thich hon trong buoi bao ve.
-- Tinh nang khop hon voi yeu cau de bai ve uu tien theo thoi diem dang ky.
-- Khong can viet lai toan bo module.
-- Khong lam anh huong den cac phan chinh nhu `BidService`, `BidHandler`,
-  database schema hoac realtime notification.
+- Auto-Bid vẫn hoạt động.
+- Code dễ đọc hơn.
+- Luồng xử lý dễ giải thích hơn trong buổi bảo vệ.
+- Tính năng khớp hơn với yêu cầu đề bài về ưu tiên theo thời điểm đăng ký.
+- Không cần viết lại toàn bộ module.
+- Không làm ảnh hưởng đến các phần chính như `BidService`, `BidHandler`,
+  database schema hoặc realtime notification.
