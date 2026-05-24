@@ -49,7 +49,6 @@ public class ImageUploadService {
           return fileKey.trim();
         }
       } catch (IOException ignored) {
-        // Fallback to final error below.
       }
     }
 

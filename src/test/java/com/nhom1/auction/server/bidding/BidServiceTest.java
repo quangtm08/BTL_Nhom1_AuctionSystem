@@ -70,14 +70,21 @@ public class BidServiceTest {
   public void testPlaceBid_ValidBid_SavesAndUpdatesHighestBid() throws Exception {
     UUID bidderId = UUID.randomUUID();
     BigDecimal amount = new BigDecimal("150.00");
+    LocalDateTime now = LocalDateTime.now();
     Auction auction =
         new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
+            UUID.randomUUID(),
             new BigDecimal("100.00"),
-            LocalDateTime.now().minusHours(1),
-            LocalDateTime.now().plusHours(1));
-    auction.startAuction();
+            now.minusHours(1),
+            now.plusHours(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            now,
+            now,
+            null);
     UUID auctionId = auction.getId();
     when(connection.getAutoCommit()).thenReturn(true);
     when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
@@ -160,14 +167,21 @@ public class BidServiceTest {
   public void testPlaceBid_UpdateHighestBidFails_RollsBackAndRestoresAutoCommit() throws Exception {
     UUID bidderId = UUID.randomUUID();
     BigDecimal amount = new BigDecimal("150.00");
+    LocalDateTime now = LocalDateTime.now();
     Auction auction =
         new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
+            UUID.randomUUID(),
             new BigDecimal("100.00"),
-            LocalDateTime.now().minusHours(1),
-            LocalDateTime.now().plusHours(1));
-    auction.startAuction();
+            now.minusHours(1),
+            now.plusHours(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            now,
+            now,
+            null);
     UUID auctionId = auction.getId();
     when(connection.getAutoCommit()).thenReturn(false);
     when(auctionRepository.findById(auctionId, connection)).thenReturn(Optional.of(auction));
@@ -199,8 +213,20 @@ public class BidServiceTest {
     UUID sellerId = UUID.randomUUID();
     LocalDateTime startTime = LocalDateTime.now().minusHours(1);
     LocalDateTime endTime = startTime.plusHours(2);
-    Auction auction = new Auction(itemId, sellerId, new BigDecimal("100.00"), startTime, endTime);
-    auction.startAuction();
+    Auction auction =
+        new Auction(
+            UUID.randomUUID(),
+            itemId,
+            sellerId,
+            new BigDecimal("100.00"),
+            startTime,
+            endTime,
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
     UUID auctionId = auction.getId();
     UUID highestBidderId = UUID.randomUUID();
     BigDecimal currentHighestBid = new BigDecimal("150.00");
@@ -287,18 +313,30 @@ public class BidServiceTest {
         new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
+            UUID.randomUUID(),
             new BigDecimal("100.00"),
             LocalDateTime.now(),
-            LocalDateTime.now().plusDays(1));
-    auction1.startAuction();
+            LocalDateTime.now().plusDays(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
     Auction auction2 =
         new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
+            UUID.randomUUID(),
             new BigDecimal("200.00"),
             LocalDateTime.now(),
-            LocalDateTime.now().plusDays(1));
-    auction2.startAuction();
+            LocalDateTime.now().plusDays(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
 
     Item item =
         new Item("Item 1", "Desc", ItemCategory.ELECTRONICS, ItemCondition.NEW) {

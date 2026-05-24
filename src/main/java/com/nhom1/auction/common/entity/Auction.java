@@ -2,9 +2,6 @@ package com.nhom1.auction.common.entity;
 
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.BidType;
-import com.nhom1.auction.common.enums.UserRole;
-import com.nhom1.auction.common.exception.InvalidAuctionStateException;
-import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -134,49 +131,6 @@ public class Auction extends BaseEntity {
     this.version = version;
   }
 
-  public void startAuction() {
-    auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
-    try {
-      if (status == AuctionStatus.OPEN) {
-        status = AuctionStatus.RUNNING;
-        touchUpdatedAt();
-      } else {
-        throw new InvalidAuctionStateException("Only OPEN auctions can be started");
-      }
-    } finally {
-      auctionLock.unlock();
-    }
-  }
-
-  public void endAuction() {
-    auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
-    try {
-      if (status == AuctionStatus.RUNNING) {
-        status = AuctionStatus.FINISHED;
-        touchUpdatedAt();
-      } else {
-        throw new InvalidAuctionStateException("Only RUNNING auctions can be ended");
-      }
-    } finally {
-      auctionLock.unlock();
-    }
-  }
-
-  // TODO: Add payment validation before allowing this transition.
-  public void markAsPaid() {
-    auctionLock.lock(); // Lock to ensure thread safety when changing the auction status
-    try {
-      if (status == AuctionStatus.FINISHED) {
-        status = AuctionStatus.PAID;
-        touchUpdatedAt();
-      } else {
-        throw new InvalidAuctionStateException("Only FINISHED auctions can be marked as paid");
-      }
-    } finally {
-      auctionLock.unlock();
-    }
-  }
-
   public BidTransaction placeBid(
       UUID bidderId, BigDecimal amount, BidType bidType, LocalDateTime bidTime) {
 
@@ -193,36 +147,6 @@ public class Auction extends BaseEntity {
       currentHighestBid = amount;
       touchUpdatedAt();
       return bidTransaction;
-    } finally {
-      auctionLock.unlock();
-    }
-  }
-
-  // Sellers may cancel only their own OPEN auctions. Admins may cancel OPEN or
-  // RUNNING auctions.
-  public void cancelAuction(UUID callerId, UserRole userRole) {
-
-    auctionLock.lock(); // Lock to ensure thread safety when canceling the auction
-    try {
-      if (userRole == UserRole.ADMIN
-          && (status == AuctionStatus.OPEN || status == AuctionStatus.RUNNING)) {
-        status = AuctionStatus.CANCELED;
-        touchUpdatedAt();
-      } else if (userRole == UserRole.USER
-          && callerId != null
-          && callerId.equals(sellerId)
-          && status == AuctionStatus.OPEN) {
-        status = AuctionStatus.CANCELED;
-        touchUpdatedAt();
-      } else if (userRole == UserRole.ADMIN
-          || (userRole == UserRole.USER && callerId != null && callerId.equals(sellerId))) {
-        throw new InvalidAuctionStateException(
-            "The auction cannot be canceled in its current state");
-      } else {
-        throw new UnauthorizedActionException(
-            "Only the owning seller or an admin can cancel this auction");
-      }
-
     } finally {
       auctionLock.unlock();
     }

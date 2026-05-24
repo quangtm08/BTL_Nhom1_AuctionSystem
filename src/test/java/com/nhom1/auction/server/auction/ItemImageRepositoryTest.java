@@ -99,8 +99,9 @@ public class ItemImageRepositoryTest {
     when(mockConnection.prepareStatement(anyString()))
         .thenThrow(new SQLException("no such table: item_images", "42P01"));
 
-    List<String> list = repo.findImageUrlsByItemId(itemId);
-    assertTrue(list.isEmpty());
+    RuntimeException thrown =
+        assertThrows(RuntimeException.class, () -> repo.findImageUrlsByItemId(itemId));
+    assertTrue(thrown.getMessage().contains("Failed to fetch item images"));
   }
 
   @Test
@@ -120,8 +121,9 @@ public class ItemImageRepositoryTest {
     when(mockDataSource.getConnection())
         .thenThrow(new SQLException("relation item_images does not exist", "42P01"));
 
-    List<String> list = repo.findImageUrlsByItemId(itemId);
-    assertTrue(list.isEmpty());
+    RuntimeException thrown =
+        assertThrows(RuntimeException.class, () -> repo.findImageUrlsByItemId(itemId));
+    assertTrue(thrown.getMessage().contains("Failed to fetch item images"));
   }
 
   @Test

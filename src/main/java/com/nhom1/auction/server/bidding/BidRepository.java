@@ -23,7 +23,7 @@ public class BidRepository {
     this.dataSource = dataSource;
   }
 
-  // ===================== SAVE =====================
+  // Writes
   public void save(BidTransaction bidTransaction) {
     try (Connection conn = dataSource.getConnection()) {
       save(bidTransaction, conn);
@@ -52,6 +52,7 @@ public class BidRepository {
     }
   }
 
+  // Reads
   public List<BidTransaction> findByAuctionId(UUID auctionId) {
     String sql =
         """
@@ -159,7 +160,7 @@ public class BidRepository {
     return Optional.empty();
   }
 
-  // ===================== DELETE BY BIDDER =====================
+  // Deletes
   public int deleteByBidderId(UUID bidderId) {
     try (Connection conn = dataSource.getConnection()) {
       return deleteByBidderId(bidderId, conn);
@@ -178,7 +179,6 @@ public class BidRepository {
     }
   }
 
-  // ===================== DELETE BY AUCTION =====================
   public int deleteByAuctionId(UUID auctionId) {
     try (Connection conn = dataSource.getConnection()) {
       return deleteByAuctionId(auctionId, conn);
@@ -197,6 +197,7 @@ public class BidRepository {
     }
   }
 
+  // Row mapping
   private BidTransaction mapBidTransaction(ResultSet rs) throws SQLException {
     UUID id = UUID.fromString(rs.getString("id"));
     UUID auctionId = UUID.fromString(rs.getString("auction_id"));

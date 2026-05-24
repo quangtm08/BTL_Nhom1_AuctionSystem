@@ -23,6 +23,7 @@ public class AuctionManagementController {
 
   private String cancelingAuctionId;
 
+  // Initialization
   @FXML
   public void initialize() {
     reloadAuctions();
@@ -33,6 +34,7 @@ public class AuctionManagementController {
     pushService.onAuctionEnded(event -> Platform.runLater(this::reloadAuctions));
   }
 
+  // Data loading
   private void reloadAuctions() {
     lblAuctionSummary.setText("Loading auctions...");
 
@@ -48,6 +50,7 @@ public class AuctionManagementController {
             });
   }
 
+  // Rendering
   private void renderAuctions(List<AuctionSummaryDto> auctions) {
     clearRowsFrom(1);
     List<AuctionSummaryDto> safeAuctions = auctions != null ? auctions : List.of();
@@ -111,7 +114,7 @@ public class AuctionManagementController {
             || auction.getStatus() == AuctionStatus.RUNNING;
     cancelBtn.setDisable(missingAuctionId || !canCancel || auctionId.equals(cancelingAuctionId));
     cancelBtn.setOnAction(e -> cancelAuction(auctionId, cancelBtn));
-    // Approve button for OPEN auctions
+
     Button approveBtn = new Button("Approve");
     approveBtn.getStyleClass().add("btn-approve");
     approveBtn.setDisable(missingAuctionId || !(auction.getStatus() == AuctionStatus.PENDING));
@@ -122,6 +125,7 @@ public class AuctionManagementController {
     auctionGrid.add(actions, 8, row);
   }
 
+  // Event handlers
   private void cancelAuction(String auctionId, Button cancelBtn) {
     cancelingAuctionId = auctionId;
     cancelBtn.setDisable(true);
@@ -167,6 +171,7 @@ public class AuctionManagementController {
             });
   }
 
+  // Helpers
   private void addLabel(int col, int row, String text, String styleClass) {
     Label label = new Label(text);
     label.getStyleClass().add(styleClass);

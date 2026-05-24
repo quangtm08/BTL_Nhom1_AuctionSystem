@@ -20,7 +20,6 @@ public class ErrorResponse {
     this.details = details;
   }
 
-  // Getters and Setters
   public String getCode() {
     return code;
   }

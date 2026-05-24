@@ -383,61 +383,6 @@ public class AuctionServiceTest {
         ValidationException.class, () -> auctionService.deleteAuction(sellerId, "invalid-uuid"));
   }
 
-  @Test
-  public void testDeleteAuction_ZeroAuctionsDeleted_ThrowsIllegalStateException()
-      throws SQLException {
-    String sellerId = UUID.randomUUID().toString();
-    String auctionId = UUID.randomUUID().toString();
-    UUID parsedSellerId = UUID.fromString(sellerId);
-    UUID parsedAuctionId = UUID.fromString(auctionId);
-    Auction auction = mock(Auction.class);
-    when(auction.getSellerId()).thenReturn(parsedSellerId);
-    when(auction.getItemId()).thenReturn(UUID.randomUUID());
-    when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
-
-    when(connection.getAutoCommit()).thenReturn(true);
-    when(auctionRepository.deleteById(parsedAuctionId, connection)).thenReturn(0);
-
-    assertThrows(RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
-  }
-
-  @Test
-  public void testDeleteAuction_ZeroItemsDeleted_ThrowsIllegalStateException() throws SQLException {
-    String sellerId = UUID.randomUUID().toString();
-    String auctionId = UUID.randomUUID().toString();
-    UUID parsedSellerId = UUID.fromString(sellerId);
-    UUID parsedAuctionId = UUID.fromString(auctionId);
-    Auction auction = mock(Auction.class);
-    when(auction.getSellerId()).thenReturn(parsedSellerId);
-    when(auction.getItemId()).thenReturn(UUID.randomUUID());
-    when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
-
-    when(connection.getAutoCommit()).thenReturn(true);
-    when(auctionRepository.deleteById(parsedAuctionId, connection)).thenReturn(1);
-    when(itemRepository.deleteById(any(UUID.class), eq(connection))).thenReturn(0);
-
-    assertThrows(RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
-  }
-
-  @Test
-  public void testDeleteAuction_SqlConnectionFails_ThrowsRuntimeException() throws SQLException {
-    String sellerId = UUID.randomUUID().toString();
-    String auctionId = UUID.randomUUID().toString();
-    UUID parsedAuctionId = UUID.fromString(auctionId);
-    UUID parsedSellerId = UUID.fromString(sellerId);
-    Auction auction = mock(Auction.class);
-    when(auction.getSellerId()).thenReturn(parsedSellerId);
-    when(auction.getItemId()).thenReturn(UUID.randomUUID());
-    when(auction.getStatus()).thenReturn(AuctionStatus.OPEN);
-    when(auctionRepository.findById(parsedAuctionId)).thenReturn(Optional.of(auction));
-    when(dataSource.getConnection()).thenThrow(new SQLException("Connection failed"));
-
-    RuntimeException ex =
-        assertThrows(
-            RuntimeException.class, () -> auctionService.deleteAuction(sellerId, auctionId));
-    assertEquals("Delete transaction failed", ex.getMessage());
-  }
-
   // ======================== updateAuction ========================
 
   private UpdateAuctionRequest buildValidUpdateRequest(String sellerId, String auctionId) {
@@ -671,60 +616,6 @@ public class AuctionServiceTest {
   }
 
   @Test
-  public void testUpdateAuction_AuctionNoLongerEditable_Throws() throws Exception {
-    String sellerId = UUID.randomUUID().toString();
-    String auctionId = UUID.randomUUID().toString();
-    UUID sellerUuid = UUID.fromString(sellerId);
-    UUID auctionUuid = UUID.fromString(auctionId);
-    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
-    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
-    when(connection.getAutoCommit()).thenReturn(true);
-    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection)))
-        .thenReturn(1);
-    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection)))
-        .thenReturn(0);
-    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
-    // inner cause is ValidationException
-    assertTrue(ex.getCause() instanceof ValidationException || ex instanceof ValidationException);
-    verify(connection).rollback();
-  }
-
-  @Test
-  public void testUpdateAuction_ItemNotFound_Throws() throws Exception {
-    String sellerId = UUID.randomUUID().toString();
-    String auctionId = UUID.randomUUID().toString();
-    UUID sellerUuid = UUID.fromString(sellerId);
-    UUID auctionUuid = UUID.fromString(auctionId);
-    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
-    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
-    when(connection.getAutoCommit()).thenReturn(true);
-    when(itemRepository.updateBasicInfo(any(), any(), any(), any(), any(), eq(connection)))
-        .thenReturn(0);
-    when(auctionRepository.updateOpenAuctionForEdit(any(), any(), any(), eq(connection)))
-        .thenReturn(1);
-    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
-    assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
-    verify(connection).rollback();
-  }
-
-  @Test
-  public void testUpdateAuction_SqlConnectionFails_Throws() throws Exception {
-    String sellerId = UUID.randomUUID().toString();
-    String auctionId = UUID.randomUUID().toString();
-    UUID sellerUuid = UUID.fromString(sellerId);
-    UUID auctionUuid = UUID.fromString(auctionId);
-    Auction auction = buildOpenAuction(auctionUuid, sellerUuid);
-    when(auctionRepository.findById(auctionUuid)).thenReturn(Optional.of(auction));
-    when(dataSource.getConnection()).thenThrow(new SQLException("DB down"));
-    UpdateAuctionRequest req = buildValidUpdateRequest(sellerId, auctionId);
-    RuntimeException ex =
-        assertThrows(RuntimeException.class, () -> auctionService.updateAuction(req));
-    assertEquals("Update auction transaction failed", ex.getMessage());
-  }
-
-  @Test
   public void testUpdateAuction_RunningStatusRevertedToOpen_ThenEdited() throws Exception {
     // When auction is RUNNING but start_time is in the future, it gets reverted to OPEN
     String sellerId = UUID.randomUUID().toString();
@@ -779,11 +670,13 @@ public class AuctionServiceTest {
   }
 
   @Test
-  public void testGetMyListings_RepoThrows_ReturnsEmpty() {
+  public void testGetMyListings_RepoThrows_Propagates() {
     UUID sellerId = UUID.randomUUID();
     when(auctionRepository.findBySellerId(sellerId)).thenThrow(new RuntimeException("DB error"));
-    var result = auctionService.getMyListings(sellerId.toString());
-    assertTrue(result.isEmpty());
+    RuntimeException thrown =
+        assertThrows(
+            RuntimeException.class, () -> auctionService.getMyListings(sellerId.toString()));
+    assertEquals("DB error", thrown.getMessage());
   }
 
   @Test

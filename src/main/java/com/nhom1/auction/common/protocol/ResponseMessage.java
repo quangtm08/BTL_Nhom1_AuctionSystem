@@ -28,7 +28,6 @@ public class ResponseMessage<T> {
     this.error = new ErrorResponse(errorCode, errorMessage);
   }
 
-  // Getters and Setters
   public String getRequestId() {
     return requestId;
   }

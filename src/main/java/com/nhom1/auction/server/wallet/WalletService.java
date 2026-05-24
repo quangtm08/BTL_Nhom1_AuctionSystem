@@ -18,49 +18,7 @@ public class WalletService {
     this.walletRepository = walletRepository;
   }
 
-  public WalletResponse getWallet(UUID userId) {
-    Wallet wallet = getOrCreateWallet(userId);
-    List<WalletTransaction> txs = walletRepository.findTransactionsByUserId(userId);
-
-    List<WalletTransactionDto> txDtos =
-        txs.stream()
-            .map(
-                tx ->
-                    new WalletTransactionDto(
-                        tx.getId().toString(),
-                        tx.getAmount(),
-                        tx.getTransactionType(),
-                        tx.getReferenceId(),
-                        tx.getDescription(),
-                        tx.getCreatedAt()))
-            .collect(Collectors.toList());
-
-    return new WalletResponse(userId.toString(), wallet.getBalance(), txDtos);
-  }
-
-  public Wallet getOrCreateWallet(UUID userId) {
-    return walletRepository
-        .findByUserId(userId)
-        .orElseGet(
-            () -> {
-              // Default initial balance of $100,000.00 as requested by the user
-              Wallet wallet = new Wallet(userId, new BigDecimal("100000.00"));
-              walletRepository.save(wallet);
-              return wallet;
-            });
-  }
-
-  public Wallet getOrCreateWallet(UUID userId, Connection conn) {
-    return walletRepository
-        .findByUserId(userId, conn)
-        .orElseGet(
-            () -> {
-              Wallet wallet = new Wallet(userId, new BigDecimal("100000.00"));
-              walletRepository.save(wallet, conn);
-              return wallet;
-            });
-  }
-
+  // Business operations
   public void deposit(UUID userId, BigDecimal amount) {
     if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
       throw new ValidationException("Deposit amount must be greater than zero.");
@@ -115,19 +73,16 @@ public class WalletService {
 
     Wallet toWallet = getOrCreateWallet(toUserId, conn);
 
-    // Update sender wallet
     BigDecimal newFromBalance = fromWallet.getBalance().subtract(amount);
     fromWallet.setBalance(newFromBalance);
     fromWallet.touchUpdatedAt();
     walletRepository.save(fromWallet, conn);
 
-    // Update receiver wallet
     BigDecimal newToBalance = toWallet.getBalance().add(amount);
     toWallet.setBalance(newToBalance);
     toWallet.touchUpdatedAt();
     walletRepository.save(toWallet, conn);
 
-    // Save transactions
     WalletTransaction fromTx =
         new WalletTransaction(fromUserId, amount, "PAYMENT", referenceId, description);
     walletRepository.saveTransaction(fromTx, conn);
@@ -135,5 +90,48 @@ public class WalletService {
     WalletTransaction toTx =
         new WalletTransaction(toUserId, amount, "RECEIPT", referenceId, description);
     walletRepository.saveTransaction(toTx, conn);
+  }
+
+  // Query operations
+  public WalletResponse getWallet(UUID userId) {
+    Wallet wallet = getOrCreateWallet(userId);
+    List<WalletTransaction> txs = walletRepository.findTransactionsByUserId(userId);
+
+    List<WalletTransactionDto> txDtos =
+        txs.stream()
+            .map(
+                tx ->
+                    new WalletTransactionDto(
+                        tx.getId().toString(),
+                        tx.getAmount(),
+                        tx.getTransactionType(),
+                        tx.getReferenceId(),
+                        tx.getDescription(),
+                        tx.getCreatedAt()))
+            .collect(Collectors.toList());
+
+    return new WalletResponse(userId.toString(), wallet.getBalance(), txDtos);
+  }
+
+  public Wallet getOrCreateWallet(UUID userId) {
+    return walletRepository
+        .findByUserId(userId)
+        .orElseGet(
+            () -> {
+              Wallet wallet = new Wallet(userId, new BigDecimal("100000.00"));
+              walletRepository.save(wallet);
+              return wallet;
+            });
+  }
+
+  public Wallet getOrCreateWallet(UUID userId, Connection conn) {
+    return walletRepository
+        .findByUserId(userId, conn)
+        .orElseGet(
+            () -> {
+              Wallet wallet = new Wallet(userId, new BigDecimal("100000.00"));
+              walletRepository.save(wallet, conn);
+              return wallet;
+            });
   }
 }

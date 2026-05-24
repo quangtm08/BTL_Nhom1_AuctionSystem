@@ -52,13 +52,7 @@ public class AdminService {
     this.dataSource = dataSource;
   }
 
-  public AdminUserListResponse getAllUsers(String callerId) {
-    requireAdmin(callerId);
-    List<UserSummaryDto> users =
-        userRepository.findAll().stream().map(this::toUserSummaryDto).toList();
-    return new AdminUserListResponse(users);
-  }
-
+  // Business operations
   public String deleteUser(String targetUserId, String callerId) {
     if (targetUserId == null || targetUserId.isBlank()) {
       throw new ValidationException("Target user ID is required.");
@@ -136,11 +130,6 @@ public class AdminService {
     return "CANCELED";
   }
 
-  public AdminAuctionListResponse getAllAuctions(String callerId) {
-    requireAdmin(callerId);
-    return new AdminAuctionListResponse(adminAuctionGateway.findAllAuctionSummaries());
-  }
-
   public String approveAuction(String auctionId, String callerId, String openingDateStr) {
     requireAdmin(callerId);
     if (auctionId == null || auctionId.isBlank())
@@ -209,7 +198,6 @@ public class AdminService {
       throw new RuntimeException("Approve auction failed", ex);
     }
 
-    // Broadcast new auction so clients can show it in explore
     try {
       String itemName =
           itemRepository.findById(auction.getItemId()).map(i -> i.getName()).orElse("Unknown");
@@ -220,6 +208,20 @@ public class AdminService {
     return "APPROVED";
   }
 
+  // Query operations
+  public AdminUserListResponse getAllUsers(String callerId) {
+    requireAdmin(callerId);
+    List<UserSummaryDto> users =
+        userRepository.findAll().stream().map(this::toUserSummaryDto).toList();
+    return new AdminUserListResponse(users);
+  }
+
+  public AdminAuctionListResponse getAllAuctions(String callerId) {
+    requireAdmin(callerId);
+    return new AdminAuctionListResponse(adminAuctionGateway.findAllAuctionSummaries());
+  }
+
+  // Validation
   private User requireAdmin(String callerId) {
     if (callerId == null || callerId.isBlank()) {
       throw new ValidationException("Caller ID is required.");
@@ -243,6 +245,7 @@ public class AdminService {
     }
   }
 
+  // DTO mapping
   private UserSummaryDto toUserSummaryDto(User user) {
     return new UserSummaryDto(
         user.getId().toString(),

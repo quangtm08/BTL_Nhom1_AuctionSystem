@@ -7,11 +7,6 @@ import com.nhom1.auction.common.exception.UserAlreadyExistsException;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.util.List;
 
-/*
-- Execute authentication business logic. Does not know anything about JSON or SQL:
-+ AuthHandler already turns JSON to DTOs and use it to call this service
-+ This service asks repository to read/write to database
- */
 public class AuthService {
   private final UserRepository userRepository;
   private final NotificationService notificationService;
@@ -21,13 +16,7 @@ public class AuthService {
     this.notificationService = notificationService;
   }
 
-  // Return all users
-  public List<User> getAllUsers() {
-    return userRepository.findAll();
-  }
-
-  // Take in identifier (email or username) and password. Return User object if success, throw
-  // exception if failed
+  // Business operations
   public User login(String identifier, String password) {
     return userRepository
         .findByIdentifier(identifier)
@@ -35,7 +24,6 @@ public class AuthService {
         .orElseThrow(() -> new AuthenticationException("Wrong email/username or password"));
   }
 
-  // Take in username, email and password. Return User object if success, throw exception if failed
   public User register(String username, String email, String password) {
     if (userRepository.existsByEmail(email)) {
       throw new UserAlreadyExistsException("Email already exists");
@@ -51,5 +39,10 @@ public class AuthService {
     notificationService.broadcastUserCreated(newUser.getId().toString(), username, email);
 
     return newUser;
+  }
+
+  // Query operations
+  public List<User> getAllUsers() {
+    return userRepository.findAll();
   }
 }

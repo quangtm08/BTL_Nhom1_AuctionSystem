@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class AdminClientService extends BaseClientService {
 
+  // Query operations
   public CompletableFuture<AdminUserListResponse> listUsers() {
     AuthResponse currentUser = requireAdminUser();
     if (currentUser == null)
@@ -37,6 +38,7 @@ public class AdminClientService extends BaseClientService {
         AdminAuctionListResponse.class);
   }
 
+  // Business operations
   public CompletableFuture<String> deleteUser(String targetUserId) {
     if (targetUserId == null || targetUserId.isBlank())
       return validationError("Target user ID is required.");
@@ -76,6 +78,7 @@ public class AdminClientService extends BaseClientService {
     return send(new RequestMessage<>(MessageType.ADMIN_APPROVE_AUCTION, req), String.class);
   }
 
+  // Validation
   private AuthResponse requireAdminUser() {
     AuthResponse currentUser = AppContext.getCurrentUser();
     if (currentUser == null || currentUser.getUserID() == null || currentUser.getUserID().isBlank())

@@ -61,7 +61,6 @@ public class AuctionDetailDto {
     this.bidHistory = bidHistory;
   }
 
-  // Getters and Setters
   public String getAuctionId() {
     return auctionId;
   }

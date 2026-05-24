@@ -21,6 +21,36 @@ public class CreateAuctionClientService extends BaseClientService {
     this.imageUploadService = new ImageUploadService();
   }
 
+  // Business operations
+  public CompletableFuture<CreateAuctionResponse> createAuction(
+      String title,
+      String description,
+      String startingBid,
+      ItemCategory category,
+      ItemCondition condition,
+      int durationDays,
+      LocalDate openingDate,
+      List<File> imageFiles) {
+    return uploadImages(imageFiles)
+        .thenCompose(
+            imageUrls -> {
+              CreateAuctionRequest payload =
+                  buildCreateAuctionRequest(
+                      title,
+                      description,
+                      startingBid,
+                      category,
+                      condition,
+                      durationDays,
+                      openingDate,
+                      imageUrls);
+              RequestMessage<CreateAuctionRequest> request =
+                  new RequestMessage<>(MessageType.CREATE_AUCTION, payload);
+              return send(request, CreateAuctionResponse.class);
+            });
+  }
+
+  // Validation
   public String validateInput(
       String title,
       String startingBid,
@@ -55,34 +85,7 @@ public class CreateAuctionClientService extends BaseClientService {
     return null;
   }
 
-  public CompletableFuture<CreateAuctionResponse> createAuction(
-      String title,
-      String description,
-      String startingBid,
-      ItemCategory category,
-      ItemCondition condition,
-      int durationDays,
-      LocalDate openingDate,
-      List<File> imageFiles) {
-    return uploadImages(imageFiles)
-        .thenCompose(
-            imageUrls -> {
-              CreateAuctionRequest payload =
-                  buildCreateAuctionRequest(
-                      title,
-                      description,
-                      startingBid,
-                      category,
-                      condition,
-                      durationDays,
-                      openingDate,
-                      imageUrls);
-              RequestMessage<CreateAuctionRequest> request =
-                  new RequestMessage<>(MessageType.CREATE_AUCTION, payload);
-              return send(request, CreateAuctionResponse.class);
-            });
-  }
-
+  // Helpers
   private CompletableFuture<List<String>> uploadImages(List<File> imageFiles) {
     if (imageFiles == null || imageFiles.isEmpty()) {
       return CompletableFuture.completedFuture(List.of());
@@ -114,8 +117,6 @@ public class CreateAuctionClientService extends BaseClientService {
     payload.setStartingPrice(parsedStartingBid);
     payload.setStartTime(openingDate.atStartOfDay());
     payload.setDurationDays(durationDays);
-    // Backward compatibility with older Railway server schema:
-    // only send imageUrls when it actually has data.
     if (imageUrls != null && !imageUrls.isEmpty()) {
       payload.setImageUrls(imageUrls);
     }
