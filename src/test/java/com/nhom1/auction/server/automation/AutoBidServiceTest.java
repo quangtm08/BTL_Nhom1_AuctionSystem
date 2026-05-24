@@ -359,4 +359,78 @@ public class AutoBidServiceTest {
 
     verify(autoBidRepository).deleteByAuctionId(auctionId);
   }
+
+  @Test
+  public void testTriggerAutoBids_PriorityQueueOrderByCreatedAt() throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    BigDecimal startingPrice = new BigDecimal("100.00");
+    UUID bot1Id = UUID.randomUUID();
+    UUID bot2Id = UUID.randomUUID();
+
+    AutoBidConfig config1 =
+        new AutoBidConfig(
+            auctionId,
+            bot1Id,
+            new BigDecimal("130.00"),
+            new BigDecimal("10.00"),
+            LocalDateTime.now().minusMinutes(10));
+
+    AutoBidConfig config2 =
+        new AutoBidConfig(
+            auctionId,
+            bot2Id,
+            new BigDecimal("150.00"),
+            new BigDecimal("10.00"),
+            LocalDateTime.now().minusMinutes(5));
+
+    when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(config1, config2));
+
+    java.util.List<String> bidSequence = new java.util.ArrayList<>();
+    java.util.List<BigDecimal> amountSequence = new java.util.ArrayList<>();
+
+    when(bidGateway.placeAutoBid(any(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              UUID bidderId = invocation.getArgument(0);
+              BigDecimal amount = invocation.getArgument(2);
+              bidSequence.add(bidderId.toString());
+              amountSequence.add(amount);
+
+              BidTransaction bidTx = mock(BidTransaction.class);
+              when(bidTx.getAmount()).thenReturn(amount);
+              when(bidTx.getBidderId()).thenReturn(bidderId);
+              return bidTx;
+            });
+
+    Auction auction =
+        new Auction(
+            auctionId,
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            startingPrice,
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusHours(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
+    when(auctionGateway.findById(auctionId)).thenReturn(Optional.of(auction));
+
+    autoBidService.triggerAutoBids(auctionId, BigDecimal.ZERO, null);
+
+    assertEquals(4, bidSequence.size());
+    assertEquals(bot1Id.toString(), bidSequence.get(0));
+    assertEquals(new BigDecimal("100.00"), amountSequence.get(0));
+
+    assertEquals(bot2Id.toString(), bidSequence.get(1));
+    assertEquals(new BigDecimal("110.00"), amountSequence.get(1));
+
+    assertEquals(bot1Id.toString(), bidSequence.get(2));
+    assertEquals(new BigDecimal("120.00"), amountSequence.get(2));
+
+    assertEquals(bot2Id.toString(), bidSequence.get(3));
+    assertEquals(new BigDecimal("130.00"), amountSequence.get(3));
+  }
 }

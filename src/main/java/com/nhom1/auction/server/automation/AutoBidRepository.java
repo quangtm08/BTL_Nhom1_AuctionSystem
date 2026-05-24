@@ -46,7 +46,7 @@ public class AutoBidRepository {
   public List<AutoBidConfig> findByAuctionId(UUID auctionId) {
     String sql =
         """
-        SELECT auction_id, bidder_id, max_amount, increment_amount
+        SELECT auction_id, bidder_id, max_amount, increment_amount, created_at
         FROM auto_bid_configs
         WHERE auction_id = ?
         """;
@@ -56,12 +56,16 @@ public class AutoBidRepository {
       ps.setString(1, auctionId.toString());
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
+          java.sql.Timestamp ts = rs.getTimestamp("created_at");
+          java.time.LocalDateTime createdAt =
+              ts != null ? ts.toLocalDateTime() : java.time.LocalDateTime.now();
           result.add(
               new AutoBidConfig(
                   UUID.fromString(rs.getString("auction_id")),
                   UUID.fromString(rs.getString("bidder_id")),
                   rs.getBigDecimal("max_amount"),
-                  rs.getBigDecimal("increment_amount")));
+                  rs.getBigDecimal("increment_amount"),
+                  createdAt));
         }
       }
     } catch (SQLException e) {
@@ -73,7 +77,7 @@ public class AutoBidRepository {
   public Optional<AutoBidConfig> findByAuctionAndBidder(UUID auctionId, UUID bidderId) {
     String sql =
         """
-        SELECT auction_id, bidder_id, max_amount, increment_amount
+        SELECT auction_id, bidder_id, max_amount, increment_amount, created_at
         FROM auto_bid_configs
         WHERE auction_id = ? AND bidder_id = ?
         """;
@@ -83,12 +87,16 @@ public class AutoBidRepository {
       ps.setString(2, bidderId.toString());
       try (ResultSet rs = ps.executeQuery()) {
         if (rs.next()) {
+          java.sql.Timestamp ts = rs.getTimestamp("created_at");
+          java.time.LocalDateTime createdAt =
+              ts != null ? ts.toLocalDateTime() : java.time.LocalDateTime.now();
           return Optional.of(
               new AutoBidConfig(
                   UUID.fromString(rs.getString("auction_id")),
                   UUID.fromString(rs.getString("bidder_id")),
                   rs.getBigDecimal("max_amount"),
-                  rs.getBigDecimal("increment_amount")));
+                  rs.getBigDecimal("increment_amount"),
+                  createdAt));
         }
       }
     } catch (SQLException e) {
