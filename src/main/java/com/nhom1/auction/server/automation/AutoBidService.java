@@ -160,9 +160,8 @@ public class AutoBidService {
       }
 
       BigDecimal nextAmt = requiredBid.min(selected.getMaxAmount());
-      BigDecimal minRequired = hasBids
-          ? currentHighestBid.add(selected.getIncrement())
-          : auction.getStartingPrice();
+      BigDecimal minRequired =
+          hasBids ? currentHighestBid.add(selected.getIncrement()) : auction.getStartingPrice();
 
       if (nextAmt.compareTo(minRequired) < 0) {
         break;
