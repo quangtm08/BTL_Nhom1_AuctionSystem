@@ -276,7 +276,9 @@ public class EditAuctionController {
   }
 
   private void showStatus(String message) {
-    statusLabel.setText(message);
+    if (statusLabel != null) {
+      statusLabel.setText(message);
+    }
   }
 
   private String resolveErrorMessage(Throwable throwable, String fallback) {
@@ -293,11 +295,13 @@ public class EditAuctionController {
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     String opens = startTime != null ? startTime.format(fmt) : "N/A";
     String ends = endTime != null ? endTime.format(fmt) : "N/A";
-    metaLabel.setText("Opens: " + opens + " | Ends: " + ends);
+    if (metaLabel != null) {
+      metaLabel.setText("Opens: " + opens + " | Ends: " + ends);
+    }
   }
 
   private boolean isEditableStatus(AuctionStatus status) {
-    return status == AuctionStatus.PENDING || status == AuctionStatus.OPEN;
+    return status == AuctionStatus.PENDING;
   }
 
   private String statusName(AuctionStatus status) {

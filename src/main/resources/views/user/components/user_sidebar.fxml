@@ -4,27 +4,25 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER" 
+<VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER"
       xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
       stylesheets="@/css/client/user_sidebar.css, @/css/client/common_ui.css" fx:controller="com.nhom1.auction.client.user.controller.UserSidebarController"  >
     <padding>
         <Insets top="80.0" left="25.0" right="25.0" bottom="30.0"/>
     </padding>
-    
+
     <VBox spacing="12.0" VBox.vgrow="ALWAYS">
         <Button fx:id="btnExplore" text="Explore" maxWidth="Infinity" styleClass="btn-ghost, btn-ghost-active"/>
         <Button fx:id="btnBids" text="My bids" maxWidth="Infinity" styleClass="btn-ghost"/>
         <Button fx:id="btnListings" text="My listings" maxWidth="Infinity" styleClass="btn-ghost"/>
         <Button fx:id="btnPayment" text="Payments" maxWidth="Infinity" styleClass="btn-ghost"/>
-        <Button fx:id="btnWallet" text="My Wallet 💳" maxWidth="Infinity" styleClass="btn-ghost"/>
+        <Button fx:id="btnWallet" text="My Wallet" maxWidth="Infinity" styleClass="btn-ghost"/>
     </VBox>
-    
+
     <VBox spacing="18.0" styleClass="user-footer">
         <HBox alignment="CENTER_LEFT" spacing="12.0">
             <Circle radius="18.0" fill="#3a3a3a" stroke="#4a4a4a"/>
-            <VBox spacing="2.0">
-                <Label text="Loading.." fx:id="usernameLabel" styleClass="user-label" style="-fx-text-fill: white; -fx-font-weight: bold;"/>
-            </VBox>
+            <Label text="Loading.." fx:id="usernameLabel" styleClass="user-label"/>
         </HBox>
         <Button fx:id="btnLogout" text="Logout ⎋" maxWidth="Infinity" styleClass="btn-danger"/>
     </VBox>

@@ -4,55 +4,63 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" 
+<BorderPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
             styleClass="main-container" stylesheets="@/css/client/my_bids.css, @/css/client/common_ui.css"
             fx:controller="com.nhom1.auction.client.user.controller.MyBidsController">
-    
+
     <left>
         <fx:include source="/views/user/components/user_sidebar.fxml" />
     </left>
 
     <center>
-        <ScrollPane fitToWidth="true" styleClass="custom-scroll-pane">
-            <VBox spacing="30" styleClass="content-padding">
-                
-                <Label text="Always stay ahead" styleClass="dashboard-title-serif"/>
-                
-                <HBox spacing="60">
-                    <VBox spacing="5">
-                        <Label text="Active bids" styleClass="stat-label"/>
-                        <Label fx:id="activeBidCountLabel" text="0" styleClass="stat-value-white"/>
-                    </VBox>
-                    <VBox spacing="5">
-                        <Label text="Ending soon (24h)" styleClass="stat-label"/>
-                        <Label fx:id="endingSoonCountLabel" text="0" styleClass="stat-value-white"/>
-                    </VBox>
-                </HBox>
-                
-                <VBox spacing="15">
-                    <TextField promptText="Search..." styleClass="search-field"/>
-                    <HBox alignment="CENTER_LEFT" spacing="10">
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <Label text="Sort by" styleClass="text-dim"/>
-                        <Label text="Ending soon" styleClass="sort-text-active"/>
+        <StackPane>
+            <!-- SKELETON LOADING -->
+            <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
+
+            <!-- ACTUAL CONTENT -->
+            <ScrollPane fx:id="contentBox" fitToWidth="true" styleClass="custom-scroll-pane" visible="false" managed="false">
+                <VBox spacing="30" styleClass="content-padding">
+
+                    <Label text="My Bids" styleClass="dashboard-title-serif"/>
+
+                    <HBox spacing="60">
+                        <VBox spacing="5">
+                            <Label text="Active bids" styleClass="stat-label"/>
+                            <Label fx:id="activeBidCountLabel" text="0" styleClass="stat-value-white"/>
+                        </VBox>
+                        <VBox spacing="5">
+                            <Label text="Ending soon (24h)" styleClass="stat-label"/>
+                            <Label fx:id="endingSoonCountLabel" text="0" styleClass="stat-value-white"/>
+                        </VBox>
                     </HBox>
+
+                    <VBox spacing="20.0">
+                        <TextField promptText="Search..." styleClass="search-field"/>
+                        <HBox alignment="CENTER_LEFT">
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <HBox alignment="CENTER_RIGHT" spacing="12.0">
+                                <Label text="Sort by" styleClass="text-dim" style="-fx-translate-y: 4;"/>
+                                <Button text="Ending soon" styleClass="filter-chip, filter-chip-active"/>
+                            </HBox>
+                        </HBox>
+                    </VBox>
+
+                    <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
+                        <content>
+                            <GridPane fx:id="cardsGridPane" hgap="30.0" vgap="30.0">
+                                <padding>
+                                    <Insets bottom="30.0" right="20.0" />
+                                </padding>
+                                <columnConstraints>
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
+                                    <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
+                                </columnConstraints>
+                                <children/>
+                            </GridPane>
+                        </content>
+                    </ScrollPane>
                 </VBox>
-                
-                <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
-                <content>
-                    <GridPane fx:id="cardsGridPane" hgap="30.0" vgap="30.0">
-                        <padding>
-                            <Insets bottom="30.0" right="20.0" />
-                        </padding>
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" />
-                        </columnConstraints>
-                        <children/>
-                    </GridPane>
-                </content>
             </ScrollPane>
-            </VBox>
-        </ScrollPane>
+        </StackPane>
     </center>
 </BorderPane>

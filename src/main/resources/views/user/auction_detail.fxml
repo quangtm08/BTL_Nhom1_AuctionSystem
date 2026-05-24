@@ -13,10 +13,7 @@
             stylesheets="@/css/client/auction_detail.css, @/css/client/common_ui.css"
             styleClass="root">
 
-    <VBox fx:id="loadingBox" spacing="10" alignment="CENTER" styleClass="container">
-        <ProgressIndicator/>
-        <Label text="Loading auction detail..."/>
-    </VBox>
+    <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
 
     <VBox fx:id="contentBox" spacing="30" styleClass="container" visible="false" managed="false">
 

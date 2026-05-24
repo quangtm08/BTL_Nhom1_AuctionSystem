@@ -40,6 +40,10 @@ public class AuctionBrowseController {
 
   @FXML private GridPane cardsGridPane;
 
+  @FXML private javafx.scene.layout.VBox loadingBox;
+
+  @FXML private javafx.scene.layout.VBox contentBox;
+
   // Initialization
   @FXML
   public void initialize() {
@@ -55,6 +59,17 @@ public class AuctionBrowseController {
       pushService.onAuctionDeleted(
           event -> Platform.runLater(() -> handleAuctionDeletedPush(event)));
       pushService.onAuctionEnded(event -> Platform.runLater(this::loadAuctions));
+    }
+  }
+
+  private void showContent() {
+    if (loadingBox != null) {
+      loadingBox.setVisible(false);
+      loadingBox.setManaged(false);
+    }
+    if (contentBox != null) {
+      contentBox.setVisible(true);
+      contentBox.setManaged(true);
     }
   }
 
@@ -95,12 +110,17 @@ public class AuctionBrowseController {
         .exceptionally(
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
-              Platform.runLater(() -> showError("Load auctions failed", cause.getMessage()));
+              Platform.runLater(
+                  () -> {
+                    showContent();
+                    showError("Load auctions failed", cause.getMessage());
+                  });
               return null;
             });
   }
 
   private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
+    showContent();
     if (auctions == null || auctions.isEmpty()) {
       currentAuctions = new ArrayList<>();
       renderAuctionCards(currentAuctions);

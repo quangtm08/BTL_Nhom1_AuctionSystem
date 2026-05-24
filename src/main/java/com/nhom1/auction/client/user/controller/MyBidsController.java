@@ -25,9 +25,17 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 
 public class MyBidsController {
+
   @FXML private GridPane cardsGridPane;
+
   @FXML private Label activeBidCountLabel;
+
   @FXML private Label endingSoonCountLabel;
+
+  @FXML private javafx.scene.layout.VBox loadingBox;
+
+  @FXML private javafx.scene.control.ScrollPane contentBox;
+
   private final BiddingClientService biddingService = new BiddingClientService();
   private final ClientPushService pushService = ClientPushService.getInstance();
 
@@ -35,6 +43,17 @@ public class MyBidsController {
   public void initialize() {
     loadMyBids();
     pushService.onAuctionEnded(event -> Platform.runLater(this::loadMyBids));
+  }
+
+  private void showContent() {
+    if (loadingBox != null) {
+      loadingBox.setVisible(false);
+      loadingBox.setManaged(false);
+    }
+    if (contentBox != null) {
+      contentBox.setVisible(true);
+      contentBox.setManaged(true);
+    }
   }
 
   private void loadMyBids() {
@@ -45,12 +64,16 @@ public class MyBidsController {
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
               Platform.runLater(
-                  () -> System.err.println("Failed to load my bids: " + cause.getMessage()));
+                  () -> {
+                    showContent();
+                    System.err.println("Failed to load my bids: " + cause.getMessage());
+                  });
               return null;
             });
   }
 
   private void renderMyBids(MyBidsResponse resp) {
+    showContent();
     cardsGridPane.getChildren().clear();
     if (resp == null || resp.getBids() == null || resp.getBids().isEmpty()) {
       updateCounts(0, 0);
@@ -103,7 +126,7 @@ public class MyBidsController {
   private boolean isEndingSoon(LocalDateTime endTime) {
     if (endTime == null) return false;
     Duration remaining = Duration.between(LocalDateTime.now(), endTime);
-    return !remaining.isNegative() && remaining.compareTo(Duration.ofHours(24)) < 0;
+    return (!remaining.isNegative() && remaining.compareTo(Duration.ofHours(24)) < 0);
   }
 
   private void navigateToDetail(String auctionId) {

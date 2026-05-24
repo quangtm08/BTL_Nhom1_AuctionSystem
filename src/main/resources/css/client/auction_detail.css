@@ -14,7 +14,8 @@
     -fx-background-color: linear-gradient(to right, #0c1c16, #111c19);
     -fx-background-radius: 20;
     -fx-padding: 30;
-}root {
+}
+.root {
     -fx-background-color: #050505;
 }
 
@@ -37,7 +38,7 @@
     -fx-min-height: 320;
     -fx-max-width: 420;
     -fx-max-height: 320;
-    -fx-background-color: #cccccc;
+    -fx-background-color: #262626;
     -fx-background-radius: 10;
     -fx-alignment: center;
     -fx-padding: 0;
@@ -261,4 +262,3 @@
     -fx-font-size: 12;
     -fx-font-style: italic;
 }
-

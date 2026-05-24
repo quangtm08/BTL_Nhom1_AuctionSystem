@@ -4,8 +4,8 @@
 <?import javafx.scene.layout.*?>
 
 
-<BorderPane fx:id="root" stylesheets="@/css/client/payment.css, @/css/client/common_ui.css" 
-            prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17" 
+<BorderPane fx:id="root" stylesheets="@/css/client/payment.css, @/css/client/common_ui.css"
+            prefHeight="650.0" prefWidth="1000.0" styleClass="root-pane" xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.user.controller.PaymentController">
 
    <left>
@@ -13,25 +13,31 @@
    </left>
 
    <center>
-      <ScrollPane fitToWidth="true" styleClass="main-scroll-pane">
-         <content>
-            <VBox spacing="20.0" styleClass="main-content">
-               <children>
-                  <Label styleClass="header-title" text="Cha-ching $" />
-                  <Label fx:id="lblPaymentStatus" styleClass="item-category" text="Loading payment data..." />
-                  
+      <StackPane>
+         <!-- SKELETON LOADING -->
+         <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
+
+         <!-- ACTUAL CONTENT -->
+         <ScrollPane fx:id="contentBox" fitToWidth="true" styleClass="main-scroll-pane" visible="false" managed="false">
+            <content>
+               <VBox spacing="20.0" styleClass="main-content">
+                  <children>
+                     <!-- Header Title -->
+                     <Label styleClass="header-title" text="Payments" />
+
                   <Label styleClass="section-label" text="TO PAY" />
-                  
-                  <VBox fx:id="pendingPaymentsBox" alignment="CENTER_LEFT" spacing="12.0" />
 
-                  <Separator styleClass="content-divider" />
+                     <VBox fx:id="pendingPaymentsBox" alignment="CENTER_LEFT" spacing="12.0" />
 
-                  <Label styleClass="section-label" text="HISTORY" />
+                     <Separator styleClass="content-divider" />
 
-                  <VBox fx:id="historyBox" spacing="12.0" />
-               </children>
-            </VBox>
-         </content>
-      </ScrollPane>
+                     <Label styleClass="section-label" text="HISTORY" />
+
+                     <VBox fx:id="historyBox" spacing="12.0" />
+                  </children>
+               </VBox>
+            </content>
+         </ScrollPane>
+      </StackPane>
    </center>
 </BorderPane>

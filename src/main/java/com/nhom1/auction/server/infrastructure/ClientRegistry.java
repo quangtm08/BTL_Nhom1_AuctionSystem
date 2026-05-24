@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 // ClientRegistry keeps track of the active clients and their client handlers
 public class ClientRegistry {
+
   private final Map<UUID, ClientHandler> activeClients = new ConcurrentHashMap<>();
   private final Map<UUID, UUID> userToClientMap = new ConcurrentHashMap<>();
 
@@ -29,7 +30,12 @@ public class ClientRegistry {
 
   // Send message to every online clients
   public void broadcast(String json) {
-    activeClients.values().forEach(client -> client.push(json));
+    activeClients
+        .values()
+        .forEach(
+            client -> {
+              java.util.concurrent.CompletableFuture.runAsync(() -> client.push(json));
+            });
   }
 
   // Send message to a specific user

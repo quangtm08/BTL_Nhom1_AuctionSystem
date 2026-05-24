@@ -26,6 +26,13 @@ Khi một sự kiện quan trọng xảy ra (như lưu thành công một lượ
 notificationService.broadcastBidUpdate(auctionId, amount, userId);
 ```
 
+### Cơ chế Gửi Tin nhắn Không chặn (Non-blocking)
+
+Từ phiên bản hiện tại, lớp `ClientRegistry` đã được nâng cấp để thực hiện gửi thông báo ở chế độ **bất đồng bộ (asynchronous)** sử dụng `CompletableFuture.runAsync()`.
+
+- **Lợi ích**: Server sẽ không còn bị treo khi gặp một Client có kết nối mạng chậm. Luồng xử lý chính của Server chỉ việc "giao việc" cho các worker thread chạy ngầm và tiếp tục xử lý các yêu cầu khác ngay lập tức.
+- **Tác động**: Một client lag sẽ không làm ảnh hưởng đến tốc độ nhận thông báo của các client khác. Tuân thủ nguyên tắc cách ly lỗi trong hệ thống phân tán.
+
 ---
 
 ## 2. Phía Client: Cơ chế nhận thông báo (Listen)
