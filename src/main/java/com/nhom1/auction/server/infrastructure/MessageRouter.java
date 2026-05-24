@@ -2,7 +2,6 @@ package com.nhom1.auction.server.infrastructure;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nhom1.auction.common.protocol.ErrorCode;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.ResponseMessage;
@@ -12,8 +11,6 @@ import java.util.Map;
 
 // Identify MessageType from the JSON request -> route the message to the right feature handler
 public class MessageRouter {
-  private final ObjectMapper objectMapper = new ObjectMapper();
-
   // Maps a MessageType to a specific piece of logic (Action) executed by the feature handler.
   private final Map<MessageType, MessageRouteAction> routes = new EnumMap<>(MessageType.class);
 
@@ -30,18 +27,19 @@ public class MessageRouter {
     String requestId = null;
     try {
       // 1. Peek at the JSON to get the 'Envelope' info
-      JsonNode rootNode = objectMapper.readTree(json);
+      JsonNode rootNode = JsonUtil.readTree(json);
 
-      if (!rootNode.has("type")) {
+      String typeText = JsonUtil.fieldText(rootNode, "type");
+      if (typeText == null) {
         return serializeError(null, "INVALID_FORMAT", "Missing message type");
       }
 
       // Get the type and requestId from the JSON request
-      MessageType type = MessageType.valueOf(rootNode.get("type").asText());
-      requestId = rootNode.has("requestId") ? rootNode.get("requestId").asText() : null;
+      MessageType type = MessageType.valueOf(typeText);
+      requestId = JsonUtil.fieldText(rootNode, "requestId");
 
       // 2. Extract the inner payload as a raw JSON string
-      String payloadJson = rootNode.has("payload") ? rootNode.get("payload").toString() : null;
+      String payloadJson = JsonUtil.fieldJson(rootNode, "payload");
 
       // 3. Find the registered Action
       MessageRouteAction action = routes.get(type);
