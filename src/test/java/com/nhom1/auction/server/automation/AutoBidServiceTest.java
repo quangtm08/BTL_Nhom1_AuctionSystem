@@ -103,6 +103,34 @@ public class AutoBidServiceTest {
   }
 
   @Test
+  public void testSaveConfig_CustomIncrementGreater_SavesSuccessfully() {
+    AutoBidConfigRequest dto = new AutoBidConfigRequest();
+    dto.setAuctionId(UUID.randomUUID().toString());
+    dto.setBidderId(UUID.randomUUID().toString());
+    dto.setMaxAmount("200.00");
+    dto.setIncrement("15.00");
+
+    AutoBidConfigResponse result = autoBidService.saveConfig(dto);
+
+    assertEquals("CONFIG_SAVED", result.getStatus());
+    verify(autoBidRepository)
+        .save(
+            org.mockito.ArgumentMatchers.argThat(
+                cfg -> cfg.getIncrement().compareTo(new BigDecimal("15.00")) == 0));
+  }
+
+  @Test
+  public void testSaveConfig_IncrementLessThanMinimum_Throws() {
+    AutoBidConfigRequest dto = new AutoBidConfigRequest();
+    dto.setAuctionId(UUID.randomUUID().toString());
+    dto.setBidderId(UUID.randomUUID().toString());
+    dto.setMaxAmount("200.00");
+    dto.setIncrement("5.00");
+
+    assertThrows(ValidationException.class, () -> autoBidService.saveConfig(dto));
+  }
+
+  @Test
   public void testTriggerAutoBids_OneEligibleBot_PlacesAutoBid() throws Exception {
     UUID auctionId = UUID.randomUUID();
     BigDecimal newHighestBid = new BigDecimal("100.00");

@@ -55,14 +55,15 @@ public class AutoBidService {
     if (maxAmount.compareTo(BigDecimal.ZERO) <= 0) {
       throw new ValidationException("maxAmount must be > 0");
     }
-    if (incrementFromClient.compareTo(increment) != 0) {
-      throw new ValidationException("increment does not match auction rule");
+    if (incrementFromClient.compareTo(increment) < 0) {
+      throw new ValidationException(
+          "increment must be >= minimum increment (" + increment.toPlainString() + ")");
     }
-    if (maxAmount.compareTo(increment) < 0) {
+    if (maxAmount.compareTo(incrementFromClient) < 0) {
       throw new ValidationException("maxAmount must be >= increment");
     }
 
-    autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, increment));
+    autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, incrementFromClient));
 
     scheduleAutoBids(
         auctionId,
