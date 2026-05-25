@@ -109,6 +109,14 @@
     -fx-font-size: 11;
 }
 
+.auto-bid-config-box {
+    -fx-background-color: #12271f;
+    -fx-background-radius: 8;
+    -fx-border-color: #2b6b4c;
+    -fx-border-radius: 8;
+    -fx-padding: 12;
+}
+
 /* BUTTON */
 .btn-green {
     -fx-background-color: #2e5d4f;

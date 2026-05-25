@@ -14,8 +14,8 @@
 
     <center>
         <StackPane>
-            <!-- SKELETON LOADING -->
-            <fx:include source="components/skeleton.fxml" fx:id="skeletonBox" />
+        <!-- SKELETON LOADING -->
+        <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
 
             <!-- ACTUAL CONTENT -->
             <ScrollPane fx:id="contentBox" fitToWidth="true" styleClass="main-scroll-pane" visible="false" managed="false">

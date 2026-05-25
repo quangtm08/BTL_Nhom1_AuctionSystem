@@ -7,6 +7,7 @@ import com.nhom1.auction.client.user.controller.components.BidCardComponentContr
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.client.util.DisplayFormatters;
+import com.nhom1.auction.client.util.SkeletonUtils;
 import com.nhom1.auction.common.dto.bidding.BidWithAuctionDto;
 import com.nhom1.auction.common.dto.bidding.MyBidsResponse;
 import com.nhom1.auction.common.enums.AuctionStatus;
@@ -22,7 +23,9 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 
 public class MyBidsController {
 
@@ -32,9 +35,9 @@ public class MyBidsController {
 
   @FXML private Label endingSoonCountLabel;
 
-  @FXML private javafx.scene.layout.VBox loadingBox;
+  @FXML private VBox loadingBox;
 
-  @FXML private javafx.scene.control.ScrollPane contentBox;
+  @FXML private ScrollPane contentBox;
 
   private final BiddingClientService biddingService = new BiddingClientService();
   private final ClientPushService pushService = ClientPushService.getInstance();
@@ -45,18 +48,16 @@ public class MyBidsController {
     pushService.onAuctionEnded(event -> Platform.runLater(this::loadMyBids));
   }
 
+  private void showLoading() {
+    SkeletonUtils.showLoading(loadingBox, contentBox);
+  }
+
   private void showContent() {
-    if (loadingBox != null) {
-      loadingBox.setVisible(false);
-      loadingBox.setManaged(false);
-    }
-    if (contentBox != null) {
-      contentBox.setVisible(true);
-      contentBox.setManaged(true);
-    }
+    SkeletonUtils.showContent(loadingBox, contentBox);
   }
 
   private void loadMyBids() {
+    showLoading();
     biddingService
         .getMyBids()
         .thenAccept(resp -> Platform.runLater(() -> renderMyBids(resp)))

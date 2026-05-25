@@ -42,15 +42,25 @@ public class BidHistoryChartController {
   private final ClientPushService pushService = ClientPushService.getInstance();
 
   @FXML private Button btnBack;
+
   @FXML private Label lblSubtitle;
+
   @FXML private Label lblChartSub;
+
   @FXML private Label lblStatTotal;
+
   @FXML private Label lblStatHigh;
+
   @FXML private Label lblStatBidders;
+
   @FXML private Label lblEmpty;
+
   @FXML private StackPane chartContainer;
+
   @FXML private LineChart<Number, Number> bidChart;
+
   @FXML private NumberAxis xAxis;
+
   @FXML private NumberAxis yAxis;
 
   @FXML

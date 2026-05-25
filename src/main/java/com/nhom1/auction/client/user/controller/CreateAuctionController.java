@@ -27,6 +27,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 public class CreateAuctionController {
+
   private final List<File> selectedImageFiles = new ArrayList<>();
   private final CreateAuctionClientService createAuctionService = new CreateAuctionClientService();
 
@@ -34,17 +35,29 @@ public class CreateAuctionController {
 
   @FXML private ComboBox<ItemCondition> conditionComboBox;
 
-  @FXML private Label uploadCountLabel;
   @FXML private Button duration1Btn;
+
   @FXML private Button duration3Btn;
+
   @FXML private Button duration7Btn;
+
   @FXML private Button duration14Btn;
+
   @FXML private Button duration30Btn;
+
   @FXML private TextField customDurationField;
+
   @FXML private TextField titleField;
+
   @FXML private TextArea descriptionArea;
+
   @FXML private TextField startingBidField;
+
   @FXML private DatePicker openingDatePicker;
+
+  @FXML private Label uploadCountLabel;
+
+  @FXML private Label lblStatus;
 
   @FXML
   private void initialize() {
@@ -60,6 +73,11 @@ public class CreateAuctionController {
             });
   }
 
+  private void clearActiveDurationButtons() {
+    Arrays.asList(duration1Btn, duration3Btn, duration7Btn, duration14Btn, duration30Btn)
+        .forEach(button -> button.getStyleClass().remove("duration-chip-active"));
+  }
+
   @FXML
   private void handleDurationPreset(ActionEvent event) {
     if (!(event.getSource() instanceof Button selectedButton)) {
@@ -71,11 +89,6 @@ public class CreateAuctionController {
       classes.add("duration-chip-active");
     }
     customDurationField.clear();
-  }
-
-  private void clearActiveDurationButtons() {
-    Arrays.asList(duration1Btn, duration3Btn, duration7Btn, duration14Btn, duration30Btn)
-        .forEach(button -> button.getStyleClass().remove("duration-chip-active"));
   }
 
   @FXML

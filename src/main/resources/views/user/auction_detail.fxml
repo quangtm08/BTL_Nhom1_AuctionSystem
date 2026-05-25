@@ -77,6 +77,27 @@
                     <Label fx:id="lblAutoBidStatus" text="" styleClass="auto-bid-status-label"
                            visible="false" managed="false"/>
 
+                    <VBox fx:id="autoBidConfigBox" spacing="10" styleClass="auto-bid-config-box"
+                          visible="false" managed="false">
+                        <HBox>
+                            <Label text="Current highest bid"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblAutoBidCurrentBid" text="0"/>
+                        </HBox>
+                        <HBox>
+                            <Label text="Increment"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblAutoBidIncrement" text="0"/>
+                        </HBox>
+                        <TextField fx:id="txtAutoBidMax"
+                                   promptText=" ENTER YOUR BID LIMIT"
+                                   styleClass="bid-input"/>
+                        <HBox spacing="10">
+                            <Button text="Save Auto-bid" fx:id="btnSaveAutoBid" styleClass="btn-primary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                            <Button text="Close" fx:id="btnCloseAutoBid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        </HBox>
+                    </VBox>
+
                     <HBox spacing="10">
                         <Button text="Place Bid" styleClass="btn-primary" fx:id="btnBid" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
                         <Button text="Auto-bid" fx:id="btnAutoBid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
