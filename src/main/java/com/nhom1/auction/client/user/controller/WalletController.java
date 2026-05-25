@@ -3,6 +3,7 @@ package com.nhom1.auction.client.user.controller;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.WalletClientService;
 import com.nhom1.auction.client.util.DisplayFormatters;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.client.util.SkeletonUtils;
 import com.nhom1.auction.common.dto.wallet.WalletResponse;
 import com.nhom1.auction.common.dto.wallet.WalletTransactionDto;
@@ -10,25 +11,18 @@ import java.math.BigDecimal;
 import java.util.List;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 
 public class WalletController {
 
   private final WalletClientService walletClientService = new WalletClientService();
-  private Stage alertStage;
 
   @FXML private VBox loadingBox;
 
@@ -124,7 +118,7 @@ public class WalletController {
     clearStatus();
     String input = txtDepositAmount.getText().trim();
     if (input.isEmpty()) {
-      showAlert("Invalid Amount", "Please enter an amount to deposit.", false);
+      showError("Please enter an amount to deposit.");
       return;
     }
 
@@ -135,7 +129,7 @@ public class WalletController {
         throw new NumberFormatException();
       }
     } catch (NumberFormatException e) {
-      showAlert("Invalid Amount", "Please enter a valid positive number.", false);
+      showError("Please enter a valid positive number.");
       return;
     }
 
@@ -149,12 +143,10 @@ public class WalletController {
                       btnDeposit.setDisable(false);
                       txtDepositAmount.clear();
                       render(wallet);
-                      showAlert(
-                          "Deposit Successful",
+                      showStatus(
                           String.format(
                               "Successfully deposited %s to your wallet.",
-                              DisplayFormatters.money(amount)),
-                          true);
+                              DisplayFormatters.money(amount)));
                     }))
         .exceptionally(
             ex -> {
@@ -162,7 +154,7 @@ public class WalletController {
               Platform.runLater(
                   () -> {
                     btnDeposit.setDisable(false);
-                    showAlert("Deposit Failed", cause.getMessage(), false);
+                    showError(FeedbackUtils.messageOrFallback(cause, "Deposit failed."));
                   });
               return null;
             });
@@ -172,7 +164,7 @@ public class WalletController {
     clearStatus();
     String input = txtWithdrawAmount.getText().trim();
     if (input.isEmpty()) {
-      showAlert("Invalid Amount", "Please enter an amount to withdraw.", false);
+      showError("Please enter an amount to withdraw.");
       return;
     }
 
@@ -183,7 +175,7 @@ public class WalletController {
         throw new NumberFormatException();
       }
     } catch (NumberFormatException e) {
-      showAlert("Invalid Amount", "Please enter a valid positive number.", false);
+      showError("Please enter a valid positive number.");
       return;
     }
 
@@ -197,12 +189,10 @@ public class WalletController {
                       btnWithdraw.setDisable(false);
                       txtWithdrawAmount.clear();
                       render(wallet);
-                      showAlert(
-                          "Withdrawal Successful",
+                      showStatus(
                           String.format(
                               "Successfully withdrew %s from your wallet.",
-                              DisplayFormatters.money(amount)),
-                          true);
+                              DisplayFormatters.money(amount)));
                     }))
         .exceptionally(
             ex -> {
@@ -210,7 +200,7 @@ public class WalletController {
               Platform.runLater(
                   () -> {
                     btnWithdraw.setDisable(false);
-                    showAlert("Withdrawal Failed", cause.getMessage(), false);
+                    showError(FeedbackUtils.messageOrFallback(cause, "Withdrawal failed."));
                   });
               return null;
             });
@@ -308,55 +298,14 @@ public class WalletController {
   }
 
   private void clearStatus() {
-    if (lblStatus != null) {
-      lblStatus.setText("");
-      lblStatus.setVisible(false);
-      lblStatus.setManaged(false);
-    }
+    FeedbackUtils.clear(lblStatus);
   }
 
-  private void showAlert(String title, String message, boolean isSuccess) {
-    try {
-      if (alertStage != null && alertStage.isShowing()) return;
+  private void showError(String message) {
+    FeedbackUtils.showError(lblStatus, message);
+  }
 
-      FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/custom_alert.fxml"));
-      Parent root = loader.load();
-
-      Label titleLabel = (Label) root.lookup("#lblTitle");
-      Label messageLabel = (Label) root.lookup("#lblMessage");
-      Button closeButton = (Button) root.lookup("#btnClose");
-
-      titleLabel.setText(title);
-      messageLabel.setText(message);
-
-      if (isSuccess) {
-        closeButton.setText("Awesome");
-        closeButton.setStyle("-fx-background-color: #2b6b4c; -fx-border-color: #2b6b4c;");
-
-        StackPane header = (StackPane) root.lookup(".alert-header");
-        if (header != null) {
-          header.setStyle("-fx-background-color: #2b6b4c;");
-        }
-        Label icon = (Label) root.lookup(".alert-icon");
-        if (icon != null) {
-          icon.setText("✓");
-        }
-      } else {
-        closeButton.setText("Try Again");
-      }
-
-      Scene scene = new Scene(root);
-      scene.setFill(null);
-
-      alertStage = new Stage();
-      alertStage.setScene(scene);
-      alertStage.initStyle(StageStyle.TRANSPARENT);
-
-      closeButton.setOnAction(e -> alertStage.close());
-      alertStage.setOnHidden(e -> alertStage = null);
-      alertStage.show();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+  private void showStatus(String message) {
+    FeedbackUtils.showStatus(lblStatus, message);
   }
 }

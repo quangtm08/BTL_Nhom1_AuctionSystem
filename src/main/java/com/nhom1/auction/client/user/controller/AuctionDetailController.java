@@ -8,6 +8,7 @@ import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.client.util.CountdownAnimator;
 import com.nhom1.auction.client.util.DisplayFormatters;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.client.util.SkeletonUtils;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigDetailResponse;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
@@ -51,8 +52,6 @@ public class AuctionDetailController {
   @FXML private TextField txtBidInput;
 
   @FXML private Label lblBidError;
-
-  @FXML private Label lblAutoBidStatus;
 
   @FXML private Button btnBid;
 
@@ -137,7 +136,7 @@ public class AuctionDetailController {
           .addListener(
               (obs, wasFocused, isFocused) -> {
                 if (isFocused) {
-                  clearBidError();
+                  clearBidFeedback();
                 }
               });
     }
@@ -150,7 +149,7 @@ public class AuctionDetailController {
           .addListener(
               (obs, wasFocused, isFocused) -> {
                 if (isFocused) {
-                  clearBidError();
+                  clearBidFeedback();
                 }
               });
     }
@@ -247,7 +246,7 @@ public class AuctionDetailController {
           if (bid != null && lblAutoBidCurrentBid != null) {
             lblAutoBidCurrentBid.setText(DisplayFormatters.money(bid));
           }
-          clearAutoBidStatus();
+          clearBidFeedback();
         });
 
     biddingService
@@ -309,7 +308,7 @@ public class AuctionDetailController {
     } else if (DisplayFormatters.isEnded(dto.getStatus())) {
       showBidError("This auction has ended.");
     } else {
-      clearBidError();
+      clearBidFeedback();
     }
 
     if (bidHistoryList != null && dto.getBidHistory() != null) {
@@ -503,41 +502,26 @@ public class AuctionDetailController {
   }
 
   private void showBidError(String message) {
-    if (lblBidError != null) {
-      lblBidError.setText(message);
-      lblBidError.setVisible(true);
-      lblBidError.setManaged(true);
-    }
+    FeedbackUtils.showError(lblBidError, message);
     if (txtBidInput != null) {
       txtBidInput.getStyleClass().remove("bid-input-error");
       txtBidInput.getStyleClass().add("bid-input-error");
     }
   }
 
-  private void clearBidError() {
-    if (lblBidError != null) {
-      lblBidError.setVisible(false);
-      lblBidError.setManaged(false);
-    }
-    if (txtBidInput != null) {
-      txtBidInput.getStyleClass().remove("bid-input-error");
-    }
+  private void showBidStatus(String message) {
+    FeedbackUtils.showStatus(lblBidError, message);
+    clearBidInputError();
   }
 
-  private void showAutoBidStatus(String message) {
-    if (lblAutoBidStatus != null) {
-      lblAutoBidStatus.setText(message);
-      lblAutoBidStatus.setVisible(true);
-      lblAutoBidStatus.setManaged(true);
-    }
+  private void clearBidFeedback() {
+    FeedbackUtils.clear(lblBidError);
+    clearBidInputError();
   }
 
-  private void clearAutoBidStatus() {
-    if (lblAutoBidStatus != null) {
-      lblAutoBidStatus.setVisible(false);
-      lblAutoBidStatus.setManaged(false);
-      lblAutoBidStatus.setText("");
-    }
+  private void clearBidInputError() {
+    if (txtBidInput != null) txtBidInput.getStyleClass().remove("bid-input-error");
+    if (txtAutoBidMax != null) txtAutoBidMax.getStyleClass().remove("bid-input-error");
   }
 
   private void onPlaceBid() {
@@ -566,7 +550,7 @@ public class AuctionDetailController {
         .exceptionally(
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
-              String message = cause.getMessage() != null ? cause.getMessage() : "Bid failed";
+              String message = FeedbackUtils.messageOrFallback(cause, "Bid failed");
               Platform.runLater(() -> showBidError(message));
               return null;
             });
@@ -584,7 +568,7 @@ public class AuctionDetailController {
       showBidError("Could not read increment value from auction.");
       return;
     }
-    clearAutoBidStatus();
+    clearBidFeedback();
 
     autoBidService
         .getConfig(auctionId)
@@ -593,9 +577,7 @@ public class AuctionDetailController {
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
               String message =
-                  cause.getMessage() != null
-                      ? cause.getMessage()
-                      : "Failed to load auto-bid config";
+                  FeedbackUtils.messageOrFallback(cause, "Failed to load auto-bid config");
               Platform.runLater(() -> showBidError(message));
               return null;
             });
@@ -613,8 +595,7 @@ public class AuctionDetailController {
         .exceptionally(
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
-              String message =
-                  cause.getMessage() != null ? cause.getMessage() : "Failed to cancel auto-bid";
+              String message = FeedbackUtils.messageOrFallback(cause, "Failed to cancel auto-bid");
               Platform.runLater(() -> showBidError(message));
               return null;
             });
@@ -624,13 +605,13 @@ public class AuctionDetailController {
     if (response == null) {
       return;
     }
-    clearBidError();
-    showAutoBidStatus("Auto-bid stopped.");
+    clearBidFeedback();
+    showBidStatus("Auto-bid stopped.");
     hideAutoBidConfig();
   }
 
   private void showAutoBidConfig(BigDecimal increment, AutoBidConfigDetailResponse config) {
-    clearBidError();
+    clearBidFeedback();
     if (lblAutoBidCurrentBid != null) {
       lblAutoBidCurrentBid.setText(lblCurrentBid != null ? lblCurrentBid.getText() : "$0");
       activeAutoBidCurrentBidLabel = lblAutoBidCurrentBid;
@@ -672,19 +653,16 @@ public class AuctionDetailController {
     } catch (Exception ex) {
       showBidError("Please enter a valid auto-bid limit.");
       if (txtAutoBidMax != null) {
-        txtAutoBidMax.getStyleClass().remove("bid-input-error");
         txtAutoBidMax.getStyleClass().add("bid-input-error");
       }
       return;
     }
 
-    if (txtAutoBidMax != null) {
-      txtAutoBidMax.getStyleClass().remove("bid-input-error");
-    }
+    clearBidInputError();
     if (btnSaveAutoBid != null) {
       btnSaveAutoBid.setDisable(true);
     }
-    showAutoBidStatus("Saving auto-bid...");
+    showBidStatus("Saving auto-bid...");
     autoBidService
         .saveConfig(auctionId, maxAmount, increment)
         .thenAccept(
@@ -695,8 +673,7 @@ public class AuctionDetailController {
                         btnSaveAutoBid.setDisable(false);
                       }
                       if (resp != null) {
-                        clearBidError();
-                        showAutoBidStatus(
+                        showBidStatus(
                             "Auto-bid is active up to " + DisplayFormatters.money(maxAmount) + ".");
                         hideAutoBidConfig();
                       }
@@ -705,9 +682,7 @@ public class AuctionDetailController {
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
               String message =
-                  cause.getMessage() != null
-                      ? cause.getMessage()
-                      : "Failed to save auto-bid config";
+                  FeedbackUtils.messageOrFallback(cause, "Failed to save auto-bid config");
               Platform.runLater(
                   () -> {
                     if (btnSaveAutoBid != null) {

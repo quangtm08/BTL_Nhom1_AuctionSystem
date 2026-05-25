@@ -29,6 +29,7 @@
             <VBox spacing="4.0">
                 <Label text="Edit listing" styleClass="page-title"/>
                 <Label fx:id="metaLabel" text="" styleClass="meta-text"/>
+                <Label fx:id="statusLabel" managed="false" visible="false" wrapText="true"/>
             </VBox>
 
             <VBox spacing="8.0">                <Label text="Title" styleClass="field-label"/>

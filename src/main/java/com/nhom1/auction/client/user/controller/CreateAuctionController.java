@@ -4,6 +4,7 @@ import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.CreateAuctionClientService;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.exception.AppException;
@@ -111,6 +112,7 @@ public class CreateAuctionController {
     if (selectedFiles == null || selectedFiles.isEmpty()) {
       selectedImageFiles.clear();
       uploadCountLabel.setText("No photo selected");
+      FeedbackUtils.clear(lblStatus);
       return;
     }
     selectedImageFiles.clear();
@@ -123,6 +125,7 @@ public class CreateAuctionController {
     }
 
     uploadCountLabel.setText(selectedFiles.size() + " photo(s): " + selectedNames);
+    FeedbackUtils.clear(lblStatus);
   }
 
   @FXML
@@ -136,17 +139,17 @@ public class CreateAuctionController {
             resolveDurationDays(),
             openingDatePicker.getValue());
     if (validationError != null) {
-      uploadCountLabel.setText(validationError);
+      FeedbackUtils.showError(lblStatus, validationError);
       return;
     }
 
     int durationDays = resolveDurationDays();
     if (durationDays <= 0) {
-      uploadCountLabel.setText("Duration must be greater than 0.");
+      FeedbackUtils.showError(lblStatus, "Duration must be greater than 0.");
       return;
     }
 
-    uploadCountLabel.setText("Uploading images and publishing...");
+    FeedbackUtils.showStatus(lblStatus, "Uploading images and publishing...");
     createAuctionService
         .createAuction(
             titleField.getText(),
@@ -162,15 +165,15 @@ public class CreateAuctionController {
                 Platform.runLater(
                     () -> {
                       if (response != null) {
-                        uploadCountLabel.setText("Published successfully.");
+                        FeedbackUtils.showStatus(lblStatus, "Published successfully.");
                         AppNavigator.navigateTo(AppView.MY_LISTINGS);
                       } else {
-                        uploadCountLabel.setText("Failed to publish listing.");
+                        FeedbackUtils.showError(lblStatus, "Failed to publish listing.");
                       }
                     }))
         .exceptionally(
             ex -> {
-              Platform.runLater(() -> uploadCountLabel.setText(resolveErrorMessage(ex)));
+              Platform.runLater(() -> FeedbackUtils.showError(lblStatus, resolveErrorMessage(ex)));
               return null;
             });
   }

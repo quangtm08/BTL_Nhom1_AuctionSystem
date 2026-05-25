@@ -3,6 +3,7 @@ package com.nhom1.auction.client.user.controller;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.PaymentClientService;
 import com.nhom1.auction.client.util.DisplayFormatters;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.client.util.SkeletonUtils;
 import com.nhom1.auction.common.dto.payment.PaymentHistoryEntryDto;
 import com.nhom1.auction.common.dto.payment.PaymentHistoryResponse;
@@ -31,6 +32,8 @@ public class PaymentController {
   @FXML private VBox loadingBox;
 
   @FXML private ScrollPane contentBox;
+
+  @FXML private Label lblStatus;
 
   private void showLoading() {
     SkeletonUtils.showLoading(loadingBox, contentBox);
@@ -95,6 +98,8 @@ public class PaymentController {
 
   private void renderFailure(Throwable cause) {
     showContent();
+    FeedbackUtils.showError(
+        lblStatus, FeedbackUtils.messageOrFallback(cause, "Could not load payments."));
     pendingPaymentsBox.getChildren().setAll(createEmptyState("Could not load pending payments."));
     historyBox.getChildren().setAll(createEmptyState("Could not load payment history."));
   }
@@ -148,6 +153,7 @@ public class PaymentController {
   private void processPayment(String auctionId, Button payNowButton) {
     processingAuctionId = auctionId;
     payNowButton.setDisable(true);
+    FeedbackUtils.showStatus(lblStatus, "Processing payment...");
 
     paymentClientService
         .processPayment(auctionId)
@@ -156,6 +162,7 @@ public class PaymentController {
                 Platform.runLater(
                     () -> {
                       processingAuctionId = null;
+                      FeedbackUtils.showStatus(lblStatus, "Payment completed.");
                       reload();
                     }))
         .exceptionally(
@@ -165,6 +172,8 @@ public class PaymentController {
                   () -> {
                     processingAuctionId = null;
                     payNowButton.setDisable(false);
+                    FeedbackUtils.showError(
+                        lblStatus, FeedbackUtils.messageOrFallback(cause, "Payment failed."));
                   });
               return null;
             });

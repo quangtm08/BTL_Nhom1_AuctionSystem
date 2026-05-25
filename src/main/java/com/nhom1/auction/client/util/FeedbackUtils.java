@@ -36,4 +36,11 @@ public final class FeedbackUtils {
     label.setVisible(false);
     label.setManaged(false);
   }
+
+  public static String messageOrFallback(Throwable throwable, String fallback) {
+    if (throwable != null && throwable.getMessage() != null && !throwable.getMessage().isBlank()) {
+      return throwable.getMessage();
+    }
+    return fallback;
+  }
 }

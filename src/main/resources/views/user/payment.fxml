@@ -24,6 +24,7 @@
                   <children>
                      <!-- Header Title -->
                      <Label styleClass="header-title" text="Payments" />
+                     <Label fx:id="lblStatus" managed="false" visible="false" wrapText="true" />
 
                   <Label styleClass="section-label" text="TO PAY" />
 
