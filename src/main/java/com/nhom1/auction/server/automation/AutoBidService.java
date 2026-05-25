@@ -12,6 +12,7 @@ import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -130,37 +131,29 @@ public class AutoBidService {
 
       List<AutoBidConfig> allConfigs = autoBidRepository.findByAuctionId(auctionId);
 
-      List<AutoBidConfig> eligibleConfigs =
-          allConfigs.stream()
-              .filter(cfg -> !cfg.getBidderId().equals(snapshotBidderId))
-              .filter(cfg -> cfg.getMaxAmount().compareTo(snapshotBid) > 0)
-              .toList();
+      PriorityQueue<AutoBidConfig> queue =
+          new PriorityQueue<>(
+              Comparator.comparing(AutoBidConfig::getCreatedAt)
+                  .thenComparing(AutoBidConfig::getBidderId));
 
-      if (eligibleConfigs.isEmpty()) break;
+      for (AutoBidConfig cfg : allConfigs) {
+        if (cfg.getBidderId().equals(snapshotBidderId)) {
+          continue;
+        }
 
-      AutoBidConfig selected =
-          eligibleConfigs.stream()
-              .max(Comparator.comparing(AutoBidConfig::getMaxAmount))
-              .orElse(null);
-      if (selected == null) break;
+        BigDecimal requiredBid =
+            !hasBids ? auction.getStartingPrice() : snapshotBid.add(cfg.getIncrement());
 
-      BigDecimal nextBestMax =
-          allConfigs.stream()
-              .filter(cfg -> !cfg.getBidderId().equals(selected.getBidderId()))
-              .map(AutoBidConfig::getMaxAmount)
-              .max(BigDecimal::compareTo)
-              .orElse(BigDecimal.ZERO);
-
-      BigDecimal requiredBid;
-      if (!hasBids) {
-        requiredBid = auction.getStartingPrice().max(nextBestMax.add(selected.getIncrement()));
-      } else {
-        requiredBid = currentHighestBid.max(nextBestMax).add(selected.getIncrement());
+        if (cfg.getMaxAmount().compareTo(requiredBid) >= 0) {
+          queue.add(cfg);
+        }
       }
 
-      BigDecimal nextAmt = requiredBid.min(selected.getMaxAmount());
-      if (nextAmt.compareTo(requiredBid) < 0) break;
-      if (nextAmt.compareTo(currentHighestBid) <= 0) break;
+      AutoBidConfig selected = queue.poll();
+      if (selected == null) break;
+
+      BigDecimal nextAmt =
+          !hasBids ? auction.getStartingPrice() : snapshotBid.add(selected.getIncrement());
 
       try {
         BidTransaction bid = bidGateway.placeAutoBid(selected.getBidderId(), auctionId, nextAmt);
@@ -177,6 +170,7 @@ public class AutoBidService {
       }
     }
 
+    // Broadcast once after the entire chain settles
     if (anyBidPlaced) {
       notificationService.broadcastBidUpdate(auctionId, finalBid, finalBidderId);
     }
