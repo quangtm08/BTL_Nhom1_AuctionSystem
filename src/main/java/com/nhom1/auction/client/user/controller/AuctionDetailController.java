@@ -603,9 +603,9 @@ public class AuctionDetailController {
 
   private void showAutoBidDialog(
       String auctionId, BigDecimal increment, AutoBidConfigDetailResponse config) {
-    Dialog<BigDecimal> dialog = new Dialog<>();
+    Dialog<BigDecimal[]> dialog = new Dialog<>();
     dialog.setTitle("Configure Auto-bid");
-    dialog.setHeaderText("Set your bid limit for this auction");
+    dialog.setHeaderText("Set your bid limit and increment for this auction");
 
     dialog
         .getDialogPane()
@@ -628,7 +628,19 @@ public class AuctionDetailController {
 
     Label currentBidLabel = new Label(lblCurrentBid != null ? lblCurrentBid.getText() : "$0");
     activeAutoBidCurrentBidLabel = currentBidLabel;
-    Label incrementLabel = new Label(DisplayFormatters.money(increment));
+
+    TextField incrementField = new TextField();
+    incrementField.setPromptText("ENTER YOUR INCREMENT");
+    incrementField.setTextFormatter(
+        new TextFormatter<String>(
+            change -> change.getControlNewText().matches("\\d*(\\.\\d{0,2})?") ? change : null));
+
+    if (config != null && config.isConfigured() && config.getIncrement() != null) {
+      incrementField.setText(config.getIncrement());
+    } else {
+      incrementField.setText(increment.toPlainString());
+    }
+
     TextField maxField = new TextField();
     maxField.setPromptText("ENTER YOUR BID LIMIT");
     maxField.setTextFormatter(
@@ -640,7 +652,7 @@ public class AuctionDetailController {
     }
 
     grid.addRow(0, new Label("Current highest bid:"), currentBidLabel);
-    grid.addRow(1, new Label("Increment:"), incrementLabel);
+    grid.addRow(1, new Label("Increment:"), incrementField);
     grid.addRow(2, new Label("Max amount:"), maxField);
 
     HBox customButtonBar = new HBox(15);
@@ -664,11 +676,15 @@ public class AuctionDetailController {
     saveButton.setOnAction(
         e -> {
           try {
-            dialog.setResult(new BigDecimal(maxField.getText().trim()));
+            BigDecimal max = new BigDecimal(maxField.getText().trim());
+            BigDecimal inc = new BigDecimal(incrementField.getText().trim());
+            dialog.setResult(new BigDecimal[] {max, inc});
             dialog.close();
           } catch (Exception ex) {
             maxField.getStyleClass().remove("bid-input-error");
             maxField.getStyleClass().add("bid-input-error");
+            incrementField.getStyleClass().remove("bid-input-error");
+            incrementField.getStyleClass().add("bid-input-error");
           }
         });
 
@@ -678,34 +694,39 @@ public class AuctionDetailController {
           dialog.close();
         });
 
-    Optional<BigDecimal> result = dialog.showAndWait();
+    Optional<BigDecimal[]> result = dialog.showAndWait();
     activeAutoBidCurrentBidLabel = null;
     result.ifPresent(
-        maxAmount ->
-            autoBidService
-                .saveConfig(auctionId, maxAmount, increment)
-                .thenAccept(
-                    resp ->
-                        Platform.runLater(
-                            () -> {
-                              if (resp != null) {
-                                clearBidError();
-                                showAutoBidStatus(
-                                    "Auto-bid is active up to "
-                                        + DisplayFormatters.money(maxAmount)
-                                        + ".");
-                              }
-                            }))
-                .exceptionally(
-                    ex -> {
-                      Throwable cause = BaseClientService.extractFailure(ex);
-                      String message =
-                          cause.getMessage() != null
-                              ? cause.getMessage()
-                              : "Failed to save auto-bid config";
-                      Platform.runLater(() -> showBidError(message));
-                      return null;
-                    }));
+        values -> {
+          BigDecimal maxAmount = values[0];
+          BigDecimal customInc = values[1];
+          autoBidService
+              .saveConfig(auctionId, maxAmount, customInc)
+              .thenAccept(
+                  resp ->
+                      Platform.runLater(
+                          () -> {
+                            if (resp != null) {
+                              clearBidError();
+                              showAutoBidStatus(
+                                  "Auto-bid is active up to "
+                                      + DisplayFormatters.money(maxAmount)
+                                      + " with increment "
+                                      + DisplayFormatters.money(customInc)
+                                      + ".");
+                            }
+                          }))
+              .exceptionally(
+                  ex -> {
+                    Throwable cause = BaseClientService.extractFailure(ex);
+                    String message =
+                        cause.getMessage() != null
+                            ? cause.getMessage()
+                            : "Failed to save auto-bid config";
+                    Platform.runLater(() -> showBidError(message));
+                    return null;
+                  });
+        });
   }
 
   private void handlePlaceBidSuccess(PlaceBidResponse response) {

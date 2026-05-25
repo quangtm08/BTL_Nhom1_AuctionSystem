@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AutoBidService {
+
   private static final int MAX_TRIGGER_DEPTH = 10;
 
   private final AutoBidRepository autoBidRepository;
@@ -56,14 +57,15 @@ public class AutoBidService {
     if (maxAmount.compareTo(BigDecimal.ZERO) <= 0) {
       throw new ValidationException("maxAmount must be > 0");
     }
-    if (incrementFromClient.compareTo(increment) != 0) {
-      throw new ValidationException("increment does not match auction rule");
+    if (incrementFromClient.compareTo(increment) < 0) {
+      throw new ValidationException(
+          "increment must be >= minimum increment (" + increment.toPlainString() + ")");
     }
-    if (maxAmount.compareTo(increment) < 0) {
+    if (maxAmount.compareTo(incrementFromClient) < 0) {
       throw new ValidationException("maxAmount must be >= increment");
     }
 
-    autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, increment));
+    autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, incrementFromClient));
 
     scheduleAutoBids(
         auctionId,
@@ -131,6 +133,13 @@ public class AutoBidService {
 
       List<AutoBidConfig> allConfigs = autoBidRepository.findByAuctionId(auctionId);
 
+      // Find the current leader's config to check for escalation
+      AutoBidConfig leaderConfig =
+          allConfigs.stream()
+              .filter(cfg -> cfg.getBidderId().equals(snapshotBidderId))
+              .findFirst()
+              .orElse(null);
+
       PriorityQueue<AutoBidConfig> queue =
           new PriorityQueue<>(
               Comparator.comparing(AutoBidConfig::getCreatedAt)
@@ -141,10 +150,10 @@ public class AutoBidService {
           continue;
         }
 
-        BigDecimal requiredBid =
+        BigDecimal minRequired =
             !hasBids ? auction.getStartingPrice() : snapshotBid.add(cfg.getIncrement());
 
-        if (cfg.getMaxAmount().compareTo(requiredBid) >= 0) {
+        if (cfg.getMaxAmount().compareTo(minRequired) >= 0) {
           queue.add(cfg);
         }
       }
@@ -152,8 +161,27 @@ public class AutoBidService {
       AutoBidConfig selected = queue.poll();
       if (selected == null) break;
 
-      BigDecimal nextAmt =
-          !hasBids ? auction.getStartingPrice() : snapshotBid.add(selected.getIncrement());
+      BigDecimal nextAmt;
+      if (leaderConfig != null) {
+        // Escalation: if we're competing against another auto-bidder, jump to outbid them
+        nextAmt =
+            leaderConfig.getMaxAmount().add(selected.getIncrement()).min(selected.getMaxAmount());
+
+        // If we are the "lower" one, we bid our max and let the leader outbid us in the next step
+        if (selected.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) <= 0) {
+          nextAmt = selected.getMaxAmount();
+        }
+
+        // Ensure we at least bid the minimum required amount
+        BigDecimal minRequired =
+            !hasBids ? auction.getStartingPrice() : snapshotBid.add(selected.getIncrement());
+        if (nextAmt.compareTo(minRequired) < 0) {
+          nextAmt = minRequired;
+        }
+      } else {
+        // Standard minimum increment bid
+        nextAmt = !hasBids ? auction.getStartingPrice() : snapshotBid.add(selected.getIncrement());
+      }
 
       try {
         BidTransaction bid = bidGateway.placeAutoBid(selected.getBidderId(), auctionId, nextAmt);
@@ -174,10 +202,6 @@ public class AutoBidService {
     if (anyBidPlaced) {
       notificationService.broadcastBidUpdate(auctionId, finalBid, finalBidderId);
     }
-  }
-
-  private BigDecimal nextAmount(AutoBidConfig config, BigDecimal currentHighestBid) {
-    return currentHighestBid.add(config.getIncrement());
   }
 
   private UUID parseUuid(String value, String fieldName) {
