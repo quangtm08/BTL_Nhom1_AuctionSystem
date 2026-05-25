@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -25,7 +24,6 @@ import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.util.Duration;
 
 public class AuctionBrowseController {
 
@@ -152,10 +150,7 @@ public class AuctionBrowseController {
   public void navigateToDetail(String auctionId) {
     if (auctionId != null) AppContext.setSelectedAuctionId(auctionId);
     if (AppNavigator.getCurrentView() == AppView.AUCTION_DETAIL) return;
-    AppNavigator.navigateTo(AppView.LOADING);
-    PauseTransition d = new PauseTransition(Duration.seconds(0.4));
-    d.setOnFinished(e -> AppNavigator.navigateTo(AppView.AUCTION_DETAIL));
-    d.play();
+    AppNavigator.navigateTo(AppView.AUCTION_DETAIL);
   }
 
   // Helpers

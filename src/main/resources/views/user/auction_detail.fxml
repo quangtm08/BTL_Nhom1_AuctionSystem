@@ -85,8 +85,10 @@
                         <HBox>
                             <Label text="Increment"/>
                             <Region HBox.hgrow="ALWAYS"/>
-                            <Label fx:id="lblAutoBidIncrement" text="0"/>
                         </HBox>
+                        <TextField fx:id="txtAutoBidIncrement"
+                                   promptText=" ENTER YOUR INCREMENT"
+                                   styleClass="bid-input"/>
                         <TextField fx:id="txtAutoBidMax"
                                    promptText=" ENTER YOUR BID LIMIT"
                                    styleClass="bid-input"/>

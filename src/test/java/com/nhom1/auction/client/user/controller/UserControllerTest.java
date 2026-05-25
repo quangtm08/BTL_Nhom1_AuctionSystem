@@ -661,6 +661,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -678,6 +679,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -1101,6 +1103,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -1117,6 +1120,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -1204,20 +1208,20 @@ public class UserControllerTest {
         CreateAuctionController.class.getDeclaredMethod("handlePublishListing");
     mPublish.setAccessible(true);
     mPublish.invoke(controller);
-    assertEquals("Invalid title", uploadCountLabel.getText());
+    assertEquals("Invalid title", statusLabel.getText());
 
     when(mockCreateService.validateInput(any(), any(), any(), any(), anyInt(), any()))
         .thenReturn(null);
     customDurationField.setText("0");
     mPublish.invoke(controller);
-    assertEquals("Duration must be greater than 0.", uploadCountLabel.getText());
+    assertEquals("Duration must be greater than 0.", statusLabel.getText());
 
     customDurationField.setText("5");
     when(mockCreateService.createAuction(any(), any(), any(), any(), any(), anyInt(), any(), any()))
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("IMGBB_API_KEY missing")));
     mPublish.invoke(controller);
     waitForRunLater();
-    assertTrue(uploadCountLabel.getText().contains("IMGBB_API_KEY"));
+    assertTrue(statusLabel.getText().contains("IMGBB_API_KEY"));
 
     when(mockCreateService.createAuction(any(), any(), any(), any(), any(), anyInt(), any(), any()))
         .thenReturn(
@@ -1226,7 +1230,7 @@ public class UserControllerTest {
                     "Custom validation failed")));
     mPublish.invoke(controller);
     waitForRunLater();
-    assertEquals("Custom validation failed", uploadCountLabel.getText());
+    assertEquals("Custom validation failed", statusLabel.getText());
   }
 
   @Test
@@ -1942,6 +1946,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -1958,6 +1963,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -1989,7 +1995,7 @@ public class UserControllerTest {
     handlePublishListing.setAccessible(true);
     handlePublishListing.invoke(controller);
     waitForRunLater();
-    assertEquals("Failed to publish listing.", uploadCountLabel.getText());
+    assertEquals("Failed to publish listing.", statusLabel.getText());
 
     // resolveErrorMessage scenarios
     java.lang.reflect.Method resolveErrorMessage =

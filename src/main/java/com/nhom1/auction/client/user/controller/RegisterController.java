@@ -2,8 +2,8 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.client.user.service.AuthClientService;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

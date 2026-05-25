@@ -73,7 +73,7 @@ public class AuctionDetailController {
 
   @FXML private Label lblAutoBidCurrentBid;
 
-  @FXML private Label lblAutoBidIncrement;
+  @FXML private TextField txtAutoBidIncrement;
 
   @FXML private Label lblMinIncrement;
 
@@ -145,6 +145,19 @@ public class AuctionDetailController {
           new TextFormatter<String>(
               change -> change.getControlNewText().matches("\\d*(\\.\\d{0,2})?") ? change : null));
       txtAutoBidMax
+          .focusedProperty()
+          .addListener(
+              (obs, wasFocused, isFocused) -> {
+                if (isFocused) {
+                  clearBidFeedback();
+                }
+              });
+    }
+    if (txtAutoBidIncrement != null) {
+      txtAutoBidIncrement.setTextFormatter(
+          new TextFormatter<String>(
+              change -> change.getControlNewText().matches("\\d*(\\.\\d{0,2})?") ? change : null));
+      txtAutoBidIncrement
           .focusedProperty()
           .addListener(
               (obs, wasFocused, isFocused) -> {
@@ -522,6 +535,7 @@ public class AuctionDetailController {
   private void clearBidInputError() {
     if (txtBidInput != null) txtBidInput.getStyleClass().remove("bid-input-error");
     if (txtAutoBidMax != null) txtAutoBidMax.getStyleClass().remove("bid-input-error");
+    if (txtAutoBidIncrement != null) txtAutoBidIncrement.getStyleClass().remove("bid-input-error");
   }
 
   private void onPlaceBid() {
@@ -616,17 +630,19 @@ public class AuctionDetailController {
       lblAutoBidCurrentBid.setText(lblCurrentBid != null ? lblCurrentBid.getText() : "$0");
       activeAutoBidCurrentBidLabel = lblAutoBidCurrentBid;
     }
-    if (lblAutoBidIncrement != null) {
-      lblAutoBidIncrement.setText(DisplayFormatters.money(increment));
+    if (txtAutoBidIncrement != null) {
+      txtAutoBidIncrement.setText(increment.toPlainString());
     }
     if (txtAutoBidMax != null) {
       txtAutoBidMax.clear();
     }
-    if (config != null
-        && config.isConfigured()
-        && config.getMaxAmount() != null
-        && txtAutoBidMax != null) {
-      txtAutoBidMax.setText(config.getMaxAmount());
+    if (config != null && config.isConfigured()) {
+      if (config.getIncrement() != null && txtAutoBidIncrement != null) {
+        txtAutoBidIncrement.setText(config.getIncrement());
+      }
+      if (config.getMaxAmount() != null && txtAutoBidMax != null) {
+        txtAutoBidMax.setText(config.getMaxAmount());
+      }
     }
     setAutoBidConfigVisible(true);
   }
@@ -637,9 +653,12 @@ public class AuctionDetailController {
       return;
     }
     BigDecimal increment =
-        parseDisplayedMoney(lblAutoBidIncrement != null ? lblAutoBidIncrement.getText() : null);
+        parseDisplayedMoney(txtAutoBidIncrement != null ? txtAutoBidIncrement.getText() : null);
     if (increment == null || increment.compareTo(BigDecimal.ZERO) <= 0) {
-      showBidError("Could not read increment value from auction.");
+      showBidError("Please enter a valid auto-bid increment.");
+      if (txtAutoBidIncrement != null) {
+        txtAutoBidIncrement.getStyleClass().add("bid-input-error");
+      }
       return;
     }
 
@@ -659,6 +678,9 @@ public class AuctionDetailController {
     }
 
     clearBidInputError();
+    if (txtAutoBidIncrement != null) {
+      txtAutoBidIncrement.getStyleClass().remove("bid-input-error");
+    }
     if (btnSaveAutoBid != null) {
       btnSaveAutoBid.setDisable(true);
     }
@@ -674,7 +696,11 @@ public class AuctionDetailController {
                       }
                       if (resp != null) {
                         showBidStatus(
-                            "Auto-bid is active up to " + DisplayFormatters.money(maxAmount) + ".");
+                            "Auto-bid is active up to "
+                                + DisplayFormatters.money(maxAmount)
+                                + " with increment "
+                                + DisplayFormatters.money(increment)
+                                + ".");
                         hideAutoBidConfig();
                       }
                     }))

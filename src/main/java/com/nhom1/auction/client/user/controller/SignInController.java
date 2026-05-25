@@ -2,8 +2,8 @@ package com.nhom1.auction.client.user.controller;
 
 import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
-import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.client.user.service.AuthClientService;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.common.enums.UserRole;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -31,31 +31,30 @@ public class SignInController {
     btnRegister.setOnAction(e -> AppNavigator.navigateTo(AppView.REGISTER));
 
     btnSignIn.setOnAction(
-        e ->
-            {
-              FeedbackUtils.clear(lblStatus);
-              authService
-                  .login(txtUsername.getText().trim(), txtPassword.getText())
-                  .thenAccept(
-                      authData ->
-                          Platform.runLater(
-                              () -> {
-                                if (authData.getRole() == UserRole.ADMIN) {
-                                  AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
-                                } else {
-                                  AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
-                                }
-                              }))
-                  .exceptionally(
-                      ex -> {
-                        Platform.runLater(
-                            () -> {
-                              FeedbackUtils.showError(
-                                  lblStatus, AuthClientService.extractFailure(ex).getMessage());
-                              txtPassword.clear();
-                            });
-                        return null;
-                      });
-            });
+        e -> {
+          FeedbackUtils.clear(lblStatus);
+          authService
+              .login(txtUsername.getText().trim(), txtPassword.getText())
+              .thenAccept(
+                  authData ->
+                      Platform.runLater(
+                          () -> {
+                            if (authData.getRole() == UserRole.ADMIN) {
+                              AppNavigator.navigateTo(AppView.ADMIN_OVERVIEW);
+                            } else {
+                              AppNavigator.navigateTo(AppView.AUCTION_BROWSE);
+                            }
+                          }))
+              .exceptionally(
+                  ex -> {
+                    Platform.runLater(
+                        () -> {
+                          FeedbackUtils.showError(
+                              lblStatus, AuthClientService.extractFailure(ex).getMessage());
+                          txtPassword.clear();
+                        });
+                    return null;
+                  });
+        });
   }
 }
