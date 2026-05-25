@@ -39,7 +39,7 @@ public final class DatabaseInitializer {
         condition VARCHAR(50) NOT NULL,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL,
-        FOREIGN KEY (seller_id) REFERENCES users(id)
+        FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_items_seller_id ON items(seller_id)",
@@ -57,8 +57,8 @@ public final class DatabaseInitializer {
         version BIGINT NOT NULL DEFAULT 0,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL,
-        FOREIGN KEY (item_id) REFERENCES items(id),
-        FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
+        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+        FOREIGN KEY (highest_bidder_id) REFERENCES users(id) ON DELETE SET NULL
     )
     """,
     "ALTER TABLE auctions ALTER COLUMN start_time DROP NOT NULL",
@@ -77,8 +77,8 @@ public final class DatabaseInitializer {
         amount DECIMAL(19, 2) NOT NULL,
         bid_type VARCHAR(50) NOT NULL,
         created_at TIMESTAMP NOT NULL,
-        FOREIGN KEY (auction_id) REFERENCES auctions(id),
-        FOREIGN KEY (bidder_id) REFERENCES users(id)
+        FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+        FOREIGN KEY (bidder_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON bids(auction_id)",
@@ -92,8 +92,8 @@ public final class DatabaseInitializer {
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL,
         PRIMARY KEY (auction_id, bidder_id),
-        FOREIGN KEY (auction_id) REFERENCES auctions(id),
-        FOREIGN KEY (bidder_id) REFERENCES users(id)
+        FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+        FOREIGN KEY (bidder_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_auto_bid_configs_auction_id ON auto_bid_configs(auction_id)",
@@ -108,9 +108,9 @@ public final class DatabaseInitializer {
         status VARCHAR(50) NOT NULL,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL,
-        FOREIGN KEY (auction_id) REFERENCES auctions(id),
-        FOREIGN KEY (payer_id) REFERENCES users(id),
-        FOREIGN KEY (payee_id) REFERENCES users(id)
+        FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+        FOREIGN KEY (payer_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (payee_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_payment_transactions_auction_id ON"
@@ -141,7 +141,7 @@ public final class DatabaseInitializer {
         balance DECIMAL(19, 2) NOT NULL DEFAULT 100000.00,
         created_at TIMESTAMP NOT NULL,
         updated_at TIMESTAMP NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id)
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """,
     """
@@ -153,7 +153,7 @@ public final class DatabaseInitializer {
         reference_id VARCHAR(36),
         description TEXT,
         created_at TIMESTAMP NOT NULL,
-        FOREIGN KEY (user_id) REFERENCES users(id)
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
     """,
     "CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_id ON wallet_transactions(user_id)",

@@ -100,6 +100,7 @@
                         </HBox>
 
                         <Button fx:id="btnSignIn" maxWidth="Infinity" mnemonicParsing="false" prefHeight="50.0" styleClass="btn-primary" text="Sign in" />
+                        <Label fx:id="lblStatus" managed="false" visible="false" wrapText="true" />
                      </children>
                   </VBox>
                </children>

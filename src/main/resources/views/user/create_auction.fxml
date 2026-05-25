@@ -27,6 +27,7 @@
             </HBox>
 
             <Label text="New listing" styleClass="page-title"/>
+            <Label fx:id="lblStatus" managed="false" visible="false" wrapText="true"/>
 
             <VBox spacing="8.0">
                 <Label text="Title" styleClass="field-label"/>

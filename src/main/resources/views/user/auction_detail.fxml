@@ -74,8 +74,6 @@
                          Hiện khi validate thất bại, ẩn ngay khi TextField được focus. -->
                     <Label fx:id="lblBidError" text="" styleClass="bid-error-label"
                            visible="false" managed="false"/>
-                    <Label fx:id="lblAutoBidStatus" text="" styleClass="auto-bid-status-label"
-                           visible="false" managed="false"/>
 
                     <VBox fx:id="autoBidConfigBox" spacing="10" styleClass="auto-bid-config-box"
                           visible="false" managed="false">

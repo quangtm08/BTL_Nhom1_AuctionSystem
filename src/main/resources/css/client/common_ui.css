@@ -78,6 +78,16 @@
     -fx-font-size: 18px;
 }
 
+.error-label {
+    -fx-text-fill: #ff5c5c;
+    -fx-font-size: 12px;
+}
+
+.status-label {
+    -fx-text-fill: #7ec8a0;
+    -fx-font-size: 12px;
+}
+
 .btn-ghost-active {
     -fx-background-color: #1a3327;
     -fx-text-fill: white;

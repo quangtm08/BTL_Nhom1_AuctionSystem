@@ -104,6 +104,7 @@
                         </VBox>
 
                         <Button fx:id="btnRegister" maxWidth="Infinity" mnemonicParsing="false" prefHeight="50.0" styleClass="btn-primary" text="Register" />
+                        <Label fx:id="lblStatus" managed="false" visible="false" wrapText="true" />
 
                         <HBox alignment="CENTER_LEFT" spacing="4.0">
                            <children>

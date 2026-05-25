@@ -72,7 +72,7 @@ public class SqlAdminAuctionGateway implements AdminAuctionGateway {
         """
         UPDATE auctions
         SET status = 'CANCELED', updated_at = CURRENT_TIMESTAMP
-        WHERE id = ? AND status IN ('OPEN', 'RUNNING')
+        WHERE id = ? AND status IN ('PENDING', 'OPEN', 'RUNNING')
         """;
     try (Connection conn = dataSource.getConnection();
         PreparedStatement ps = conn.prepareStatement(sql)) {
