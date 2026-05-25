@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.*?>
+
+<!-- UNIVERSAL SKELETON -->
+<VBox fx:id="loadingBox" spacing="30.0" VBox.vgrow="ALWAYS" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml">
+    <!-- Padding matches standard content padding -->
+    <padding>
+        <Insets top="40" left="40" right="40" bottom="30"/>
+    </padding>
+
+    <!-- Generic Title -->
+    <Region prefWidth="300" prefHeight="40" styleClass="skeleton-bar" maxWidth="300"/>
+
+    <!-- Generic Top Filters / Action Bar -->
+    <Region prefWidth="1000" prefHeight="60" styleClass="skeleton-bar"/>
+
+    <!-- Generic Grid / Cards -->
+    <GridPane hgap="30.0" vgap="30.0">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="50"/>
+            <ColumnConstraints percentWidth="50"/>
+        </columnConstraints>
+        <Region GridPane.rowIndex="0" GridPane.columnIndex="0" prefHeight="180" styleClass="skeleton-image"/>
+        <Region GridPane.rowIndex="0" GridPane.columnIndex="1" prefHeight="180" styleClass="skeleton-image"/>
+    </GridPane>
+
+    <!-- Generic List Rows -->
+    <VBox spacing="15.0">
+        <Region prefWidth="1000" prefHeight="40" styleClass="skeleton-bar"/>
+        <Region prefWidth="1000" prefHeight="40" styleClass="skeleton-bar"/>
+    </VBox>
+</VBox>

@@ -13,10 +13,7 @@
             stylesheets="@/css/client/auction_detail.css, @/css/client/common_ui.css"
             styleClass="root">
 
-    <VBox fx:id="loadingBox" spacing="10" alignment="CENTER" styleClass="container">
-        <ProgressIndicator/>
-        <Label text="Loading auction detail..."/>
-    </VBox>
+    <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
 
     <VBox fx:id="contentBox" spacing="30" styleClass="container" visible="false" managed="false">
 
@@ -77,8 +74,29 @@
                          Hiện khi validate thất bại, ẩn ngay khi TextField được focus. -->
                     <Label fx:id="lblBidError" text="" styleClass="bid-error-label"
                            visible="false" managed="false"/>
-                    <Label fx:id="lblAutoBidStatus" text="" styleClass="auto-bid-status-label"
-                           visible="false" managed="false"/>
+
+                    <VBox fx:id="autoBidConfigBox" spacing="10" styleClass="auto-bid-config-box"
+                          visible="false" managed="false">
+                        <HBox>
+                            <Label text="Current highest bid"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblAutoBidCurrentBid" text="0"/>
+                        </HBox>
+                        <HBox>
+                            <Label text="Increment"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                        <TextField fx:id="txtAutoBidIncrement"
+                                   promptText=" ENTER YOUR INCREMENT"
+                                   styleClass="bid-input"/>
+                        <TextField fx:id="txtAutoBidMax"
+                                   promptText=" ENTER YOUR BID LIMIT"
+                                   styleClass="bid-input"/>
+                        <HBox spacing="10">
+                            <Button text="Save Auto-bid" fx:id="btnSaveAutoBid" styleClass="btn-primary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                            <Button text="Close" fx:id="btnCloseAutoBid" styleClass="btn-secondary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                        </HBox>
+                    </VBox>
 
                     <HBox spacing="10">
                         <Button text="Place Bid" styleClass="btn-primary" fx:id="btnBid" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>

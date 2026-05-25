@@ -78,8 +78,8 @@
 
 /* PRODUCT CARD */
 .product-card {
-    -fx-background-color: #0c120f;
-    -fx-border-color: #1a221e;
+    -fx-background-color: #0a0a0a;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
     -fx-border-radius: 20;
     -fx-background-radius: 20;
     -fx-padding: 25;
@@ -87,8 +87,9 @@
 }
 
 .product-card:hover {
-    -fx-border-color: #2b6b4c;
-    -fx-background-color: #0e1612;
+    -fx-border-color: rgba(43, 107, 76, 0.5);
+    -fx-background-color: #0e0e0e;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.4), 15, 0, 0, 4);
 }
 
 .card-title-text {
@@ -98,7 +99,7 @@
 }
 
 .card-sub-text {
-    -fx-text-fill: #666666;
+    -fx-text-fill: #8fa097;
     -fx-font-size: 13px;
 }
 
@@ -110,7 +111,9 @@
 }
 
 .status-badge {
-    -fx-background-color: #1a3327;
+    -fx-background-color: rgba(76, 175, 80, 0.1);
+    -fx-border-color: rgba(76, 175, 80, 0.2);
+    -fx-border-radius: 8;
     -fx-text-fill: #4caf50;
     -fx-padding: 5 12;
     -fx-background-radius: 8;
@@ -119,14 +122,18 @@
 }
 
 .btn-action-green {
-    -fx-background-color: #1a3327;
+    -fx-background-color: #1b2622;
     -fx-text-fill: white;
     -fx-font-weight: bold;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 1px;
+    -fx-border-radius: 10;
     -fx-padding: 10 20;
     -fx-background-radius: 10;
     -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.2), 6, 0, 0, 2);
 }
 
 .btn-action-green:hover {
-    -fx-background-color: #2b6b4c;
+    -fx-background-color: #24332e;
 }

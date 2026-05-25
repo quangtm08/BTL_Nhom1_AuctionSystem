@@ -405,6 +405,7 @@ public class ServerHandlersTest {
 
     os.reset();
     registry.broadcast("BroadMsg");
+    Thread.sleep(50); // Wait for async broadcast to complete
     assertTrue(os.toString().contains("BroadMsg"));
 
     // Test sendToUser where clientId is null

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -25,7 +24,6 @@ import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.util.Duration;
 
 public class AuctionBrowseController {
 
@@ -39,6 +37,10 @@ public class AuctionBrowseController {
   @FXML private HBox mainContainer;
 
   @FXML private GridPane cardsGridPane;
+
+  @FXML private javafx.scene.layout.VBox loadingBox;
+
+  @FXML private javafx.scene.layout.VBox contentBox;
 
   // Initialization
   @FXML
@@ -55,6 +57,17 @@ public class AuctionBrowseController {
       pushService.onAuctionDeleted(
           event -> Platform.runLater(() -> handleAuctionDeletedPush(event)));
       pushService.onAuctionEnded(event -> Platform.runLater(this::loadAuctions));
+    }
+  }
+
+  private void showContent() {
+    if (loadingBox != null) {
+      loadingBox.setVisible(false);
+      loadingBox.setManaged(false);
+    }
+    if (contentBox != null) {
+      contentBox.setVisible(true);
+      contentBox.setManaged(true);
     }
   }
 
@@ -95,12 +108,17 @@ public class AuctionBrowseController {
         .exceptionally(
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
-              Platform.runLater(() -> showError("Load auctions failed", cause.getMessage()));
+              Platform.runLater(
+                  () -> {
+                    showContent();
+                    showError("Load auctions failed", cause.getMessage());
+                  });
               return null;
             });
   }
 
   private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
+    showContent();
     if (auctions == null || auctions.isEmpty()) {
       currentAuctions = new ArrayList<>();
       renderAuctionCards(currentAuctions);
@@ -132,10 +150,7 @@ public class AuctionBrowseController {
   public void navigateToDetail(String auctionId) {
     if (auctionId != null) AppContext.setSelectedAuctionId(auctionId);
     if (AppNavigator.getCurrentView() == AppView.AUCTION_DETAIL) return;
-    AppNavigator.navigateTo(AppView.LOADING);
-    PauseTransition d = new PauseTransition(Duration.seconds(0.4));
-    d.setOnFinished(e -> AppNavigator.navigateTo(AppView.AUCTION_DETAIL));
-    d.play();
+    AppNavigator.navigateTo(AppView.AUCTION_DETAIL);
   }
 
   // Helpers

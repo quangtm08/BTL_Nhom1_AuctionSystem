@@ -626,12 +626,10 @@ public class UserControllerTest {
     when(mockPaymentService.listPaymentHistory())
         .thenReturn(CompletableFuture.completedFuture(phr));
 
-    Label lblPaymentStatus = new Label();
     VBox pendingPaymentsBox = new VBox();
     VBox historyBox = new VBox();
 
     injectField(controller, "paymentClientService", mockPaymentService);
-    injectField(controller, "lblPaymentStatus", lblPaymentStatus);
     injectField(controller, "pendingPaymentsBox", pendingPaymentsBox);
     injectField(controller, "historyBox", historyBox);
 
@@ -663,6 +661,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -680,6 +679,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -1103,6 +1103,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -1119,6 +1120,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -1206,20 +1208,20 @@ public class UserControllerTest {
         CreateAuctionController.class.getDeclaredMethod("handlePublishListing");
     mPublish.setAccessible(true);
     mPublish.invoke(controller);
-    assertEquals("Invalid title", uploadCountLabel.getText());
+    assertEquals("Invalid title", statusLabel.getText());
 
     when(mockCreateService.validateInput(any(), any(), any(), any(), anyInt(), any()))
         .thenReturn(null);
     customDurationField.setText("0");
     mPublish.invoke(controller);
-    assertEquals("Duration must be greater than 0.", uploadCountLabel.getText());
+    assertEquals("Duration must be greater than 0.", statusLabel.getText());
 
     customDurationField.setText("5");
     when(mockCreateService.createAuction(any(), any(), any(), any(), any(), anyInt(), any(), any()))
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("IMGBB_API_KEY missing")));
     mPublish.invoke(controller);
     waitForRunLater();
-    assertTrue(uploadCountLabel.getText().contains("IMGBB_API_KEY"));
+    assertTrue(statusLabel.getText().contains("IMGBB_API_KEY"));
 
     when(mockCreateService.createAuction(any(), any(), any(), any(), any(), anyInt(), any(), any()))
         .thenReturn(
@@ -1228,7 +1230,7 @@ public class UserControllerTest {
                     "Custom validation failed")));
     mPublish.invoke(controller);
     waitForRunLater();
-    assertEquals("Custom validation failed", uploadCountLabel.getText());
+    assertEquals("Custom validation failed", statusLabel.getText());
   }
 
   @Test
@@ -1880,10 +1882,8 @@ public class UserControllerTest {
     PaymentClientService mockPaymentService = mock(PaymentClientService.class);
     injectField(controller, "paymentClientService", mockPaymentService);
 
-    Label lblPaymentStatus = new Label();
     VBox pendingPaymentsBox = new VBox();
     VBox historyBox = new VBox();
-    injectField(controller, "lblPaymentStatus", lblPaymentStatus);
     injectField(controller, "pendingPaymentsBox", pendingPaymentsBox);
     injectField(controller, "historyBox", historyBox);
 
@@ -1899,7 +1899,6 @@ public class UserControllerTest {
     reload.setAccessible(true);
     reload.invoke(controller);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("0 pending payment(s)"));
 
     // reload exceptional path
     reset(mockPaymentService);
@@ -1909,7 +1908,6 @@ public class UserControllerTest {
         .thenReturn(CompletableFuture.completedFuture(phrNull));
     reload.invoke(controller);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("Service offline"));
 
     // 2. Row styling and null scenarios (paidAt is null, amount is null, direction is not RECEIVE)
     PendingPaymentDto pending = new PendingPaymentDto("auc-1", "PaidItem", "ART", null, null);
@@ -1925,10 +1923,6 @@ public class UserControllerTest {
         .thenReturn(CompletableFuture.completedFuture(phr));
     reload.invoke(controller);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("1 pending payment(s)"));
-
-    // historyEntries size == 1 (singular) vs other (plural)
-    assertTrue(lblPaymentStatus.getText().contains("1 history entry"));
 
     // 3. processPayment failure
     reset(mockPaymentService);
@@ -1940,7 +1934,6 @@ public class UserControllerTest {
     Button payButton = new Button();
     processPayment.invoke(controller, "auc-1", payButton);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("Insufficient funds"));
     assertFalse(payButton.isDisabled());
   }
 
@@ -1953,6 +1946,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -1969,6 +1963,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -2000,7 +1995,7 @@ public class UserControllerTest {
     handlePublishListing.setAccessible(true);
     handlePublishListing.invoke(controller);
     waitForRunLater();
-    assertEquals("Failed to publish listing.", uploadCountLabel.getText());
+    assertEquals("Failed to publish listing.", statusLabel.getText());
 
     // resolveErrorMessage scenarios
     java.lang.reflect.Method resolveErrorMessage =

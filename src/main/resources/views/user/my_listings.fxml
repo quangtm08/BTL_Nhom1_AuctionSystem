@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
-<?import java.net.URL?> 
+<?import java.net.URL?>
 
 <BorderPane prefHeight="700.0" prefWidth="1100.0"
             stylesheets="@/css/client/my_listings.css, @/css/client/common_ui.css"
@@ -15,7 +15,7 @@
         >
 
     <!-- SIDEBAR -->
-    
+
    <left>
         <fx:include source="components/user_sidebar.fxml" />
    </left>
@@ -23,81 +23,68 @@
 
     <!-- MAIN CONTENT -->
     <center>
-        <VBox spacing="20" styleClass="main-content">
-            <padding>
-                <Insets top="40" left="40" right="40"/>
-            </padding>
+        <StackPane styleClass="main-content">
+            <!-- SKELETON LOADING -->
+            <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
 
-            <children>
+            <!-- ACTUAL CONTENT -->
+            <VBox fx:id="contentBox" spacing="20" visible="false" managed="false">
+                <padding>
+                    <Insets top="40" left="40" right="40"/>
+                </padding>
 
-                <HBox alignment="CENTER_LEFT">
-                    <Label text="See your networth grows" styleClass="title"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="btnCreateListing" text="+ New listing" styleClass="btn-primary" onAction="#handleCreateListing"/>
-                </HBox>
+                <children>
 
-                <!-- STATS -->
-                <HBox spacing="80">
-                    <VBox>
-                        <Label text="Active listings" styleClass="sub"/>
-                        <Label fx:id="activeListingsLabel" text="0" styleClass="big"/>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="My Listings" styleClass="title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="btnCreateListing" text="+ New listing" styleClass="btn-primary" onAction="#handleCreateListing"/>
+                    </HBox>
+
+                    <!-- STATS -->
+                    <HBox spacing="80">
+                        <VBox spacing="5">
+                            <Label text="Active listings" styleClass="stat-label"/>
+                            <Label fx:id="activeListingsLabel" text="0" styleClass="big"/>
+                        </VBox>
+
+                        <VBox spacing="5">
+                            <Label text="Ended listings" styleClass="stat-label"/>
+                            <Label text="0" styleClass="big"/>
+                        </VBox>
+                    </HBox>
+
+                    <!-- FILTER & SEARCH -->
+                    <VBox spacing="20.0">
+                        <TextField promptText="Search listings..." styleClass="search-field"/>
+                        <HBox alignment="CENTER_LEFT">
+                            <HBox spacing="10.0" HBox.hgrow="ALWAYS">
+                                <Button text="All" styleClass="filter-chip, filter-chip-active"/>
+                            </HBox>
+                            <HBox alignment="CENTER_RIGHT" spacing="12.0">
+                                <!-- Placeholder for future sort options if needed -->
+                            </HBox>
+                        </HBox>
                     </VBox>
 
-                    <VBox>
-                        <Label text="Accumulated revenue" styleClass="sub"/>
-                        <Label text="0" styleClass="money"/>
-                    </VBox>
-                </HBox>
+                    <!-- CARD LIST -->
+                    <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
+                    <content>
+                        <GridPane fx:id="listingsGrid" hgap="30.0" vgap="30.0">
+                            <padding>
+                                <Insets bottom="30.0" right="20.0" />
+                            </padding>
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
+                                <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
+                            </columnConstraints>
+                        </GridPane>
+                    </content>
+                </ScrollPane>
 
-                <!-- FILTER -->
-                <HBox spacing="10">
-                    <Button text="All" styleClass="filter-chip"/>
-                </HBox>
-
-                <!-- CARD LIST -->
-                <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
-                <content>
-                    <GridPane fx:id="listingsGrid" hgap="30.0" vgap="30.0">
-                        <padding>
-                            <Insets bottom="30.0" right="20.0" />
-                        </padding>
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
-                            <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
-                        </columnConstraints>
-                        <children>
-                            <!-- <VBox styleClass="product-card" spacing="12.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
-                                <HBox alignment="CENTER_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Vintage Fender Guitar" styleClass="card-title-text"/>
-                                        <Label text="Art &amp; Collectibles" styleClass="card-sub-text"/>
-                                    </VBox>
-                                    <Label text="Running" styleClass="status-badge"/>
-                                </HBox>
-                                <HBox alignment="BOTTOM_LEFT">
-                                    <VBox HBox.hgrow="ALWAYS">
-                                        <Label text="Current bid" styleClass="card-sub-text"/>
-                                        <Label text="\$5000" styleClass="card-price-text"/>
-                                        <Label text="12 bids" styleClass="card-sub-text"/>
-                                    </VBox>
-                                    <VBox alignment="BOTTOM_RIGHT" spacing="10">
-                                        <Label text="2 days left" styleClass="card-sub-text"/>
-                                    </VBox>
-                                </HBox>
-                                <Separator styleClass="card-separator"/>
-                                <HBox spacing="10.0">
-                                    <Button text="Edit" styleClass="btn-card-edit" HBox.hgrow="ALWAYS" maxWidth="Infinity" onAction="#handleEditListing"/>
-                                    <Button text="Delete" styleClass="btn-card-delete" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                                </HBox>
-                            </VBox> -->
-                            
-                        </children>
-                    </GridPane>
-                </content>
-            </ScrollPane>
-
-            </children>
-        </VBox>
+                </children>
+            </VBox>
+        </StackPane>
     </center>
 
 </BorderPane>

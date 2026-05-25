@@ -58,8 +58,8 @@ public class ServerConnection {
   }
 
   private void connect() {
-    String cloudHost = "kodama.proxy.rlwy.net";
-    int cloudPort = 14606;
+    String cloudHost = "zephyr.proxy.rlwy.net";
+    int cloudPort = 30411;
     String localHost = "localhost";
     int localPort = 12345;
     int timeoutMillis = 6000;
@@ -135,7 +135,7 @@ public class ServerConnection {
     CompletableFuture<ResponseMessage<T>> future = new CompletableFuture<>();
 
     future
-        .orTimeout(10, TimeUnit.SECONDS)
+        .orTimeout(20, TimeUnit.SECONDS)
         .whenComplete(
             (res, ex) -> {
               if (ex instanceof java.util.concurrent.TimeoutException) {

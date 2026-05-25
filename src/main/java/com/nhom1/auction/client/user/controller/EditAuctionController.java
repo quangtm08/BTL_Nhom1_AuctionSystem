@@ -5,6 +5,7 @@ import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.BiddingClientService;
 import com.nhom1.auction.client.user.service.MyListingsClientService;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.common.dto.bidding.AuctionDetailDto;
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.ItemCategory;
@@ -85,7 +86,7 @@ public class EditAuctionController {
 
     auctionId = AppContext.getSelectedAuctionId();
     if (auctionId == null || auctionId.isBlank()) {
-      showStatus("No listing selected.");
+      showError("No listing selected.");
       setEditable(false);
       return;
     }
@@ -117,7 +118,7 @@ public class EditAuctionController {
   private void handleSaveChanges() {
     int days = resolveDurationDays();
     if (days <= 0 && loadedEndTime == null) {
-      showStatus("Duration must be greater than 0.");
+      showError("Duration must be greater than 0.");
       return;
     }
     LocalDateTime baseTime =
@@ -143,7 +144,7 @@ public class EditAuctionController {
             ex -> {
               Platform.runLater(
                   () -> {
-                    showStatus(resolveErrorMessage(ex, "Unable to save listing."));
+                    showError(resolveErrorMessage(ex, "Unable to save listing."));
                     setButtonsDisabled(false);
                   });
               return null;
@@ -175,7 +176,7 @@ public class EditAuctionController {
                       ex -> {
                         Platform.runLater(
                             () -> {
-                              showStatus(resolveErrorMessage(ex, "Unable to delete listing."));
+                              showError(resolveErrorMessage(ex, "Unable to delete listing."));
                               setButtonsDisabled(false);
                             });
                         return null;
@@ -191,7 +192,7 @@ public class EditAuctionController {
             ex -> {
               Platform.runLater(
                   () -> {
-                    showStatus(resolveErrorMessage(ex, "Unable to load listing."));
+                    showError(resolveErrorMessage(ex, "Unable to load listing."));
                     setEditable(false);
                   });
               return null;
@@ -235,7 +236,7 @@ public class EditAuctionController {
 
   private void applyDetail(AuctionDetailDto dto) {
     if (dto == null) {
-      showStatus("Unable to load listing.");
+      showError("Unable to load listing.");
       setEditable(false);
       return;
     }
@@ -251,10 +252,11 @@ public class EditAuctionController {
     bindMeta(dto.getStartTime(), dto.getEndTime());
 
     boolean editable = isEditableStatus(dto.getStatus());
-    showStatus(
-        editable
-            ? "Editing " + statusName(dto.getStatus()) + " listing"
-            : "Only pending or open listings can be edited.");
+    if (editable) {
+      showStatus("Editing " + statusName(dto.getStatus()) + " listing");
+    } else {
+      showError("Only pending or open listings can be edited.");
+    }
     setEditable(editable);
   }
 
@@ -276,7 +278,11 @@ public class EditAuctionController {
   }
 
   private void showStatus(String message) {
-    statusLabel.setText(message);
+    FeedbackUtils.showStatus(statusLabel, message);
+  }
+
+  private void showError(String message) {
+    FeedbackUtils.showError(statusLabel, message);
   }
 
   private String resolveErrorMessage(Throwable throwable, String fallback) {
@@ -293,11 +299,13 @@ public class EditAuctionController {
     DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     String opens = startTime != null ? startTime.format(fmt) : "N/A";
     String ends = endTime != null ? endTime.format(fmt) : "N/A";
-    metaLabel.setText("Opens: " + opens + " | Ends: " + ends);
+    if (metaLabel != null) {
+      metaLabel.setText("Opens: " + opens + " | Ends: " + ends);
+    }
   }
 
   private boolean isEditableStatus(AuctionStatus status) {
-    return status == AuctionStatus.PENDING || status == AuctionStatus.OPEN;
+    return status == AuctionStatus.PENDING;
   }
 
   private String statusName(AuctionStatus status) {
