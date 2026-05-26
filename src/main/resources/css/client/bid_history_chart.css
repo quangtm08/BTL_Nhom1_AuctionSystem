@@ -19,8 +19,7 @@
 /* ===== HEADER ===== */
 .page-title {
     -fx-text-fill: white;
-    -fx-font-family: "Georgia";
-    -fx-font-style: italic;
+    -fx-font-family: "EB Garamond";
     -fx-font-size: 28px;
 }
 

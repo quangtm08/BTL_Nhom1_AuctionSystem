@@ -4,25 +4,25 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<VBox prefWidth="260" styleClass="sidebar" xmlns:fx="http://javafx.com/fxml" 
-        fx:controller="com.nhom1.auction.client.admin.controller.AdminSidebarController" 
-        stylesheets="@/css/admin/admin_sidebar.css">
+<VBox prefWidth="260" styleClass="sidebar" xmlns:fx="http://javafx.com/fxml"
+        fx:controller="com.nhom1.auction.client.admin.controller.AdminSidebarController"
+        stylesheets="@/css/admin/admin_sidebar.css, @/css/client/common_ui.css">
     <padding><Insets top="40" left="25" right="25" bottom="25"/></padding>
     <VBox spacing="5" styleClass="brand-container">
-        <Label text="Auction Admin" styleClass="brand-title"/>
+        <Label text="Welcome, Admin" styleClass="brand-title"/>
         <Label text="Control Panel" styleClass="brand-subtitle"/>
         <VBox.margin><Insets bottom="40"/></VBox.margin>
     </VBox>
     <VBox spacing="10" VBox.vgrow="ALWAYS">
-        <Button fx:id="btnDashboard" text="Dashboard" styleClass="side-btn , side-btn-active" maxWidth="Infinity"/>
-        <Button fx:id="btnUsers" text="Users" styleClass="side-btn" maxWidth="Infinity"/>
-        <Button fx:id="btnAuctions" text="Auctions" styleClass="side-btn" maxWidth="Infinity"/>
+        <Button fx:id="btnDashboard" text="Dashboard" styleClass="side-btn, btn-ghost, btn-ghost-active" maxWidth="Infinity"/>
+        <Button fx:id="btnUsers" text="Users" styleClass="side-btn, btn-ghost" maxWidth="Infinity"/>
+        <Button fx:id="btnAuctions" text="Auctions" styleClass="side-btn, btn-ghost" maxWidth="Infinity"/>
     </VBox>
     <HBox alignment="CENTER_LEFT" spacing="12" styleClass="user-footer">
-        <StackPane><Circle radius="18" fill="#1a221e"/><Label text="🛡️"/></StackPane>
+        <StackPane><Circle radius="18" fill="#1a221e"/></StackPane>
         <VBox><Label text="Admin" styleClass="text-white-bold"/><Label text="Super user" styleClass="text-dim"/></VBox>
-        <Button fx:id="btnLogout" text="Logout ⎋" styleClass="logout-btn"/>
+        <Button fx:id="btnLogout" text="Logout ⎋" styleClass="btn-danger"/>
 
     </HBox>
-    
+
 </VBox>

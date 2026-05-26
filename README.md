@@ -67,7 +67,7 @@ CSDL local fallback: `database/auction-system.db` (cùng các file `-wal`, `-shm
 
 ## 4. Vị trí file JAR
 
-Sau khi build (`./mvnw -q -DskipTests package`):
+Sau khi build (`./mvnw -DskipTests package -Pdist`):
 
 | File | Vai trò | Main class |
 |------|---------|------------|
@@ -77,8 +77,11 @@ Sau khi build (`./mvnw -q -DskipTests package`):
 Lệnh build:
 
 ```bash
-./mvnw -q -DskipTests package          # Linux / macOS
-.\mvnw.cmd -q -DskipTests package      # Windows PowerShell
+# Build fat JARs cho máy hiện tại (phục vụ test nhanh)
+./mvnw -DskipTests package
+
+# Build fat JARs đa nền tảng (Win/Mac/Linux) để phân phối
+./mvnw -DskipTests package -Pdist
 ```
 
 ## 5. Hướng dẫn chạy Server / Client
@@ -110,9 +113,11 @@ java -jar target/auction-client.jar
 ### Chế độ dev (tùy chọn)
 
 ```bash
-./mvnw -q exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"   # server
-./mvnw -q javafx:run                                                      # client
-./mvnw -q test                                                            # test
+# Chạy server từ source
+./mvnw exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"
+
+# Chạy client từ source (dùng cho phát triển giao diện)
+./mvnw javafx:run
 ```
 
 ## 6. Danh sách chức năng đã hoàn thành

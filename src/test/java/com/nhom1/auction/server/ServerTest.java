@@ -48,7 +48,7 @@ public class ServerTest {
 
   @Test
   public void testServerMainPortBusy() throws IOException {
-    int port = 41177;
+    int port = 12345;
 
     // Bind the port so Server main fails to bind and exits immediately
     try (ServerSocket busySocket = new ServerSocket(port)) {

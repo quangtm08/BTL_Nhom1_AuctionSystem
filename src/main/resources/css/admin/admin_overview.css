@@ -25,11 +25,9 @@
 }
 
 .brand-title {
-    -fx-font-family: "Georgia", serif;
-    -fx-font-style: italic;
+    -fx-font-family: "EB Garamond", serif;
     -fx-font-size: 24px;
     -fx-text-fill: white;
-    -fx-font-weight: bold;
 }
 
 .brand-subtitle {
@@ -61,11 +59,9 @@
 
 /* --- DASHBOARD CONTENT --- */
 .dashboard-title {
-    -fx-font-family: "EBGaramond", serif;
-    -fx-font-style: italic;
-    -fx-font-size: 42px;
+    -fx-font-family: "EB Garamond", serif;
+    -fx-font-size: 36px;
     -fx-text-fill: #ffffff;
-    -fx-font-weight: bold;
 }
 
 .dashboard-date {

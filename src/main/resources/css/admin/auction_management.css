@@ -4,11 +4,9 @@
 }
 
 .dashboard-title {
-    -fx-font-family: "EBGaramond", serif;
-    -fx-font-style: italic;
+    -fx-font-family: "EB Garamond", serif;
     -fx-font-size: 36px;
     -fx-text-fill: white;
-    -fx-font-weight: bold;
 }
 
 .dashboard-date {
