@@ -1,63 +1,56 @@
-# Module: Bidding Feature (Đấu giá)
+# Module: Bidding Feature
 
-Tài liệu này tổng hợp chi tiết về module Đấu giá (Bidding), bao gồm kiến trúc hệ thống, các thành phần chính và quy tắc nghiệp vụ về bước giá tối thiểu.
+Tai lieu nay mo ta trang thai hien tai cua module bidding theo code trong `server/bidding`, `client/user/service/BiddingClientService.java`, va cac DTO trong `common/dto/bidding`.
 
----
+## Thanh phan chinh
 
-## 1. Kiến Trúc & Thành Phần Chính
+- `BidModule`: tao `BidRepository`, `BidService`, `BidHandler` va dang ky route vao `MessageRouter`.
+- `BidHandler`: xu ly `LIST_AUCTIONS`, `GET_AUCTION_DETAIL`, `PLACE_BID`, `LIST_MY_BIDS`; parse DTO bang `JsonUtil`; tra loi bang `ResponseFactory`.
+- `BidService`: nghiep vu browse/detail/my bids/place bid. Khi place bid, service mo transaction rieng tu `DataSource`.
+- `BidRepository`: luu va doc `BidTransaction`, tim bid theo auction, bidder, va last bid time cho anti-sniping.
+- `AuctionRepository`, `ItemRepository`, `ItemImageRepository`: duoc inject de lay auction/item/image khi render danh sach va chi tiet.
+- `WalletRepository`: duoc inject de validate so du truoc khi commit bid.
+- `BiddingClientService`: tao request DTO, chon `MessageType`, unwrap response cho controller.
 
-Hệ thống tuân thủ mô hình phân lớp để tách biệt logic nghiệp vụ và giao diện.
+## Luong place bid
 
-### Phía Server (Logic & Dữ liệu)
-- **BidRepository**: Quản lý lưu trữ và truy vấn dữ liệu bid từ Database (SQLite). Hỗ trợ các thao tác: `save`, `findByAuctionId`, `findByBidderId`, `findLastBidTime`.
-- **BidService**: "Bộ não" xử lý logic đặt giá. Thực hiện kiểm tra trạng thái auction, validate người dùng và xử lý giao dịch đặt giá.
-- **BidHandler**: Đóng vai trò bộ định tuyến (router) phía server, chuyển đổi giữa dữ liệu JSON và đối tượng Java, đồng thời chuẩn hóa các mã lỗi phản hồi (`INVALID_BID`, `AUCTION_CLOSED`, `UNAUTHORIZED`, v.v.).
-- **BidModule**: Điểm khởi tạo và kết nối các thành phần (wiring/DI) vào hệ thống server.
+```text
+AuctionDetailController / AuctionBrowseController
+-> BiddingClientService.placeBid(...)
+-> PLACE_BID
+-> BidHandler
+-> BidService.placeBid(...)
+-> BidRepository + AuctionRepository + WalletRepository trong transaction
+-> NotificationService.broadcastBidUpdate(...)
+-> AutoBidService trigger neu duoc cau hinh
+```
 
-### Phía Client (Giao diện & Dịch vụ)
-- **BiddingClientService**: Tầng dịch vụ trung gian kế thừa từ `BaseClientService`. 
-  - Quản lý các yêu cầu: `listAuctions()`, `getAuctionDetail()`, `placeBid()`, `getMyBids()`.
-  - Sử dụng `CompletableFuture` để xử lý bất đồng bộ, tránh treo giao diện.
-  - Tự động lấy thông tin người dùng từ `AppContext`.
+`BidService.placeBid` doc auction trong transaction, validate bang domain logic, kiem tra wallet balance, luu `BidTransaction`, roi cap nhat highest bid bang expected `auction.version`. Neu update 0 row do co bid dong thoi, service rollback va retry toi gioi han.
 
----
+## Quy tac dat gia
 
-## 2. Quy tắc Đặt giá (Bid Rules)
+- Auction phai o trang thai cho phep bidding.
+- Bidder khong duoc la seller cua auction.
+- Bid dau tien phai dat toi thieu `startingPrice`.
+- Bid tiep theo phai dat toi thieu `currentHighestBid + auction.getMinBidIncrement()`.
+- `Auction.getMinBidIncrement()` hien tinh 5% cua `startingPrice`, lam tron theo logic trong entity.
+- Wallet cua bidder phai co `balance >= amount`.
 
-Để đảm bảo tính công bằng và sôi nổi cho phiên đấu giá, hệ thống áp dụng quy tắc **Bước giá tối thiểu (Min Bid Increment)**.
+Loi nghiep vu duoc nem bang exception typed nhu `InvalidBidException`, `AuctionClosedException`, `UnauthorizedActionException`, `ValidationException`, `ConflictException`; `ResponseFactory` map thanh response loi cho client.
 
-### Cơ chế hoạt động
-- **Mức tăng**: 5% dựa trên giá khởi điểm (`startingPrice`).
-- **Công thức**:
-  - Lần bid đầu tiên: `amount >= startingPrice`.
-  - Các lần bid tiếp theo: `amount >= currentHighestBid + (startingPrice * 0.05)`.
-- **Làm tròn**: Giá trị bước giá được làm tròn đến 2 chữ số thập phân (HALF_UP).
+## Realtime va auto-bid
 
-### Thành phần tham gia xác thực
-- **Auction Entity**: Chứa logic tính toán `getMinBidIncrement()`.
-- **AuctionBidValidator**: Thực hiện kiểm tra điều kiện mỗi khi có yêu cầu đặt giá mới. Nếu không thỏa mãn, hệ thống sẽ ném `InvalidBidException` kèm thông báo rõ ràng cho người dùng.
+Sau bid manual thanh cong, `BidHandler` broadcast `PUSH_BID_UPDATE`. Neu `AutoBidService` da duoc wire trong `ServerContext`, handler tiep tuc kich hoat auto-bid. Auto-bid co the dat them mot chuoi bid tu dong va broadcast lai khi chuoi da on dinh.
 
----
+## Test lien quan
 
-## 3. Chi tiết thực hiện & File liên quan
+- `server/bidding/BidServiceTest.java`
+- `server/bidding/BidHandlerTest.java`
+- `server/bidding/BidRepositoryTest.java`
+- `server/bidding/BidGatewayImplTest.java`
+- `common/entity/AuctionTest.java`
+- `common/entity/BidTransactionTest.java`
 
-### Các file chính:
-- `com.nhom1.auction.server.bidding`: `BidHandler.java`, `BidService.java`, `BidRepository.java`.
-- `com.nhom1.auction.client.user.service`: `BiddingClientService.java`.
-- `com.nhom1.auction.common.entity`: `Auction.java`, `AuctionBidValidator.java`.
+## Trung lap docs
 
-### Tác động hệ thống:
-- Cải thiện khả năng xử lý lỗi, giúp Client hiển thị thông báo chính xác cho người dùng.
-- Tương thích tốt với các module Seller và Auction đã có.
-
----
-
-## 4. Kiểm tra & Kết quả
-
-- **Biên dịch**: Đã chạy `mvn compile` thành công, không có lỗi xung đột.
-- **Unit Test**: Đã bổ sung và chạy thành công các test case trong `AuctionTest.java`:
-  - `testPlaceBid_RejectWhenLessThanMinIncrement`: Kiểm tra từ chối bid nếu không đủ bước giá.
-  - `testPlaceBid_AcceptedWhenEqualOrGreaterThanMinIncrement`: Kiểm tra chấp nhận bid khi đủ bước giá.
-
----
-**Người thực hiện:** Ngọc
+Luong socket/request-response chung nam o `docs/architecture/client-server-communication.md`. Schema bang `bids` va `auctions.version` nam o `docs/architecture/database-schema.md`.

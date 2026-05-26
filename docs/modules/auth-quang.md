@@ -33,7 +33,7 @@ Khi người dùng nhập thông tin và bấm "Login":
 Tin nhắn JSON đến Server:
 1.  **`MessageRouter`** đọc nhãn `MessageType.LOGIN` và chuyển tiếp cho **`AuthHandler`**.
 2.  **`AuthHandler`** giải mã JSON thành `LoginRequest` và gọi **`AuthService`**.
-3.  **`AuthService`** gọi **`UserRepository`** để truy vấn thông tin từ CSDL SQLite.
+3.  **`AuthService`** gọi **`UserRepository`** để truy vấn thông tin từ database qua `DataSource` hiện tại (SQLite local hoặc PostgreSQL nếu có cấu hình cloud).
 4.  Nếu thông tin khớp, **`AuthService`** trả về đối tượng `User`.
 
 ### Bước 3: Phản Hồi Và Cập Nhật Trạng Thái (Client)
