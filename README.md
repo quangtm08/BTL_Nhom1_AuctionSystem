@@ -71,7 +71,8 @@ Sau khi build (`./mvnw -DskipTests package -Pdist`):
 
 | File | Vai trò | Main class |
 |------|---------|------------|
-| `target/auction-server.jar` | Server fat JAR (chạy local) | `com.nhom1.auction.server.Server` |
+| `target/auction-app-1.0-SNAPSHOT.jar` | Server fat JAR mặc định Maven/Railway auto-detect | `com.nhom1.auction.server.Server` |
+| `target/auction-server.jar` | Alias ổn định của server fat JAR (chạy local) | `com.nhom1.auction.server.Server` |
 | `target/auction-client.jar` | Client fat JAR (đa nền tảng, kèm native JavaFX win/mac/linux) | `com.nhom1.auction.client.ClientLauncher` |
 
 Lệnh build:

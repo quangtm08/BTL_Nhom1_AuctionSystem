@@ -1,1 +1,1 @@
-web: java -jar target/auction-app-1.0-SNAPSHOT.jar
+web: java -jar target/auction-server.jar

@@ -13,7 +13,7 @@ Tai lieu nay bam theo code hien tai trong `DBConnection`, `Server`, `ServerConne
 
 ## Port server
 
-`Server.main` doc bien `PORT`. Neu Railway set `PORT`, server bind vao port do. Neu khong co `PORT`, code hien tai fallback ve `41177`.
+`Server.main` doc bien `PORT`. Neu Railway set `PORT`, server bind vao port do. Neu khong co `PORT`, code hien tai fallback ve `12345`.
 
 Luu y: `ServerConnection` phia client hien thu cloud truoc:
 
@@ -29,11 +29,15 @@ String localHost = "localhost";
 int localPort = 12345;
 ```
 
-Khi test local, can dam bao server local dang lang nghe dung port ma client fallback su dung. Hien tai server fallback `41177`, client fallback `12345`, nen hai gia tri nay can duoc dong bo neu chay local khong qua Railway.
+Khi test local, server va client cung fallback ve `localhost:12345`.
 
 ## Build va start command
 
-`pom.xml` dung `maven-shade-plugin` de tao fat JAR co main class `com.nhom1.auction.server.Server`.
+`pom.xml` dung `maven-shade-plugin` de tao cac fat JAR sau:
+
+- `target/auction-app-1.0-SNAPSHOT.jar`: server, main class `com.nhom1.auction.server.Server`. Day la ten JAR mac dinh ma Railway/Nixpacks co the auto-detect.
+- `target/auction-server.jar`: alias on dinh cua server JAR de doc/chay local.
+- `target/auction-client.jar`: client JavaFX, main class `com.nhom1.auction.client.ClientLauncher`.
 
 Build:
 
@@ -41,10 +45,17 @@ Build:
 ./mvnw package
 ```
 
-Run:
+Run tren Railway/Procfile:
 
 ```bash
-java -jar target/auction-app-1.0-SNAPSHOT.jar
+java -jar target/auction-server.jar
+```
+
+Build JAR client da nen dependency de nop/chay demo:
+
+```bash
+./mvnw -DskipTests package -Pdist
+java -jar target/auction-client.jar
 ```
 
 Repo co production profile rong de dap ung build command co `-Pproduction` neu Railway dung mac dinh do.
