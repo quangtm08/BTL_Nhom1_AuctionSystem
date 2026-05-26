@@ -92,6 +92,13 @@ public class WalletService {
     walletRepository.saveTransaction(toTx, conn);
   }
 
+  public void ensureSufficientBalance(UUID userId, BigDecimal amount, Connection conn) {
+    Wallet wallet = getOrCreateWallet(userId, conn);
+    if (wallet.getBalance().compareTo(amount) < 0) {
+      throw new ValidationException("Insufficient wallet balance to place this bid");
+    }
+  }
+
   // Query operations
   public WalletResponse getWallet(UUID userId) {
     Wallet wallet = getOrCreateWallet(userId);

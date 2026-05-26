@@ -24,8 +24,8 @@
 
 .page-title {
     -fx-text-fill: #eef5f0;
+    -fx-font-family: "EB Garamond";
     -fx-font-size: 48px;
-    -fx-font-weight: 700;
 }
 
 .meta-text,

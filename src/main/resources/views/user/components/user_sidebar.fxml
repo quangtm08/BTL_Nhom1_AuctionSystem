@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.Circle?>
 
-<VBox prefWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER"
+<VBox prefWidth="260.0" minWidth="260.0" maxWidth="260.0" styleClass="sidebar" HBox.hgrow="NEVER"
       xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
       stylesheets="@/css/client/user_sidebar.css, @/css/client/common_ui.css" fx:controller="com.nhom1.auction.client.user.controller.UserSidebarController"  >
     <padding>

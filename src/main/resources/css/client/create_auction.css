@@ -24,8 +24,8 @@
 
 .page-title {
     -fx-text-fill: #f2f5f3;
+    -fx-font-family: "EB Garamond";
     -fx-font-size: 44px;
-    -fx-font-weight: 700;
 }
 
 .section-title,

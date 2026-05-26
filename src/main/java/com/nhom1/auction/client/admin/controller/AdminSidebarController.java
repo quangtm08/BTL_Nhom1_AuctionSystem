@@ -7,6 +7,8 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 
 public class AdminSidebarController {
+  private static final String SIDE_ACTIVE_CLASS = "side-btn-active";
+  private static final String GHOST_ACTIVE_CLASS = "btn-ghost-active";
 
   @FXML Button btnDashboard;
   @FXML Button btnUsers;
@@ -40,15 +42,25 @@ public class AdminSidebarController {
 
     if (current == null) return;
 
-    btnDashboard.getStyleClass().remove("side-btn-active");
-    btnUsers.getStyleClass().remove("side-btn-active");
-    btnAuctions.getStyleClass().remove("side-btn-active");
+    removeActiveClasses(btnDashboard);
+    removeActiveClasses(btnUsers);
+    removeActiveClasses(btnAuctions);
 
     switch (current) {
-      case ADMIN_OVERVIEW -> btnDashboard.getStyleClass().add("side-btn-active");
-      case USER_MANAGEMENT -> btnUsers.getStyleClass().add("side-btn-active");
-      case AUCTION_MANAGEMENT -> btnAuctions.getStyleClass().add("side-btn-active");
+      case ADMIN_OVERVIEW -> addActiveClasses(btnDashboard);
+      case USER_MANAGEMENT -> addActiveClasses(btnUsers);
+      case AUCTION_MANAGEMENT -> addActiveClasses(btnAuctions);
       default -> {}
     }
+  }
+
+  private void removeActiveClasses(Button button) {
+    button.getStyleClass().remove(SIDE_ACTIVE_CLASS);
+    button.getStyleClass().remove(GHOST_ACTIVE_CLASS);
+  }
+
+  private void addActiveClasses(Button button) {
+    button.getStyleClass().add(SIDE_ACTIVE_CLASS);
+    button.getStyleClass().add(GHOST_ACTIVE_CLASS);
   }
 }

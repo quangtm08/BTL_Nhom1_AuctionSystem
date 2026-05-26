@@ -21,7 +21,7 @@
         <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" hbarPolicy="NEVER">
             <VBox spacing="30" style="-fx-padding: 40;">
                 <VBox spacing="8">
-                    <Label text="Dashboard" style="-fx-font-family: 'Georgia'; -fx-font-style: italic; -fx-font-size: 36; -fx-text-fill: white;"/>
+                    <Label text="Dashboard" styleClass="dashboard-title"/>
                     <Label fx:id="lblOverviewDate" text="System overview" style="-fx-text-fill: #555555;"/>
                 </VBox>
 

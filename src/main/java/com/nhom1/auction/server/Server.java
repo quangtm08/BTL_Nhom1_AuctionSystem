@@ -18,7 +18,7 @@ public class Server {
     TimeZone.setDefault(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"));
     // Use the PORT environment variable if available (required for Railway deployment)
     String portEnv = System.getenv("PORT");
-    int port = (portEnv != null) ? Integer.parseInt(portEnv) : 41177;
+    int port = (portEnv != null) ? Integer.parseInt(portEnv) : 12345;
     int clientCount = 0;
     ExecutorService pool = Executors.newFixedThreadPool(10);
 

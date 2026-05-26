@@ -78,8 +78,7 @@
    3. TYPOGRAPHY & HEADERS
    ========================================================================== */
 .dashboard-title-serif {
-    -fx-font-family: "Georgia";
-    -fx-font-style: italic;
+    -fx-font-family: "EB Garamond";
     -fx-font-size: 38;
     -fx-text-fill: white;
 }
