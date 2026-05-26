@@ -1,109 +1,143 @@
 # BTL Auction System — Nhóm 1
 
-Ứng dụng đấu giá: **JavaFX (client)** giao tiếp với **máy chủ TCP** bằng **JSON** (Jackson). Server gom nghiệp vụ, router tin nhắn và truy cập **SQLite** (file trong thư mục `database/`). Client không kết nối DB trực tiếp.
+## 1. Mô tả bài toán & phạm vi
 
-## Kiến trúc tóm tắt
+Hệ thống đấu giá trực tuyến nhiều người dùng đồng thời, giao tiếp client-server bằng **TCP socket** và **JSON** (Jackson). Client **JavaFX** chỉ gửi/nhận message qua socket; server xử lý toàn bộ nghiệp vụ (xác thực, đấu giá, đặt giá, thanh toán, auto-bid, lịch tự động, quản trị) và truy cập CSDL. Mặc định khi deploy trên Railway, server dùng **PostgreSQL**; **SQLite** trong thư mục `database/`  là fallback khi chạy local hoặc không kết nối được Postgres Server.
 
-| Thành phần | Vai trò |
-|------------|---------|
-| **Client** | Giao diện FXML/CSS, điều hướng (`AppNavigator`), kết nối socket qua `ServerConnection`, DTO dùng chung từ `common`. |
-| **Server** | `ServerSocket` (mặc định cổng **12345**), mỗi client một luồng (`ClientHandler`), định tuyến `MessageType` qua `MessageRouter` và các module (auth, auction, bidding, admin, automation). |
-| **Common** | Entity, enum, DTO, protocol (`RequestMessage` / `ResponseMessage`), exception, value object, observer. |
+Phạm vi: đăng ký / đăng nhập, duyệt phiên đấu giá, đặt giá thủ công + tự động (auto-bid), thanh toán mock, quản trị hệ thống, thông báo realtime qua socket.
 
-Giao thức: client và server trao đổi theo dòng JSON; một số sự kiện được đẩy từ server (notification / realtime tùy luồng).
+## 2. Công nghệ & yêu cầu cài đặt
 
-## Công nghệ
+| Hạng mục | Giá trị |
+|---------|---------|
+| Ngôn ngữ | Java 21 (LTS) |
+| UI | JavaFX 21 (FXML + CSS) |
+| Build | Maven (kèm `mvnw` / `mvnw.cmd`) |
+| Giao thức | TCP socket, JSON (Jackson + JSR-310) |
+| CSDL | PostgreSQL trên Railway; SQLite fallback local (`jdbc:sqlite:database/auction-system.db`, WAL) |
+| Connection pool | HikariCP |
+| Test | JUnit 5, Mockito |
+| Coverage | JaCoCo |
+| Định dạng | Spotless + Google Java Format |
+| Packaging | Maven Shade Plugin tạo 2 fat JAR server/client |
 
-- **Java 21** **JavaFX 21**
-- **Maven** (`mvnw` / `mvnw.cmd`)
-- **SQLite** — `jdbc:sqlite:database/auction-system.db` (WAL, busy timeout; xem `DBConnection`)
-- **Jackson** + JSR-310 cho `LocalDateTime`
-- **JUnit 5** cho unit test
-- **MySQL connector** có trong `pom.xml` (phục vụ mở rộng); triển khai hiện tại dùng SQLite
+**Yêu cầu môi trường:**
+- **JDK 21** trở lên (đặt `JAVA_HOME` đúng).
+- Kết nối Internet **nếu chạy theo Kịch bản A** (cloud server Railway + PostgreSQL).
+- Không cần cài thêm JavaFX riêng — JAR client đã đóng gói sẵn native libs cho **Windows / macOS / Linux**.
+- Nếu tự chạy server local với PostgreSQL, cần cấu hình `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`. Nếu thiếu `PGHOST`, server tự dùng SQLite fallback.
 
-## Tính năng chính (mức tổng quan)
-
-- Đăng ký / đăng nhập, phân quyền người dùng
-- Duyệt phiên đấu giá, chi tiết, đặt giá
-- Tin đăng của tôi, lịch sử đấu giá
-- Thanh toán (luồng payment trên client/server)
-- **Auto-bid** và lịch tự động (`AuctionScheduler` / automation)
-- **Admin**: tổng quan, quản lý phiên đấu giá, quản lý người dùng
-
-## Cấu trúc mã nguồn (`src/main/java/com/nhom1/auction/`)
+## 3. Cấu trúc module chính (`src/main/java/com/nhom1/auction/`)
 
 ```text
 client/
 ├── ClientApplication.java      # Entry JavaFX
-├── ShellController.java        # Khung shell chung
-├── AppNavigator.java, AppView.java, AppAssets.java, BaseShellController.java
+├── ClientLauncher.java         # Main wrapper cho fat JAR
+├── ShellController.java, AppNavigator.java, AppView.java, AppAssets.java
+├── service/                    # ClientPushService nhận realtime push
+├── util/                       # Formatter, countdown, feedback, skeleton UI
 ├── user/
-│   ├── Controller/             # Đăng nhập, duyệt, chi tiết, đấu giá, listing, thanh toán, ...
-│   ├── Connection/             # ServerConnection (socket + JSON)
+│   ├── controller/             # Đăng nhập, duyệt, chi tiết, đấu giá, listing, thanh toán
+│   ├── connection/             # ServerConnection (socket + JSON, tự fallback local)
 │   └── service/                # *ClientService gọi server
 └── admin/
-    ├── controller/             # Admin overview, auction management, user management, ...
+    ├── controller/             # Admin overview, auction & user management
     └── service/                # AdminClientService
 
 server/
-├── Server.java                 # main — lắng nghe cổng 12345
-├── infrastructure/             # ClientHandler, MessageRouter, ServerContext, ClientRegistry, NotificationService, database/DBConnection
+├── Server.java                 # main — mở ServerSocket, dùng PORT nếu có, fallback 12345
+├── infrastructure/             # ClientHandler, ClientRegistry, MessageRouter, ServerContext
+├── infrastructure/database/    # DBConnection, DatabaseInitializer
 ├── auth/                       # AuthModule, AuthHandler, AuthService, UserRepository
 ├── auction/                    # Phiên đấu giá, item
 ├── bidding/                    # Đặt giá, BidService
+├── payment/                    # PaymentHandler, PaymentService, PaymentRepository
+├── wallet/                     # Ví và lịch sử giao dịch
 ├── admin/                      # Thao tác quản trị
-└── automation/                 # Auto-bid, scheduler, gateway đấu giá
+└── automation/                 # Auto-bid, scheduler, gateway
 
 common/
-├── entity/, enums/, exception/, factory/, observer/, value/, utils/
-├── dto/                        # auth, auction, bidding, admin, payment, autobid, notification
-└── protocol/                   # MessageType, RequestMessage, ResponseMessage, ...
+├── entity/, enums/, exception/, factory/, utils/
+├── dto/                        # auth, auction, bidding, admin, payment, autobid, notification, wallet
+└── protocol/                   # MessageType, RequestMessage, ResponseMessage
 ```
 
-**Tài nguyên UI:** `src/main/resources/` — `views/` (FXML), `css/`, `assets/`.
+Tài nguyên UI: `src/main/resources/views/` (FXML), `css/`, `assets/`.
+CSDL local fallback: `database/auction-system.db` (cùng các file `-wal`, `-shm` khi đang chạy). Chạy server từ thư mục gốc repo để JDBC path khớp.
 
-**Cơ sở dữ liệu:** file SQLite trong `database/` (có thể có `.db`, `-wal`, `-shm` khi đang chạy). Chạy server từ **thư mục gốc repo** để đường dẫn `database/auction-system.db` khớp với JDBC.
+## 4. Vị trí file JAR
 
-## Chạy ứng dụng
+Sau khi build (`./mvnw -q -DskipTests package`):
 
-Yêu cầu **JDK 21 hoặc mới hơn**. Thứ tự: **server trước**, **client sau** (client kết nối `localhost:12345`).
+| File | Vai trò | Main class |
+|------|---------|------------|
+| `target/auction-server.jar` | Server fat JAR (chạy local) | `com.nhom1.auction.server.Server` |
+| `target/auction-client.jar` | Client fat JAR (đa nền tảng, kèm native JavaFX win/mac/linux) | `com.nhom1.auction.client.ClientLauncher` |
 
-Dự án sử dụng Maven. Đảm bảo bạn đã cài đặt JDK 21 (hoặc mới hơn).
+Lệnh build:
 
 ```bash
-./mvnw -q exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"
+./mvnw -q -DskipTests package          # Linux / macOS
+.\mvnw.cmd -q -DskipTests package      # Windows PowerShell
 ```
 
-Windows (PowerShell):
+## 5. Hướng dẫn chạy Server / Client
 
-```powershell
-.\mvnw.cmd -q exec:java "-Dexec.mainClass=com.nhom1.auction.server.Server"
-```
+### Kịch bản A — Cloud server (mặc định, khuyến nghị grader)
 
-**Client (JavaFX)**
+Server đã deploy sẵn trên Railway (`kodama.proxy.rlwy.net:49734`). **Chỉ cần chạy client**:
 
 ```bash
-./mvnw -q javafx:run
+java -jar target/auction-client.jar
 ```
 
-Hoặc chạy class `com.nhom1.auction.client.ClientApplication` từ IDE.
+Client tự kết nối cloud. Nếu cloud không truy cập được, client tự fallback sang `localhost:12345`.
 
-**Chạy test**
+### Kịch bản B — Chạy local server + client
+
+Thứ tự: **server trước, client sau**.
+
+Terminal 1 (server):
+```bash
+java -jar target/auction-server.jar
+```
+
+Terminal 2 (client):
+```bash
+java -jar target/auction-client.jar
+```
+
+### Chế độ dev (tùy chọn)
 
 ```bash
-./mvnw -q test
+./mvnw -q exec:java -Dexec.mainClass="com.nhom1.auction.server.Server"   # server
+./mvnw -q javafx:run                                                      # client
+./mvnw -q test                                                            # test
 ```
 
-GitHub Actions (nhánh `main`): build và test bằng Maven wrapper (JDK 21 Temurin).
+## 6. Danh sách chức năng đã hoàn thành
 
-## Tài liệu trong repo
+- **Auth & phân quyền**: đăng ký, đăng nhập, phân vai trò user / admin.
+- **Đấu giá**: duyệt danh sách phiên, xem chi tiết, đặt giá thủ công với optimistic locking chống race condition.
+- **Listing**: tạo / quản lý tin đăng đấu giá của người dùng.
+- **Auto-bid**: đặt giá tự động theo ngưỡng + hybrid escalation, lịch chạy tự động qua `AuctionScheduler`.
+- **Thanh toán**: luồng payment mock với cập nhật ví realtime hai chiều client–server.
+- **Admin**: tổng quan hệ thống, quản lý phiên đấu giá, quản lý người dùng.
+- **Realtime notification**: server đẩy sự kiện qua socket tới client liên quan.
+
+## 7. Báo cáo PDF & video demo
+
+Google Drive (chứa cả PDF báo cáo + video demo):
+
+<https://drive.google.com/drive/folders/1RezNDeNXlE1QBGB51JY2uxZq178qgrW0?usp=sharing>
+
+## 8. Tài liệu kỹ thuật trong repo
 
 - Yêu cầu bài: `docs/requirements/assignment-requirement.md`
 - Giao tiếp client–server: `docs/architecture/client-server-communication.md`
-- Schema / DB: `docs/architecture/database-schema.md`
+- Schema DB: `docs/architecture/database-schema.md`
+- Deploy Railway: `docs/deployment/railway-instruction.md`
 - Xử lý exception: `docs/architecture/exception-handling.md`
-- UI: `docs/guidelines/ui-standards.md`
+- Connection pool: `docs/architecture/thuc-thi-connection-pool.md`
+- UI standard: `docs/guidelines/ui-standards.md`
 - Module theo thành viên / sprint: `docs/modules/`, `docs/sprints/`
-
----
-Dự án phát triển trong khuôn khổ BTL; chi tiết thay đổi kiến trúc nên cập nhật song song trong thư mục `docs/`.
