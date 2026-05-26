@@ -44,3 +44,15 @@
     -fx-text-fill: #777777;
     -fx-font-size: 12px;
 }
+
+.admin-logout-btn {
+    -fx-background-color: rgba(255, 92, 92, 0.03);
+    -fx-border-color: rgba(255, 92, 92, 0.65);
+    -fx-text-fill: #d86666;
+}
+
+.admin-logout-btn:hover {
+    -fx-background-color: #d86666;
+    -fx-border-color: #d86666;
+    -fx-text-fill: white;
+}

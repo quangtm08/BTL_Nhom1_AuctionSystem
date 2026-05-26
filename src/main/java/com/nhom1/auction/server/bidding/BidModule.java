@@ -6,6 +6,7 @@ import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
 import com.nhom1.auction.server.infrastructure.MessageRouter;
 import com.nhom1.auction.server.infrastructure.NotificationService;
+import com.nhom1.auction.server.wallet.WalletService;
 import javax.sql.DataSource;
 
 public class BidModule {
@@ -28,7 +29,7 @@ public class BidModule {
       ItemImageRepository itemImageRepository,
       NotificationService notificationService,
       UserRepository userRepository,
-      com.nhom1.auction.server.wallet.WalletRepository walletRepository) {
+      WalletService walletService) {
     BidRepository repository = new BidRepository(dataSource);
     BidService service =
         new BidService(
@@ -37,7 +38,7 @@ public class BidModule {
             itemRepository,
             itemImageRepository,
             userRepository,
-            walletRepository,
+            walletService,
             dataSource);
     BidHandler handler = new BidHandler(service, notificationService);
     handler.register(router);
