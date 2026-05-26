@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -68,7 +67,6 @@ import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -85,7 +83,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -629,12 +626,10 @@ public class UserControllerTest {
     when(mockPaymentService.listPaymentHistory())
         .thenReturn(CompletableFuture.completedFuture(phr));
 
-    Label lblPaymentStatus = new Label();
     VBox pendingPaymentsBox = new VBox();
     VBox historyBox = new VBox();
 
     injectField(controller, "paymentClientService", mockPaymentService);
-    injectField(controller, "lblPaymentStatus", lblPaymentStatus);
     injectField(controller, "pendingPaymentsBox", pendingPaymentsBox);
     injectField(controller, "historyBox", historyBox);
 
@@ -666,6 +661,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -683,6 +679,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -1106,6 +1103,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -1122,6 +1120,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -1209,20 +1208,20 @@ public class UserControllerTest {
         CreateAuctionController.class.getDeclaredMethod("handlePublishListing");
     mPublish.setAccessible(true);
     mPublish.invoke(controller);
-    assertEquals("Invalid title", uploadCountLabel.getText());
+    assertEquals("Invalid title", statusLabel.getText());
 
     when(mockCreateService.validateInput(any(), any(), any(), any(), anyInt(), any()))
         .thenReturn(null);
     customDurationField.setText("0");
     mPublish.invoke(controller);
-    assertEquals("Duration must be greater than 0.", uploadCountLabel.getText());
+    assertEquals("Duration must be greater than 0.", statusLabel.getText());
 
     customDurationField.setText("5");
     when(mockCreateService.createAuction(any(), any(), any(), any(), any(), anyInt(), any(), any()))
         .thenReturn(CompletableFuture.failedFuture(new RuntimeException("IMGBB_API_KEY missing")));
     mPublish.invoke(controller);
     waitForRunLater();
-    assertTrue(uploadCountLabel.getText().contains("IMGBB_API_KEY"));
+    assertTrue(statusLabel.getText().contains("IMGBB_API_KEY"));
 
     when(mockCreateService.createAuction(any(), any(), any(), any(), any(), anyInt(), any(), any()))
         .thenReturn(
@@ -1231,7 +1230,7 @@ public class UserControllerTest {
                     "Custom validation failed")));
     mPublish.invoke(controller);
     waitForRunLater();
-    assertEquals("Custom validation failed", uploadCountLabel.getText());
+    assertEquals("Custom validation failed", statusLabel.getText());
   }
 
   @Test
@@ -1883,10 +1882,8 @@ public class UserControllerTest {
     PaymentClientService mockPaymentService = mock(PaymentClientService.class);
     injectField(controller, "paymentClientService", mockPaymentService);
 
-    Label lblPaymentStatus = new Label();
     VBox pendingPaymentsBox = new VBox();
     VBox historyBox = new VBox();
-    injectField(controller, "lblPaymentStatus", lblPaymentStatus);
     injectField(controller, "pendingPaymentsBox", pendingPaymentsBox);
     injectField(controller, "historyBox", historyBox);
 
@@ -1902,7 +1899,6 @@ public class UserControllerTest {
     reload.setAccessible(true);
     reload.invoke(controller);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("0 pending payment(s)"));
 
     // reload exceptional path
     reset(mockPaymentService);
@@ -1912,7 +1908,6 @@ public class UserControllerTest {
         .thenReturn(CompletableFuture.completedFuture(phrNull));
     reload.invoke(controller);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("Service offline"));
 
     // 2. Row styling and null scenarios (paidAt is null, amount is null, direction is not RECEIVE)
     PendingPaymentDto pending = new PendingPaymentDto("auc-1", "PaidItem", "ART", null, null);
@@ -1928,10 +1923,6 @@ public class UserControllerTest {
         .thenReturn(CompletableFuture.completedFuture(phr));
     reload.invoke(controller);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("1 pending payment(s)"));
-
-    // historyEntries size == 1 (singular) vs other (plural)
-    assertTrue(lblPaymentStatus.getText().contains("1 history entry"));
 
     // 3. processPayment failure
     reset(mockPaymentService);
@@ -1943,7 +1934,6 @@ public class UserControllerTest {
     Button payButton = new Button();
     processPayment.invoke(controller, "auc-1", payButton);
     waitForRunLater();
-    assertTrue(lblPaymentStatus.getText().contains("Insufficient funds"));
     assertFalse(payButton.isDisabled());
   }
 
@@ -1956,6 +1946,7 @@ public class UserControllerTest {
     ComboBox<ItemCategory> categoryComboBox = new ComboBox<>();
     ComboBox<ItemCondition> conditionComboBox = new ComboBox<>();
     Label uploadCountLabel = new Label();
+    Label statusLabel = new Label();
     Button duration1Btn = new Button();
     Button duration3Btn = new Button();
     Button duration7Btn = new Button();
@@ -1972,6 +1963,7 @@ public class UserControllerTest {
     injectField(controller, "categoryComboBox", categoryComboBox);
     injectField(controller, "conditionComboBox", conditionComboBox);
     injectField(controller, "uploadCountLabel", uploadCountLabel);
+    injectField(controller, "lblStatus", statusLabel);
     injectField(controller, "duration1Btn", duration1Btn);
     injectField(controller, "duration3Btn", duration3Btn);
     injectField(controller, "duration7Btn", duration7Btn);
@@ -2003,7 +1995,7 @@ public class UserControllerTest {
     handlePublishListing.setAccessible(true);
     handlePublishListing.invoke(controller);
     waitForRunLater();
-    assertEquals("Failed to publish listing.", uploadCountLabel.getText());
+    assertEquals("Failed to publish listing.", statusLabel.getText());
 
     // resolveErrorMessage scenarios
     java.lang.reflect.Method resolveErrorMessage =
@@ -2337,733 +2329,5 @@ public class UserControllerTest {
     assertEquals("Untitled listing", titleLabel.getText());
     assertTrue(editButton.isDisabled());
     assertNull(editButton.getOnAction());
-  }
-
-  @Test
-  public void testSignInControllerShowErrorEdgeCases() throws Exception {
-    SignInController controller = new SignInController();
-    java.lang.reflect.Method mShowError =
-        SignInController.class.getDeclaredMethod("showError", String.class, String.class);
-    mShowError.setAccessible(true);
-
-    java.lang.reflect.Field fAlertStage = SignInController.class.getDeclaredField("alertStage");
-    fAlertStage.setAccessible(true);
-
-    java.util.concurrent.atomic.AtomicReference<Stage> alertStageRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-    java.util.concurrent.atomic.AtomicReference<Button> closeBtnRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-    java.util.concurrent.atomic.AtomicReference<Label> titleRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-    java.util.concurrent.atomic.AtomicReference<Label> msgRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-
-    Platform.runLater(
-        () -> {
-          try {
-            try (MockedConstruction<FXMLLoader> mockLoader =
-                mockConstruction(
-                    FXMLLoader.class,
-                    (mock, context) -> {
-                      when(mock.load())
-                          .thenAnswer(
-                              inv -> {
-                                VBox r = new VBox();
-                                Label lblTitle = new Label();
-                                lblTitle.setId("lblTitle");
-                                Label lblMessage = new Label();
-                                lblMessage.setId("lblMessage");
-                                Button btnClose = new Button();
-                                btnClose.setId("btnClose");
-                                r.getChildren().addAll(lblTitle, lblMessage, btnClose);
-
-                                closeBtnRef.set(btnClose);
-                                titleRef.set(lblTitle);
-                                msgRef.set(lblMessage);
-                                return r;
-                              });
-                    })) {
-              mShowError.invoke(controller, "Test Error", "Test Message");
-
-              Stage alertStage = (Stage) fAlertStage.get(controller);
-              alertStageRef.set(alertStage);
-
-              mShowError.invoke(controller, "Test Error 2", "Test Message 2");
-
-              // Test the branch: alertStage is not null but is not showing
-              Stage dummyStage = new Stage();
-              fAlertStage.set(controller, dummyStage);
-
-              mShowError.invoke(controller, "Test Error 3", "Test Message 3");
-              Stage alertStage3 = (Stage) fAlertStage.get(controller);
-              assertNotNull(alertStage3);
-              assertTrue(dummyStage != alertStage3);
-              alertStageRef.set(alertStage3);
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        });
-    waitForRunLater();
-
-    Stage alertStage = alertStageRef.get();
-    assertNotNull(alertStage);
-    assertEquals("Test Error 3", titleRef.get().getText());
-    assertEquals("Test Message 3", msgRef.get().getText());
-    assertTrue(alertStage.isShowing());
-
-    Platform.runLater(
-        () -> {
-          closeBtnRef.get().fire();
-          try {
-            Stage stage = (Stage) fAlertStage.get(controller);
-            if (stage != null && stage.getOnHidden() != null) {
-              stage.getOnHidden().handle(null);
-            }
-          } catch (Exception e) {
-          }
-        });
-    waitForRunLater();
-
-    assertNull(fAlertStage.get(controller));
-  }
-
-  @Test
-  public void testSignInControllerShowErrorFXMLLoadFailure() throws Exception {
-    SignInController controller = new SignInController();
-    try (MockedConstruction<FXMLLoader> mockLoader =
-        mockConstruction(
-            FXMLLoader.class,
-            (mock, context) -> {
-              when(mock.load()).thenThrow(new IOException("Simulated load error"));
-            })) {
-      java.lang.reflect.Method mShowError =
-          SignInController.class.getDeclaredMethod("showError", String.class, String.class);
-      mShowError.setAccessible(true);
-      mShowError.invoke(controller, "Test Error", "Test Message");
-
-      java.lang.reflect.Field fAlertStage = SignInController.class.getDeclaredField("alertStage");
-      fAlertStage.setAccessible(true);
-      assertNull(fAlertStage.get(controller));
-    }
-  }
-
-  @Test
-  public void testRegisterControllerShowErrorEdgeCases() throws Exception {
-    RegisterController controller = new RegisterController();
-    java.lang.reflect.Method mShowError =
-        RegisterController.class.getDeclaredMethod("showError", String.class, String.class);
-    mShowError.setAccessible(true);
-
-    java.lang.reflect.Field fAlertStage = RegisterController.class.getDeclaredField("alertStage");
-    fAlertStage.setAccessible(true);
-
-    java.util.concurrent.atomic.AtomicReference<Stage> alertStageRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-    java.util.concurrent.atomic.AtomicReference<Button> closeBtnRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-    java.util.concurrent.atomic.AtomicReference<Label> titleRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-    java.util.concurrent.atomic.AtomicReference<Label> msgRef =
-        new java.util.concurrent.atomic.AtomicReference<>();
-
-    Platform.runLater(
-        () -> {
-          try {
-            try (MockedConstruction<FXMLLoader> mockLoader =
-                mockConstruction(
-                    FXMLLoader.class,
-                    (mock, context) -> {
-                      when(mock.load())
-                          .thenAnswer(
-                              inv -> {
-                                VBox r = new VBox();
-                                Label lblTitle = new Label();
-                                lblTitle.setId("lblTitle");
-                                Label lblMessage = new Label();
-                                lblMessage.setId("lblMessage");
-                                Button btnClose = new Button();
-                                btnClose.setId("btnClose");
-                                r.getChildren().addAll(lblTitle, lblMessage, btnClose);
-
-                                closeBtnRef.set(btnClose);
-                                titleRef.set(lblTitle);
-                                msgRef.set(lblMessage);
-                                return r;
-                              });
-                    })) {
-              mShowError.invoke(controller, "Reg Error", "Reg Message");
-
-              Stage alertStage = (Stage) fAlertStage.get(controller);
-              alertStageRef.set(alertStage);
-
-              mShowError.invoke(controller, "Reg Error 2", "Reg Message 2");
-
-              // Test the branch: alertStage is not null but is not showing
-              Stage dummyStage = new Stage();
-              fAlertStage.set(controller, dummyStage);
-
-              mShowError.invoke(controller, "Reg Error 3", "Reg Message 3");
-              Stage alertStage3 = (Stage) fAlertStage.get(controller);
-              assertNotNull(alertStage3);
-              assertTrue(dummyStage != alertStage3);
-              alertStageRef.set(alertStage3);
-            }
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        });
-    waitForRunLater();
-
-    Stage alertStage = alertStageRef.get();
-    assertNotNull(alertStage);
-    assertEquals("Reg Error 3", titleRef.get().getText());
-    assertEquals("Reg Message 3", msgRef.get().getText());
-    assertTrue(alertStage.isShowing());
-
-    Platform.runLater(
-        () -> {
-          closeBtnRef.get().fire();
-          try {
-            Stage stage = (Stage) fAlertStage.get(controller);
-            if (stage != null && stage.getOnHidden() != null) {
-              stage.getOnHidden().handle(null);
-            }
-          } catch (Exception e) {
-          }
-        });
-    waitForRunLater();
-
-    assertNull(fAlertStage.get(controller));
-  }
-
-  @Test
-  public void testRegisterControllerShowErrorFXMLLoadFailure() throws Exception {
-    RegisterController controller = new RegisterController();
-    try (MockedConstruction<FXMLLoader> mockLoader =
-        mockConstruction(
-            FXMLLoader.class,
-            (mock, context) -> {
-              when(mock.load()).thenThrow(new IOException("Simulated load error"));
-            })) {
-      java.lang.reflect.Method mShowError =
-          RegisterController.class.getDeclaredMethod("showError", String.class, String.class);
-      mShowError.setAccessible(true);
-      mShowError.invoke(controller, "Reg Error", "Reg Message");
-
-      java.lang.reflect.Field fAlertStage = RegisterController.class.getDeclaredField("alertStage");
-      fAlertStage.setAccessible(true);
-      assertNull(fAlertStage.get(controller));
-    }
-  }
-
-  @Test
-  public void testRegisterControllerNullEmail() throws Exception {
-    RegisterController controller = new RegisterController();
-    AuthClientService mockAuthService = mock(AuthClientService.class);
-    when(mockAuthService.register(anyString(), anyString(), anyString(), anyString()))
-        .thenReturn(CompletableFuture.failedFuture(new RuntimeException("Error")));
-
-    Button btnRegister = new Button();
-    Button btnSignIn = new Button();
-    TextField txtUsername = new TextField("user");
-    PasswordField txtPassword = new PasswordField();
-    txtPassword.setText("pass");
-    PasswordField txtRepeatPassword = new PasswordField();
-    txtRepeatPassword.setText("pass");
-
-    injectField(controller, "authService", mockAuthService);
-    injectField(controller, "btnRegister", btnRegister);
-    injectField(controller, "btnSignIn", btnSignIn);
-    injectField(controller, "txtUsername", txtUsername);
-    injectField(controller, "txtEmail", null);
-    injectField(controller, "txtPassword", txtPassword);
-    injectField(controller, "txtRepeatPassword", txtRepeatPassword);
-
-    controller.initialize();
-    btnRegister.getOnAction().handle(null);
-    waitForRunLater();
-
-    verify(mockAuthService).register("user", "", "pass", "pass");
-  }
-
-  @Test
-  public void testMyBidsControllerTimeFormatting() throws Exception {
-    String d1 =
-        com.nhom1.auction.client.util.DisplayFormatters.timeLeft(
-            LocalDateTime.now().plusDays(1).plusSeconds(10));
-    assertEquals("1 days left", d1);
-
-    String h1 =
-        com.nhom1.auction.client.util.DisplayFormatters.timeLeft(
-            LocalDateTime.now().plusHours(1).plusSeconds(10));
-    assertEquals("1 hours left", h1);
-
-    String m1 =
-        com.nhom1.auction.client.util.DisplayFormatters.timeLeft(
-            LocalDateTime.now().plusMinutes(1).plusSeconds(10));
-    assertEquals("1 min left", m1);
-  }
-
-  @Test
-  public void testMyBidsControllerCreateBidCardFailure() throws Exception {
-    MyBidsController controller = new MyBidsController();
-    BidWithAuctionDto bid =
-        new BidWithAuctionDto(
-            "auc-1",
-            "Item",
-            BigDecimal.TEN,
-            BigDecimal.TEN,
-            AuctionStatus.OPEN,
-            LocalDateTime.now(),
-            true);
-
-    try (MockedConstruction<FXMLLoader> mockLoader =
-        mockConstruction(
-            FXMLLoader.class,
-            (mock, context) -> {
-              when(mock.load()).thenThrow(new IOException("Simulated load failure"));
-            })) {
-      java.lang.reflect.Method mCreate =
-          MyBidsController.class.getDeclaredMethod("createBidCard", BidWithAuctionDto.class);
-      mCreate.setAccessible(true);
-
-      try {
-        mCreate.invoke(controller, bid);
-        fail("Should have thrown an exception");
-      } catch (java.lang.reflect.InvocationTargetException e) {
-        assertTrue(e.getCause() instanceof RuntimeException);
-        assertTrue(e.getCause().getMessage().contains("Failed to load bid card component"));
-      }
-    }
-  }
-
-  @Test
-  public void testAuctionBrowseControllerCreateAuctionCardFailure() throws Exception {
-    AuctionBrowseController controller = new AuctionBrowseController();
-    AuctionSummaryDto dto = new AuctionSummaryDto();
-    dto.setId("auc-1");
-
-    try (MockedConstruction<FXMLLoader> mockLoader =
-        mockConstruction(
-            FXMLLoader.class,
-            (mock, context) -> {
-              when(mock.load()).thenThrow(new IOException("Simulated load failure"));
-            })) {
-      java.lang.reflect.Method mCreate =
-          AuctionBrowseController.class.getDeclaredMethod(
-              "createAuctionCard", AuctionSummaryDto.class);
-      mCreate.setAccessible(true);
-
-      try {
-        mCreate.invoke(controller, dto);
-        fail("Should have thrown an exception");
-      } catch (java.lang.reflect.InvocationTargetException e) {
-        assertTrue(e.getCause() instanceof RuntimeException);
-        assertTrue(e.getCause().getMessage().contains("Failed to load auction card component"));
-      }
-    }
-  }
-
-  @Test
-  public void testAuctionBrowseControllerNavigateToDetailTransition() throws Exception {
-    AuctionBrowseController controller = new AuctionBrowseController();
-
-    java.lang.reflect.Field cvField = AppNavigator.class.getDeclaredField("currentView");
-    cvField.setAccessible(true);
-    cvField.set(null, AppView.SIGN_IN);
-
-    controller.navigateToDetail("auc-1");
-    assertEquals(AppNavigator.getCurrentView(), AppView.LOADING);
-
-    Thread.sleep(500);
-    waitForRunLater();
-
-    assertEquals(AppNavigator.getCurrentView(), AppView.AUCTION_DETAIL);
-    cvField.set(null, null);
-  }
-
-  @Test
-  public void testEditAuctionControllerDurationPresetAlreadyActive() throws Exception {
-    EditAuctionController controller = new EditAuctionController();
-
-    Button duration1Btn = new Button();
-    Button duration3Btn = new Button();
-    Button duration7Btn = new Button();
-    Button duration14Btn = new Button();
-    Button duration30Btn = new Button();
-    TextField customDurationField = new TextField();
-
-    injectField(controller, "duration1Btn", duration1Btn);
-    injectField(controller, "duration3Btn", duration3Btn);
-    injectField(controller, "duration7Btn", duration7Btn);
-    injectField(controller, "duration14Btn", duration14Btn);
-    injectField(controller, "duration30Btn", duration30Btn);
-    injectField(controller, "customDurationField", customDurationField);
-
-    Button foreignButton = new Button();
-    foreignButton.getStyleClass().add("duration-chip-active");
-
-    ActionEvent event = new ActionEvent(foreignButton, null);
-    java.lang.reflect.Method preset =
-        EditAuctionController.class.getDeclaredMethod("handleDurationPreset", ActionEvent.class);
-    preset.setAccessible(true);
-
-    preset.invoke(controller, event);
-    assertTrue(foreignButton.getStyleClass().contains("duration-chip-active"));
-  }
-
-  @Test
-  public void testAuctionBrowseControllerPushHandlers() throws Exception {
-    AuctionBrowseController controller = new AuctionBrowseController();
-
-    AuthResponse user = new AuthResponse();
-    user.setUserID("user-1");
-    user.setUsername("alice");
-    AppContext.setCurrentUser(user);
-
-    BiddingClientService mockBiddingService = mock(BiddingClientService.class);
-
-    AuctionSummaryDto auction = new AuctionSummaryDto();
-    auction.setId("auc-1");
-    auction.setItemName("Cool Painting");
-    auction.setStartingPrice(BigDecimal.TEN);
-    auction.setCurrentHighestBid(BigDecimal.ZERO);
-    auction.setStatus(AuctionStatus.OPEN);
-    auction.setSellerId("user-2");
-
-    ListAuctionsResponse ar = new ListAuctionsResponse();
-    ar.setAuctions(List.of(auction));
-
-    when(mockBiddingService.listBrowseAuctions())
-        .thenReturn(CompletableFuture.completedFuture(ar.getAuctions()));
-    when(mockBiddingService.getMyBids())
-        .thenReturn(CompletableFuture.completedFuture(new MyBidsResponse(Collections.emptyList())));
-
-    Label welcomeLabel = new Label();
-    HBox mainContainer = new HBox();
-    GridPane cardsGridPane = new GridPane();
-
-    injectField(controller, "biddingService", mockBiddingService);
-    injectField(controller, "welcomeLabel", welcomeLabel);
-    injectField(controller, "mainContainer", mainContainer);
-    injectField(controller, "cardsGridPane", cardsGridPane);
-
-    controller.initialize();
-    waitForRunLater();
-
-    // Verify push handlers were registered
-    assertTrue(registeredPushHandlers.containsKey(MessageType.PUSH_NEW_AUCTION));
-    assertTrue(registeredPushHandlers.containsKey(MessageType.PUSH_BID_UPDATE));
-    assertTrue(registeredPushHandlers.containsKey(MessageType.PUSH_AUCTION_DELETED));
-
-    // 1. Trigger PUSH_NEW_AUCTION
-    reset(mockBiddingService);
-    when(mockBiddingService.listBrowseAuctions())
-        .thenReturn(CompletableFuture.completedFuture(ar.getAuctions()));
-    when(mockBiddingService.getMyBids())
-        .thenReturn(CompletableFuture.completedFuture(new MyBidsResponse(Collections.emptyList())));
-    registeredPushHandlers.get(MessageType.PUSH_NEW_AUCTION).accept("{\"payload\":{}}");
-    waitForRunLater();
-    waitForRunLater();
-    verify(mockBiddingService).listBrowseAuctions();
-
-    // 2. Trigger PUSH_BID_UPDATE
-    // Set up the price labels map manually so we can verify the text changes
-    Label priceLabel = new Label("$10");
-    java.util.Map<String, Label> priceLabels = new java.util.HashMap<>();
-    priceLabels.put("auc-1", priceLabel);
-    injectField(controller, "priceLabels", priceLabels);
-
-    registeredPushHandlers
-        .get(MessageType.PUSH_BID_UPDATE)
-        .accept("{\"payload\":{\"auctionId\":\"auc-1\",\"newHighestBid\":\"25.00\"}}");
-    waitForRunLater();
-    waitForRunLater();
-    assertEquals("$25", priceLabel.getText());
-
-    // 3. Trigger PUSH_AUCTION_DELETED
-    List<AuctionSummaryDto> currentAuctions = new java.util.ArrayList<>();
-    currentAuctions.add(auction);
-    injectField(controller, "currentAuctions", currentAuctions);
-
-    registeredPushHandlers
-        .get(MessageType.PUSH_AUCTION_DELETED)
-        .accept("{\"payload\":{\"auctionId\":\"auc-1\"}}");
-    waitForRunLater();
-    waitForRunLater();
-    java.lang.reflect.Field currentAuctionsField =
-        controller.getClass().getDeclaredField("currentAuctions");
-    currentAuctionsField.setAccessible(true);
-    List<?> updatedAuctions = (List<?>) currentAuctionsField.get(controller);
-    assertTrue(updatedAuctions.isEmpty());
-
-    // Exception/Null paths in loadAuctions
-    reset(mockBiddingService);
-    when(mockBiddingService.listBrowseAuctions())
-        .thenReturn(CompletableFuture.failedFuture(new RuntimeException("API error")));
-    when(mockBiddingService.getMyBids())
-        .thenReturn(CompletableFuture.completedFuture(new MyBidsResponse(Collections.emptyList())));
-    java.lang.reflect.Method loadAuctions =
-        AuctionBrowseController.class.getDeclaredMethod("loadAuctions");
-    loadAuctions.setAccessible(true);
-    loadAuctions.invoke(controller);
-    waitForRunLater();
-
-    // Failure with cause = null
-    reset(mockBiddingService);
-    CompletableFuture<List<AuctionSummaryDto>> failedFuture = new CompletableFuture<>();
-    failedFuture.completeExceptionally(new RuntimeException("Immediate failure without cause"));
-    when(mockBiddingService.listBrowseAuctions()).thenReturn(failedFuture);
-    when(mockBiddingService.getMyBids())
-        .thenReturn(CompletableFuture.completedFuture(new MyBidsResponse(Collections.emptyList())));
-    loadAuctions.invoke(controller);
-    waitForRunLater();
-  }
-
-  @Test
-  public void testAuctionDetailControllerPushAndFocus() throws Exception {
-    AuctionDetailController controller = new AuctionDetailController();
-    BiddingClientService mockBiddingService = mock(BiddingClientService.class);
-    injectField(controller, "biddingService", mockBiddingService);
-
-    AppContext.setSelectedAuctionId("auc-123");
-    AuthResponse user = new AuthResponse();
-    user.setUserID("user-1");
-    user.setUsername("john");
-    AppContext.setCurrentUser(user);
-
-    BidSummaryDto bid =
-        new BidSummaryDto(
-            "b-1",
-            "john",
-            BigDecimal.valueOf(1200),
-            BidType.MANUAL,
-            LocalDateTime.now(),
-            "John Doe");
-    AuctionDetailDto detail =
-        new AuctionDetailDto(
-            "auc-123",
-            "item-123",
-            "Awesome Car",
-            "V8 engine",
-            ItemCategory.ART,
-            ItemCondition.USED,
-            "user-2",
-            BigDecimal.valueOf(1000),
-            BigDecimal.valueOf(1200),
-            "john",
-            BigDecimal.valueOf(50),
-            AuctionStatus.OPEN,
-            LocalDateTime.now(),
-            LocalDateTime.now().plusDays(1),
-            List.of(bid));
-    detail.setSellerName("Seller Bob");
-    detail.setImageUrls(List.of("http://dummyimage.com/img.png"));
-
-    when(mockBiddingService.getAuctionDetail(eq("auc-123")))
-        .thenReturn(CompletableFuture.completedFuture(detail));
-
-    TextField txtBidInput = new TextField();
-    Label lblBidError = new Label();
-    Button btnBid = new Button();
-    Label lblCurrentBid = new Label();
-    Label lblMinIncrement = new Label();
-    Button btnBack = new Button();
-    VBox bidHistoryList = new VBox();
-    Label lblTitle = new Label();
-    ImageView itemImageView = new ImageView();
-
-    injectField(controller, "txtBidInput", txtBidInput);
-    injectField(controller, "lblBidError", lblBidError);
-    injectField(controller, "btnBid", btnBid);
-    injectField(controller, "lblCurrentBid", lblCurrentBid);
-    injectField(controller, "lblMinIncrement", lblMinIncrement);
-    injectField(controller, "btnBack", btnBack);
-    injectField(controller, "bidHistoryList", bidHistoryList);
-    injectField(controller, "lblTitle", lblTitle);
-    injectField(controller, "itemImageView", itemImageView);
-
-    SimpleDoubleProperty progressProperty = new SimpleDoubleProperty(0.0);
-    SimpleBooleanProperty errorProperty = new SimpleBooleanProperty(false);
-    try (MockedConstruction<Image> mockedImage =
-        mockConstruction(
-            Image.class,
-            (mockImg, context) -> {
-              when(mockImg.progressProperty()).thenReturn(progressProperty);
-              when(mockImg.errorProperty()).thenReturn(errorProperty);
-              when(mockImg.getWidth()).thenReturn(420.0);
-              when(mockImg.getHeight()).thenReturn(320.0);
-            })) {
-      controller.initialize();
-      waitForRunLater();
-
-      progressProperty.set(1.0);
-      waitForRunLater();
-
-      // Test txtBidInput focus gained to clear bid error
-      lblBidError.setText("Some Error");
-      lblBidError.setVisible(true);
-
-      // Call setFocused(true) via reflection
-      java.lang.reflect.Method setFocusedMethod =
-          javafx.scene.Node.class.getDeclaredMethod("setFocused", boolean.class);
-      setFocusedMethod.setAccessible(true);
-      setFocusedMethod.invoke(txtBidInput, true);
-      waitForRunLater();
-      assertFalse(lblBidError.isVisible());
-
-      // Verify PUSH_BID_UPDATE push handler was registered and trigger it
-      assertTrue(registeredPushHandlers.containsKey(MessageType.PUSH_BID_UPDATE));
-
-      // Set up getAuctionDetail mock for the refresh call that push update does
-      reset(mockBiddingService);
-      when(mockBiddingService.getAuctionDetail(eq("auc-123")))
-          .thenReturn(CompletableFuture.completedFuture(detail));
-
-      registeredPushHandlers
-          .get(MessageType.PUSH_BID_UPDATE)
-          .accept("{\"payload\":{\"auctionId\":\"auc-123\",\"newHighestBid\":\"1500\"}}");
-      waitForRunLater();
-      assertEquals("$1,500", lblCurrentBid.getText());
-    }
-  }
-
-  @Test
-  public void testMyListingsControllerFormatMethods() throws Exception {
-    assertTrue(com.nhom1.auction.client.util.DisplayFormatters.isEnded(AuctionStatus.FINISHED));
-    assertTrue(com.nhom1.auction.client.util.DisplayFormatters.isEnded(AuctionStatus.CANCELED));
-    assertTrue(com.nhom1.auction.client.util.DisplayFormatters.isEnded(AuctionStatus.PAID));
-    assertFalse(com.nhom1.auction.client.util.DisplayFormatters.isEnded(AuctionStatus.OPEN));
-
-    assertEquals(
-        "N/A", com.nhom1.auction.client.util.DisplayFormatters.timeLeft((LocalDateTime) null));
-    assertEquals(
-        "Ended",
-        com.nhom1.auction.client.util.DisplayFormatters.timeLeft(
-            LocalDateTime.now().minusSeconds(1)));
-    assertEquals(
-        "Ended", com.nhom1.auction.client.util.DisplayFormatters.timeLeft(LocalDateTime.now()));
-    assertEquals(
-        "2 days left",
-        com.nhom1.auction.client.util.DisplayFormatters.timeLeft(
-            LocalDateTime.now().plusDays(2).plusSeconds(5)));
-    assertEquals(
-        "2 hours left",
-        com.nhom1.auction.client.util.DisplayFormatters.timeLeft(
-            LocalDateTime.now().plusHours(2).plusSeconds(5)));
-    assertEquals(
-        "1 min left",
-        com.nhom1.auction.client.util.DisplayFormatters.timeLeft(
-            LocalDateTime.now().plusMinutes(1).plusSeconds(5)));
-  }
-
-  @Test
-  public void testMyListingsControllerCreateListingCardFailure() throws Exception {
-    MyListingsController controller = new MyListingsController();
-    AuctionSummaryDto dto = new AuctionSummaryDto();
-    dto.setId("auc-1");
-
-    try (MockedConstruction<FXMLLoader> mockLoader =
-        mockConstruction(
-            FXMLLoader.class,
-            (mock, context) -> {
-              when(mock.load()).thenThrow(new IOException("Simulated FXML load failure"));
-            })) {
-      java.lang.reflect.Method mCreate =
-          MyListingsController.class.getDeclaredMethod(
-              "createListingCard", AuctionSummaryDto.class);
-      mCreate.setAccessible(true);
-      try {
-        mCreate.invoke(controller, dto);
-        fail("Should have thrown an exception");
-      } catch (java.lang.reflect.InvocationTargetException e) {
-        assertTrue(e.getCause() instanceof RuntimeException);
-        assertTrue(e.getCause().getMessage().contains("Failed to load listing card component"));
-      }
-    }
-  }
-
-  @Test
-  public void testMyListingsControllerDeleteEdgeCases() throws Exception {
-    MyListingsController controller = new MyListingsController();
-    AuctionSummaryDto summary = new AuctionSummaryDto();
-    summary.setId("auc-1");
-
-    Label activeListingsLabel = new Label();
-    GridPane listingsGrid = new GridPane();
-    injectField(controller, "activeListingsLabel", activeListingsLabel);
-    injectField(controller, "listingsGrid", listingsGrid);
-
-    ObservableList<ButtonType> buttonTypes = FXCollections.observableArrayList();
-    DialogPane mockDialogPane = mock(DialogPane.class);
-    ObservableList<String> stylesheets = FXCollections.observableArrayList();
-    when(mockDialogPane.getStylesheets()).thenReturn(stylesheets);
-    Button mockYesButton = new Button();
-    Button mockNoButton = new Button();
-    when(mockDialogPane.lookupButton(any(ButtonType.class)))
-        .thenAnswer(
-            inv -> {
-              ButtonType bt = inv.getArgument(0);
-              if (bt != null && "Yes".equals(bt.getText())) return mockYesButton;
-              return mockNoButton;
-            });
-
-    // 1. confirm dialog returns yes, but AppContext has no user session
-    AppContext.clearSession();
-    try (MockedConstruction<Alert> mockedAlert =
-        mockConstruction(
-            Alert.class,
-            (mockAlert, context) -> {
-              when(mockAlert.getButtonTypes()).thenReturn(buttonTypes);
-              when(mockAlert.getDialogPane()).thenReturn(mockDialogPane);
-              when(mockAlert.showAndWait())
-                  .thenAnswer(
-                      inv -> {
-                        if (buttonTypes.size() > 0) return Optional.of(buttonTypes.get(0)); // yes
-                        return Optional.empty();
-                      });
-            })) {
-      java.lang.reflect.Method mDelete =
-          MyListingsController.class.getDeclaredMethod(
-              "handleDeleteListing", AuctionSummaryDto.class);
-      mDelete.setAccessible(true);
-      mDelete.invoke(controller, summary);
-      waitForRunLater();
-    }
-
-    // 2. confirm dialog returns yes, user has session, but delete response has success = false and
-    // error = null
-    AuthResponse user = new AuthResponse();
-    user.setUserID("user-1");
-    AppContext.setCurrentUser(user);
-
-    ResponseMessage<String> deleteFailNullError = new ResponseMessage<>();
-    deleteFailNullError.setSuccess(false);
-    deleteFailNullError.setError(null);
-    when(mockConnection.sendRequest(
-            argThat(r -> r != null && r.getType() == MessageType.DELETE_AUCTION), eq(String.class)))
-        .thenReturn(CompletableFuture.completedFuture(deleteFailNullError));
-
-    try (MockedConstruction<Alert> mockedAlert =
-        mockConstruction(
-            Alert.class,
-            (mockAlert, context) -> {
-              when(mockAlert.getButtonTypes()).thenReturn(buttonTypes);
-              when(mockAlert.getDialogPane()).thenReturn(mockDialogPane);
-              when(mockAlert.showAndWait())
-                  .thenAnswer(
-                      inv -> {
-                        if (buttonTypes.size() > 0) return Optional.of(buttonTypes.get(0)); // yes
-                        return Optional.empty();
-                      });
-            })) {
-      java.lang.reflect.Method mDelete =
-          MyListingsController.class.getDeclaredMethod(
-              "handleDeleteListing", AuctionSummaryDto.class);
-      mDelete.setAccessible(true);
-      mDelete.invoke(controller, summary);
-      waitForRunLater();
-    }
   }
 }

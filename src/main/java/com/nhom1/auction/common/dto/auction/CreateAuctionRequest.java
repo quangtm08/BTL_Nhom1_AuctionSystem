@@ -8,19 +8,16 @@ import java.util.List;
 
 public class CreateAuctionRequest {
 
-  // Item information
   private String name;
   private String description;
   private ItemCategory category;
   private ItemCondition condition;
 
-  // Auction pricing and timing
   private BigDecimal startingPrice;
   private LocalDateTime startTime;
   private LocalDateTime endTime;
   private Integer durationDays;
 
-  // Seller information
   private String sellerId;
   private List<String> imageUrls;
 
@@ -47,7 +44,6 @@ public class CreateAuctionRequest {
     this.sellerId = sellerId;
   }
 
-  // Getters and Setters for basic item info
   public String getName() {
     return name;
   }
@@ -80,7 +76,6 @@ public class CreateAuctionRequest {
     this.condition = condition;
   }
 
-  // Getters and Setters for auction pricing and timing
   public BigDecimal getStartingPrice() {
     return startingPrice;
   }
@@ -113,7 +108,6 @@ public class CreateAuctionRequest {
     this.durationDays = durationDays;
   }
 
-  // Getters and Setters for seller
   public String getSellerId() {
     return sellerId;
   }

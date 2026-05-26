@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -25,7 +24,6 @@ import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-import javafx.util.Duration;
 
 public class AuctionBrowseController {
 
@@ -40,6 +38,11 @@ public class AuctionBrowseController {
 
   @FXML private GridPane cardsGridPane;
 
+  @FXML private javafx.scene.layout.VBox loadingBox;
+
+  @FXML private javafx.scene.layout.VBox contentBox;
+
+  // Initialization
   @FXML
   public void initialize() {
     if (AppContext.getCurrentUser() != null) {
@@ -57,6 +60,18 @@ public class AuctionBrowseController {
     }
   }
 
+  private void showContent() {
+    if (loadingBox != null) {
+      loadingBox.setVisible(false);
+      loadingBox.setManaged(false);
+    }
+    if (contentBox != null) {
+      contentBox.setVisible(true);
+      contentBox.setManaged(true);
+    }
+  }
+
+  // Rendering
   private void renderAuctionCards(List<AuctionSummaryDto> auctions) {
     priceLabels.clear();
     cardsGridPane.getChildren().clear();
@@ -85,14 +100,7 @@ public class AuctionBrowseController {
     }
   }
 
-  private void handleBidUpdatePush(BidUpdateEvent event) {
-    String auctionId = event.getAuctionId();
-    BigDecimal newBid = event.getNewHighestBid();
-    if (auctionId == null || newBid == null) return;
-    Label label = priceLabels.get(auctionId);
-    if (label != null) label.setText(DisplayFormatters.money(newBid));
-  }
-
+  // Data loading
   private void loadAuctions() {
     biddingService
         .listBrowseAuctions()
@@ -100,12 +108,17 @@ public class AuctionBrowseController {
         .exceptionally(
             ex -> {
               Throwable cause = BaseClientService.extractFailure(ex);
-              Platform.runLater(() -> showError("Load auctions failed", cause.getMessage()));
+              Platform.runLater(
+                  () -> {
+                    showContent();
+                    showError("Load auctions failed", cause.getMessage());
+                  });
               return null;
             });
   }
 
   private void handleFilteredAuctions(List<AuctionSummaryDto> auctions) {
+    showContent();
     if (auctions == null || auctions.isEmpty()) {
       currentAuctions = new ArrayList<>();
       renderAuctionCards(currentAuctions);
@@ -117,6 +130,15 @@ public class AuctionBrowseController {
     AppContext.setSelectedAuctionId(auctions.get(0).getId());
   }
 
+  // Event handlers
+  private void handleBidUpdatePush(BidUpdateEvent event) {
+    String auctionId = event.getAuctionId();
+    BigDecimal newBid = event.getNewHighestBid();
+    if (auctionId == null || newBid == null) return;
+    Label label = priceLabels.get(auctionId);
+    if (label != null) label.setText(DisplayFormatters.money(newBid));
+  }
+
   private void handleAuctionDeletedPush(AuctionDeletedEvent event) {
     String auctionId = event.getAuctionId();
     if (auctionId == null) return;
@@ -124,17 +146,16 @@ public class AuctionBrowseController {
     renderAuctionCards(currentAuctions);
   }
 
-  private void showError(String title, String message) {
-    System.err.println(title + ": " + message);
-  }
-
+  // Navigation
   public void navigateToDetail(String auctionId) {
     if (auctionId != null) AppContext.setSelectedAuctionId(auctionId);
     if (AppNavigator.getCurrentView() == AppView.AUCTION_DETAIL) return;
-    AppNavigator.navigateTo(AppView.LOADING);
-    PauseTransition d = new PauseTransition(Duration.seconds(0.4));
-    d.setOnFinished(e -> AppNavigator.navigateTo(AppView.AUCTION_DETAIL));
-    d.play();
+    AppNavigator.navigateTo(AppView.AUCTION_DETAIL);
+  }
+
+  // Helpers
+  private void showError(String title, String message) {
+    System.err.println(title + ": " + message);
   }
 
   private BigDecimal resolveDisplayCurrentBid(AuctionSummaryDto dto) {

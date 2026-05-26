@@ -3,6 +3,7 @@ package com.nhom1.auction.common.protocol;
 // Encapsulates error information for a ResponseMessage.
 
 public class ErrorResponse {
+
   private String code;
   private String message;
   private String details;
@@ -20,7 +21,6 @@ public class ErrorResponse {
     this.details = details;
   }
 
-  // Getters and Setters
   public String getCode() {
     return code;
   }

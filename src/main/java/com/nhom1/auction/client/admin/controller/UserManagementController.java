@@ -17,12 +17,14 @@ import javafx.scene.layout.HBox;
 public class UserManagementController {
   private final AdminClientService adminClientService = new AdminClientService();
   private final ClientPushService pushService = ClientPushService.getInstance();
+
   private boolean loading;
   private String deletingUserId;
 
   @FXML private Label lblUserSummary;
   @FXML private GridPane userGrid;
 
+  // Initialization
   @FXML
   public void initialize() {
     reloadUsers();
@@ -31,6 +33,7 @@ public class UserManagementController {
     pushService.onUserCreated(event -> Platform.runLater(this::reloadUsers));
   }
 
+  // Data loading
   private void reloadUsers() {
     loading = true;
     lblUserSummary.setText("Loading users...");
@@ -55,6 +58,7 @@ public class UserManagementController {
             });
   }
 
+  // Rendering
   private void renderUsers(List<UserSummaryDto> users) {
     clearRowsFrom(1);
     List<UserSummaryDto> safeUsers = users != null ? users : List.of();
@@ -101,6 +105,7 @@ public class UserManagementController {
     userGrid.add(actions, 4, row);
   }
 
+  // Event handlers
   private void deleteUser(String userId, Button deleteBtn) {
     deletingUserId = userId;
     deleteBtn.setDisable(true);
@@ -127,6 +132,7 @@ public class UserManagementController {
             });
   }
 
+  // Helpers
   private Label styled(String text, String styleClass) {
     Label label = new Label(text);
     label.getStyleClass().add(styleClass);

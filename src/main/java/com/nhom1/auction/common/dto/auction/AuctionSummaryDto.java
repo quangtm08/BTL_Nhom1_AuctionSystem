@@ -39,7 +39,6 @@ public class AuctionSummaryDto {
     this.sellerId = sellerId;
   }
 
-  // Getters and Setters
   public String getId() {
     return id;
   }

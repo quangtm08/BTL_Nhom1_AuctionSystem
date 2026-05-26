@@ -7,6 +7,7 @@ import com.nhom1.auction.common.dto.autobid.AutoBidConfigRequest;
 import com.nhom1.auction.common.dto.autobid.AutoBidConfigResponse;
 import com.nhom1.auction.common.entity.Auction;
 import com.nhom1.auction.common.entity.BidTransaction;
+import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.exception.ValidationException;
 import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
@@ -41,10 +42,16 @@ public class AutoBidServiceTest {
         new Auction(
             UUID.randomUUID(),
             UUID.randomUUID(),
+            UUID.randomUUID(),
             new BigDecimal("200.00"),
             LocalDateTime.now().minusHours(1),
-            LocalDateTime.now().plusHours(1));
-    defaultAuction.startAuction();
+            LocalDateTime.now().plusHours(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
     when(auctionGateway.findById(any(UUID.class))).thenReturn(Optional.of(defaultAuction));
   }
 
@@ -91,6 +98,34 @@ public class AutoBidServiceTest {
     dto.setBidderId(UUID.randomUUID().toString());
     dto.setMaxAmount("5.00");
     dto.setIncrement("10.00");
+
+    assertThrows(ValidationException.class, () -> autoBidService.saveConfig(dto));
+  }
+
+  @Test
+  public void testSaveConfig_CustomIncrementGreater_SavesSuccessfully() {
+    AutoBidConfigRequest dto = new AutoBidConfigRequest();
+    dto.setAuctionId(UUID.randomUUID().toString());
+    dto.setBidderId(UUID.randomUUID().toString());
+    dto.setMaxAmount("200.00");
+    dto.setIncrement("15.00");
+
+    AutoBidConfigResponse result = autoBidService.saveConfig(dto);
+
+    assertEquals("CONFIG_SAVED", result.getStatus());
+    verify(autoBidRepository)
+        .save(
+            org.mockito.ArgumentMatchers.argThat(
+                cfg -> cfg.getIncrement().compareTo(new BigDecimal("15.00")) == 0));
+  }
+
+  @Test
+  public void testSaveConfig_IncrementLessThanMinimum_Throws() {
+    AutoBidConfigRequest dto = new AutoBidConfigRequest();
+    dto.setAuctionId(UUID.randomUUID().toString());
+    dto.setBidderId(UUID.randomUUID().toString());
+    dto.setMaxAmount("200.00");
+    dto.setIncrement("5.00");
 
     assertThrows(ValidationException.class, () -> autoBidService.saveConfig(dto));
   }
@@ -351,5 +386,161 @@ public class AutoBidServiceTest {
     autoBidService.triggerAutoBids(auctionId, BigDecimal.TEN, UUID.randomUUID());
 
     verify(autoBidRepository).deleteByAuctionId(auctionId);
+  }
+
+  @Test
+  public void testTriggerAutoBids_ChallengerWithLowerMaxAmount_EscalatesBid() throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    UUID higherBidderId = UUID.randomUUID();
+    UUID lowerBidderId = UUID.randomUUID();
+
+    // Higher bidder config: max 100.00, increment 10.00
+    AutoBidConfig higherConfig =
+        new AutoBidConfig(
+            auctionId, higherBidderId, new BigDecimal("100.00"), new BigDecimal("10.00"));
+    // Lower bidder config: max 50.00, increment 5.00
+    AutoBidConfig lowerConfig =
+        new AutoBidConfig(
+            auctionId, lowerBidderId, new BigDecimal("50.00"), new BigDecimal("5.00"));
+
+    when(autoBidRepository.findByAuctionId(auctionId))
+        .thenReturn(List.of(higherConfig, lowerConfig));
+
+    // Current bid is 10.00, held by the higher bidder (higherBidderId)
+    BigDecimal currentHighestBid = new BigDecimal("10.00");
+    UUID currentHighestBidderId = higherBidderId;
+
+    // First, the challenger (lowerConfig) is processed and bids its max amount 50.00
+    BidTransaction tx1 = mock(BidTransaction.class);
+    when(tx1.getAmount()).thenReturn(new BigDecimal("50.00"));
+    when(tx1.getBidderId()).thenReturn(lowerBidderId);
+    when(bidGateway.placeAutoBid(lowerBidderId, auctionId, new BigDecimal("50.00")))
+        .thenReturn(tx1);
+
+    // Second, the higher config outbids the challenger at 50.00 + 10.00 = 60.00
+    BidTransaction tx2 = mock(BidTransaction.class);
+    when(tx2.getAmount()).thenReturn(new BigDecimal("60.00"));
+    when(tx2.getBidderId()).thenReturn(higherBidderId);
+    when(bidGateway.placeAutoBid(higherBidderId, auctionId, new BigDecimal("60.00")))
+        .thenReturn(tx2);
+
+    autoBidService.triggerAutoBids(auctionId, currentHighestBid, currentHighestBidderId);
+
+    // Verify both bids were placed
+    verify(bidGateway).placeAutoBid(lowerBidderId, auctionId, new BigDecimal("50.00"));
+    verify(bidGateway).placeAutoBid(higherBidderId, auctionId, new BigDecimal("60.00"));
+    verify(notificationService)
+        .broadcastBidUpdate(auctionId, new BigDecimal("60.00"), higherBidderId);
+  }
+
+  @Test
+  public void testTriggerAutoBids_UserScenario_Max100kAndMax12k_EscalatesTo12100()
+      throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    UUID bidderA = UUID.randomUUID();
+    UUID bidderB = UUID.randomUUID();
+
+    // Bidder A: max 100,000.00, increment 100.00
+    AutoBidConfig configA =
+        new AutoBidConfig(
+            auctionId, bidderA, new BigDecimal("100000.00"), new BigDecimal("100.00"));
+    // Bidder B: max 12,000.00, increment 50.00
+    AutoBidConfig configB =
+        new AutoBidConfig(auctionId, bidderB, new BigDecimal("12000.00"), new BigDecimal("50.00"));
+
+    when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(configA, configB));
+
+    // Initially A is the leader at starting price (e.g. 10,000.00)
+    BigDecimal currentHighestBid = new BigDecimal("10000.00");
+    UUID currentHighestBidderId = bidderA;
+
+    // B bids its max 12,000.00
+    BidTransaction tx1 = mock(BidTransaction.class);
+    when(tx1.getAmount()).thenReturn(new BigDecimal("12000.00"));
+    when(tx1.getBidderId()).thenReturn(bidderB);
+    when(bidGateway.placeAutoBid(bidderB, auctionId, new BigDecimal("12000.00"))).thenReturn(tx1);
+
+    // A outbids B at 12,000.00 + 100.00 = 12,100.00
+    BidTransaction tx2 = mock(BidTransaction.class);
+    when(tx2.getAmount()).thenReturn(new BigDecimal("12100.00"));
+    when(tx2.getBidderId()).thenReturn(bidderA);
+    when(bidGateway.placeAutoBid(bidderA, auctionId, new BigDecimal("12100.00"))).thenReturn(tx2);
+
+    autoBidService.triggerAutoBids(auctionId, currentHighestBid, currentHighestBidderId);
+
+    verify(bidGateway).placeAutoBid(bidderB, auctionId, new BigDecimal("12000.00"));
+    verify(bidGateway).placeAutoBid(bidderA, auctionId, new BigDecimal("12100.00"));
+    verify(notificationService).broadcastBidUpdate(auctionId, new BigDecimal("12100.00"), bidderA);
+  }
+
+  @Test
+  public void testTriggerAutoBids_PriorityQueueOrderByCreatedAt() throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    BigDecimal startingPrice = new BigDecimal("100.00");
+    UUID bot1Id = UUID.randomUUID();
+    UUID bot2Id = UUID.randomUUID();
+
+    AutoBidConfig config1 =
+        new AutoBidConfig(
+            auctionId,
+            bot1Id,
+            new BigDecimal("130.00"),
+            new BigDecimal("10.00"),
+            LocalDateTime.now().minusMinutes(10));
+
+    AutoBidConfig config2 =
+        new AutoBidConfig(
+            auctionId,
+            bot2Id,
+            new BigDecimal("150.00"),
+            new BigDecimal("10.00"),
+            LocalDateTime.now().minusMinutes(5));
+
+    when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(config1, config2));
+
+    java.util.List<String> bidSequence = new java.util.ArrayList<>();
+    java.util.List<BigDecimal> amountSequence = new java.util.ArrayList<>();
+
+    when(bidGateway.placeAutoBid(any(), any(), any()))
+        .thenAnswer(
+            invocation -> {
+              UUID bidderId = invocation.getArgument(0);
+              BigDecimal amount = invocation.getArgument(2);
+              bidSequence.add(bidderId.toString());
+              amountSequence.add(amount);
+
+              BidTransaction bidTx = mock(BidTransaction.class);
+              when(bidTx.getAmount()).thenReturn(amount);
+              when(bidTx.getBidderId()).thenReturn(bidderId);
+              return bidTx;
+            });
+
+    Auction auction =
+        new Auction(
+            auctionId,
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            startingPrice,
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusHours(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
+    when(auctionGateway.findById(auctionId)).thenReturn(Optional.of(auction));
+
+    autoBidService.triggerAutoBids(auctionId, BigDecimal.ZERO, null);
+
+    // With escalation logic, the bidding resolves more efficiently:
+    // 1. bot1 bids starting price: 100.00
+    // 2. bot2 outbids bot1's max: 130.00 + 10.00 = 140.00
+    assertEquals(2, bidSequence.size());
+    assertEquals(bot1Id.toString(), bidSequence.get(0));
+    assertEquals(new BigDecimal("100.00"), amountSequence.get(0));
+
+    assertEquals(bot2Id.toString(), bidSequence.get(1));
+    assertEquals(new BigDecimal("140.00"), amountSequence.get(1));
   }
 }

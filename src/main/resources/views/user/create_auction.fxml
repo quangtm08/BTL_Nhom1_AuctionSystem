@@ -22,8 +22,12 @@
                         <Insets top="34.0" right="32.0" bottom="28.0" left="32.0"/>
                     </padding>
 
-            <Button text="←  My listings" styleClass="btn-ghost" onAction="#handleBackToListings"/>
+            <HBox alignment="CENTER_LEFT" spacing="20.0">
+                <Button text="← My listings" styleClass="btn-ghost" onAction="#handleBackToListings"/>
+            </HBox>
+
             <Label text="New listing" styleClass="page-title"/>
+            <Label fx:id="lblStatus" managed="false" visible="false" wrapText="true"/>
 
             <VBox spacing="8.0">
                 <Label text="Title" styleClass="field-label"/>
@@ -64,7 +68,7 @@
                 </VBox>
                 <VBox spacing="8.0" HBox.hgrow="ALWAYS">
                     <Label text="Opening date" styleClass="field-label"/>
-                    <DatePicker fx:id="openingDatePicker" promptText="Select opening date" maxWidth="Infinity" styleClass="field-input"/>
+                    <DatePicker fx:id="openingDatePicker" promptText="Select opening date" maxWidth="Infinity" styleClass="date-picker-custom"/>
                 </VBox>
             </HBox>
 
@@ -84,7 +88,7 @@
             <Separator styleClass="line-separator"/>
 
             <HBox alignment="CENTER_RIGHT" spacing="12.0">
-                <Button text="Cancel" styleClass="btn-secondary"/>
+                <Button text="Cancel" styleClass="btn-secondary" onAction="#handleBackToListings"/>
                 <Button text="Publish listing" styleClass="btn-primary" onAction="#handlePublishListing"/>
             </HBox>
                 </VBox>

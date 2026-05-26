@@ -29,7 +29,6 @@ public class BidSummaryDto {
     this.bidderName = bidderName;
   }
 
-  // Getters and Setters
   public String getBidId() {
     return bidId;
   }

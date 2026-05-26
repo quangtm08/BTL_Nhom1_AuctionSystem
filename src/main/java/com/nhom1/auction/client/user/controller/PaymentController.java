@@ -3,6 +3,8 @@ package com.nhom1.auction.client.user.controller;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.PaymentClientService;
 import com.nhom1.auction.client.util.DisplayFormatters;
+import com.nhom1.auction.client.util.FeedbackUtils;
+import com.nhom1.auction.client.util.SkeletonUtils;
 import com.nhom1.auction.common.dto.payment.PaymentHistoryEntryDto;
 import com.nhom1.auction.common.dto.payment.PaymentHistoryResponse;
 import com.nhom1.auction.common.dto.payment.PendingPaymentDto;
@@ -13,17 +15,33 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class PaymentController {
+
   private final PaymentClientService paymentClientService = new PaymentClientService();
   private String processingAuctionId;
 
-  @FXML private Label lblPaymentStatus;
   @FXML private VBox pendingPaymentsBox;
+
   @FXML private VBox historyBox;
+
+  @FXML private VBox loadingBox;
+
+  @FXML private ScrollPane contentBox;
+
+  @FXML private Label lblStatus;
+
+  private void showLoading() {
+    SkeletonUtils.showLoading(loadingBox, contentBox);
+  }
+
+  private void showContent() {
+    SkeletonUtils.showContent(loadingBox, contentBox);
+  }
 
   @FXML
   public void initialize() {
@@ -31,7 +49,7 @@ public class PaymentController {
   }
 
   private void reload() {
-    lblPaymentStatus.setText("Loading payment data...");
+    showLoading();
     paymentClientService
         .listPendingPayments()
         .thenCombine(paymentClientService.listPaymentHistory(), PaymentSnapshot::new)
@@ -49,6 +67,7 @@ public class PaymentController {
 
   private void render(
       PendingPaymentsResponse pendingResponse, PaymentHistoryResponse historyResponse) {
+    showContent();
     List<PendingPaymentDto> pendingPayments =
         pendingResponse != null && pendingResponse.getPayments() != null
             ? pendingResponse.getPayments()
@@ -75,19 +94,14 @@ public class PaymentController {
     } else {
       historyEntries.forEach(entry -> historyBox.getChildren().add(createHistoryRow(entry)));
     }
-
-    lblPaymentStatus.setText(
-        pendingPayments.size()
-            + " pending payment(s) | "
-            + historyEntries.size()
-            + " history entr"
-            + (historyEntries.size() == 1 ? "y" : "ies"));
   }
 
   private void renderFailure(Throwable cause) {
+    showContent();
+    FeedbackUtils.showError(
+        lblStatus, FeedbackUtils.messageOrFallback(cause, "Could not load payments."));
     pendingPaymentsBox.getChildren().setAll(createEmptyState("Could not load pending payments."));
     historyBox.getChildren().setAll(createEmptyState("Could not load payment history."));
-    lblPaymentStatus.setText("Payment center unavailable: " + cause.getMessage());
   }
 
   private VBox createPendingRow(PendingPaymentDto payment) {
@@ -139,7 +153,7 @@ public class PaymentController {
   private void processPayment(String auctionId, Button payNowButton) {
     processingAuctionId = auctionId;
     payNowButton.setDisable(true);
-    lblPaymentStatus.setText("Processing payment...");
+    FeedbackUtils.showStatus(lblStatus, "Processing payment...");
 
     paymentClientService
         .processPayment(auctionId)
@@ -148,8 +162,7 @@ public class PaymentController {
                 Platform.runLater(
                     () -> {
                       processingAuctionId = null;
-                      lblPaymentStatus.setText(
-                          "Payment completed for auction " + response.getAuctionId() + ".");
+                      FeedbackUtils.showStatus(lblStatus, "Payment completed.");
                       reload();
                     }))
         .exceptionally(
@@ -159,7 +172,8 @@ public class PaymentController {
                   () -> {
                     processingAuctionId = null;
                     payNowButton.setDisable(false);
-                    lblPaymentStatus.setText("Payment failed: " + cause.getMessage());
+                    FeedbackUtils.showError(
+                        lblStatus, FeedbackUtils.messageOrFallback(cause, "Payment failed."));
                   });
               return null;
             });

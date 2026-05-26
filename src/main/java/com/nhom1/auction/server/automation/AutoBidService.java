@@ -12,11 +12,13 @@ import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class AutoBidService {
+
   private static final int MAX_TRIGGER_DEPTH = 10;
 
   private final AutoBidRepository autoBidRepository;
@@ -24,7 +26,6 @@ public class AutoBidService {
   private final BidGateway bidGateway;
   private final NotificationService notificationService;
 
-  // Single daemon thread: auto-bid chains queue up and run sequentially
   private final ExecutorService executor =
       Executors.newSingleThreadExecutor(
           r -> {
@@ -44,6 +45,7 @@ public class AutoBidService {
     this.notificationService = notificationService;
   }
 
+  // Business operations
   public AutoBidConfigResponse saveConfig(AutoBidConfigRequest dto) {
     UUID auctionId = parseUuid(dto.getAuctionId(), "auctionId");
     UUID bidderId = parseUuid(dto.getBidderId(), "bidderId");
@@ -55,14 +57,15 @@ public class AutoBidService {
     if (maxAmount.compareTo(BigDecimal.ZERO) <= 0) {
       throw new ValidationException("maxAmount must be > 0");
     }
-    if (incrementFromClient.compareTo(increment) != 0) {
-      throw new ValidationException("increment does not match auction rule");
+    if (incrementFromClient.compareTo(increment) < 0) {
+      throw new ValidationException(
+          "increment must be >= minimum increment (" + increment.toPlainString() + ")");
     }
-    if (maxAmount.compareTo(increment) < 0) {
+    if (maxAmount.compareTo(incrementFromClient) < 0) {
       throw new ValidationException("maxAmount must be >= increment");
     }
 
-    autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, increment));
+    autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, incrementFromClient));
 
     scheduleAutoBids(
         auctionId,
@@ -72,6 +75,23 @@ public class AutoBidService {
     return new AutoBidConfigResponse("CONFIG_SAVED");
   }
 
+  public AutoBidConfigResponse deleteConfig(String auctionIdRaw, String bidderIdRaw) {
+    UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
+    UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
+    int deleted = autoBidRepository.deleteByAuctionAndBidder(auctionId, bidderId);
+    return new AutoBidConfigResponse(deleted > 0 ? "CONFIG_DELETED" : "CONFIG_NOT_FOUND");
+  }
+
+  public void scheduleAutoBids(UUID auctionId, BigDecimal highestBid, UUID highestBidderId) {
+    executor.submit(() -> runAutoBids(auctionId, highestBid, highestBidderId));
+  }
+
+  public void triggerAutoBids(
+      UUID auctionId, BigDecimal newHighestBid, UUID currentHighestBidderId) {
+    runAutoBids(auctionId, newHighestBid, currentHighestBidderId);
+  }
+
+  // Query operations
   public AutoBidConfigDetailResponse getConfig(String auctionIdRaw, String bidderIdRaw) {
     UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
     UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
@@ -90,24 +110,7 @@ public class AutoBidService {
                 auctionId.toString(), bidderId.toString(), null, null, false));
   }
 
-  public AutoBidConfigResponse deleteConfig(String auctionIdRaw, String bidderIdRaw) {
-    UUID auctionId = parseUuid(auctionIdRaw, "auctionId");
-    UUID bidderId = parseUuid(bidderIdRaw, "bidderId");
-    int deleted = autoBidRepository.deleteByAuctionAndBidder(auctionId, bidderId);
-    return new AutoBidConfigResponse(deleted > 0 ? "CONFIG_DELETED" : "CONFIG_NOT_FOUND");
-  }
-
-  // Called from BidHandler — submits task and returns immediately
-  public void scheduleAutoBids(UUID auctionId, BigDecimal highestBid, UUID highestBidderId) {
-    executor.submit(() -> runAutoBids(auctionId, highestBid, highestBidderId));
-  }
-
-  // Kept for AuctionScheduler compatibility
-  public void triggerAutoBids(
-      UUID auctionId, BigDecimal newHighestBid, UUID currentHighestBidderId) {
-    runAutoBids(auctionId, newHighestBid, currentHighestBidderId);
-  }
-
+  // Helpers
   private void runAutoBids(
       UUID auctionId, BigDecimal currentHighestBid, UUID currentHighestBidderId) {
     Auction auction = auctionGateway.findById(auctionId).orElse(null);
@@ -125,43 +128,60 @@ public class AutoBidService {
             && currentHighestBid.compareTo(BigDecimal.ZERO) > 0);
 
     for (int depth = 0; depth < MAX_TRIGGER_DEPTH; depth++) {
-      // Effectively-final snapshots required by lambda capture rules
       final BigDecimal snapshotBid = currentHighestBid;
       final UUID snapshotBidderId = currentHighestBidderId;
 
       List<AutoBidConfig> allConfigs = autoBidRepository.findByAuctionId(auctionId);
 
-      List<AutoBidConfig> eligibleConfigs =
+      // Find the current leader's config to check for escalation
+      AutoBidConfig leaderConfig =
           allConfigs.stream()
-              .filter(cfg -> !cfg.getBidderId().equals(snapshotBidderId))
-              .filter(cfg -> cfg.getMaxAmount().compareTo(snapshotBid) > 0)
-              .toList();
-
-      if (eligibleConfigs.isEmpty()) break;
-
-      AutoBidConfig selected =
-          eligibleConfigs.stream()
-              .max(Comparator.comparing(AutoBidConfig::getMaxAmount))
+              .filter(cfg -> cfg.getBidderId().equals(snapshotBidderId))
+              .findFirst()
               .orElse(null);
-      if (selected == null) break;
 
-      BigDecimal nextBestMax =
-          allConfigs.stream()
-              .filter(cfg -> !cfg.getBidderId().equals(selected.getBidderId()))
-              .map(AutoBidConfig::getMaxAmount)
-              .max(BigDecimal::compareTo)
-              .orElse(BigDecimal.ZERO);
+      PriorityQueue<AutoBidConfig> queue =
+          new PriorityQueue<>(
+              Comparator.comparing(AutoBidConfig::getCreatedAt)
+                  .thenComparing(AutoBidConfig::getBidderId));
 
-      BigDecimal requiredBid;
-      if (!hasBids) {
-        requiredBid = auction.getStartingPrice().max(nextBestMax.add(selected.getIncrement()));
-      } else {
-        requiredBid = currentHighestBid.max(nextBestMax).add(selected.getIncrement());
+      for (AutoBidConfig cfg : allConfigs) {
+        if (cfg.getBidderId().equals(snapshotBidderId)) {
+          continue;
+        }
+
+        BigDecimal minRequired =
+            !hasBids ? auction.getStartingPrice() : snapshotBid.add(cfg.getIncrement());
+
+        if (cfg.getMaxAmount().compareTo(minRequired) >= 0) {
+          queue.add(cfg);
+        }
       }
 
-      BigDecimal nextAmt = requiredBid.min(selected.getMaxAmount());
-      if (nextAmt.compareTo(requiredBid) < 0) break;
-      if (nextAmt.compareTo(currentHighestBid) <= 0) break;
+      AutoBidConfig selected = queue.poll();
+      if (selected == null) break;
+
+      BigDecimal nextAmt;
+      if (leaderConfig != null) {
+        // Escalation: if we're competing against another auto-bidder, jump to outbid them
+        nextAmt =
+            leaderConfig.getMaxAmount().add(selected.getIncrement()).min(selected.getMaxAmount());
+
+        // If we are the "lower" one, we bid our max and let the leader outbid us in the next step
+        if (selected.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) <= 0) {
+          nextAmt = selected.getMaxAmount();
+        }
+
+        // Ensure we at least bid the minimum required amount
+        BigDecimal minRequired =
+            !hasBids ? auction.getStartingPrice() : snapshotBid.add(selected.getIncrement());
+        if (nextAmt.compareTo(minRequired) < 0) {
+          nextAmt = minRequired;
+        }
+      } else {
+        // Standard minimum increment bid
+        nextAmt = !hasBids ? auction.getStartingPrice() : snapshotBid.add(selected.getIncrement());
+      }
 
       try {
         BidTransaction bid = bidGateway.placeAutoBid(selected.getBidderId(), auctionId, nextAmt);
@@ -182,10 +202,6 @@ public class AutoBidService {
     if (anyBidPlaced) {
       notificationService.broadcastBidUpdate(auctionId, finalBid, finalBidderId);
     }
-  }
-
-  private BigDecimal nextAmount(AutoBidConfig config, BigDecimal currentHighestBid) {
-    return currentHighestBid.add(config.getIncrement());
   }
 
   private UUID parseUuid(String value, String fieldName) {

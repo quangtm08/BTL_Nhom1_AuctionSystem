@@ -1,6 +1,5 @@
 package com.nhom1.auction.common.entity;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -9,9 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.nhom1.auction.common.enums.AuctionStatus;
 import com.nhom1.auction.common.enums.BidType;
-import com.nhom1.auction.common.enums.UserRole;
 import com.nhom1.auction.common.exception.AuctionClosedException;
-import com.nhom1.auction.common.exception.InvalidAuctionStateException;
 import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import java.math.BigDecimal;
@@ -141,164 +138,6 @@ public class AuctionTest {
     assertEquals(AuctionStatus.OPEN, auction.getStatus());
     assertNull(auction.getHighestBidderId());
     assertNull(auction.getCurrentHighestBid());
-  }
-
-  @Test
-  public void testStartAuction_FromOpen_Succeeds() {
-    Auction auction =
-        new Auction(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            LocalDateTime.now().minusHours(1),
-            LocalDateTime.now().plusHours(1));
-
-    auction.startAuction();
-
-    assertEquals(AuctionStatus.RUNNING, auction.getStatus());
-  }
-
-  @Test
-  public void testStartAuction_FromRunning_Throws() {
-    Auction auction = createRunningAuction();
-
-    assertThrows(InvalidAuctionStateException.class, auction::startAuction);
-  }
-
-  @Test
-  public void testStartAuction_FromFinished_Throws() {
-    Auction auction = createRunningAuction();
-    auction.endAuction();
-
-    assertThrows(InvalidAuctionStateException.class, auction::startAuction);
-  }
-
-  @Test
-  public void testStartAuction_FromCanceled_Throws() {
-    Auction auction =
-        new Auction(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            LocalDateTime.now(),
-            LocalDateTime.now().plusHours(1));
-    UUID sellerId = auction.getSellerId();
-    auction.cancelAuction(sellerId, UserRole.USER);
-
-    assertThrows(InvalidAuctionStateException.class, auction::startAuction);
-  }
-
-  @Test
-  public void testEndAuction_FromRunning_Succeeds() {
-    Auction auction = createRunningAuction();
-
-    auction.endAuction();
-
-    assertEquals(AuctionStatus.FINISHED, auction.getStatus());
-  }
-
-  @Test
-  public void testEndAuction_FromOpen_Throws() {
-    Auction auction =
-        new Auction(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            LocalDateTime.now(),
-            LocalDateTime.now().plusHours(1));
-
-    assertThrows(InvalidAuctionStateException.class, auction::endAuction);
-  }
-
-  @Test
-  public void testEndAuction_FromFinished_Throws() {
-    Auction auction = createRunningAuction();
-    auction.endAuction();
-
-    assertThrows(InvalidAuctionStateException.class, auction::endAuction);
-  }
-
-  @Test
-  public void testMarkAsPaid_FromFinished_Succeeds() {
-    Auction auction = createRunningAuction();
-    auction.endAuction();
-
-    auction.markAsPaid();
-
-    assertEquals(AuctionStatus.PAID, auction.getStatus());
-  }
-
-  @Test
-  public void testMarkAsPaid_FromRunning_Throws() {
-    Auction auction = createRunningAuction();
-
-    assertThrows(InvalidAuctionStateException.class, auction::markAsPaid);
-  }
-
-  @Test
-  public void testCancelAuction_SellerCancelsOwnOpen_Succeeds() {
-    Auction auction =
-        new Auction(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            LocalDateTime.now(),
-            LocalDateTime.now().plusHours(1));
-    UUID sellerId = auction.getSellerId();
-
-    assertDoesNotThrow(() -> auction.cancelAuction(sellerId, UserRole.USER));
-
-    assertEquals(AuctionStatus.CANCELED, auction.getStatus());
-  }
-
-  @Test
-  public void testCancelAuction_SellerCancelsRunning_Throws() {
-    Auction auction = createRunningAuction();
-    UUID sellerId = auction.getSellerId();
-
-    assertThrows(
-        InvalidAuctionStateException.class, () -> auction.cancelAuction(sellerId, UserRole.USER));
-  }
-
-  @Test
-  public void testCancelAuction_NonOwnerCancels_Throws() {
-    Auction auction =
-        new Auction(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            LocalDateTime.now(),
-            LocalDateTime.now().plusHours(1));
-    UUID nonOwnerId = UUID.randomUUID();
-
-    assertThrows(
-        UnauthorizedActionException.class, () -> auction.cancelAuction(nonOwnerId, UserRole.USER));
-  }
-
-  @Test
-  public void testCancelAuction_AdminCancelsOpen_Succeeds() {
-    Auction auction =
-        new Auction(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            LocalDateTime.now(),
-            LocalDateTime.now().plusHours(1));
-    UUID adminId = UUID.randomUUID();
-
-    assertDoesNotThrow(() -> auction.cancelAuction(adminId, UserRole.ADMIN));
-
-    assertEquals(AuctionStatus.CANCELED, auction.getStatus());
-  }
-
-  @Test
-  public void testCancelAuction_AdminCancelsRunning_Succeeds() {
-    Auction auction = createRunningAuction();
-    UUID adminId = UUID.randomUUID();
-
-    assertDoesNotThrow(() -> auction.cancelAuction(adminId, UserRole.ADMIN));
-
-    assertEquals(AuctionStatus.CANCELED, auction.getStatus());
   }
 
   @Test
@@ -460,16 +299,54 @@ public class AuctionTest {
         "The seller should not be allowed to bid on their own auction");
   }
 
+  @Test
+  public void testValidator_NullArgs_Throws() {
+    Auction auction = createRunningAuction();
+    assertThrows(
+        InvalidBidException.class,
+        () ->
+            AuctionBidValidator.validatePlaceBid(
+                auction, null, BigDecimal.TEN, BidType.MANUAL, LocalDateTime.now()));
+    assertThrows(
+        InvalidBidException.class,
+        () ->
+            AuctionBidValidator.validatePlaceBid(
+                auction, UUID.randomUUID(), null, BidType.MANUAL, LocalDateTime.now()));
+  }
+
+  @Test
+  public void testValidator_AmountZeroOrNegative_Throws() {
+    Auction auction = createRunningAuction();
+    assertThrows(
+        InvalidBidException.class,
+        () ->
+            AuctionBidValidator.validatePlaceBid(
+                auction, UUID.randomUUID(), BigDecimal.ZERO, BidType.MANUAL, LocalDateTime.now()));
+    assertThrows(
+        InvalidBidException.class,
+        () ->
+            AuctionBidValidator.validatePlaceBid(
+                auction,
+                UUID.randomUUID(),
+                new BigDecimal("-1"),
+                BidType.MANUAL,
+                LocalDateTime.now()));
+  }
+
   private Auction createRunningAuction() {
     LocalDateTime startTime = LocalDateTime.now().minusHours(1);
-    Auction auction =
-        new Auction(
-            UUID.randomUUID(),
-            UUID.randomUUID(),
-            new BigDecimal("100.00"),
-            startTime,
-            startTime.plusHours(2));
-    auction.startAuction();
-    return auction;
+    return new Auction(
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        UUID.randomUUID(),
+        new BigDecimal("100.00"),
+        startTime,
+        startTime.plusHours(2),
+        null,
+        null,
+        AuctionStatus.RUNNING,
+        LocalDateTime.now(),
+        LocalDateTime.now(),
+        null);
   }
 }

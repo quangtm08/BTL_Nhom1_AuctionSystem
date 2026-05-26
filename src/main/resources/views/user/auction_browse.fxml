@@ -6,7 +6,7 @@
 <?import javafx.scene.shape.Circle?>
 
 <HBox fx:id="mainContainer"
-    prefHeight="800.0" prefWidth="1280.0" styleClass="root-pane" 
+    prefHeight="800.0" prefWidth="1280.0" styleClass="root-pane"
     stylesheets="@/css/client/auction_browse.css, @/css/client/common_ui.css" xmlns="http://javafx.com/javafx/17"
     xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.nhom1.auction.client.user.controller.AuctionBrowseController" >
 
@@ -16,9 +16,14 @@
         <padding>
             <Insets top="60.0" left="60.0" right="60.0" bottom="30.0"/>
         </padding>
-        <children>
+
+        <!-- SKELETON LOADING -->
+        <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
+
+        <!-- ACTUAL CONTENT -->
+        <VBox fx:id="contentBox" spacing="35.0" VBox.vgrow="ALWAYS" visible="false" managed="false">
             <Label text="Hunt for the next deal" fx:id="welcomeLabel" styleClass="header-title"/>
-            
+
             <VBox spacing="20.0">
                 <TextField promptText="Search..." styleClass="search-field"/>
                 <HBox alignment="CENTER_LEFT">
@@ -45,12 +50,9 @@
                             <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
                             <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" percentWidth="50" />
                         </columnConstraints>
-                        <children>
-                            <!-- Dynamic cards will be added here via Controller -->
-                        </children>
                     </GridPane>
                 </content>
             </ScrollPane>
-        </children>
+        </VBox>
     </VBox>
 </HBox>

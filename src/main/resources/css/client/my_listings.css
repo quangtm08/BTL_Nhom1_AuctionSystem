@@ -23,23 +23,39 @@
     -fx-cursor: hand;
 }
 
+.stat-label {
+    -fx-text-fill: #555555;
+    -fx-font-size: 14;
+}
+
 .sub {
     -fx-text-fill: #7a7a7a;
 }
 
 .big {
     -fx-text-fill: white;
-    -fx-font-size: 28px;
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
 }
 
 .big-orange {
     -fx-text-fill: #ff7b4a;
-    -fx-font-size: 28px;
+    -fx-font-size: 36px;
+    -fx-font-weight: bold;
 }
 
-.money {
+/* FILTER & SEARCH */
+.search-field {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #252d29 transparent;
+    -fx-border-width: 0 0 1px 0;
     -fx-text-fill: white;
-    -fx-font-size: 26px;
+    -fx-font-size: 16px;
+    -fx-padding: 10 0;
+}
+
+.search-field:focused {
+    -fx-border-color: transparent transparent #2b6b4c transparent;
 }
 
 .filter-chip {
@@ -92,8 +108,8 @@
 
 /* PRODUCT CARD */
 .product-card {
-    -fx-background-color: #0c120f;
-    -fx-border-color: #1a221e;
+    -fx-background-color: #0a0a0a;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
     -fx-border-radius: 20;
     -fx-background-radius: 20;
     -fx-padding: 25;
@@ -101,8 +117,9 @@
 }
 
 .product-card:hover {
-    -fx-border-color: #2b6b4c;
-    -fx-background-color: #0e1612;
+    -fx-border-color: rgba(43, 107, 76, 0.5);
+    -fx-background-color: #0e0e0e;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.4), 15, 0, 0, 4);
 }
 
 .card-title-text {
@@ -112,7 +129,7 @@
 }
 
 .card-sub-text {
-    -fx-text-fill: #666666;
+    -fx-text-fill: #8fa097;
     -fx-font-size: 13px;
 }
 
@@ -124,7 +141,9 @@
 }
 
 .status-badge {
-    -fx-background-color: #1a3327;
+    -fx-background-color: rgba(76, 175, 80, 0.1);
+    -fx-border-color: rgba(76, 175, 80, 0.2);
+    -fx-border-radius: 8;
     -fx-text-fill: #4caf50;
     -fx-padding: 5 12;
     -fx-background-radius: 8;
@@ -132,7 +151,9 @@
     -fx-font-weight: bold;
 }
 .status-badge-ended {
-    -fx-background-color: #331a1a;
+    -fx-background-color: rgba(255, 107, 107, 0.1);
+    -fx-border-color: rgba(255, 107, 107, 0.2);
+    -fx-border-radius: 8;
     -fx-text-fill: #ff6b6b;
     -fx-padding: 5 12;
     -fx-background-radius: 8;
@@ -142,7 +163,8 @@
 .card-separator .line {
     -fx-border-color: #2a332f;
 }
-.btn-card-edit, .btn-card-delete {
+.btn-card-edit,
+.btn-card-delete {
     -fx-background-radius: 8;
     -fx-border-radius: 8;
     -fx-padding: 10 12;
@@ -219,4 +241,3 @@
 .btn-action-green:hover {
     -fx-background-color: #2b6b4c;
 }
-

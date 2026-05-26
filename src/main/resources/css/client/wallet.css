@@ -34,13 +34,13 @@
 
 /* Balance Dashboard Card */
 .balance-card {
-    -fx-background-color: linear-gradient(to right, #0a1f14, #123222);
-    -fx-background-radius: 16;
-    -fx-padding: 25 35;
-    -fx-border-color: #2b6b4c;
-    -fx-border-width: 1.5;
-    -fx-border-radius: 16;
-    -fx-spacing: 10;
+    -fx-background-color: #0c100e;
+    -fx-background-radius: 12;
+    -fx-padding: 20 30;
+    -fx-border-color: rgba(255, 255, 255, 0.05);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-spacing: 5;
 }
 
 .balance-card-title {
@@ -50,14 +50,9 @@
 }
 
 .balance-card-value {
-    -fx-text-fill: #4caf50;
+    -fx-text-fill: #ffffff;
     -fx-font-size: 48px;
     -fx-font-weight: bold;
-}
-
-.balance-card-subtitle {
-    -fx-text-fill: #6a6f6e;
-    -fx-font-size: 13px;
 }
 
 /* Action Cards */
@@ -84,10 +79,10 @@
 /* Inputs & Forms */
 .form-input-field {
     -fx-background-color: #161c19;
-    -fx-border-color: #2b6b4c;
+    -fx-border-color: #2b332e;
     -fx-border-width: 1px;
-    -fx-border-radius: 8px;
-    -fx-background-radius: 8px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
     -fx-text-fill: white;
     -fx-padding: 10 12;
     -fx-font-size: 14px;
@@ -100,21 +95,21 @@
 
 /* Quick buttons */
 .quick-btn {
-    -fx-background-color: #16251e;
-    -fx-text-fill: #8cb8a3;
-    -fx-border-color: #233e31;
+    -fx-background-color: transparent;
+    -fx-text-fill: #8fa097;
+    -fx-border-color: #24332e;
     -fx-border-width: 1;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
     -fx-font-size: 12px;
     -fx-padding: 6 12;
     -fx-cursor: hand;
 }
 
 .quick-btn:hover {
-    -fx-background-color: #233e31;
+    -fx-background-color: rgba(255, 255, 255, 0.05);
     -fx-text-fill: white;
-    -fx-border-color: #2b6b4c;
+    -fx-border-color: #3b544b;
 }
 
 /* History logs */

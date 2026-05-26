@@ -21,6 +21,7 @@ public class PaymentRepository {
     this.dataSource = dataSource;
   }
 
+  // Writes
   public void saveCompletedPayment(
       UUID auctionId, UUID payerId, UUID payeeId, BigDecimal amount, LocalDateTime now) {
     try (Connection conn = dataSource.getConnection()) {
@@ -56,6 +57,7 @@ VALUES (?, ?, ?, ?, ?, 'COMPLETED', ?, ?)
     }
   }
 
+  // Reads
   public boolean existsCompletedPaymentForAuction(UUID auctionId) {
     try (Connection conn = dataSource.getConnection()) {
       return existsCompletedPaymentForAuction(auctionId, conn);

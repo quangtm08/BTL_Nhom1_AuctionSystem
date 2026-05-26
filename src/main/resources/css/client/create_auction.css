@@ -48,21 +48,29 @@
     -fx-padding: 10 14;
 }
 
+.date-picker {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
 .date-picker .text-field,
 .date-picker .editor {
     -fx-background-color: #2f3533;
     -fx-text-fill: #ecefed;
     -fx-prompt-text-fill: #7f8b84;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
+    -fx-background-radius: 8 0 0 8;
+    -fx-border-radius: 8 0 0 8;
     -fx-border-color: #45504a;
     -fx-padding: 10 14;
+    -fx-border-width: 1px 0px 1px 1px;
 }
 
 .date-picker .arrow-button {
     -fx-background-color: #2f3533;
     -fx-border-color: #45504a;
     -fx-border-radius: 0 8 8 0;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-width: 1px 1px 1px 1px;
 }
 
 .date-picker .day-cell,

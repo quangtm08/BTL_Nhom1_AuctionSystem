@@ -39,6 +39,10 @@ public class MyListingsController {
 
   @FXML private GridPane listingsGrid;
 
+  @FXML private javafx.scene.layout.VBox loadingBox;
+
+  @FXML private javafx.scene.layout.VBox contentBox;
+
   @FXML
   private void initialize() {
     loadMyListings();
@@ -46,6 +50,17 @@ public class MyListingsController {
     pushService.onNewAuction(event -> Platform.runLater(this::loadMyListings));
     pushService.onAuctionEnded(event -> Platform.runLater(this::loadMyListings));
     pushService.onAuctionDeleted(event -> Platform.runLater(this::loadMyListings));
+  }
+
+  private void showContent() {
+    if (loadingBox != null) {
+      loadingBox.setVisible(false);
+      loadingBox.setManaged(false);
+    }
+    if (contentBox != null) {
+      contentBox.setVisible(true);
+      contentBox.setManaged(true);
+    }
   }
 
   @FXML
@@ -96,6 +111,7 @@ public class MyListingsController {
             ex -> {
               Platform.runLater(
                   () -> {
+                    showContent();
                     activeListingsLabel.setText("0");
                     renderMessage(
                         resolveErrorMessage(ex, "Connection error while loading listings."));
@@ -105,6 +121,7 @@ public class MyListingsController {
   }
 
   private void renderMyListings(MyListingsResponse response) {
+    showContent();
     if (response != null && response.getListings() != null) {
       List<AuctionSummaryDto> listings = response.getListings();
       activeListingsLabel.setText(String.valueOf(listings.size()));

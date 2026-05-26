@@ -37,17 +37,7 @@ public class PaymentService {
     this.dataSource = dataSource;
   }
 
-  public PendingPaymentsResponse listPendingPayments(String bidderId) {
-    UUID parsedBidderId = parseUuid(bidderId, "Bidder ID");
-    return new PendingPaymentsResponse(
-        paymentRepository.findPendingPaymentsByBidder(parsedBidderId));
-  }
-
-  public PaymentHistoryResponse listPaymentHistory(String userId) {
-    UUID parsedUserId = parseUuid(userId, "User ID");
-    return new PaymentHistoryResponse(paymentRepository.findPaymentHistoryForUser(parsedUserId));
-  }
-
+  // Business operations
   public ProcessPaymentResponse processPayment(String auctionId, String bidderId) {
     UUID parsedAuctionId = parseUuid(auctionId, "Auction ID");
     UUID parsedBidderId = parseUuid(bidderId, "Bidder ID");
@@ -93,6 +83,19 @@ public class PaymentService {
     }
   }
 
+  // Query operations
+  public PendingPaymentsResponse listPendingPayments(String bidderId) {
+    UUID parsedBidderId = parseUuid(bidderId, "Bidder ID");
+    return new PendingPaymentsResponse(
+        paymentRepository.findPendingPaymentsByBidder(parsedBidderId));
+  }
+
+  public PaymentHistoryResponse listPaymentHistory(String userId) {
+    UUID parsedUserId = parseUuid(userId, "User ID");
+    return new PaymentHistoryResponse(paymentRepository.findPaymentHistoryForUser(parsedUserId));
+  }
+
+  // Validation
   private void validatePaymentEligibility(Auction auction, UUID bidderId, Connection connection) {
     if (auction.getHighestBidderId() == null || auction.getCurrentHighestBid() == null) {
       throw new ValidationException("Auction has no payable winning bid.");

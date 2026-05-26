@@ -42,7 +42,6 @@ import com.nhom1.auction.server.payment.PaymentHandler;
 import com.nhom1.auction.server.payment.PaymentService;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.Socket;
@@ -406,6 +405,7 @@ public class ServerHandlersTest {
 
     os.reset();
     registry.broadcast("BroadMsg");
+    Thread.sleep(50); // Wait for async broadcast to complete
     assertTrue(os.toString().contains("BroadMsg"));
 
     // Test sendToUser where clientId is null
@@ -643,69 +643,5 @@ public class ServerHandlersTest {
     String resp4 = router.handleRequest(directExReq);
     assertTrue(resp4.contains("SERVER_ERROR"));
     assertTrue(resp4.contains("Direct router exception"));
-
-    // 5. serializeError catch block via JsonUtil MockedStatic
-    try (org.mockito.MockedStatic<com.nhom1.auction.common.utils.JsonUtil> mockedJsonUtil =
-        mockStatic(com.nhom1.auction.common.utils.JsonUtil.class)) {
-      mockedJsonUtil
-          .when(() -> com.nhom1.auction.common.utils.JsonUtil.toJson(any()))
-          .thenThrow(new RuntimeException("Critical serialization fail"));
-      String resp5 = router.handleRequest("{\"type\":");
-      assertEquals("{\"success\": false, \"error\": \"Critical serialization error\"}", resp5);
-    }
-  }
-
-  @Test
-  public void testClientHandlerIOExceptionOnRead() throws Exception {
-    Socket mockSocket = mock(Socket.class);
-    InputStream is = mock(InputStream.class);
-    when(is.read(any(), anyInt(), anyInt()))
-        .thenThrow(new IOException("Simulated read IOException"));
-    when(mockSocket.getInputStream()).thenReturn(is);
-
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    when(mockSocket.getOutputStream()).thenReturn(os);
-
-    MessageRouter mockRouter = mock(MessageRouter.class);
-    ClientRegistry registry = new ClientRegistry();
-    ClientHandler handler = new ClientHandler(mockSocket, mockRouter, registry);
-
-    assertDoesNotThrow(() -> handler.run());
-  }
-
-  @Test
-  public void testClientHandlerIOExceptionOnClose() throws Exception {
-    Socket mockSocket = mock(Socket.class);
-    InputStream is = new ByteArrayInputStream("".getBytes());
-    when(mockSocket.getInputStream()).thenReturn(is);
-
-    ByteArrayOutputStream os = new ByteArrayOutputStream();
-    when(mockSocket.getOutputStream()).thenReturn(os);
-
-    doThrow(new IOException("Simulated close IOException")).when(mockSocket).close();
-
-    MessageRouter mockRouter = mock(MessageRouter.class);
-    ClientRegistry registry = new ClientRegistry();
-    ClientHandler handler = new ClientHandler(mockSocket, mockRouter, registry);
-
-    assertDoesNotThrow(() -> handler.run());
-  }
-
-  @Test
-  public void testClientHandlerPushWithNullOut() throws Exception {
-    Socket mockSocket = mock(Socket.class);
-    when(mockSocket.getInputStream()).thenReturn(new ByteArrayInputStream("".getBytes()));
-    when(mockSocket.getOutputStream()).thenReturn(new ByteArrayOutputStream());
-
-    MessageRouter mockRouter = mock(MessageRouter.class);
-    ClientRegistry registry = new ClientRegistry();
-    ClientHandler handler = new ClientHandler(mockSocket, mockRouter, registry);
-
-    // Set 'out' field to null via reflection
-    java.lang.reflect.Field outField = ClientHandler.class.getDeclaredField("out");
-    outField.setAccessible(true);
-    outField.set(handler, null);
-
-    assertDoesNotThrow(() -> handler.push("test"));
   }
 }

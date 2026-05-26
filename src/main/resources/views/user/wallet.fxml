@@ -13,85 +13,92 @@
     </left>
 
     <center>
-        <ScrollPane fitToWidth="true" styleClass="main-scroll-pane">
-            <content>
-                <VBox spacing="25.0" styleClass="main-content">
-                    <children>
-                        <!-- Header Title -->
-                        <Label styleClass="header-title" text="My Wallet 💳" />
-                        
-                        <!-- Balance Card -->
-                        <VBox styleClass="balance-card">
-                            <children>
-                                <Label styleClass="balance-card-title" text="CURRENT BALANCE" />
-                                <Label fx:id="lblBalance" styleClass="balance-card-value" text="0.00" />
-                                <Label styleClass="balance-card-subtitle" text="Real-time mock wallet balance for bidding &amp; purchases" />
-                            </children>
-                        </VBox>
+        <StackPane>
+        <!-- SKELETON LOADING -->
+        <fx:include source="components/skeleton.fxml" fx:id="loadingBox" />
 
-                        <Separator styleClass="content-divider" />
+            <!-- ACTUAL CONTENT -->
+            <ScrollPane fx:id="contentBox" fitToWidth="true" styleClass="main-scroll-pane" visible="false" managed="false">
+                <content>
+                    <VBox spacing="25.0" styleClass="main-content">
+                        <children>
+                            <!-- Header Title -->
+                            <Label styleClass="header-title" text="My Wallet" />
 
-                        <!-- Actions Grid (Deposit & Withdraw) -->
-                        <GridPane hgap="20.0" vgap="20.0">
-                            <columnConstraints>
-                                <ColumnConstraints percentWidth="50" />
-                                <ColumnConstraints percentWidth="50" />
-                            </columnConstraints>
-                            <rowConstraints>
-                                <RowConstraints valignment="TOP" />
-                            </rowConstraints>
-                            <children>
-                                <!-- Deposit Card -->
-                                <VBox styleClass="action-card" GridPane.columnIndex="0">
-                                    <children>
-                                        <Label styleClass="card-title" text="Deposit Funds" />
-                                        <TextField fx:id="txtDepositAmount" promptText="Enter amount to deposit..." styleClass="form-input-field" />
-                                        
-                                        <HBox spacing="8.0" alignment="CENTER_LEFT">
-                                            <children>
-                                                <Button fx:id="btnQuickDep100" text="+$100" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickDep500" text="+$500" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickDep1k" text="+$1k" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickDep5k" text="+$5k" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickDep10k" text="+$10k" styleClass="quick-btn" />
-                                            </children>
-                                        </HBox>
-                                        
-                                        <Button fx:id="btnDeposit" text="Deposit Money" styleClass="btn-primary" maxWidth="Infinity" />
-                                    </children>
-                                </VBox>
+                            <Label fx:id="lblStatus" managed="false" visible="false" wrapText="true" />
 
-                                <!-- Withdraw Card -->
-                                <VBox styleClass="action-card" GridPane.columnIndex="1">
-                                    <children>
-                                        <Label styleClass="card-title" text="Withdraw Funds" />
-                                        <TextField fx:id="txtWithdrawAmount" promptText="Enter amount to withdraw..." styleClass="form-input-field" />
-                                        
-                                        <HBox spacing="8.0" alignment="CENTER_LEFT">
-                                            <children>
-                                                <Button fx:id="btnQuickWith100" text="-$100" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickWith500" text="-$500" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickWith1k" text="-$1k" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickWith5k" text="-$5k" styleClass="quick-btn" />
-                                                <Button fx:id="btnQuickWith10k" text="-$10k" styleClass="quick-btn" />
-                                            </children>
-                                        </HBox>
-                                        
-                                        <Button fx:id="btnWithdraw" text="Withdraw Money" styleClass="btn-secondary" maxWidth="Infinity" />
-                                    </children>
-                                </VBox>
-                            </children>
-                        </GridPane>
+                            <!-- Balance Card -->
+                            <VBox styleClass="balance-card">
+                                <children>
+                                    <Label styleClass="balance-card-title" text="CURRENT BALANCE" />
+                                    <Label fx:id="lblBalance" styleClass="balance-card-value" text="0.00" />
+                                </children>
+                            </VBox>
 
-                        <Separator styleClass="content-divider" />
+                            <Separator styleClass="content-divider" />
 
-                        <!-- Transaction Logs -->
-                        <Label styleClass="section-label" text="TRANSACTION LOGS" />
-                        
-                        <VBox fx:id="historyBox" spacing="12.0" />
-                    </children>
-                </VBox>
-            </content>
-        </ScrollPane>
+                            <!-- Actions Grid (Deposit & Withdraw) -->
+                            <GridPane hgap="20.0" vgap="20.0">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="50" />
+                                    <ColumnConstraints percentWidth="50" />
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints valignment="TOP" />
+                                </rowConstraints>
+                                <children>
+                                    <!-- Deposit Card -->
+                                    <VBox styleClass="action-card" GridPane.columnIndex="0">
+                                        <children>
+                                            <Label styleClass="card-title" text="Deposit Funds" />
+                                            <TextField fx:id="txtDepositAmount" promptText="Enter amount to deposit..." styleClass="form-input-field" />
+
+                                            <HBox spacing="8.0" alignment="CENTER_LEFT">
+                                                <children>
+                                                    <Button fx:id="btnQuickDep100" text="+$100" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickDep500" text="+$500" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickDep1k" text="+$1k" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickDep5k" text="+$5k" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickDep10k" text="+$10k" styleClass="quick-btn" />
+                                                </children>
+                                            </HBox>
+
+                                            <Button fx:id="btnDeposit" text="Deposit Money" styleClass="btn-primary" maxWidth="Infinity" />
+                                        </children>
+                                    </VBox>
+
+                                    <!-- Withdraw Card -->
+                                    <VBox styleClass="action-card" GridPane.columnIndex="1">
+                                        <children>
+                                            <Label styleClass="card-title" text="Withdraw Funds" />
+                                            <TextField fx:id="txtWithdrawAmount" promptText="Enter amount to withdraw..." styleClass="form-input-field" />
+
+                                            <HBox spacing="8.0" alignment="CENTER_LEFT">
+                                                <children>
+                                                    <Button fx:id="btnQuickWith100" text="-$100" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickWith500" text="-$500" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickWith1k" text="-$1k" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickWith5k" text="-$5k" styleClass="quick-btn" />
+                                                    <Button fx:id="btnQuickWith10k" text="-$10k" styleClass="quick-btn" />
+                                                </children>
+                                            </HBox>
+
+                                            <Button fx:id="btnWithdraw" text="Withdraw Money" styleClass="btn-secondary" maxWidth="Infinity" />
+                                        </children>
+                                    </VBox>
+                                </children>
+                            </GridPane>
+
+                            <Separator styleClass="content-divider" />
+
+                            <!-- Transaction Logs -->
+                            <Label styleClass="section-label" text="TRANSACTION LOGS" />
+
+                            <VBox fx:id="historyBox" spacing="12.0" />
+                        </children>
+                    </VBox>
+                </content>
+            </ScrollPane>
+        </StackPane>
     </center>
 </BorderPane>

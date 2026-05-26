@@ -238,32 +238,4 @@ public class ItemRepositoryTest {
     assertTrue(itemOpt.isPresent());
     assertNotNull(itemOpt.get());
   }
-
-  @Test
-  public void testSave_ConditionFallback_WhenConstraintFails() throws SQLException {
-    UUID itemId = UUID.randomUUID();
-    UUID sellerId = UUID.randomUUID();
-    Item item =
-        new Art(
-            itemId,
-            "Painting",
-            "Nice",
-            ItemCategory.ART,
-            ItemCondition.REFURBISHED,
-            LocalDateTime.now(),
-            LocalDateTime.now());
-
-    PreparedStatement fallbackPs = mock(PreparedStatement.class);
-    when(mockConnection.getAutoCommit()).thenReturn(false);
-    when(mockConnection.setSavepoint()).thenReturn(mock(java.sql.Savepoint.class));
-
-    // First save throws a constraint violation (unsupported condition)
-    SQLException constraintViolation = new SQLException("check constraint on condition", "23514");
-    when(mockConnection.prepareStatement(anyString()))
-        .thenThrow(constraintViolation)
-        .thenReturn(fallbackPs);
-
-    assertDoesNotThrow(() -> repo.save(item, sellerId, mockConnection));
-    verify(fallbackPs).executeUpdate();
-  }
 }

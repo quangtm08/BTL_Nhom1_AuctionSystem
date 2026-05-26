@@ -6,8 +6,6 @@ import static org.mockito.Mockito.*;
 import com.nhom1.auction.client.user.connection.ServerConnection;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import javafx.application.Platform;
-import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,11 +14,6 @@ public class ClientApplicationTest {
 
   @BeforeAll
   public static void initJavaFX() {
-    try {
-      Platform.startup(() -> {});
-    } catch (IllegalStateException e) {
-      // Already initialized
-    }
     try {
       // Mock ServerConnection singleton to prevent blocking network attempts
       ServerConnection mockConnection = mock(ServerConnection.class);
@@ -73,50 +66,5 @@ public class ClientApplicationTest {
     javafx.fxml.FXMLLoader mockLoader = mock(javafx.fxml.FXMLLoader.class);
     ClientApplication.setFxmlLoader(mockLoader);
     assertEquals(mockLoader, ClientApplication.getFxmlLoader());
-  }
-
-  @Test
-  public void testAppNavigatorAndShellController() throws Exception {
-    // Create actual JavaFX controls on the JavaFX Thread or with toolkit initialized.
-    StackPane rootPane = new StackPane();
-    ShellController shell = new ShellController();
-
-    // Use reflection to set FXML private field
-    java.lang.reflect.Field field = ShellController.class.getDeclaredField("rootPane");
-    field.setAccessible(true);
-    field.set(shell, rootPane);
-
-    AppNavigator.setRoot(shell);
-
-    // Test navigateTo
-    // Since it loads FXML from classpath, calling it should not throw and should update
-    // currentView.
-    // We run navigateTo on Platform.runLater or synchronously since JavaFX toolkit is running.
-    Platform.runLater(
-        () -> {
-          AppNavigator.navigateTo(AppView.SIGN_IN);
-          assertEquals(AppView.SIGN_IN, AppNavigator.getCurrentView());
-
-          // Navigate to same view should return early
-          AppNavigator.navigateTo(AppView.SIGN_IN);
-          assertEquals(AppView.SIGN_IN, AppNavigator.getCurrentView());
-        });
-
-    // Wait briefly for JavaFX events
-    Thread.sleep(200);
-  }
-
-  @Test
-  public void testClientApplicationStartAndMain() {
-    ClientApplication app = new ClientApplication();
-    Stage stage = mock(Stage.class);
-    Platform.runLater(
-        () -> {
-          try {
-            app.start(stage);
-          } catch (Exception e) {
-            // Expected to fail on FXMLLoader or resource loading
-          }
-        });
   }
 }

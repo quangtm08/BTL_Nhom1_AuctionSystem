@@ -22,36 +22,7 @@ public class WalletRepository {
     this.dataSource = dataSource;
   }
 
-  public Optional<Wallet> findByUserId(UUID userId) {
-    try (Connection conn = dataSource.getConnection()) {
-      return findByUserId(userId, conn);
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to find wallet for user: " + userId, e);
-    }
-  }
-
-  public Optional<Wallet> findByUserId(UUID userId, Connection conn) {
-    String sql = "SELECT * FROM wallets WHERE user_id = ?";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, userId.toString());
-      try (ResultSet rs = ps.executeQuery()) {
-        if (rs.next()) {
-          BigDecimal balance = rs.getBigDecimal("balance");
-          Timestamp createdTs = rs.getTimestamp("created_at");
-          Timestamp updatedTs = rs.getTimestamp("updated_at");
-          LocalDateTime createdAt =
-              createdTs != null ? createdTs.toLocalDateTime() : LocalDateTime.now();
-          LocalDateTime updatedAt =
-              updatedTs != null ? updatedTs.toLocalDateTime() : LocalDateTime.now();
-          return Optional.of(new Wallet(userId, balance, createdAt, updatedAt));
-        }
-      }
-    } catch (SQLException e) {
-      throw new RuntimeException("Failed to find wallet for user: " + userId, e);
-    }
-    return Optional.empty();
-  }
-
+  // Writes
   public void save(Wallet wallet) {
     try (Connection conn = dataSource.getConnection()) {
       save(wallet, conn);
@@ -87,33 +58,63 @@ public class WalletRepository {
     }
   }
 
-  private boolean existsWallet(UUID userId, Connection conn) {
-    String sql = "SELECT 1 FROM wallets WHERE user_id = ? LIMIT 1";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, userId.toString());
-      try (ResultSet rs = ps.executeQuery()) {
-        return rs.next();
-      }
+  public void saveTransaction(WalletTransaction tx) {
+    try (Connection conn = dataSource.getConnection()) {
+      saveTransaction(tx, conn);
     } catch (SQLException e) {
-      throw new RuntimeException("Failed to check wallet existence: " + userId, e);
+      throw new RuntimeException(
+          "Failed to save wallet transaction for user: " + tx.getUserId(), e);
     }
   }
 
-  public void updateBalance(UUID userId, BigDecimal newBalance, Connection conn) {
-    String sql = "UPDATE wallets SET balance = ?, updated_at = ? WHERE user_id = ?";
+  public void saveTransaction(WalletTransaction tx, Connection conn) {
+    String sql =
+        "INSERT INTO wallet_transactions (id, user_id, amount, transaction_type, reference_id,"
+            + " description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setBigDecimal(1, newBalance);
-      ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.now()));
-      ps.setString(3, userId.toString());
-      int affected = ps.executeUpdate();
-      if (affected == 0) {
-        // If it doesn't exist, create it (shouldn't happen with migration, but safe fallback)
-        Wallet wallet = new Wallet(userId, newBalance);
-        save(wallet, conn);
+      ps.setString(1, tx.getId().toString());
+      ps.setString(2, tx.getUserId().toString());
+      ps.setBigDecimal(3, tx.getAmount());
+      ps.setString(4, tx.getTransactionType());
+      ps.setString(5, tx.getReferenceId());
+      ps.setString(6, tx.getDescription());
+      ps.setTimestamp(7, Timestamp.valueOf(tx.getCreatedAt()));
+      ps.executeUpdate();
+    } catch (SQLException e) {
+      throw new RuntimeException(
+          "Failed to save wallet transaction for user: " + tx.getUserId(), e);
+    }
+  }
+
+  // Reads
+  public Optional<Wallet> findByUserId(UUID userId) {
+    try (Connection conn = dataSource.getConnection()) {
+      return findByUserId(userId, conn);
+    } catch (SQLException e) {
+      throw new RuntimeException("Failed to find wallet for user: " + userId, e);
+    }
+  }
+
+  public Optional<Wallet> findByUserId(UUID userId, Connection conn) {
+    String sql = "SELECT * FROM wallets WHERE user_id = ?";
+    try (PreparedStatement ps = conn.prepareStatement(sql)) {
+      ps.setString(1, userId.toString());
+      try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) {
+          BigDecimal balance = rs.getBigDecimal("balance");
+          Timestamp createdTs = rs.getTimestamp("created_at");
+          Timestamp updatedTs = rs.getTimestamp("updated_at");
+          LocalDateTime createdAt =
+              createdTs != null ? createdTs.toLocalDateTime() : LocalDateTime.now();
+          LocalDateTime updatedAt =
+              updatedTs != null ? updatedTs.toLocalDateTime() : LocalDateTime.now();
+          return Optional.of(new Wallet(userId, balance, createdAt, updatedAt));
+        }
       }
     } catch (SQLException e) {
-      throw new RuntimeException("Failed to update wallet balance: " + userId, e);
+      throw new RuntimeException("Failed to find wallet for user: " + userId, e);
     }
+    return Optional.empty();
   }
 
   public List<WalletTransaction> findTransactionsByUserId(UUID userId) {
@@ -148,31 +149,15 @@ public class WalletRepository {
     return list;
   }
 
-  public void saveTransaction(WalletTransaction tx) {
-    try (Connection conn = dataSource.getConnection()) {
-      saveTransaction(tx, conn);
-    } catch (SQLException e) {
-      throw new RuntimeException(
-          "Failed to save wallet transaction for user: " + tx.getUserId(), e);
-    }
-  }
-
-  public void saveTransaction(WalletTransaction tx, Connection conn) {
-    String sql =
-        "INSERT INTO wallet_transactions (id, user_id, amount, transaction_type, reference_id,"
-            + " description, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
+  private boolean existsWallet(UUID userId, Connection conn) {
+    String sql = "SELECT 1 FROM wallets WHERE user_id = ? LIMIT 1";
     try (PreparedStatement ps = conn.prepareStatement(sql)) {
-      ps.setString(1, tx.getId().toString());
-      ps.setString(2, tx.getUserId().toString());
-      ps.setBigDecimal(3, tx.getAmount());
-      ps.setString(4, tx.getTransactionType());
-      ps.setString(5, tx.getReferenceId());
-      ps.setString(6, tx.getDescription());
-      ps.setTimestamp(7, Timestamp.valueOf(tx.getCreatedAt()));
-      ps.executeUpdate();
+      ps.setString(1, userId.toString());
+      try (ResultSet rs = ps.executeQuery()) {
+        return rs.next();
+      }
     } catch (SQLException e) {
-      throw new RuntimeException(
-          "Failed to save wallet transaction for user: " + tx.getUserId(), e);
+      throw new RuntimeException("Failed to check wallet existence: " + userId, e);
     }
   }
 }

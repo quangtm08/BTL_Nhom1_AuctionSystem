@@ -4,6 +4,7 @@ import com.nhom1.auction.client.AppNavigator;
 import com.nhom1.auction.client.AppView;
 import com.nhom1.auction.client.user.service.BaseClientService;
 import com.nhom1.auction.client.user.service.CreateAuctionClientService;
+import com.nhom1.auction.client.util.FeedbackUtils;
 import com.nhom1.auction.common.enums.ItemCategory;
 import com.nhom1.auction.common.enums.ItemCondition;
 import com.nhom1.auction.common.exception.AppException;
@@ -27,6 +28,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 
 public class CreateAuctionController {
+
   private final List<File> selectedImageFiles = new ArrayList<>();
   private final CreateAuctionClientService createAuctionService = new CreateAuctionClientService();
 
@@ -34,17 +36,29 @@ public class CreateAuctionController {
 
   @FXML private ComboBox<ItemCondition> conditionComboBox;
 
-  @FXML private Label uploadCountLabel;
   @FXML private Button duration1Btn;
+
   @FXML private Button duration3Btn;
+
   @FXML private Button duration7Btn;
+
   @FXML private Button duration14Btn;
+
   @FXML private Button duration30Btn;
+
   @FXML private TextField customDurationField;
+
   @FXML private TextField titleField;
+
   @FXML private TextArea descriptionArea;
+
   @FXML private TextField startingBidField;
+
   @FXML private DatePicker openingDatePicker;
+
+  @FXML private Label uploadCountLabel;
+
+  @FXML private Label lblStatus;
 
   @FXML
   private void initialize() {
@@ -60,6 +74,11 @@ public class CreateAuctionController {
             });
   }
 
+  private void clearActiveDurationButtons() {
+    Arrays.asList(duration1Btn, duration3Btn, duration7Btn, duration14Btn, duration30Btn)
+        .forEach(button -> button.getStyleClass().remove("duration-chip-active"));
+  }
+
   @FXML
   private void handleDurationPreset(ActionEvent event) {
     if (!(event.getSource() instanceof Button selectedButton)) {
@@ -71,11 +90,6 @@ public class CreateAuctionController {
       classes.add("duration-chip-active");
     }
     customDurationField.clear();
-  }
-
-  private void clearActiveDurationButtons() {
-    Arrays.asList(duration1Btn, duration3Btn, duration7Btn, duration14Btn, duration30Btn)
-        .forEach(button -> button.getStyleClass().remove("duration-chip-active"));
   }
 
   @FXML
@@ -98,6 +112,7 @@ public class CreateAuctionController {
     if (selectedFiles == null || selectedFiles.isEmpty()) {
       selectedImageFiles.clear();
       uploadCountLabel.setText("No photo selected");
+      FeedbackUtils.clear(lblStatus);
       return;
     }
     selectedImageFiles.clear();
@@ -110,6 +125,7 @@ public class CreateAuctionController {
     }
 
     uploadCountLabel.setText(selectedFiles.size() + " photo(s): " + selectedNames);
+    FeedbackUtils.clear(lblStatus);
   }
 
   @FXML
@@ -123,17 +139,17 @@ public class CreateAuctionController {
             resolveDurationDays(),
             openingDatePicker.getValue());
     if (validationError != null) {
-      uploadCountLabel.setText(validationError);
+      FeedbackUtils.showError(lblStatus, validationError);
       return;
     }
 
     int durationDays = resolveDurationDays();
     if (durationDays <= 0) {
-      uploadCountLabel.setText("Duration must be greater than 0.");
+      FeedbackUtils.showError(lblStatus, "Duration must be greater than 0.");
       return;
     }
 
-    uploadCountLabel.setText("Uploading images and publishing...");
+    FeedbackUtils.showStatus(lblStatus, "Uploading images and publishing...");
     createAuctionService
         .createAuction(
             titleField.getText(),
@@ -149,15 +165,15 @@ public class CreateAuctionController {
                 Platform.runLater(
                     () -> {
                       if (response != null) {
-                        uploadCountLabel.setText("Published successfully.");
+                        FeedbackUtils.showStatus(lblStatus, "Published successfully.");
                         AppNavigator.navigateTo(AppView.MY_LISTINGS);
                       } else {
-                        uploadCountLabel.setText("Failed to publish listing.");
+                        FeedbackUtils.showError(lblStatus, "Failed to publish listing.");
                       }
                     }))
         .exceptionally(
             ex -> {
-              Platform.runLater(() -> uploadCountLabel.setText(resolveErrorMessage(ex)));
+              Platform.runLater(() -> FeedbackUtils.showError(lblStatus, resolveErrorMessage(ex)));
               return null;
             });
   }

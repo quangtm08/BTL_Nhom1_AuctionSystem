@@ -1,10 +1,6 @@
 package com.nhom1.auction.client.user.connection;
 
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.nhom1.auction.common.protocol.MessageType;
 import com.nhom1.auction.common.protocol.RequestMessage;
 import com.nhom1.auction.common.protocol.ResponseMessage;
@@ -15,10 +11,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +26,6 @@ public class ServerConnection {
 
   private static ServerConnection instance;
 
-  private final ObjectMapper mapper = new ObjectMapper();
   private Socket socket;
   private PrintWriter out;
   private BufferedReader in;
@@ -56,25 +47,6 @@ public class ServerConnection {
   }
 
   private ServerConnection() {
-    DateTimeFormatter flexibleDateTimeFormatter =
-        new DateTimeFormatterBuilder()
-            .appendPattern("yyyy-MM-dd")
-            .optionalStart()
-            .appendLiteral('T')
-            .optionalEnd()
-            .optionalStart()
-            .appendLiteral(' ')
-            .optionalEnd()
-            .appendPattern("HH:mm:ss")
-            .optionalStart()
-            .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
-            .optionalEnd()
-            .toFormatter();
-
-    JavaTimeModule javaTimeModule = new JavaTimeModule();
-    javaTimeModule.addDeserializer(
-        LocalDateTime.class, new LocalDateTimeDeserializer(flexibleDateTimeFormatter));
-    mapper.registerModule(javaTimeModule);
     connect();
   }
 
@@ -86,8 +58,8 @@ public class ServerConnection {
   }
 
   private void connect() {
-    String cloudHost = "kodama.proxy.rlwy.net";
-    int cloudPort = 14606;
+    String cloudHost = "zephyr.proxy.rlwy.net";
+    int cloudPort = 30411;
     String localHost = "localhost";
     int localPort = 12345;
     int timeoutMillis = 6000;
@@ -163,7 +135,7 @@ public class ServerConnection {
     CompletableFuture<ResponseMessage<T>> future = new CompletableFuture<>();
 
     future
-        .orTimeout(10, TimeUnit.SECONDS)
+        .orTimeout(20, TimeUnit.SECONDS)
         .whenComplete(
             (res, ex) -> {
               if (ex instanceof java.util.concurrent.TimeoutException) {
@@ -192,26 +164,19 @@ public class ServerConnection {
     System.out.println("<<< RECEIVED: " + json);
     PendingRequest<?> pending = null;
     try {
-      JsonNode root = mapper.readTree(json);
-      String requestId =
-          root.has("requestId") && !root.get("requestId").isNull()
-              ? root.get("requestId").asText()
-              : null;
+      JsonNode root = JsonUtil.readTree(json);
+      String requestId = JsonUtil.fieldText(root, "requestId");
 
       if (requestId != null) {
         pending = pendingRequests.remove(requestId);
         if (pending != null) {
-          JavaType type =
-              mapper
-                  .getTypeFactory()
-                  .constructParametricType(ResponseMessage.class, pending.responseClass);
-          ResponseMessage<?> response = mapper.readValue(json, type);
+          ResponseMessage<?> response = JsonUtil.fromResponseJson(json, pending.responseClass);
           ((CompletableFuture) pending.future).complete(response);
         } else {
           System.out.println("DEBUG: No pending request found for ID: " + requestId);
         }
-      } else if (root.has("type") && !root.get("type").isNull()) {
-        String typeText = root.get("type").asText();
+      } else {
+        String typeText = JsonUtil.fieldText(root, "type");
         if (typeText != null && !typeText.isBlank() && !"null".equalsIgnoreCase(typeText)) {
           MessageType pushType = MessageType.valueOf(typeText);
           Consumer<String> handler = pushHandlers.get(pushType);
