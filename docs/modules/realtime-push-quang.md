@@ -2,7 +2,7 @@
 
 Tài liệu này tập trung hướng dẫn cơ chế Push Notification (cập nhật thời gian thực), được bổ sung song song với luồng Request-Response hiện tại của hệ thống. 
 
-*(Lưu ý: Luồng Request-Response cơ bản vẫn tuân theo tài liệu `client-server-guideline.md`)*
+*(Lưu ý: Luồng Request-Response cơ bản nằm trong `docs/architecture/client-server-communication.md`.)*
 
 ---
 
@@ -52,6 +52,7 @@ Các DTO push đang dùng:
 | `PUSH_BID_UPDATE` | `BidUpdateEvent` |
 | `PUSH_NEW_AUCTION` | `NewAuctionEvent` |
 | `PUSH_AUCTION_ENDED` | `AuctionEndedEvent` |
+| `PUSH_AUCTION_TIME_EXTENDED` | `AuctionTimeExtendedEvent` |
 | `PUSH_AUCTION_DELETED` | `AuctionDeletedEvent` |
 | `PUSH_USER_DELETED` | `UserDeletedEvent` |
 | `PUSH_USER_CREATED` | `UserCreatedEvent` |

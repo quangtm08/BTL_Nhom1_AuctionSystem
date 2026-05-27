@@ -77,14 +77,13 @@ public class ClientServiceTest {
         service.register("testuser", "email@test.com", "password", "password").get();
     assertEquals("testuser", respReg.getUsername());
 
-    AuthResponse respRegDefaultEmail =
-        service.register("testuser2", null, "password", "password").get();
-    assertNotNull(respRegDefaultEmail);
-
     // 4. Register validation failure
     assertThrows(
         CompletionException.class,
         () -> service.register("", "email@test.com", "password", "password").join());
+    assertThrows(
+        CompletionException.class,
+        () -> service.register("testuser2", null, "password", "password").join());
     assertThrows(
         CompletionException.class,
         () -> service.register("user", "email@test.com", "", "password").join());

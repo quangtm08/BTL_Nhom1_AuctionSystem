@@ -55,8 +55,7 @@
 .title {
     -fx-text-fill: white;
     -fx-font-size: 28;
-    -fx-font-family: "Georgia";
-    -fx-font-style: italic;
+    -fx-font-family: "EB Garamond";
 }
 
 .description {
@@ -149,8 +148,7 @@
 .section-title {
     -fx-text-fill: white;
     -fx-font-size: 22;
-    -fx-font-family: "Georgia";
-    -fx-font-style: italic;
+    -fx-font-family: "EB Garamond";
 }
 
 .btn-back {

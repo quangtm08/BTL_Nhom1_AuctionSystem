@@ -17,7 +17,7 @@ import com.nhom1.auction.server.auction.AuctionRepository;
 import com.nhom1.auction.server.auction.ItemImageRepository;
 import com.nhom1.auction.server.auction.ItemRepository;
 import com.nhom1.auction.server.auth.UserRepository;
-import com.nhom1.auction.server.wallet.WalletRepository;
+import com.nhom1.auction.server.wallet.WalletService;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -41,7 +41,7 @@ public class BidServiceTest {
 
   @Mock private UserRepository userRepository;
 
-  @Mock private WalletRepository walletRepository;
+  @Mock private WalletService walletService;
 
   @Mock private DataSource dataSource;
 
@@ -62,7 +62,7 @@ public class BidServiceTest {
             itemRepository,
             itemImageRepository,
             userRepository,
-            walletRepository,
+            walletService,
             dataSource);
   }
 

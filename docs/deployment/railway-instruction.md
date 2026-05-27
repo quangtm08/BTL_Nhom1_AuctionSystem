@@ -1,58 +1,76 @@
-# Hướng dẫn Triển khai Auction Server lên Railway
+# Huong Dan Trien Khai Auction Server Len Railway
 
-Tài liệu này hướng dẫn cách cấu trúc và vận hành hệ thống Auction Server trên nền tảng Railway, hỗ trợ tự động chuyển đổi giữa môi trường phát triển (Local) và môi trường thực tế (Cloud).
+Tai lieu nay bam theo code hien tai trong `DBConnection`, `Server`, `ServerConnection`, va `pom.xml`.
 
-## 1. Cơ chế Môi trường kép (Dual-Environment)
+## Moi truong database
 
-Hệ thống được thiết kế để tự nhận diện môi trường chạy dựa trên các biến môi trường (Environment Variables).
+`DBConnection.getDataSource()` chon database theo bien moi truong:
 
-### Cơ sở dữ liệu (DBConnection.java)
-- **Local:** Nếu không tìm thấy các biến cấu hình PostgreSQL, hệ thống tự động sử dụng **SQLite** (`database/auction_system.db`).
-- **Cloud (Railway):** Khi triển khai, hệ thống sẽ ưu tiên sử dụng các biến môi trường `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` để kết nối tới **PostgreSQL**.
+- Neu co `PGHOST`, server tao PostgreSQL Hikari pool bang `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`.
+- Neu khong co `PGHOST`, server tao SQLite Hikari pool tai `jdbc:sqlite:database/auction-system.db`.
 
-### Cổng kết nối (Server.java)
-- **Local:** Mặc định sử dụng cổng `12345`.
-- **Cloud:** Tự động đọc biến `PORT` do Railway cung cấp để thực hiện Dynamic Port Binding.
+`DatabaseInitializer.init(dataSource)` chay luc server startup de tao/migrate schema. File schema canonical nam o `docs/architecture/database-schema.md`.
 
-## 2. Cấu hình Build & Thực thi
+## Port server
 
-### Fat JAR (pom.xml)
-Dự án sử dụng `maven-shade-plugin` để đóng gói toàn bộ code và dependencies vào một file duy nhất gọi là **Fat JAR** tại `target/auction-app-1.0-SNAPSHOT.jar`. 
-- Railway sẽ tự động chạy lệnh `./mvnw package` mỗi khi có thay đổi code trên GitHub.
+`Server.main` doc bien `PORT`. Neu Railway set `PORT`, server bind vao port do. Neu khong co `PORT`, code hien tai fallback ve `12345`.
 
-### Procfile
-File `Procfile` tại thư mục gốc khai báo lệnh khởi chạy cho Railway:
-```text
-web: java -jar target/auction-app-1.0-SNAPSHOT.jar
-```
-
-## 3. Cấu hình trên Railway Dashboard
-
-Để server hoạt động, cần thực hiện các bước sau trên Dashboard:
-
-1.  **Thêm PostgreSQL:** Tạo một service PostgreSQL trong project.
-2.  **Biến môi trường:** Railway sẽ tự động liên kết các biến `PG...` vào Server service.
-3.  **TCP Proxy (Quan trọng):**
-    - Vào phần **Settings** -> **Networking**.
-    - Tạo một **TCP Proxy**.
-    - Sử dụng địa chỉ Proxy này (ví dụ: `hopper.proxy.rlwy.net:16743`) để cấu hình Client.
-
-## 4. Kết nối từ Client (ServerConnection.java)
-
-Trong code Client, class `ServerConnection` hỗ trợ chuyển đổi nhanh giữa Local và Cloud:
+Luu y: `ServerConnection` phia client hien thu cloud truoc:
 
 ```java
-// String host = "localhost"; int port = 12345; // CHẾ ĐỘ LOCAL
-String host = "hopper.proxy.rlwy.net"; int port = 16743; // CHẾ ĐỘ CLOUD (Railway)
+String cloudHost = "zephyr.proxy.rlwy.net";
+int cloudPort = 30411;
 ```
 
-- Khi làm việc nhóm hoặc test local, hãy bỏ comment dòng **LOCAL**.
-- Khi muốn kết nối tới server thực tế, hãy sử dụng dòng **CLOUD**.
+Neu cloud fail, client fallback ve:
 
-## 5. Lưu ý về Java Version & DB Compatibility
-- Dự án sử dụng **JDK 21** (LTS) để đảm bảo tương thích tốt nhất với môi trường xây dựng của Railway.
-- **Quan trọng:** PostgreSQL khắt khe hơn SQLite về kiểu dữ liệu. Luôn sử dụng `ps.setTimestamp()` và `rs.getTimestamp()` thay vì xử lý chuỗi (String) cho các cột thời gian (`created_at`, `end_time`, v.v.). Điều này đảm bảo code chạy tốt trên cả SQLite (Local) và PostgreSQL (Railway).
-- Tránh sử dụng cú pháp `INSERT OR REPLACE` của SQLite; hãy chuyển sang chuẩn SQL hoặc sử dụng `ON CONFLICT` cho PostgreSQL.
+```java
+String localHost = "localhost";
+int localPort = 12345;
+```
 
----
-*Chúc may mắn với phiên bản Cloud đầu tiên của bạn!*
+Khi test local, server va client cung fallback ve `localhost:12345`.
+
+## Build va start command
+
+`pom.xml` dung `maven-shade-plugin` de tao cac fat JAR sau:
+
+- `target/auction-app-1.0-SNAPSHOT.jar`: server, main class `com.nhom1.auction.server.Server`. Day la ten JAR mac dinh ma Railway/Nixpacks co the auto-detect.
+- `target/auction-server.jar`: alias on dinh cua server JAR de doc/chay local.
+- `target/auction-client.jar`: client JavaFX, main class `com.nhom1.auction.client.ClientLauncher`.
+
+Build:
+
+```bash
+./mvnw package
+```
+
+Run tren Railway/Procfile:
+
+```bash
+java -jar target/auction-server.jar
+```
+
+Build JAR client da nen dependency de nop/chay demo:
+
+```bash
+./mvnw -DskipTests package -Pdist
+java -jar target/auction-client.jar
+```
+
+Repo co production profile rong de dap ung build command co `-Pproduction` neu Railway dung mac dinh do.
+
+## Railway dashboard
+
+1. Tao service cho app tu GitHub repo.
+2. Them PostgreSQL service neu muon dung cloud database.
+3. Dam bao app service nhan du cac bien `PG...` tu PostgreSQL service.
+4. Tao TCP Proxy trong Settings -> Networking de JavaFX client co the ket noi socket TCP.
+5. Cap nhat `cloudHost` va `cloudPort` trong `ServerConnection` theo proxy Railway hien tai.
+
+## Luu y tuong thich SQL
+
+- Dung `setTimestamp` / `getTimestamp` cho cot thoi gian.
+- Tranh syntax chi rieng SQLite nhu `INSERT OR REPLACE`.
+- `DatabaseInitializer` da co xu ly rieng cho SQLite voi `ALTER COLUMN` va `ADD COLUMN IF NOT EXISTS`.
+- `ON CONFLICT (auction_id, bidder_id) DO UPDATE` dang duoc dung trong auto-bid upsert; can test lai neu doi backend hoac version driver.
