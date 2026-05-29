@@ -154,6 +154,7 @@ public class AutoBidService {
       queue.sort(
           Comparator.comparing(AutoBidConfig::getMaxAmount)
               .reversed()
+              .thenComparing(AutoBidConfig::getUpdatedAt)
               .thenComparing(AutoBidConfig::getCreatedAt));
 
       AutoBidConfig selected = queue.isEmpty() ? null : queue.get(0);
@@ -161,7 +162,7 @@ public class AutoBidService {
 
       if (leaderConfig != null
           && hasSameAutoBidProfile(leaderConfig, selected)
-          && isEarlierInQueueOrder(leaderConfig, selected, allConfigs)) {
+          && isEarlierInQueueOrder(leaderConfig, selected)) {
         BigDecimal targetBid = leaderConfig.getMaxAmount();
         if (targetBid.compareTo(snapshotBid) <= 0) {
           break;
@@ -232,9 +233,8 @@ public class AutoBidService {
         && first.getIncrement().compareTo(second.getIncrement()) == 0;
   }
 
-  private boolean isEarlierInQueueOrder(
-      AutoBidConfig first, AutoBidConfig second, List<AutoBidConfig> orderedConfigs) {
-    return !first.getCreatedAt().isAfter(second.getCreatedAt());
+  private boolean isEarlierInQueueOrder(AutoBidConfig first, AutoBidConfig second) {
+    return !first.getUpdatedAt().isAfter(second.getUpdatedAt());
   }
 
   private UUID parseUuid(String value, String fieldName) {

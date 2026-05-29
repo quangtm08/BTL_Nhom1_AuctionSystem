@@ -648,13 +648,14 @@ public class AutoBidServiceTest {
   }
 
   @Test
-  public void testTriggerAutoBids_SameMaxSameCreatedAt_EarlierKeepsWin() throws Exception {
+  public void testTriggerAutoBids_SameMaxEarlierUpdatedAt_EarlierKeepsWin() throws Exception {
     UUID auctionId = UUID.randomUUID();
     BigDecimal currentHighestBid = new BigDecimal("2000.00");
     UUID currentHighestBidderId = UUID.randomUUID();
     UUID earlierBidderId = UUID.randomUUID();
     UUID laterBidderId = UUID.randomUUID();
-    LocalDateTime sameCreatedAt = LocalDateTime.now().minusMinutes(10);
+    LocalDateTime earlierUpdatedAt = LocalDateTime.now().minusMinutes(10);
+    LocalDateTime laterUpdatedAt = LocalDateTime.now().minusMinutes(5);
 
     AutoBidConfig earlierConfig =
         new AutoBidConfig(
@@ -662,14 +663,16 @@ public class AutoBidServiceTest {
             earlierBidderId,
             new BigDecimal("4000.00"),
             new BigDecimal("50.00"),
-            sameCreatedAt);
+            earlierUpdatedAt,
+            earlierUpdatedAt);
     AutoBidConfig laterConfig =
         new AutoBidConfig(
             auctionId,
             laterBidderId,
             new BigDecimal("4000.00"),
             new BigDecimal("50.00"),
-            sameCreatedAt);
+            earlierUpdatedAt,
+            laterUpdatedAt);
 
     when(autoBidRepository.findByAuctionId(auctionId))
         .thenReturn(List.of(earlierConfig, laterConfig));
@@ -693,5 +696,56 @@ public class AutoBidServiceTest {
     verify(bidGateway, never()).placeAutoBid(eq(laterBidderId), any(), any());
     verify(notificationService)
         .broadcastBidUpdate(auctionId, new BigDecimal("4000.00"), earlierBidderId);
+  }
+
+  @Test
+  public void testTriggerAutoBids_SameMaxHigherUpdatedAt_EarlierSetterWins() throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    BigDecimal currentHighestBid = new BigDecimal("2000.00");
+    UUID currentHighestBidderId = UUID.randomUUID();
+    UUID firstSetterBidderId = UUID.randomUUID();
+    UUID secondSetterBidderId = UUID.randomUUID();
+    LocalDateTime firstUpdatedAt = LocalDateTime.now().minusMinutes(10);
+    LocalDateTime secondUpdatedAt = LocalDateTime.now().minusMinutes(5);
+
+    AutoBidConfig earlierConfig =
+        new AutoBidConfig(
+            auctionId,
+            firstSetterBidderId,
+            new BigDecimal("5000.00"),
+            new BigDecimal("50.00"),
+            firstUpdatedAt,
+            firstUpdatedAt);
+    AutoBidConfig laterConfig =
+        new AutoBidConfig(
+            auctionId,
+            secondSetterBidderId,
+            new BigDecimal("5000.00"),
+            new BigDecimal("50.00"),
+            firstUpdatedAt,
+            secondUpdatedAt);
+
+    when(autoBidRepository.findByAuctionId(auctionId))
+        .thenReturn(List.of(earlierConfig, laterConfig));
+
+    BidTransaction tx1 = mock(BidTransaction.class);
+    when(tx1.getAmount()).thenReturn(new BigDecimal("2050.00"));
+    when(tx1.getBidderId()).thenReturn(firstSetterBidderId);
+    when(bidGateway.placeAutoBid(firstSetterBidderId, auctionId, new BigDecimal("2050.00")))
+        .thenReturn(tx1);
+
+    BidTransaction tx2 = mock(BidTransaction.class);
+    when(tx2.getAmount()).thenReturn(new BigDecimal("5000.00"));
+    when(tx2.getBidderId()).thenReturn(firstSetterBidderId);
+    when(bidGateway.placeAutoBid(firstSetterBidderId, auctionId, new BigDecimal("5000.00")))
+        .thenReturn(tx2);
+
+    autoBidService.triggerAutoBids(auctionId, currentHighestBid, currentHighestBidderId);
+
+    verify(bidGateway).placeAutoBid(firstSetterBidderId, auctionId, new BigDecimal("2050.00"));
+    verify(bidGateway).placeAutoBid(firstSetterBidderId, auctionId, new BigDecimal("5000.00"));
+    verify(bidGateway, never()).placeAutoBid(eq(secondSetterBidderId), any(), any());
+    verify(notificationService)
+        .broadcastBidUpdate(auctionId, new BigDecimal("5000.00"), firstSetterBidderId);
   }
 }
