@@ -549,8 +549,9 @@ public class AutoBidServiceTest {
     UUID auctionId = UUID.randomUUID();
     BigDecimal currentHighestBid = new BigDecimal("100.00");
     UUID currentHighestBidderId = UUID.randomUUID();
-    UUID earlierBidderId = UUID.randomUUID();
-    UUID laterBidderId = UUID.randomUUID();
+    UUID earlierBidderId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    UUID laterBidderId = UUID.fromString("00000000-0000-0000-0000-000000000000");
+    LocalDateTime sameCreatedAt = LocalDateTime.now().minusMinutes(10);
 
     AutoBidConfig earlierConfig =
         new AutoBidConfig(
@@ -558,14 +559,14 @@ public class AutoBidServiceTest {
             earlierBidderId,
             new BigDecimal("150.00"),
             new BigDecimal("10.00"),
-            LocalDateTime.now().minusMinutes(10));
+            sameCreatedAt);
     AutoBidConfig laterConfig =
         new AutoBidConfig(
             auctionId,
             laterBidderId,
             new BigDecimal("150.00"),
             new BigDecimal("10.00"),
-            LocalDateTime.now().minusMinutes(5));
+            sameCreatedAt);
 
     when(autoBidRepository.findByAuctionId(auctionId))
         .thenReturn(List.of(earlierConfig, laterConfig));
