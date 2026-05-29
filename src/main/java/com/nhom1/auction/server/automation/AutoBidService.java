@@ -161,6 +161,31 @@ public class AutoBidService {
       AutoBidConfig selected = queue.poll();
       if (selected == null) break;
 
+      if (leaderConfig != null
+          && hasSameAutoBidProfile(leaderConfig, selected)
+          && isEarlierPriority(leaderConfig, selected)) {
+        BigDecimal targetBid = leaderConfig.getMaxAmount();
+        if (targetBid.compareTo(snapshotBid) <= 0) {
+          break;
+        }
+
+        try {
+          BidTransaction bid =
+              bidGateway.placeAutoBid(leaderConfig.getBidderId(), auctionId, targetBid);
+          currentHighestBid = bid.getAmount();
+          currentHighestBidderId = bid.getBidderId();
+          finalBid = currentHighestBid;
+          finalBidderId = currentHighestBidderId;
+          anyBidPlaced = true;
+          hasBids = true;
+          continue;
+        } catch (Exception ignored) {
+          System.err.println(
+              "Auto-bid failed for auction " + auctionId + ": " + ignored.getMessage());
+          break;
+        }
+      }
+
       BigDecimal nextAmt;
       if (leaderConfig != null) {
         // Escalation: if we're competing against another auto-bidder, jump to outbid them
@@ -202,6 +227,19 @@ public class AutoBidService {
     if (anyBidPlaced) {
       notificationService.broadcastBidUpdate(auctionId, finalBid, finalBidderId);
     }
+  }
+
+  private boolean hasSameAutoBidProfile(AutoBidConfig first, AutoBidConfig second) {
+    return first.getMaxAmount().compareTo(second.getMaxAmount()) == 0
+        && first.getIncrement().compareTo(second.getIncrement()) == 0;
+  }
+
+  private boolean isEarlierPriority(AutoBidConfig first, AutoBidConfig second) {
+    int createdAtCompare = first.getCreatedAt().compareTo(second.getCreatedAt());
+    if (createdAtCompare != 0) {
+      return createdAtCompare < 0;
+    }
+    return first.getBidderId().compareTo(second.getBidderId()) < 0;
   }
 
   private UUID parseUuid(String value, String fieldName) {
