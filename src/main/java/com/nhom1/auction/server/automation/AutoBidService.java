@@ -162,6 +162,7 @@ public class AutoBidService {
       if (selected == null) break;
 
       BigDecimal nextAmt;
+      UUID bidderToBid = selected.getBidderId();
       if (leaderConfig != null) {
         // Escalation: if we're competing against another auto-bidder, jump to outbid them
         nextAmt =
@@ -170,6 +171,13 @@ public class AutoBidService {
         // If we are the "lower" one, we bid our max and let the leader outbid us in the next step
         if (selected.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) <= 0) {
           nextAmt = selected.getMaxAmount();
+
+          // Tie-breaker: If both configs have the same maxAmount, and selected is the newer one,
+          // we let the leader (older config) bid their max amount to retain leadership.
+          if (selected.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) == 0
+              && selected.getCreatedAt().isAfter(leaderConfig.getCreatedAt())) {
+            bidderToBid = leaderConfig.getBidderId();
+          }
         }
 
         // Ensure we at least bid the minimum required amount
@@ -184,7 +192,7 @@ public class AutoBidService {
       }
 
       try {
-        BidTransaction bid = bidGateway.placeAutoBid(selected.getBidderId(), auctionId, nextAmt);
+        BidTransaction bid = bidGateway.placeAutoBid(bidderToBid, auctionId, nextAmt);
         currentHighestBid = bid.getAmount();
         currentHighestBidderId = bid.getBidderId();
         finalBid = currentHighestBid;
