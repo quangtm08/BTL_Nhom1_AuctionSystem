@@ -151,7 +151,10 @@ public class AutoBidService {
           queue.add(cfg);
         }
       }
-      queue.sort(Comparator.comparing(AutoBidConfig::getCreatedAt));
+      queue.sort(
+          Comparator.comparing(AutoBidConfig::getMaxAmount)
+              .reversed()
+              .thenComparing(AutoBidConfig::getCreatedAt));
 
       AutoBidConfig selected = queue.isEmpty() ? null : queue.get(0);
       if (selected == null) break;
