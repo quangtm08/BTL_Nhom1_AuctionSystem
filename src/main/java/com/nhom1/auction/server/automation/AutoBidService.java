@@ -65,6 +65,34 @@ public class AutoBidService {
       throw new ValidationException("maxAmount must be >= increment");
     }
 
+    // Before saving, check if another auto-bid config was created first and set it as lead if
+    // necessary
+    List<AutoBidConfig> existingConfigs = autoBidRepository.findByAuctionId(auctionId);
+    AutoBidConfig earliestConfig =
+        existingConfigs.stream()
+            .min(
+                java.util.Comparator.comparing(AutoBidConfig::getCreatedAt)
+                    .thenComparing(AutoBidConfig::getBidderId))
+            .orElse(null);
+
+    if (earliestConfig != null && !earliestConfig.getBidderId().equals(bidderId)) {
+      UUID leadId = earliestConfig.getBidderId();
+      if (auction.getHighestBidderId() == null || !auction.getHighestBidderId().equals(leadId)) {
+        BigDecimal nextBid =
+            auction.getCurrentHighestBid() == null
+                ? auction.getStartingPrice()
+                : auction.getCurrentHighestBid().add(earliestConfig.getIncrement());
+        if (earliestConfig.getMaxAmount().compareTo(nextBid) >= 0) {
+          try {
+            bidGateway.placeAutoBid(leadId, auctionId, nextBid);
+            auction = auctionGateway.findById(auctionId).orElse(auction);
+          } catch (Exception e) {
+            System.err.println("Failed to set earliest bidder as lead: " + e.getMessage());
+          }
+        }
+      }
+    }
+
     autoBidRepository.save(new AutoBidConfig(auctionId, bidderId, maxAmount, incrementFromClient));
 
     scheduleAutoBids(
@@ -153,7 +181,8 @@ public class AutoBidService {
         BigDecimal minRequired =
             !hasBids ? auction.getStartingPrice() : snapshotBid.add(cfg.getIncrement());
 
-        if (cfg.getMaxAmount().compareTo(minRequired) >= 0) {
+        BigDecimal effectiveMax = getEffectiveMaxAmount(cfg, leaderConfig);
+        if (effectiveMax.compareTo(minRequired) >= 0) {
           queue.add(cfg);
         }
       }
@@ -168,8 +197,14 @@ public class AutoBidService {
             leaderConfig.getMaxAmount().add(selected.getIncrement()).min(selected.getMaxAmount());
 
         // If we are the "lower" one, we bid our max and let the leader outbid us in the next step
-        if (selected.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) <= 0) {
+        if (selected.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) < 0) {
           nextAmt = selected.getMaxAmount();
+        } else if (selected.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) == 0) {
+          if (hasHigherPriority(selected, leaderConfig)) {
+            nextAmt = selected.getMaxAmount();
+          } else {
+            nextAmt = leaderConfig.getMaxAmount().subtract(leaderConfig.getIncrement());
+          }
         }
 
         // Ensure we at least bid the minimum required amount
@@ -202,6 +237,26 @@ public class AutoBidService {
     if (anyBidPlaced) {
       notificationService.broadcastBidUpdate(auctionId, finalBid, finalBidderId);
     }
+  }
+
+  private boolean hasHigherPriority(AutoBidConfig c1, AutoBidConfig c2) {
+    int cmp = c1.getCreatedAt().compareTo(c2.getCreatedAt());
+    if (cmp != 0) {
+      return cmp < 0;
+    }
+    return c1.getBidderId().compareTo(c2.getBidderId()) < 0;
+  }
+
+  private BigDecimal getEffectiveMaxAmount(AutoBidConfig cfg, AutoBidConfig leaderConfig) {
+    if (leaderConfig == null) {
+      return cfg.getMaxAmount();
+    }
+    if (cfg.getMaxAmount().compareTo(leaderConfig.getMaxAmount()) == 0) {
+      if (!hasHigherPriority(cfg, leaderConfig)) {
+        return leaderConfig.getMaxAmount().subtract(leaderConfig.getIncrement());
+      }
+    }
+    return cfg.getMaxAmount();
   }
 
   private UUID parseUuid(String value, String fieldName) {

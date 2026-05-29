@@ -543,4 +543,130 @@ public class AutoBidServiceTest {
     assertEquals(bot2Id.toString(), bidSequence.get(1));
     assertEquals(new BigDecimal("140.00"), amountSequence.get(1));
   }
+
+  @Test
+  public void testSaveConfig_SetEarliestBidderAsLead() throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    UUID earliestBidderId = UUID.randomUUID();
+    UUID newBidderId = UUID.randomUUID();
+
+    // Earliest config: max 400.00, increment 50.00
+    AutoBidConfig earliestConfig =
+        new AutoBidConfig(
+            auctionId,
+            earliestBidderId,
+            new BigDecimal("400.00"),
+            new BigDecimal("50.00"),
+            LocalDateTime.now().minusMinutes(10));
+    when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(earliestConfig));
+
+    // Auction: starting price 100.00, running, no highest bid yet
+    Auction auction =
+        new Auction(
+            auctionId,
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            new BigDecimal("100.00"),
+            LocalDateTime.now().minusHours(1),
+            LocalDateTime.now().plusHours(1),
+            null,
+            null,
+            AuctionStatus.RUNNING,
+            LocalDateTime.now(),
+            LocalDateTime.now(),
+            null);
+
+    Auction updatedAuction =
+        new Auction(
+            auctionId,
+            auction.getItemId(),
+            auction.getSellerId(),
+            auction.getStartingPrice(),
+            auction.getStartTime(),
+            auction.getEndTime(),
+            earliestBidderId,
+            new BigDecimal("100.00"),
+            auction.getStatus(),
+            auction.getCreatedAt(),
+            auction.getUpdatedAt(),
+            auction.getDurationDays());
+
+    when(auctionGateway.findById(auctionId))
+        .thenReturn(Optional.of(auction))
+        .thenReturn(Optional.of(updatedAuction));
+
+    BidTransaction mockBid = mock(BidTransaction.class);
+    when(mockBid.getAmount()).thenReturn(new BigDecimal("100.00"));
+    when(mockBid.getBidderId()).thenReturn(earliestBidderId);
+    when(bidGateway.placeAutoBid(earliestBidderId, auctionId, new BigDecimal("100.00")))
+        .thenReturn(mockBid);
+
+    AutoBidConfigRequest dto = new AutoBidConfigRequest();
+    dto.setAuctionId(auctionId.toString());
+    dto.setBidderId(newBidderId.toString());
+    dto.setMaxAmount("400.00");
+    dto.setIncrement("50.00");
+
+    autoBidService.saveConfig(dto);
+
+    // Verify that earliestBidderId was placed as lead (bid 100.00) before saving new bidder's
+    // config
+    verify(bidGateway, times(1))
+        .placeAutoBid(earliestBidderId, auctionId, new BigDecimal("100.00"));
+    verify(autoBidRepository).save(any(AutoBidConfig.class));
+  }
+
+  @Test
+  public void testTriggerAutoBids_SameMaxAmount_HigherPriorityWins() throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    UUID priorityBidderId = UUID.randomUUID();
+    UUID challengerBidderId = UUID.randomUUID();
+
+    // Priority bidder config: max 400.00, increment 50.00, created 10 mins ago
+    AutoBidConfig priorityConfig =
+        new AutoBidConfig(
+            auctionId,
+            priorityBidderId,
+            new BigDecimal("400.00"),
+            new BigDecimal("50.00"),
+            LocalDateTime.now().minusMinutes(10));
+    // Challenger bidder config: max 400.00, increment 50.00, created 5 mins ago
+    AutoBidConfig challengerConfig =
+        new AutoBidConfig(
+            auctionId,
+            challengerBidderId,
+            new BigDecimal("400.00"),
+            new BigDecimal("50.00"),
+            LocalDateTime.now().minusMinutes(5));
+
+    when(autoBidRepository.findByAuctionId(auctionId))
+        .thenReturn(List.of(priorityConfig, challengerConfig));
+
+    // Initially, the priority bidder is the current leader at 100.00
+    BigDecimal currentHighestBid = new BigDecimal("100.00");
+    UUID currentHighestBidderId = priorityBidderId;
+
+    // 1. Challenger (lower priority) bids capped at leader.max - leader.increment = 400.00 - 50.00
+    // = 350.00
+    BidTransaction tx1 = mock(BidTransaction.class);
+    when(tx1.getAmount()).thenReturn(new BigDecimal("350.00"));
+    when(tx1.getBidderId()).thenReturn(challengerBidderId);
+    when(bidGateway.placeAutoBid(challengerBidderId, auctionId, new BigDecimal("350.00")))
+        .thenReturn(tx1);
+
+    // 2. Priority bidder outbids at max amount 400.00
+    BidTransaction tx2 = mock(BidTransaction.class);
+    when(tx2.getAmount()).thenReturn(new BigDecimal("400.00"));
+    when(tx2.getBidderId()).thenReturn(priorityBidderId);
+    when(bidGateway.placeAutoBid(priorityBidderId, auctionId, new BigDecimal("400.00")))
+        .thenReturn(tx2);
+
+    autoBidService.triggerAutoBids(auctionId, currentHighestBid, currentHighestBidderId);
+
+    // Verify both bids were placed in sequence and priority bidder wins at 400.00
+    verify(bidGateway).placeAutoBid(challengerBidderId, auctionId, new BigDecimal("350.00"));
+    verify(bidGateway).placeAutoBid(priorityBidderId, auctionId, new BigDecimal("400.00"));
+    verify(notificationService)
+        .broadcastBidUpdate(auctionId, new BigDecimal("400.00"), priorityBidderId);
+  }
 }
