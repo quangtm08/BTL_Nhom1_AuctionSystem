@@ -12,7 +12,6 @@ import com.nhom1.auction.server.infrastructure.NotificationService;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -140,11 +139,7 @@ public class AutoBidService {
               .findFirst()
               .orElse(null);
 
-      PriorityQueue<AutoBidConfig> queue =
-          new PriorityQueue<>(
-              Comparator.comparing(AutoBidConfig::getCreatedAt)
-                  .thenComparing(AutoBidConfig::getBidderId));
-
+      List<AutoBidConfig> queue = new java.util.ArrayList<>();
       for (AutoBidConfig cfg : allConfigs) {
         if (cfg.getBidderId().equals(snapshotBidderId)) {
           continue;
@@ -152,14 +147,43 @@ public class AutoBidService {
 
         BigDecimal minRequired =
             !hasBids ? auction.getStartingPrice() : snapshotBid.add(cfg.getIncrement());
-
         if (cfg.getMaxAmount().compareTo(minRequired) >= 0) {
           queue.add(cfg);
         }
       }
+      queue.sort(
+          Comparator.comparing(AutoBidConfig::getMaxAmount)
+              .reversed()
+              .thenComparing(AutoBidConfig::getUpdatedAt)
+              .thenComparing(AutoBidConfig::getCreatedAt));
 
-      AutoBidConfig selected = queue.poll();
+      AutoBidConfig selected = queue.isEmpty() ? null : queue.get(0);
       if (selected == null) break;
+
+      if (leaderConfig != null
+          && hasSameAutoBidProfile(leaderConfig, selected)
+          && isEarlierInQueueOrder(leaderConfig, selected)) {
+        BigDecimal targetBid = leaderConfig.getMaxAmount();
+        if (targetBid.compareTo(snapshotBid) <= 0) {
+          break;
+        }
+
+        try {
+          BidTransaction bid =
+              bidGateway.placeAutoBid(leaderConfig.getBidderId(), auctionId, targetBid);
+          currentHighestBid = bid.getAmount();
+          currentHighestBidderId = bid.getBidderId();
+          finalBid = currentHighestBid;
+          finalBidderId = currentHighestBidderId;
+          anyBidPlaced = true;
+          hasBids = true;
+          continue;
+        } catch (Exception ignored) {
+          System.err.println(
+              "Auto-bid failed for auction " + auctionId + ": " + ignored.getMessage());
+          break;
+        }
+      }
 
       BigDecimal nextAmt;
       if (leaderConfig != null) {
@@ -202,6 +226,15 @@ public class AutoBidService {
     if (anyBidPlaced) {
       notificationService.broadcastBidUpdate(auctionId, finalBid, finalBidderId);
     }
+  }
+
+  private boolean hasSameAutoBidProfile(AutoBidConfig first, AutoBidConfig second) {
+    return first.getMaxAmount().compareTo(second.getMaxAmount()) == 0
+        && first.getIncrement().compareTo(second.getIncrement()) == 0;
+  }
+
+  private boolean isEarlierInQueueOrder(AutoBidConfig first, AutoBidConfig second) {
+    return !first.getUpdatedAt().isAfter(second.getUpdatedAt());
   }
 
   private UUID parseUuid(String value, String fieldName) {

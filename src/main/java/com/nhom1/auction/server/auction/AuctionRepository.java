@@ -242,7 +242,7 @@ public class AuctionRepository {
   public int updateHighestBid(
       UUID auctionId, BigDecimal amount, UUID bidderId, long expectedVersion, Connection conn) {
     String sql =
-        """
+"""
     UPDATE auctions
     SET current_highest_bid = ?, highest_bidder_id = ?, version = version + 1, updated_at = ?
     WHERE id = ?
@@ -330,7 +330,7 @@ public class AuctionRepository {
   public int updateOpenAuctionForEdit(
       UUID auctionId, BigDecimal startingPrice, LocalDateTime newEndTime, Connection conn) {
     String sql =
-        """
+"""
     UPDATE auctions
     SET starting_price = ?, current_highest_bid = ?, end_time = ?, version = version + 1, updated_at = ?
     WHERE id = ?

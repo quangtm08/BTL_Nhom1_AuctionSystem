@@ -29,7 +29,7 @@ public class ItemImageRepository {
       return;
     }
     String sql =
-        """
+"""
 INSERT INTO item_images(id, item_id, object_key, public_url, is_primary, sort_order, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 """;
