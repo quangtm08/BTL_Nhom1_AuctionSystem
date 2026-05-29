@@ -646,4 +646,52 @@ public class AutoBidServiceTest {
     verify(notificationService)
         .broadcastBidUpdate(auctionId, new BigDecimal("2010.00"), higherMaxBidderId);
   }
+
+  @Test
+  public void testTriggerAutoBids_SameMaxSameCreatedAt_EarlierKeepsWin() throws Exception {
+    UUID auctionId = UUID.randomUUID();
+    BigDecimal currentHighestBid = new BigDecimal("2000.00");
+    UUID currentHighestBidderId = UUID.randomUUID();
+    UUID earlierBidderId = UUID.randomUUID();
+    UUID laterBidderId = UUID.randomUUID();
+    LocalDateTime sameCreatedAt = LocalDateTime.now().minusMinutes(10);
+
+    AutoBidConfig earlierConfig =
+        new AutoBidConfig(
+            auctionId,
+            earlierBidderId,
+            new BigDecimal("4000.00"),
+            new BigDecimal("50.00"),
+            sameCreatedAt);
+    AutoBidConfig laterConfig =
+        new AutoBidConfig(
+            auctionId,
+            laterBidderId,
+            new BigDecimal("4000.00"),
+            new BigDecimal("50.00"),
+            sameCreatedAt);
+
+    when(autoBidRepository.findByAuctionId(auctionId))
+        .thenReturn(List.of(earlierConfig, laterConfig));
+
+    BidTransaction tx1 = mock(BidTransaction.class);
+    when(tx1.getAmount()).thenReturn(new BigDecimal("2050.00"));
+    when(tx1.getBidderId()).thenReturn(earlierBidderId);
+    when(bidGateway.placeAutoBid(earlierBidderId, auctionId, new BigDecimal("2050.00")))
+        .thenReturn(tx1);
+
+    BidTransaction tx2 = mock(BidTransaction.class);
+    when(tx2.getAmount()).thenReturn(new BigDecimal("4000.00"));
+    when(tx2.getBidderId()).thenReturn(earlierBidderId);
+    when(bidGateway.placeAutoBid(earlierBidderId, auctionId, new BigDecimal("4000.00")))
+        .thenReturn(tx2);
+
+    autoBidService.triggerAutoBids(auctionId, currentHighestBid, currentHighestBidderId);
+
+    verify(bidGateway).placeAutoBid(earlierBidderId, auctionId, new BigDecimal("2050.00"));
+    verify(bidGateway).placeAutoBid(earlierBidderId, auctionId, new BigDecimal("4000.00"));
+    verify(bidGateway, never()).placeAutoBid(eq(laterBidderId), any(), any());
+    verify(notificationService)
+        .broadcastBidUpdate(auctionId, new BigDecimal("4000.00"), earlierBidderId);
+  }
 }

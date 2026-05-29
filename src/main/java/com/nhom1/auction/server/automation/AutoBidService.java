@@ -234,12 +234,7 @@ public class AutoBidService {
 
   private boolean isEarlierInQueueOrder(
       AutoBidConfig first, AutoBidConfig second, List<AutoBidConfig> orderedConfigs) {
-    int firstIndex = orderedConfigs.indexOf(first);
-    int secondIndex = orderedConfigs.indexOf(second);
-    if (firstIndex < 0 || secondIndex < 0) {
-      return false;
-    }
-    return firstIndex < secondIndex;
+    return !first.getCreatedAt().isAfter(second.getCreatedAt());
   }
 
   private UUID parseUuid(String value, String fieldName) {
