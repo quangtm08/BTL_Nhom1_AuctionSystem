@@ -39,7 +39,7 @@ public class PaymentRepository {
       LocalDateTime now,
       Connection conn) {
     String sql =
-        """
+"""
 INSERT INTO payment_transactions(id, auction_id, payer_id, payee_id, amount, status, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, 'COMPLETED', ?, ?)
 """;
