@@ -567,7 +567,8 @@ public class AutoBidServiceTest {
             new BigDecimal("10.00"),
             LocalDateTime.now().minusMinutes(5));
 
-    when(autoBidRepository.findByAuctionId(auctionId)).thenReturn(List.of(earlierConfig, laterConfig));
+    when(autoBidRepository.findByAuctionId(auctionId))
+        .thenReturn(List.of(earlierConfig, laterConfig));
 
     BidTransaction tx1 = mock(BidTransaction.class);
     when(tx1.getAmount()).thenReturn(new BigDecimal("110.00"));
@@ -586,6 +587,7 @@ public class AutoBidServiceTest {
     verify(bidGateway).placeAutoBid(earlierBidderId, auctionId, new BigDecimal("110.00"));
     verify(bidGateway).placeAutoBid(earlierBidderId, auctionId, new BigDecimal("150.00"));
     verify(bidGateway, never()).placeAutoBid(eq(laterBidderId), any(), any());
-    verify(notificationService).broadcastBidUpdate(auctionId, new BigDecimal("150.00"), earlierBidderId);
+    verify(notificationService)
+        .broadcastBidUpdate(auctionId, new BigDecimal("150.00"), earlierBidderId);
   }
 }
