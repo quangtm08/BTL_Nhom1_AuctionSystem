@@ -140,10 +140,10 @@ curl -L -o auction-server.jar https://github.com/quangtm08/BTL_Nhom1_AuctionSyst
 - Chạy JAR đã tải (yêu cầu Java 21+):
 ```powershell
 # Chạy server (nếu cần chạy local)
-java -jar auction-server.jar
+java -jar auction-server-v1.0.0.jar
 
 # Chạy client
-java -jar auction-client.jar
+java -jar auction-client-v1.0.0.jar
 ```
 
 Lưu ý: Nếu chạy client và muốn kết nối tới server local, đảm bảo chạy server trước (xem Kịch bản B). Nếu không muốn dùng server local, client sẽ cố kết nối tới server trên Railway theo mặc định.
