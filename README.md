@@ -138,16 +138,22 @@ curl -L -o auction-server.jar https://github.com/quangtm08/BTL_Nhom1_AuctionSyst
 ```
 
 - Chạy JAR đã tải (yêu cầu Java 21+):
-
 ```powershell
+# Chạy server (nếu cần chạy local)
+java -jar auction-server.jar
+
+# Chạy client
+java -jar auction-client.jar
+```
+
+Lưu ý: Nếu chạy client và muốn kết nối tới server local, đảm bảo chạy server trước (xem Kịch bản B). Nếu không muốn dùng server local, client sẽ cố kết nối tới server trên Railway theo mặc định.
+
 ## 6. Danh sách chức năng đã hoàn thành
 
 - **Auth & phân quyền**: đăng ký, đăng nhập, phân vai trò user / admin.
 - **Đấu giá**: duyệt danh sách phiên, xem chi tiết, đặt giá thủ công với optimistic locking chống race condition.
 - **Listing**: tạo / quản lý tin đăng đấu giá của người dùng.
 - **Auto-bid**: đặt giá tự động theo ngưỡng + hybrid escalation, lịch chạy tự động qua `AuctionScheduler`.
-
-Lưu ý: Nếu chạy client và muốn kết nối tới server local, đảm bảo chạy server trước (xem Kịch bản B). Nếu không muốn dùng server local, client sẽ cố kết nối tới server trên Railway theo mặc định.
 - **Thanh toán**: luồng payment mock với cập nhật ví realtime hai chiều client–server.
 - **Admin**: tổng quan hệ thống, quản lý phiên đấu giá, quản lý người dùng.
 - **Realtime notification**: server đẩy sự kiện qua socket tới client liên quan.
