@@ -5,12 +5,10 @@ import com.nhom1.auction.common.enums.BidType;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Auction extends BaseEntity {
+
   private static final BigDecimal MIN_INCREMENT_RATE = new BigDecimal("0.05");
   private static final int MIN_INCREMENT_SCALE = 2;
   private final UUID itemId;
@@ -18,25 +16,15 @@ public class Auction extends BaseEntity {
   private final LocalDateTime startTime;
   private LocalDateTime endTime;
   private final BigDecimal startingPrice;
-  private final List<BidTransaction> bidHistory;
   private final Integer durationDays;
-  // Persistence-only concurrency token used by optimistic locking in the repository.
-  // Business logic does not mutate this field directly; the database increments it.
+  // Optimistic locking using version field in the database
+  // The database increments the version.
   private final Integer version;
 
-  // volatile để đảm bảo giá trị được cập nhật và đồng bộ hóa, thread-safe !
   private volatile UUID highestBidderId;
   private volatile BigDecimal currentHighestBid;
   private volatile AuctionStatus status;
 
-  // thêm ReentrantLock đảm bảo thread-safety khi thay đổi trạng thái của phiên.
-  private final ReentrantLock auctionLock =
-      new ReentrantLock(true); // Fair lock để đảm bảo thứ tự truy cập công bằng
-  // giữa các thread.
-  private final Object bidHistoryMonitor =
-      new Object(); // Monitor riêng để đồng bộ hóa truy cập vào bidHistory
-
-  // TODO: Change exception to domain exception of the app.
   public Auction(
       UUID itemId,
       UUID sellerId,
@@ -68,12 +56,11 @@ public class Auction extends BaseEntity {
     this.highestBidderId = null;
     this.currentHighestBid = null;
     this.status = AuctionStatus.OPEN;
-    this.bidHistory = new ArrayList<>();
     this.durationDays = null;
     this.version = 0;
   }
 
-  /** Use this constructor for loading an EXISTING auction from the database. */
+  // Use this constructor for loading an EXISTING auction from the database.
   public Auction(
       UUID id,
       UUID itemId,
@@ -127,50 +114,24 @@ public class Auction extends BaseEntity {
     this.currentHighestBid = currentHighestBid;
     this.status = status;
     this.durationDays = durationDays;
-    this.bidHistory = new ArrayList<>();
     this.version = version;
   }
 
   public BidTransaction placeBid(
       UUID bidderId, BigDecimal amount, BidType bidType, LocalDateTime bidTime) {
+    AuctionBidValidator.validatePlaceBid(this, bidderId, amount, bidType, bidTime);
 
-    auctionLock.lock(); // Lock to ensure thread safety when placing a bid
-    try {
-      AuctionBidValidator.validatePlaceBid(this, bidderId, amount, bidType, bidTime);
-
-      BidTransaction bidTransaction = new BidTransaction(getId(), bidderId, amount, bidType);
-      synchronized (
-          bidHistoryMonitor) { // Synchronize to ensure thread safety when modifying the bid history
-        bidHistory.add(bidTransaction);
-      }
-      highestBidderId = bidderId;
-      currentHighestBid = amount;
-      touchUpdatedAt();
-      return bidTransaction;
-    } finally {
-      auctionLock.unlock();
-    }
+    BidTransaction bidTransaction = new BidTransaction(getId(), bidderId, amount, bidType);
+    highestBidderId = bidderId;
+    currentHighestBid = amount;
+    touchUpdatedAt();
+    return bidTransaction;
   }
 
-  // Return a snapshot so callers cannot modify the auction's internal bid
-  // history.
-  public List<BidTransaction> getBidHistory() {
-    synchronized (
-        bidHistoryMonitor) { // Synchronize on the same monitor used when modifying the bid history
-      return List.copyOf(bidHistory);
-    }
-  }
-
-  // Used by AuctionScheduler for anti-sniping: extends the end time when a bid is
-  // placed near the deadline.
+  // Used by AuctionScheduler for anti-sniping
   public void extendEndTime(LocalDateTime newEndTime) {
-    auctionLock.lock();
-    try {
-      this.endTime = newEndTime;
-      touchUpdatedAt();
-    } finally {
-      auctionLock.unlock();
-    }
+    this.endTime = newEndTime;
+    touchUpdatedAt();
   }
 
   public UUID getItemId() {
