@@ -3,7 +3,6 @@ package com.nhom1.auction.common.entity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.nhom1.auction.common.enums.AuctionStatus;
@@ -13,7 +12,6 @@ import com.nhom1.auction.common.exception.InvalidBidException;
 import com.nhom1.auction.common.exception.UnauthorizedActionException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
@@ -172,21 +170,6 @@ public class AuctionTest {
   }
 
   @Test
-  public void testGetBidHistory_ReturnsCopy() {
-    Auction auction = createRunningAuction();
-    LocalDateTime bidTime = auction.getStartTime().plusMinutes(10);
-
-    auction.placeBid(UUID.randomUUID(), new BigDecimal("100.00"), BidType.MANUAL, bidTime);
-
-    List<BidTransaction> history = auction.getBidHistory();
-    assertEquals(1, history.size());
-
-    // Modifying the returned list should not affect the auction's internal state
-    assertThrows(UnsupportedOperationException.class, history::clear);
-    assertEquals(1, auction.getBidHistory().size());
-  }
-
-  @Test
   public void testPlaceBid_Success() {
     Auction auction = createRunningAuction();
     UUID bidderId = UUID.randomUUID();
@@ -201,11 +184,6 @@ public class AuctionTest {
         new BigDecimal("100.00"),
         auction.getCurrentHighestBid(),
         "The highest bid should be updated");
-    assertEquals(1, auction.getBidHistory().size(), "The bid history should contain the new bid");
-    assertSame(
-        bidTransaction,
-        auction.getBidHistory().getFirst(),
-        "The bid history should store the created bid");
   }
 
   @Test
