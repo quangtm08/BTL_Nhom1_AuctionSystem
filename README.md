@@ -157,6 +157,7 @@ Lưu ý: Nếu chạy client và muốn kết nối tới server local, đảm b
 - **Thanh toán**: luồng payment mock với cập nhật ví realtime hai chiều client–server.
 - **Admin**: tổng quan hệ thống, quản lý phiên đấu giá, quản lý người dùng.
 - **Realtime notification**: server đẩy sự kiện qua socket tới client liên quan.
+- **Visualization chart, wallet**
 
 ## 7. Báo cáo PDF & video demo
 
